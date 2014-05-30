@@ -37,11 +37,11 @@ public class AbstractHeap {
 	}
 
 	// field look-up for location
-	public P2Set lookup(AbstractMemLoc loc, FieldElem field) {
-		if (ArgDerivedHelper.isArgDerived(loc)) {
-
-		}
-	}
+//	public P2Set lookup(AbstractMemLoc loc, FieldElem field) {
+//		if (ArgDerivedHelper.isArgDerived(loc)) {
+//
+//		}
+//	}
 
 	// check whether some abstract memory location is contained in the heap
 	public boolean hasCreated(AbstractMemLoc loc) {
@@ -53,12 +53,13 @@ public class AbstractHeap {
 		return heap.containsKey(loc);
 	}
 
-	public AccessPath createAbstractMemLoc(AbstractMemLoc base, FieldElem field) {
-		if (memLocFactory.contains(o))
-		AccessPath ret = new AccessPath(base, field);
-		memLocFactory.add(ret);
-		return ret;
-	}
+//	 public AccessPath createAbstractMemLoc(AbstractMemLoc base, FieldElem
+//	 field) {
+//	 if (memLocFactory.contains(o))
+//	 AccessPath ret = new AccessPath(base, field);
+//	 memLocFactory.add(ret);
+//	 return ret;
+//	 }
 
 	public boolean strongUpdate(HeapObject obj, P2Set p2Set) {
 
