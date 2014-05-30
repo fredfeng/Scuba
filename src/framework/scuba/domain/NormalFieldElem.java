@@ -24,4 +24,21 @@ public class NormalFieldElem extends FieldElem {
 	public jq_Field getField() {
 		return this.field;
 	}
+
+	@Override
+	public boolean equals(Object other) {
+		return (other instanceof NormalFieldElem)
+				&& (this.clazz.equals(((NormalFieldElem) other).clazz))
+				&& (this.field.equals(((NormalFieldElem) other).field));
+	}
+
+	@Override
+	public int hashCode() {
+		return 37 * clazz.hashCode() + field.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return "[Class] " + clazz + " [Field] " + field;
+	}
 }

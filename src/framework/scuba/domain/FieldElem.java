@@ -1,5 +1,5 @@
 package framework.scuba.domain;
 
-public class FieldElem {
+public abstract class FieldElem {
 
 }

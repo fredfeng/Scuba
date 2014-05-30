@@ -1,6 +1,5 @@
 package framework.scuba.utils;
 
-import framework.scuba.domain.ConcreteP2Set;
 import framework.scuba.domain.Constraint;
 import framework.scuba.domain.HeapObject;
 import framework.scuba.domain.P2Set;
@@ -8,7 +7,7 @@ import framework.scuba.domain.P2Set;
 public class P2SetUtils {
 
 	public P2Set project(P2Set p2Set, Constraint otherConstraint) {
-		P2Set ret = new ConcreteP2Set();
+		P2Set ret = new P2Set();
 		for (HeapObject obj : p2Set.getP2HeapObjects()) {
 			Constraint newConstraint = ConstraintUtils.intersect(
 					p2Set.getConstraint(obj), otherConstraint);

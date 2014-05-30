@@ -6,6 +6,10 @@ public class Context {
 
 	protected LinkedList<ProgramPoint> context;
 
+	public Context() {
+
+	}
+
 	public Context(ProgramPoint point) {
 		this.context = new LinkedList<ProgramPoint>();
 		this.context.add(point);

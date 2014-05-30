@@ -4,11 +4,24 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class P2Set {
+public class P2Set {
 
-	Map<HeapObject, Constraint> p2Set;
+	Map<HeapObject, Constraint> p2Set = new HashMap<HeapObject, Constraint>();
 
-	abstract public P2Set clone();
+	public P2Set() {
+
+	}
+
+	public P2Set(HeapObject obj, Constraint constraint) {
+		p2Set.put(obj, constraint);
+	}
+
+	public P2Set(HeapObject obj) {
+		assert (obj.isArgDerived()) : obj + " is not argument derived!";
+		assert (obj instanceof HeapObject) : obj + " is not a heap object!";
+		p2Set = new HashMap<HeapObject, Constraint>();
+		p2Set.put(obj, new TrueConstraint());
+	}
 
 	// this join method implements the join operation described in definition 8
 	// of the paper, in which it only reads other and write this.p2Set
@@ -51,9 +64,19 @@ public abstract class P2Set {
 	}
 
 	public Constraint getConstraint(HeapObject obj) {
-		// if ptSet contains obj, then return that obj
-		// otherwise, return null
+		// if ptSet contains obj, then return that obj otherwise, return null
 		return p2Set.get(obj);
+	}
+
+	// do a shallow copy
+	public P2Set clone() {
+		P2Set ret = new P2Set();
+
+		for (HeapObject obj : p2Set.keySet()) {
+			ret.put(obj, p2Set.get(obj));
+		}
+
+		return ret;
 	}
 
 }

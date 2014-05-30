@@ -18,12 +18,24 @@ public abstract class AbstractMemLoc {
 		this.argDerived = ArgDerivedType.NOT_ARG_DERIVED;
 	}
 
+	public ArgDerivedType getArgDerivedMarker() {
+		return this.argDerived;
+	}
+
 	public boolean knownArgDerived() {
 		return (this.argDerived != ArgDerivedType.UN_KNOWN);
 	}
 
+	public boolean unknowArgDerived() {
+		return (this.argDerived == ArgDerivedType.UN_KNOWN);
+	}
+
 	public boolean isArgDerived() {
 		return (this.argDerived == ArgDerivedType.IS_ARG_DERIVED);
+	}
+
+	public boolean isNotArgDerived() {
+		return (this.argDerived == ArgDerivedType.NOT_ARG_DERIVED);
 	}
 
 	public boolean hasFieldSelector(FieldElem f) {
