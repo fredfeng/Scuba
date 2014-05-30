@@ -37,7 +37,20 @@ public class AccessPath extends HeapObject {
 		return null;
 	}
 
+	@Override
+	public boolean equals(Object other) {
+		return (other instanceof AccessPath)
+				&& (base.equals(((AccessPath) other).base))
+				&& (field.equals(((AccessPath) other).field));
+	}
+
+	@Override
 	public String toString() {
 		return base + "." + field;
+	}
+
+	@Override
+	public int hashCode() {
+		return 37 * base.hashCode() + field.hashCode();
 	}
 }

@@ -1,6 +1,6 @@
 package framework.scuba.domain;
 
-public class Constraint {
+public abstract class Constraint {
 
 	public Constraint intersect(Constraint other) {
 		return null;

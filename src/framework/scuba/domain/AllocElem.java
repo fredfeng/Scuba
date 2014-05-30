@@ -28,4 +28,17 @@ public class AllocElem extends HeapObject {
 		return allocSite + " || " + context;
 	}
 
+	@Override
+	public boolean equals(Object other) {
+
+		return (other instanceof AllocElem)
+				&& (allocSite.equals(((AllocElem) other).allocSite))
+				&& (context.equals(((AllocElem) other).context));
+	}
+
+	@Override
+	public int hashCode() {
+		return 37 * allocSite.hashCode() + context.hashCode();
+	}
+
 }
