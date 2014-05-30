@@ -6,6 +6,7 @@
   <target name="clean">
     <delete dir="classes"/>
     <delete dir="chord_output"/>
+    <delete file="scuba.jar"/>
   </target>
   <target name="compile">
     <mkdir dir="classes"/>
