@@ -1,22 +1,50 @@
+package framework.scuba.analyses.alias;
+
+import java.util.List;
+import java.util.Set;
+
+import joeq.Class.jq_Method;
+import chord.analyses.alias.CICG;
+import chord.analyses.alias.ICICG;
+import chord.analyses.method.DomM;
+import chord.project.Chord;
+import chord.project.ClassicProject;
+import chord.project.analyses.JavaAnalysis;
+import chord.project.analyses.ProgramRel;
+
 /**
  * Summary-based analysis.
+ * 1. Build and get a CHA-based CallGraph.
+ * 2. Compute SCC
+ * 3. Run the worklist algorithm 
  * author: Yu Feng
  * email: yufeng@cs.utexas.edu
  */
-package framework.scuba.analyses.alias;
 
-import java.util.LinkedList;
-
-
-public class SummaryBasedAnalysis {
+@Chord(
+	    name = "sum-java",
+	    consumes = { "rootM", "reachableM", "IM", "MM" }
+	)
+public class SummaryBasedAnalysis extends JavaAnalysis {
 	
-	public SummaryBasedAnalysis() {
+
+    protected DomM domM;
+    protected ProgramRel relRootM;
+    protected ProgramRel relReachableM;
+    protected ProgramRel relIM;
+    protected ProgramRel relMM;
+    protected CICG callGraph;
+    
+	private void init() {
+		getCallGraph();
+		System.out.println("Total nodes in CG---------" + callGraph.getNodes().size());
+		List<Set<jq_Method>> sccList = callGraph.getTopSortedSCCs();
 		//init \gamma
 		//compute SCCs and their representative nodes.
 	}
 	
 	
-	public void sumAnalyze() {
+	private void sumAnalyze() {
 		//foreach leaf in the callgraph. Add them to the worklist.
 		/*LinkedList worklist = new LinkedList();
 		while(!worklist.isEmpty()) {
@@ -32,12 +60,12 @@ public class SummaryBasedAnalysis {
 		}*/
 	}
 	
-	public void analyze() {
+	private void analyze() {
 		//do interproc
 		//mark terminated
 	}
 	
-	public void analyzeSCC() {
+	private void analyzeSCC() {
 		//add all methods to worklist
 /*		while(wl is not empty) {
 			gamma = worker.getSummary();
@@ -52,4 +80,37 @@ public class SummaryBasedAnalysis {
 			add pred(unterminated)
 		}*/
 	}
+	
+	/*This method will be invoked by Chord automatically.*/
+    public void run() {
+        domM = (DomM) ClassicProject.g().getTrgt("M");
+        relRootM = (ProgramRel) ClassicProject.g().getTrgt("rootM");
+        relReachableM = (ProgramRel) ClassicProject.g().getTrgt("reachableM");
+        relIM = (ProgramRel) ClassicProject.g().getTrgt("IM");
+        relMM = (ProgramRel) ClassicProject.g().getTrgt("MM");
+        //init scuba.
+        init();
+    }
+    /**
+     * Provides the program's context-insensitive call graph.
+     * 
+     * @return The program's context-insensitive call graph.
+     */
+    public ICICG getCallGraph() {
+        if (callGraph == null) {
+            callGraph = new CICG(domM, relRootM, relReachableM, relIM, relMM);
+        }
+        return callGraph;
+    }
+    /**
+     * Frees relations used by this program analysis if they are in memory.
+     * <p>
+     * This method must be called after clients are done exercising the interface of this analysis.
+     */
+    public void free() {
+        if (callGraph != null)
+            callGraph.free();
+        
+    }
+
 }
