@@ -39,25 +39,26 @@ public class ConstraintManager {
 			return new FalseConstraint();
 		
 		if (first instanceof TrueConstraint)
-			return second;
+			return second.clone();
 		
 		if (second instanceof TrueConstraint)
-			return first;
+			return first.clone();
 
 		assert false : "Unknown constraints in intersection!";
 		return null;
 	}
 
+	//Make sure that we get a fresh instance each time.
 	public static Constraint union(Constraint first, Constraint second) {
 		if ((first instanceof TrueConstraint)
 				|| (second instanceof TrueConstraint))
 			return new TrueConstraint();
 		
 		if (first instanceof FalseConstraint)
-			return second;
+			return second.clone();
 		
 		if (second instanceof FalseConstraint)
-			return first;
+			return first.clone();
 
 		assert false : "Unknown constraints in union!";
 		return null;
