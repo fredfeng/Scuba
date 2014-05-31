@@ -11,9 +11,13 @@ import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
+import joeq.Compiler.Quad.Operator.Getfield;
+import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.New;
+import joeq.Compiler.Quad.Operator.Putfield;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
@@ -314,7 +318,16 @@ public class AbstractHeap {
 
 	// v1 = v2.f
 	public void handleGetfieldStmt(Quad stmt) {
-
+		assert(stmt.getOperator() instanceof Getfield);
+		RegisterOperand lhs = Getfield.getDest(stmt);
+		RegisterOperand rhsBase = (RegisterOperand)Getfield.getBase(stmt);
+		FieldOperand rhsField = Getfield.getField(stmt);
+		jq_Method meth = stmt.getMethod();
+		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
+		VariableType rvt = getVarType(stmt.getMethod(), rhsBase.getRegister());
+		
+		this.handleLoadStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
+				lvt, rhsBase.getRegister(), rhsField.getField(), rvt);
 	}
 
 	public void handleGetstaticStmt(Quad stmt) {
@@ -335,7 +348,14 @@ public class AbstractHeap {
 
 	//v1 = v2.
 	public void handleMoveStmt(Quad stmt) {
+		jq_Method meth = stmt.getMethod();
+		RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
+		RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
+		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
+		VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
+		handleAssgnStmt(meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
+				rhs.getRegister(), rvt);
 	}
 
 	public void handleMultiNewArrayStmt(Quad stmt) {
@@ -347,19 +367,8 @@ public class AbstractHeap {
 		assert (stmt.getOperator() instanceof New);
 		jq_Method meth = stmt.getMethod();
 		TypeOperand to = New.getType(stmt);
-		VariableType vt = VariableType.LOCAL_VARIABLE;	
         RegisterOperand rop = New.getDest(stmt);
-
-        ControlFlowGraph cfg = meth.getCFG();
-        RegisterFactory rf = cfg.getRegisterFactory();
-        int numArgs = meth.getParamTypes().length;
-		for (int zIdx = 0; zIdx < numArgs; zIdx++) {
-			Register v = rf.get(zIdx);
-			if(v.equals(rop.getRegister())) {
-				vt = VariableType.PARAMEMTER;	
-				break;
-			}
-		}
+		VariableType vt = getVarType(meth, rop.getRegister());	
         
 		handleNewStmt(stmt.getMethod().getDeclaringClass(), meth,
 				rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
@@ -371,7 +380,16 @@ public class AbstractHeap {
 
 	// v1.f = v2
 	public void handlePutfieldStmt(Quad stmt) {
-
+		assert(stmt.getOperator() instanceof Putfield);
+		jq_Method meth = stmt.getMethod();
+		RegisterOperand rhs = (RegisterOperand) Putfield.getSrc(stmt);
+		RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
+		FieldOperand field = Putfield.getField(stmt);
+		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
+		VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
+		
+		this.handleStoreStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
+				lvt, field.getField(), rhs.getRegister(), rvt);
 	}
 
 	public void handlePutstaticStmt(Quad stmt) {
@@ -380,6 +398,23 @@ public class AbstractHeap {
 
 	public void handleReturnStmt(Quad stmt) {
 
+	}
+	
+	//is this a param or local. helper function.
+	public VariableType getVarType(jq_Method meth, Register r) {
+		VariableType vt = VariableType.LOCAL_VARIABLE;	
+
+        ControlFlowGraph cfg = meth.getCFG();
+        RegisterFactory rf = cfg.getRegisterFactory();
+        int numArgs = meth.getParamTypes().length;
+		for (int zIdx = 0; zIdx < numArgs; zIdx++) {
+			Register v = rf.get(zIdx);
+			if(v.equals(r)) {
+				vt = VariableType.PARAMEMTER;	
+				break;
+			}
+		}
+		return vt;
 	}
 
 	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
@@ -413,7 +448,7 @@ public class AbstractHeap {
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = A.f, where A is a class and f is a static field
-	protected void handleLoadStmt(jq_Class clazz, jq_Method method,
+	protected void handleStatLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Class rightBase,
 			jq_Field rightField) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
