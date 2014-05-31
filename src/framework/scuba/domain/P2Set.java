@@ -36,13 +36,19 @@ public class P2Set {
 		for (HeapObject obj : other.getHeapObjects()) {
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets
-				Constraint otherConstraint = other.getConstraint(obj);
+				// directly get the other p2set's constraints
+				Constraint otherCst = other.getConstraint(obj);
+				// generate the union of the two (a shallow copy with the same
+				// constraints but different instances)
 				Constraint newCst = ConstraintManager.union(p2Set.get(obj),
-						otherConstraint);
+						otherCst);
+
 				p2Set.put(obj, newCst);
 			} else {
 				// obj is only in other's p2set
-				p2Set.put(obj, other.getConstraint(obj));
+				// AVOID directly get the constraint instance of the other
+				// p2set!!!! only get the shallow copy of the other constraints
+				p2Set.put(obj, other.getConstraint(obj).clone());
 			}
 		}
 		return this;
@@ -53,6 +59,8 @@ public class P2Set {
 	// the other constraint
 	public P2Set project(Constraint otherConstraint) {
 		for (HeapObject obj : p2Set.keySet()) {
+			// this newCst is a copy with the same content but different
+			// constraint instances
 			Constraint newCst = ConstraintManager.intersect(p2Set.get(obj),
 					otherConstraint);
 			p2Set.put(obj, newCst);
@@ -76,12 +84,13 @@ public class P2Set {
 		return p2Set.keySet();
 	}
 
+	// return null or return true constraint?
 	public Constraint getConstraint(HeapObject obj) {
-		// if ptSet contains obj, then return that obj otherwise, return null
+		// if ptSet contains obj then return that obj, otherwise return null
 		return p2Set.get(obj);
 	}
 
-	// do a shallow copy
+	// do a shallow copy (only shallowly copying the constraints)
 	public P2Set clone() {
 		P2Set ret = new P2Set();
 
