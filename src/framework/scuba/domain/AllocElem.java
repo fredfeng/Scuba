@@ -2,11 +2,11 @@ package framework.scuba.domain;
 
 public class AllocElem extends HeapObject {
 
-	protected AllocSite allocSite;
+	protected Alloc allocSite;
 
 	protected Context context;
 
-	public AllocElem(AllocSite allocSite, Context context) {
+	public AllocElem(Alloc allocSite, Context context) {
 		this.allocSite = allocSite;
 		this.context = context;
 	}
