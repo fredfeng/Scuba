@@ -22,6 +22,7 @@ public class AbstractHeap {
 	// topology of the abstract heap
 	// THIS IS the main data structure to represent the abstract heap
 	// every time we refer to a heap, it means this heap topology
+	// MAYBE we will not use this? we can use memLocFactory
 	protected Map<AbstractMemLoc, Set<HeapObject>> heap;
 
 	// heap is a mapping described in Figure 7 of the paper
@@ -83,9 +84,18 @@ public class AbstractHeap {
 		}
 
 		for (AbstractMemLoc loc : memLocFactory.keySet()) {
-			
+			Set<FieldElem> fields = loc.getFields();
+			for (FieldElem f : fields) {
+				P2Set p2Set = heapObjectsToP2Set.get(getAbstractMemLoc(loc, f));
+				for (HeapObject obj : p2Set.getHeapObjects()) {
+					b.append("  ").append("\"" + loc + "\"");
+					b.append(" -> ").append("\"" + obj + "\"")
+							.append(" [label=\"");
+					b.append("\"" + f + "\"");
+					b.append("\"]\n");
+				}
+			}
 		}
-
 	}
 
 	// field look-up for location which is described in definition 7 of the
