@@ -1,35 +1,24 @@
 package framework.scuba.analyses.dataflow;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
-import joeq.Class.jq_Class;
-import joeq.Class.jq_Method;
-import joeq.Class.jq_Type;
-import joeq.Compiler.Dataflow.BBComparator;
 import joeq.Compiler.Dataflow.Fact;
-import joeq.Compiler.Dataflow.IterativeSolver;
-import joeq.Compiler.Dataflow.PriorityQueueSolver;
 import joeq.Compiler.Dataflow.Problem;
 import joeq.Compiler.Dataflow.Solver;
-import joeq.Compiler.Dataflow.SortedSetSolver;
 import joeq.Compiler.Dataflow.TransferFunction;
 import joeq.Compiler.Quad.BasicBlock;
-import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
-import joeq.Main.HostedVM;
 import jwutil.graphs.EdgeGraph;
 import jwutil.graphs.Graph;
 import jwutil.graphs.ReverseGraph;
 import jwutil.math.BitString;
 import jwutil.util.Assert;
+import framework.scuba.domain.Summary;
 
 /**
  * Intra-proc summary-based analysis
@@ -38,11 +27,15 @@ import jwutil.util.Assert;
  *
  */
 public class IntraProcSumAnalysis extends Problem{
-    Map transferFunctions;
+    Map<BasicBlock, TransferFunction> transferFunctions;
+    
     Fact emptySet;
+    
     TransferFunction emptyTF;
+    
+    Summary summary; 
 
-    Solver mySolver;
+    public Solver mySolver;
     
     static final boolean TRACE = false;
 
@@ -58,7 +51,6 @@ public class IntraProcSumAnalysis extends Problem{
         
         if (TRACE) System.out.println("Bit vector size: "+bitVectorSize);
         
-        Map regToDefs = new HashMap();
         transferFunctions = new HashMap();
         emptySet = new UnionBitVectorFact(bitVectorSize);
         emptyTF = new GenKillTransferFunction(bitVectorSize);
@@ -125,24 +117,7 @@ public class IntraProcSumAnalysis extends Problem{
         if (tf == null) tf = emptyTF;
         return tf;
     }
-    
-    public static IntraProcSumAnalysis solve(ControlFlowGraph cfg) {
-    	IntraProcSumAnalysis p = new IntraProcSumAnalysis();
-        Solver s1 = new IterativeSolver();
-        p.mySolver = s1;
-        solve(cfg, s1, p);
-        if (TRACE) {
-            System.out.println("Finished solving IntraProcSumAnalysis.");
-            //Solver.dumpResults(cfg, s1);
-        }
-        return p;
-    }
-    
-    private static void solve(ControlFlowGraph cfg, Solver s, Problem p) {
-        s.initialize(p, new EdgeGraph(new ReverseGraph(cfg, Collections.singleton(cfg.exit()))));
-        s.solve();
-    }
-
+   
     public boolean isLiveAtOut(BasicBlock bb, Register r) {
         if (bb.getNumberOfSuccessors() > 0)
             bb = bb.getSuccessors().get(0);
@@ -170,32 +145,7 @@ public class IntraProcSumAnalysis extends Problem{
         tf.kill.set(r.getNumber()+1);
     }
     
-    public static void main(String[] args) {
-        HostedVM.initialize();
-        HashSet set = new HashSet();
-        
-		String s = "test.intraproc.TestAssignment";
-		jq_Class c = (jq_Class) jq_Type.parseType(s);
-		c.load();
-		set.addAll(Arrays.asList(c.getDeclaredStaticMethods()));
-		set.addAll(Arrays.asList(c.getDeclaredInstanceMethods()));
-            
-        Problem p = new IntraProcSumAnalysis();
-        Solver s1 = new IterativeSolver();
-        Solver s2 = new SortedSetSolver(BBComparator.INSTANCE);
-        Solver s3 = new PriorityQueueSolver();
-        for (Iterator i = set.iterator(); i.hasNext(); ) {
-            jq_Method m = (jq_Method) i.next();
-            if (m.getBytecode() == null) continue;
-            System.out.println("Method "+m);
-            ControlFlowGraph cfg = CodeCache.getCode(m);
-            System.out.println(cfg.fullDump());
-            solve(cfg, s1, p);
-            solve(cfg, s2, p);
-            solve(cfg, s3, p);
-            Solver.dumpResults(cfg, s1);
-            Solver.compareResults(cfg, s1, s2);
-            Solver.compareResults(cfg, s2, s3);
-        }
+    public void setSummary(Summary sum) {
+    	summary = sum;
     }
 }

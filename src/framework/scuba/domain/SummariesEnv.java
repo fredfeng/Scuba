@@ -28,6 +28,10 @@ public class SummariesEnv {
 	}
 
 	public Summary getSummary(jq_Method meth) {
+		//first time?
+		if(summaries.get(meth) == null)
+			putSummary(meth, new Summary(meth));
+		
 		return summaries.get(meth);
 	}
 
