@@ -15,6 +15,10 @@ public class TypeEqConstraint extends Constraint {
 		return elemType;
 	}
 	
+	public AccessPath getAcceeElem() {
+		return accessElem;
+	}
+	
 	@Override
 	public String toString() {
 		// type(a.e.f) = T?
@@ -23,5 +27,17 @@ public class TypeEqConstraint extends Constraint {
 	
 	public Constraint clone() {
 		return new TypeEqConstraint(accessElem, elemType);
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		//equal when both are exactly the same class.
+		if(!this.getClass().equals(other.getClass())) 
+			return false;
+		
+		TypeEqConstraint otherType = (TypeEqConstraint) other;
+		
+		return elemType.equals(otherType.getElemType())
+				&& accessElem.equals(otherType.getAcceeElem());
 	}
 }

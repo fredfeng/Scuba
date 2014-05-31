@@ -1,9 +1,12 @@
 package framework.scuba.domain;
 
 public class TrueConstraint extends Constraint {
+	
+	final String id = "TRUE";
+	
 	@Override
 	public String toString() {
-		return "TRUE";
+		return id;
 	}
 	
 	public Constraint clone() {
