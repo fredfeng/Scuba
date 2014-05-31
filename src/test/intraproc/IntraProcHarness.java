@@ -47,7 +47,7 @@ public class IntraProcHarness {
     //temporary entry point for intra-proc analysis.
     public static void main(String[] args) {
         HostedVM.initialize();
-        HashSet set = new HashSet();
+        HashSet<jq_Method> set = new HashSet<jq_Method>();
         
         //assign the class you want to analyze. ignore function calls.
 		String s = "test.intraproc.TestAssignment";
@@ -58,9 +58,9 @@ public class IntraProcHarness {
             
 		IntraProcSumAnalysis p = new IntraProcSumAnalysis();
         Solver s1 = new IterativeSolver();
-        Solver s2 = new SortedSetSolver(BBComparator.INSTANCE);
-        Solver s3 = new PriorityQueueSolver();
-        for (Iterator i = set.iterator(); i.hasNext(); ) {
+//        Solver s2 = new SortedSetSolver(BBComparator.INSTANCE);
+//        Solver s3 = new PriorityQueueSolver();
+        for (Iterator<jq_Method> i = set.iterator(); i.hasNext(); ) {
             jq_Method m = (jq_Method) i.next();
             
             Summary summary = SummariesEnv.v().getSummary(m);
@@ -70,11 +70,11 @@ public class IntraProcHarness {
             ControlFlowGraph cfg = CodeCache.getCode(m);
             System.out.println(cfg.fullDump());
             solve(cfg, s1, p);
-            solve(cfg, s2, p);
-            solve(cfg, s3, p);
+//            solve(cfg, s2, p);
+//            solve(cfg, s3, p);
             Solver.dumpResults(cfg, s1);
-            Solver.compareResults(cfg, s1, s2);
-            Solver.compareResults(cfg, s2, s3);
+//            Solver.compareResults(cfg, s1, s2);
+//            Solver.compareResults(cfg, s2, s3);
         }
     }
 
