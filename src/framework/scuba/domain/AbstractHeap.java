@@ -25,7 +25,7 @@ import framework.scuba.helper.P2SetHelper;
 public class AbstractHeap {
 
 	// the method whose heap is represented by this AbstractHeap
-	protected jq_Method method;
+	// final protected jq_Method method;
 
 	// heap is a translation from heap, which is used to dump the
 	// topology of the abstract heap
@@ -37,19 +37,20 @@ public class AbstractHeap {
 	// heap is a mapping described in Figure 7 of the paper
 	// mapping: (\pi, f) --> \theta
 	// THIS IS just a helper field used to get the P2Set but still very critical
-	protected Map<Pair<AbstractMemLoc, FieldElem>, P2Set> heapObjectsToP2Set;
+	final protected Map<Pair<AbstractMemLoc, FieldElem>, P2Set> heapObjectsToP2Set;
 
 	// all the abstract memory locations that have been CREATED as instances in
 	// the heap, and this is a map mapping key to value which is the key itself
 	// this should include the keySet of heap but include more than that (maybe
 	// some locations are not used in the program
-	protected Map<AbstractMemLoc, AbstractMemLoc> memLocFactory;
+	final private Map<AbstractMemLoc, AbstractMemLoc> memLocFactory;
 
 	public static enum VariableType {
 		PARAMEMTER, LOCAL_VARIABLE;
 	}
 
 	public AbstractHeap() {
+		// this.method = method;
 		heap = new HashMap<AbstractMemLoc, Set<HeapObject>>();
 		heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
