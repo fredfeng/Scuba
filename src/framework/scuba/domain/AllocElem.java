@@ -45,4 +45,9 @@ public class AllocElem extends HeapObject {
 		return 37 * alloc.hashCode() + context.hashCode();
 	}
 
+	@Override
+	public boolean hasFieldSelector(FieldElem field) {
+		return false;
+	}
+
 }

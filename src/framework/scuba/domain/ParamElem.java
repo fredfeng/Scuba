@@ -61,4 +61,9 @@ public class ParamElem extends StackObject {
 		return this.parameter;
 	}
 
+	@Override
+	public boolean hasFieldSelector(FieldElem field) {
+		return false;
+	}
+
 }

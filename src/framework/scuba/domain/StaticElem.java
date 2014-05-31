@@ -33,4 +33,8 @@ public class StaticElem extends HeapObject {
 		return "[Static Class] " + clazz;
 	}
 
+	@Override
+	public boolean hasFieldSelector(FieldElem field) {
+		return false;
+	}
 }

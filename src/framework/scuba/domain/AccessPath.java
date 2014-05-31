@@ -59,4 +59,20 @@ public class AccessPath extends HeapObject {
 	public int hashCode() {
 		return 37 * base.hashCode() + field.hashCode();
 	}
+
+	@Override
+	public boolean hasFieldSelector(FieldElem field) {
+		return this.field.equals(field) || this.base.hasFieldSelector(field);
+	}
+
+	// get the prefix ending with field f
+	public AccessPath getPrefix(FieldElem f) {
+		assert hasFieldSelector(f) : this + " does NOT have field selector "
+				+ f;
+		if (field.equals(f)) {
+			return this;
+		}
+
+		return ((AccessPath) base).getPrefix(f);
+	}
 }

@@ -44,13 +44,7 @@ public abstract class AbstractMemLoc {
 		return (this.argDerived == ArgDerivedType.NOT_ARG_DERIVED);
 	}
 
-	public boolean hasFieldSelector(FieldElem field) {
-		if (!(this instanceof AccessPath)) {
-			return false;
-		}
-
-		return false;
-	}
+	abstract public boolean hasFieldSelector(FieldElem field);
 
 	public void addField(FieldElem field) {
 		fields.add(field);

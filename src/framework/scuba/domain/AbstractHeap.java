@@ -11,7 +11,6 @@ import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.Quad;
-import joeq.Compiler.Quad.QuadVisitor;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 import framework.scuba.helper.ArgDerivedHelper;
@@ -53,8 +52,40 @@ public class AbstractHeap {
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
 	}
 
-	public boolean validate() {
+	public void validate() {
 
+		for (AbstractMemLoc loc : memLocFactory.keySet()) {
+			// validate there is no illegal heap objects like y.\epsilon where y
+			// is just a stack local variable
+			if (loc instanceof AccessPath) {
+				AbstractMemLoc root = loc.findRoot();
+				assert (root instanceof ParamElem || root instanceof StaticElem) : "Root of "
+						+ loc
+						+ " : "
+						+ root
+						+ " should be either ParamElem or StaticElem!";
+			} else if (loc instanceof StaticElem) {
+				AbstractMemLoc root = loc.findRoot();
+				assert (loc.equals(root)) : "Root of " + loc + " : " + root
+						+ " should be the same as " + loc;
+			} else if (loc instanceof AllocElem) {
+				AbstractMemLoc root = loc.findRoot();
+				assert (loc.equals(root)) : root + " of " + loc
+						+ " should be the same as " + loc;
+			} else if (loc instanceof LocalVarElem) {
+				AbstractMemLoc root = loc.findRoot();
+				assert (loc.equals(root)) : root + " of " + loc
+						+ " should be the same as " + loc;
+			} else if (loc instanceof ParamElem) {
+				AbstractMemLoc root = loc.findRoot();
+				assert (loc.equals(root)) : root + " of " + loc
+						+ " should be the same as " + loc;
+			}
+			// validate all the argument derived marker are properly set
+			assert (loc.knownArgDerived()) : "we should set the argument derived marker of "
+					+ loc
+					+ " before putting it into the abstract memory location facltory";
+		}
 		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
 			AbstractMemLoc loc = pair.val0;
 			FieldElem f = pair.val1;
@@ -84,10 +115,13 @@ public class AbstractHeap {
 				assert (memLocFactory.containsKey(hobj)) : hobj
 						+ " should be contained in the memory location factory!";
 			}
-			//
+			// validate there is no default edges in the abstract heap
+			if (loc.isArgDerived()) {
+				HeapObject hObj = getAbstractMemLoc(loc, f);
+				assert (!p2Set.containsHeapObject(hObj)) : "A default edge exists from "
+						+ loc + " with field " + f + " to heap object " + hObj;
+			}
 		}
-
-		return false;
 	}
 
 	public void dump() {
@@ -222,8 +256,14 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				loc, field);
 		if (loc.isArgDerived()) {
-			HeapObject hObj = getAbstractMemLoc(loc, field);
-			P2Set defaultP2Set = new P2Set(hObj);
+			P2Set defaultP2Set = null;
+			if (loc.hasFieldSelector(field)) {
+				AccessPath path = (AccessPath) loc;
+				defaultP2Set = new P2Set(path);
+			} else {
+				AccessPath hObj = getAbstractMemLoc(loc, field);
+				defaultP2Set = new P2Set(hObj);
+			}
 			if (heapObjectsToP2Set.containsKey(pair)) {
 				return P2SetHelper.join(heapObjectsToP2Set.get(pair),
 						defaultP2Set);
@@ -399,8 +439,8 @@ public class AbstractHeap {
 		return heap.containsKey(loc);
 	}
 
-	protected HeapObject getAbstractMemLoc(AbstractMemLoc base, FieldElem field) {
-		HeapObject ret = null;
+	protected AccessPath getAbstractMemLoc(AbstractMemLoc base, FieldElem field) {
+		AccessPath ret = null;
 		if (base instanceof HeapObject) {
 			ret = getAbstractMemLoc(((HeapObject) base), field);
 		} else if (base instanceof ParamElem) {

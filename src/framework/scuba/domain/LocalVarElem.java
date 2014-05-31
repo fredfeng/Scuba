@@ -62,4 +62,9 @@ public class LocalVarElem extends StackObject {
 		return this.local;
 	}
 
+	@Override
+	public boolean hasFieldSelector(FieldElem field) {
+		return false;
+	}
+
 }
