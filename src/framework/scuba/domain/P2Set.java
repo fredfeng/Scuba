@@ -105,4 +105,63 @@ public class P2Set {
 		return ret;
 	}
 
+	public int size() {
+		return p2Set.size();
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof P2Set))
+			return false;
+
+		P2Set otherPT = (P2Set) other;
+
+		if (p2Set.size() != otherPT.size())
+			return false;
+
+		for (HeapObject hObj : p2Set.keySet()) {
+			if (otherPT.containsHeapObject(hObj)) {
+				Constraint otherCst = otherPT.getConstraint(hObj);
+				Constraint thisCst = p2Set.get(hObj);
+				if (!thisCst.equals(otherCst))
+					return false;
+			} else {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		if (p2Set.isEmpty())
+			return 0;
+
+		int ret = 0;
+		int i = 0;
+		int range = 3;
+		for (HeapObject hObj : p2Set.keySet()) {
+			ret *= 37;
+			ret += hObj.hashCode();
+			ret *= 37;
+			ret += p2Set.get(hObj).hashCode();
+			i++;
+			if (i > range)
+				break;
+		}
+
+		return ret;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("{");
+		for (HeapObject hObj : p2Set.keySet()) {
+			ret.append("(").append(hObj).append(",");
+			ret.append(p2Set.get(hObj)).append(") ");
+		}
+		ret.append("}");
+		return ret.toString();
+	}
 }

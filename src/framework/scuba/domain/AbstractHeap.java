@@ -346,7 +346,7 @@ public class AbstractHeap {
 
 	}
 
-	//v1 = v2.
+	// v1 = v2.
 	public void handleMoveStmt(Quad stmt) {
 		jq_Method meth = stmt.getMethod();
 		RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
@@ -362,14 +362,14 @@ public class AbstractHeap {
 
 	}
 
-	//v1 = new A();
+	// v1 = new A();
 	public void handleNewStmt(Quad stmt) {
 		assert (stmt.getOperator() instanceof New);
 		jq_Method meth = stmt.getMethod();
 		TypeOperand to = New.getType(stmt);
-        RegisterOperand rop = New.getDest(stmt);
+		RegisterOperand rop = New.getDest(stmt);
 		VariableType vt = getVarType(meth, rop.getRegister());	
-        
+
 		handleNewStmt(stmt.getMethod().getDeclaringClass(), meth,
 				rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
 	}
