@@ -40,8 +40,6 @@ public class AbstractHeap {
 	// some locations are not used in the program
 	protected Map<AbstractMemLoc, AbstractMemLoc> memLocFactory;
 
-	// protected ArgDerivedHelper argDerivedHelper = new ArgDerivedHelper();
-
 	public static enum VariableType {
 		PARAMEMTER, LOCAL_VARIABLE;
 	}
@@ -256,14 +254,18 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				loc, field);
 		if (loc.isArgDerived()) {
+			// always find the default p2set of (loc, field)
 			P2Set defaultP2Set = null;
 			if (loc.hasFieldSelector(field)) {
-				AccessPath path = (AccessPath) loc;
+				// only AccessPath has field selectors
+				AccessPath path = ((AccessPath) loc).getPrefix(field);
+				path = getAbstractMemLoc(path);
 				defaultP2Set = new P2Set(path);
 			} else {
 				AccessPath hObj = getAbstractMemLoc(loc, field);
 				defaultP2Set = new P2Set(hObj);
 			}
+			// return the p2set always including the default p2set
 			if (heapObjectsToP2Set.containsKey(pair)) {
 				return P2SetHelper.join(heapObjectsToP2Set.get(pair),
 						defaultP2Set);
@@ -272,6 +274,8 @@ public class AbstractHeap {
 			}
 		} else if (loc.isNotArgDerived()) {
 			// TODO maybe we need a clone()?
+			assert (heapObjectsToP2Set.containsKey(pair)) : loc
+					+ " with field " + field + " should have a p2 set?";
 			return heapObjectsToP2Set.get(pair);
 		} else {
 			assert false : "you have not mark the argument derived marker before lookup!";
@@ -447,7 +451,7 @@ public class AbstractHeap {
 		} else if (base instanceof ParamElem) {
 			ret = getAbstractMemLoc(((ParamElem) base), field);
 		} else if (base instanceof LocalVarElem) {
-			assert false : base + " is a LocalVarElem";
+			assert false : base + " can NOT be a LocalVarElem";
 		} else {
 			assert false : "wried things!";
 		}
@@ -480,6 +484,21 @@ public class AbstractHeap {
 		return ret;
 	}
 
+	protected AccessPath getAbstractMemLoc(AccessPath path) {
+		if (memLocFactory.containsKey(path)) {
+			return (AccessPath) memLocFactory.get(path);
+		}
+
+		memLocFactory.put(path, path);
+
+		return path;
+	}
+
+	// given a variable (maybe parameter or local variable) and the type
+	// (parameter/local), generate (if not yet existed in the memory location
+	// factory) the corresponding memory location (and at the same time put it
+	// into the factory), OR get the corresponding memory location (if it has
+	// been created and put into the factory)
 	protected StackObject getAbstractMemLoc(jq_Class clazz, jq_Method method,
 			Register variable, VariableType vType) {
 		if (vType == VariableType.LOCAL_VARIABLE) {
@@ -497,7 +516,7 @@ public class AbstractHeap {
 			memLocFactory.put(ret, ret);
 
 			return ret;
-		} else {
+		} else if (vType == VariableType.PARAMEMTER) {
 			// create a wrapper
 			ParamElem ret = new ParamElem(clazz, method, variable);
 			// try to look up this wrapper in the memory location factory
@@ -512,6 +531,9 @@ public class AbstractHeap {
 			memLocFactory.put(ret, ret);
 
 			return ret;
+		} else {
+			assert false : "wried things!";
+			return null;
 		}
 	}
 
@@ -558,7 +580,8 @@ public class AbstractHeap {
 	protected boolean strongUpdate(Pair<AbstractMemLoc, FieldElem> pair,
 			P2Set p2Set) {
 		assert (pair.val0 instanceof StackObject) : "Only stack objects can do strong update!";
-		assert (pair.val1 instanceof EpsilonFieldElem) : "Only stack objects with epsilon field can do strong update!";
+		assert (pair.val1 instanceof EpsilonFieldElem) : "Only stack objects with epsilon field"
+				+ " can do strong update!";
 		pair.val0.addField(pair.val1);
 		heapObjectsToP2Set.put(pair, p2Set);
 		return false;

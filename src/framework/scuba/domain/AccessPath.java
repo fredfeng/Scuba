@@ -66,6 +66,7 @@ public class AccessPath extends HeapObject {
 	}
 
 	// get the prefix ending with field f
+	// ONLY AccessPath has this getPrefix method
 	public AccessPath getPrefix(FieldElem f) {
 		assert hasFieldSelector(f) : this + " does NOT have field selector "
 				+ f;
