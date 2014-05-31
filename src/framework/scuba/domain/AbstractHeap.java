@@ -8,7 +8,37 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
+import joeq.Compiler.Quad.Operator.ALength;
+import joeq.Compiler.Quad.Operator.ALoad;
+import joeq.Compiler.Quad.Operator.AStore;
+import joeq.Compiler.Quad.Operator.Binary;
+import joeq.Compiler.Quad.Operator.BoundsCheck;
+import joeq.Compiler.Quad.Operator.Branch;
+import joeq.Compiler.Quad.Operator.CheckCast;
+import joeq.Compiler.Quad.Operator.Getfield;
+import joeq.Compiler.Quad.Operator.Getstatic;
+import joeq.Compiler.Quad.Operator.InstanceOf;
+import joeq.Compiler.Quad.Operator.Invoke;
+import joeq.Compiler.Quad.Operator.MemLoad;
+import joeq.Compiler.Quad.Operator.MemStore;
+import joeq.Compiler.Quad.Operator.Monitor;
+import joeq.Compiler.Quad.Operator.Move;
+import joeq.Compiler.Quad.Operator.MultiNewArray;
+import joeq.Compiler.Quad.Operator.New;
+import joeq.Compiler.Quad.Operator.NewArray;
+import joeq.Compiler.Quad.Operator.NullCheck;
+import joeq.Compiler.Quad.Operator.Phi;
+import joeq.Compiler.Quad.Operator.Putfield;
+import joeq.Compiler.Quad.Operator.Putstatic;
+import joeq.Compiler.Quad.Operator.Return;
+import joeq.Compiler.Quad.Operator.Special;
+import joeq.Compiler.Quad.Operator.StoreCheck;
+import joeq.Compiler.Quad.Operator.Unary;
+import joeq.Compiler.Quad.Operator.ZeroCheck;
+import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.QuadVisitor;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.util.tuple.object.Pair;
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.P2SetHelper;
@@ -28,7 +58,7 @@ public class AbstractHeap {
 	// heap is a mapping described in Figure 7 of the paper
 	// mapping: (\pi, f) --> \theta
 	// THIS IS just a helper field used to get the P2Set but still very critical
-	protected Map<HeapObject, P2Set> heapObjectsToP2Set;
+	protected Map<Pair<AbstractMemLoc, FieldElem>, P2Set> heapObjectsToP2Set;
 
 	// all the abstract memory locations that have been CREATED as instances in
 	// the heap, and this is a map mapping key to value which is the key itself
@@ -44,7 +74,7 @@ public class AbstractHeap {
 
 	public AbstractHeap() {
 		heap = new HashMap<AbstractMemLoc, Set<HeapObject>>();
-		heapObjectsToP2Set = new HashMap<HeapObject, P2Set>();
+		heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
 	}
 
@@ -101,19 +131,23 @@ public class AbstractHeap {
 	// field look-up for location which is described in definition 7 of the
 	// paper
 	public P2Set lookup(AbstractMemLoc loc, FieldElem field) {
-		HeapObject loc1 = getAbstractMemLoc(loc, field);
+		// create a pair wrapper for lookup
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				loc, field);
 		if (loc.isArgDerived()) {
-			P2Set defaultP2Set = new P2Set(loc1);
-			if (heapObjectsToP2Set.containsKey(loc1)) {
-				return P2SetHelper.join(heapObjectsToP2Set.get(loc1),
+			HeapObject hObj = getAbstractMemLoc(loc, field);
+			P2Set defaultP2Set = new P2Set(hObj);
+			if (heapObjectsToP2Set.containsKey(pair)) {
+				return P2SetHelper.join(heapObjectsToP2Set.get(pair),
 						defaultP2Set);
 			} else {
 				return defaultP2Set;
 			}
 		} else if (loc.isNotArgDerived()) {
-			return heapObjectsToP2Set.get(loc1);
+			// TODO maybe we need a clone()?
+			return heapObjectsToP2Set.get(pair);
 		} else {
-			assert false : "we have not mark the argument derived marker before lookup!";
+			assert false : "you have not mark the argument derived marker before lookup!";
 		}
 
 		return null;
@@ -122,6 +156,7 @@ public class AbstractHeap {
 	// generalized field look-up for location which is described in definition
 	// 10 of the paper
 	public P2Set lookup(P2Set p2Set, FieldElem field) {
+
 		P2Set ret = new P2Set();
 		for (HeapObject obj : p2Set.getHeapObjects()) {
 			Constraint cst = p2Set.getConstraint(obj);
@@ -133,21 +168,176 @@ public class AbstractHeap {
 		return ret;
 	}
 
+	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
+
+		public void visitALenth(Quad stmt) {
+		}
+
+		public void visitALoad(Quad stmt) {
+			handleALoadStmt(stmt);
+			// TODO
+		}
+
+		public void visitAStore(Quad stmt) {
+			// TODO
+		}
+
+		public void visitBinary(Quad stmt) {
+		}
+
+		public void visitBoundsCheck(Quad stmt) {
+		}
+
+		public void visitBranch(Quad stmt) {
+		}
+
+		public void visitCheckCast(Quad stmt) {
+		}
+
+		public void visitGetfield(Quad stmt) {
+			// TODO
+		}
+
+		public void visitGetstatic(Quad stmt) {
+			// TODO
+		}
+
+		public void visitInstanceOf(Quad stmt) {
+		}
+
+		public void visitInvoke(Quad stmt) {
+			// TODO
+		}
+
+		public void visitMemLoad(Quad stmt) {
+		}
+
+		public void visitMemStore(Quad stmt) {
+		}
+
+		public void visitMonitor(Quad stmt) {
+		}
+
+		public void visitMove(Quad stmt) {
+			// TODO
+		}
+
+		public void visitMultiNewArray(Quad stmt) {
+			// TODO
+		}
+
+		public void visitNew(Quad stmt) {
+			// TODO
+		}
+
+		public void visitNewArray(Quad stmt) {
+			// TODO
+		}
+
+		public void visitNulCheck(Quad stmt) {
+		}
+
+		public void visitPhi(Quad stmt) {
+		}
+
+		public void visitPutfield(Quad stmt) {
+			// TODO
+		}
+
+		public void visitPutstatic(Quad stmt) {
+			// TODO
+		}
+
+		public void visitReturn(Quad stmt) {
+			// TODO
+		}
+
+		public void visitSpecial(Quad stmt) {
+		}
+
+		public void visitStoreCheck(Quad stmt) {
+		}
+
+		public void visitUnary(Quad stmt) {
+		}
+
+		public void visitZeroCheck(Quad stmt) {
+		}
+
+	};
+
+	protected void handleALoadStmt(Quad stmt) {
+
+	}
+
+	protected void handleAStoreStmt(Quad stmt) {
+
+	}
+
+	protected void handleGetfieldStmt(Quad stmt) {
+
+	}
+
+	protected void handleGetstaticStmt(Quad stmt) {
+
+	}
+
+	protected void handleInvokeStmt(Quad stmt) {
+
+	}
+
+	protected void handleMemLoadStmt(Quad stmt) {
+
+	}
+
+	protected void handleMemStoreStmt(Quad stmt) {
+
+	}
+
+	protected void handleMoveStmt(Quad stmt) {
+
+	}
+
+	protected void handleMultiNewArrayStmt(Quad stmt) {
+
+	}
+
+	protected void handleNewStmt(Quad stmt) {
+
+	}
+
+	protected void handleNewArrayStmt(Quad stmt) {
+
+	}
+
+	protected void handlePutfieldStmt(Quad stmt) {
+
+	}
+
+	protected void handlePutstaticStmt(Quad stmt) {
+
+	}
+
+	protected void handleReturnStmt(Quad stmt) {
+
+	}
+
 	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
 	// v1 = v2
-	public void handleAssgnStmt(jq_Class clazz, jq_Method method,
+	protected void handleAssgnStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register right,
 			VariableType rightVType) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
 		StackObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
-		HeapObject h1 = getAbstractMemLoc(v1, new EpsilonFieldElem());
-		weakUpdate(h1, p2Setv2);
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				v1, new EpsilonFieldElem());
+		weakUpdate(pair, p2Setv2);
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = v2.f
-	public void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
+	protected void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
 			VariableType leftVType, Register rightBase, jq_Field rightField,
 			VariableType rightBaseVType) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
@@ -156,26 +346,28 @@ public class AbstractHeap {
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
 		NormalFieldElem f = new NormalFieldElem(rightField);
 		P2Set p2Setv2Epsilon = lookup(p2Setv2, f);
-		HeapObject h1 = getAbstractMemLoc(v1, new EpsilonFieldElem());
-		weakUpdate(h1, p2Setv2Epsilon);
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				v1, new EpsilonFieldElem());
+		weakUpdate(pair, p2Setv2Epsilon);
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = A.f, where A is a class and f is a static field
-	public void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
+	protected void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
 			VariableType leftVType, jq_Class rightBase, jq_Field rightField) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
-		StaticElem v2 = getAbstractMemLoc(rightBase);
-		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		StaticElem A = getAbstractMemLoc(rightBase);
+		P2Set p2SetA = lookup(A, new EpsilonFieldElem());
 		NormalFieldElem f = new NormalFieldElem(rightField);
-		P2Set p2Setv2Epsilon = lookup(p2Setv2, f);
-		HeapObject h1 = getAbstractMemLoc(v1, new EpsilonFieldElem());
-		weakUpdate(h1, p2Setv2Epsilon);
+		P2Set p2SetAf = lookup(p2SetA, f);
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				v1, new EpsilonFieldElem());
+		weakUpdate(pair, p2SetAf);
 	}
 
 	// handleStoreStmt implements rule (3) in Figure 8 of the paper
 	// v1.f = v2
-	public void handleStoreStmt(jq_Class clazz, jq_Method method,
+	protected void handleStoreStmt(jq_Class clazz, jq_Method method,
 			Register leftBase, VariableType leftBaseVType, jq_Field leftField,
 			Register right, VariableType rightVType) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, leftBase,
@@ -186,20 +378,25 @@ public class AbstractHeap {
 		NormalFieldElem f = new NormalFieldElem(leftField);
 		for (HeapObject obj : p2Setv1.getHeapObjects()) {
 			Constraint cst = p2Setv1.getConstraint(obj);
+			// projP2Set is a new P2Set with copies of the constraints (same
+			// content but different constraint instances)
 			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
-			HeapObject tgtObj = getAbstractMemLoc(obj, f);
-			weakUpdate(tgtObj, projP2Set);
+
+			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+					obj, f);
+			weakUpdate(pair, projP2Set);
 		}
 	}
 
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
 	// v = new T
-	public void handleNewStmt(jq_Class clazz, jq_Method method, Register left,
+	protected void handleNewStmt(jq_Class clazz, jq_Method method, Register left,
 			VariableType leftVType, jq_Type right, int line) {
 		AllocElem allocT = getAbstractMemLoc(clazz, method, right, line);
 		StackObject v = getAbstractMemLoc(clazz, method, left, leftVType);
-		HeapObject h1 = getAbstractMemLoc(v, new EpsilonFieldElem());
-		weakUpdate(h1, new P2Set(allocT, ConstraintManager.genTrue()));
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				v, new EpsilonFieldElem());
+		weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()));
 	}
 
 	// check whether some abstract memory location is contained in the heap
@@ -238,7 +435,8 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	// get the AccessPath object using memLocFactory which generates that if it
+	// get the AccessPath object using memLocFactory which generates
+	// that if it
 	// is not in the factory
 	protected AccessPath getAbstractMemLoc(HeapObject base, FieldElem field) {
 		AccessPath ret = new AccessPath(base, field);
@@ -251,7 +449,7 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	public StackObject getAbstractMemLoc(jq_Class clazz, jq_Method method,
+	protected StackObject getAbstractMemLoc(jq_Class clazz, jq_Method method,
 			Register variable, VariableType vType) {
 		if (vType == VariableType.LOCAL_VARIABLE) {
 			// create a wrapper
@@ -288,7 +486,7 @@ public class AbstractHeap {
 
 	// given a new instruction in the bytecode, create the corresponding
 	// AllocElem
-	public AllocElem getAbstractMemLoc(jq_Class clazz, jq_Method method,
+	protected AllocElem getAbstractMemLoc(jq_Class clazz, jq_Method method,
 			jq_Type type, int line) {
 		Context context = new Context(new ProgramPoint(clazz, method, line));
 		// create an AllocElem wrapper
@@ -309,7 +507,7 @@ public class AbstractHeap {
 
 	// given a class (thinking about static field like A.f), create the
 	// corresponding ClassElem
-	public StaticElem getAbstractMemLoc(jq_Class clazz) {
+	protected StaticElem getAbstractMemLoc(jq_Class clazz) {
 		// create a wrapper
 		StaticElem ret = new StaticElem(clazz);
 		// try to look up this wrapper in the memory location factory
@@ -326,18 +524,22 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	public boolean strongUpdate(HeapObject obj, P2Set p2Set) {
-		heapObjectsToP2Set.put(obj, p2Set);
+	protected boolean strongUpdate(Pair<AbstractMemLoc, FieldElem> pair,
+			P2Set p2Set) {
+		heapObjectsToP2Set.put(pair, p2Set);
 		return false;
 	}
 
-	public P2Set weakUpdate(HeapObject obj, P2Set p2Set) {
+	protected P2Set weakUpdate(Pair<AbstractMemLoc, FieldElem> pair, P2Set p2Set) {
 		P2Set ret = null;
-		if (heapObjectsToP2Set.containsKey(obj)) {
-			ret = heapObjectsToP2Set.get(obj);
+		if (heapObjectsToP2Set.containsKey(pair)) {
+			ret = heapObjectsToP2Set.get(pair);
 		} else {
 			ret = new P2Set();
-			heapObjectsToP2Set.put(obj, ret);
+			heapObjectsToP2Set.put(pair, ret);
+			// fill the fields of the abstract memory location so that we can
+			// conveniently dump the topology of the heap
+			pair.val0.addField(pair.val1);
 		}
 
 		ret.join(p2Set);
