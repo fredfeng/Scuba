@@ -27,8 +27,13 @@ public class AccessPath extends HeapObject {
 
 			if (base instanceof AllocElem) {
 				return (AllocElem) base;
-			} else if (base instanceof AccessPath)
+			} else if (base instanceof StaticElem) {
+				return (StaticElem) base;
+			} else if (base instanceof AccessPath) {
 				return ((AccessPath) base).findRoot();
+			} else {
+				assert false : "The base of " + this + " is not legal";
+			}
 
 		} else {
 			assert false : "The base of " + this + " is not legal";

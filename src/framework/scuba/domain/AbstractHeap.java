@@ -107,7 +107,7 @@ public class AbstractHeap {
 	public void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
 			jq_Class rightBase, jq_Field rightField) {
 		LocalVarElem v1 = getAbstractMemLoc(clazz, method, left);
-		ClassElem v2 = getAbstractMemLoc(rightBase);
+		StaticElem v2 = getAbstractMemLoc(rightBase);
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
 		NormalFieldElem f = new NormalFieldElem(rightField);
 		P2Set p2Setv2Epsilon = lookup(p2Setv2, f);
@@ -130,7 +130,6 @@ public class AbstractHeap {
 			HeapObject tgtObj = getAbstractMemLoc(obj, f);
 			weakUpdate(tgtObj, projP2Set);
 		}
-
 	}
 
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
@@ -235,12 +234,12 @@ public class AbstractHeap {
 
 	// given a class (thinking about static field like A.f), create the
 	// corresponding ClassElem
-	public ClassElem getAbstractMemLoc(jq_Class clazz) {
+	public StaticElem getAbstractMemLoc(jq_Class clazz) {
 		// create a wrapper
-		ClassElem ret = new ClassElem(clazz);
+		StaticElem ret = new StaticElem(clazz);
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
-			return (ClassElem) memLocFactory.get(ret);
+			return (StaticElem) memLocFactory.get(ret);
 		}
 
 		// not found in the factory

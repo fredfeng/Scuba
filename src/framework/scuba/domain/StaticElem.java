@@ -1,13 +1,14 @@
 package framework.scuba.domain;
 
 import joeq.Class.jq_Class;
+import joeq.Class.jq_Field;
 
-public class ClassElem extends HeapObject {
+public class StaticElem extends HeapObject {
 
 	// the class this belongs to
 	protected jq_Class clazz;
 
-	public ClassElem(jq_Class clazz) {
+	public StaticElem(jq_Class clazz) {
 		this.clazz = clazz;
 	}
 
@@ -18,8 +19,8 @@ public class ClassElem extends HeapObject {
 
 	@Override
 	public boolean equals(Object other) {
-		return (other instanceof ClassElem)
-				&& (clazz.equals(((ClassElem) other).clazz));
+		return (other instanceof StaticElem)
+				&& (clazz.equals(((StaticElem) other).clazz));
 	}
 
 	@Override
@@ -29,7 +30,7 @@ public class ClassElem extends HeapObject {
 
 	@Override
 	public String toString() {
-		return "[Class] " + clazz;
+		return "[Static Class] " + clazz;
 	}
 
 }
