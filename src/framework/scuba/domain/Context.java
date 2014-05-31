@@ -26,6 +26,51 @@ public class Context {
 		this.context.addLast(point);
 	}
 
+	public int size() {
+		return context.size();
+	}
+
+	public ProgramPoint get(int index) {
+		return context.get(index);
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof Context))
+			return false;
+
+		Context otherCtx = (Context) other;
+
+		if (context.size() != otherCtx.size())
+			return false;
+
+		for (int i = 0; i < context.size(); i++) {
+			ProgramPoint thisPoint = context.get(i);
+			ProgramPoint otherPoint = otherCtx.get(i);
+			if (!thisPoint.equals(otherPoint))
+				return false;
+		}
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		if (context.isEmpty())
+			return 0;
+
+		int ret = 0;
+		int range = 3;
+		for (int i = 0; i < context.size(); i++) {
+			ret *= 37;
+			ret += context.get(i).hashCode();
+			if (i > range)
+				break;
+		}
+
+		return ret;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

@@ -36,6 +36,19 @@ public class ProgramPoint {
 	}
 
 	@Override
+	public boolean equals(Object other) {
+		return (other instanceof ProgramPoint)
+				&& (clazz.equals(((ProgramPoint) other).getBelongingClass()))
+				&& (method.equals(((ProgramPoint) other).getBelongingMethod()))
+				&& (line == ((ProgramPoint) other).getLineNumber());
+	}
+
+	@Override
+	public int hashCode() {
+		return 37 * 37 * clazz.hashCode() + 37 * method.hashCode() + line;
+	}
+
+	@Override
 	public String toString() {
 		return "[Class] " + clazz + " [Method] " + method + " [Line] " + line;
 	}
