@@ -2,6 +2,7 @@ package framework.scuba.helper;
 
 import joeq.Class.jq_Type;
 import framework.scuba.domain.AccessPath;
+import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.Constraint;
 import framework.scuba.domain.FalseConstraint;
 import framework.scuba.domain.TrueConstraint;
@@ -60,5 +61,19 @@ public class ConstraintManager {
 
 		assert false : "Unknown constraints in union!";
 		return null;
+	}
+	
+	//instantiating type constraint.
+	public static Constraint instTypeConstaint(Constraint typeConst, AllocElem allocElem) {
+		assert(typeConst instanceof TypeEqConstraint);
+		assert(allocElem.getAlloc() != null);
+
+		TypeEqConstraint cst = (TypeEqConstraint)typeConst;
+		
+		if (allocElem.getAlloc().getType().equals(cst.getElemType()))
+			return new TrueConstraint();
+		else 
+			return new FalseConstraint();
+
 	}
 }

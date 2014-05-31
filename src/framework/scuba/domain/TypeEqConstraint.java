@@ -11,6 +11,10 @@ public class TypeEqConstraint extends Constraint {
 		this.elemType = t;
 	}
 	
+	public jq_Type getElemType() {
+		return elemType;
+	}
+	
 	@Override
 	public String toString() {
 		// type(a.e.f) = T?
