@@ -20,4 +20,8 @@ public class TypeEqConstraint extends Constraint {
 		// type(a.e.f) = T?
 		return "type(" + accessElem.toString() + ")=" + elemType.getName();
 	}
+	
+	public Constraint clone() {
+		return new TypeEqConstraint(accessElem, elemType);
+	}
 }

@@ -5,4 +5,8 @@ public class TrueConstraint extends Constraint {
 	public String toString() {
 		return "TRUE";
 	}
+	
+	public Constraint clone() {
+		return new TrueConstraint();
+	}
 }

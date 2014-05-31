@@ -5,4 +5,8 @@ public class FalseConstraint extends Constraint {
 	public String toString() {
 		return "FALSE";
 	}
+	
+	public Constraint clone() {
+		return new FalseConstraint();
+	}
 }
