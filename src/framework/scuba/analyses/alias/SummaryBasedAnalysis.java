@@ -1,14 +1,19 @@
 package framework.scuba.analyses.alias;
 
-import java.util.List;
+import java.io.PrintWriter;
+import java.util.LinkedList;
 import java.util.Set;
 
+import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.Quad;
 import chord.analyses.alias.CICG;
 import chord.analyses.alias.ICICG;
 import chord.analyses.method.DomM;
+import chord.program.Program;
 import chord.project.Chord;
 import chord.project.ClassicProject;
+import chord.project.OutDirUtils;
 import chord.project.analyses.JavaAnalysis;
 import chord.project.analyses.ProgramRel;
 
@@ -46,26 +51,39 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	
 	private void sumAnalyze() {
 		Set<jq_Method> roots = callGraph.getRoots();
+		dumpCallGraph();
+		System.out.println("Root nodes: ---" + roots);
 		for(Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
 			System.out.println("SCC List---" + scc);
 		}
-		//foreach leaf in the callgraph. Add them to the worklist.
-		/*LinkedList worklist = new LinkedList();
-		while(!worklist.isEmpty()) {
-			worker = worklist.poll();
-			if(success terminated) {
-				analyze(worker);
-			} else
-				append worker to the end of the List.class
+		//for now, assume there is no SCC.
+		LinkedList<jq_Method> worklist = new LinkedList<jq_Method>();
+		for (jq_Method meth : callGraph.getNodes()) {
+			//isolated node.
+			if (roots.contains(meth) && callGraph.getSuccs(meth).size() == 0)
+				continue;
+			
+			if ((callGraph.getSuccs(meth).size() == 0)
+					&& (callGraph.getPreds(meth).size() != 0))
+				worklist.add(meth);
 				
-		    add m's pred to worklist
-		    
-		    
-		}*/
+		}
+		//foreach leaf in the callgraph. Add them to the worklist.
+		while(!worklist.isEmpty()) {
+			jq_Method worker = worklist.poll();
+//			if(success terminated) {
+				analyze(worker);
+//			} else
+//				append worker to the end of the List.class
+				
+//		    add m's pred to worklist
+			worklist.addAll(callGraph.getPreds(worker));
+		}
 	}
 	
-	private void analyze() {
+	private void analyze(jq_Method method) {
 		//do interproc
+		System.out.println("Analyzing----------->" + method);
 		//mark terminated
 	}
 	
@@ -106,6 +124,45 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
         }
         return callGraph;
     }
+    
+    /*Dump method. Borrowed from Mayur. */
+    public void dumpCallGraph() {
+        ClassicProject project = ClassicProject.g();
+
+        ICICG cicg = this.getCallGraph();
+        domM = (DomM) project.getTrgt("M");
+
+        PrintWriter out = OutDirUtils.newPrintWriter("cicg.dot");
+        out.println("digraph G {");
+        for (jq_Method m1 : cicg.getNodes()) {
+            String id1 = id(m1);
+            out.println("\t" + id1 + " [label=\"" + str(m1) + "\"];");
+            for (jq_Method m2 : cicg.getSuccs(m1)) {
+                String id2 = id(m2);
+                Set<Quad> labels = cicg.getLabels(m1, m2);
+                for (Quad q : labels) {
+                    String el = q.toJavaLocStr();
+                    out.println("\t" + id1 + " -> " + id2 + " [label=\"" + el + "\"];");
+                }
+            }
+        }
+        out.println("}");
+        out.close();
+
+    }
+    
+    private String id(jq_Method m) {
+        return "m" + domM.indexOf(m);
+    }
+    
+    private static String str(jq_Method m) {
+        jq_Class c = m.getDeclaringClass();
+        String desc = m.getDesc().toString();
+        String args = desc.substring(1, desc.indexOf(')'));
+        String sign = "(" + Program.typesToStr(args) + ")";
+        return c.getName() + "." + m.getName().toString() +  sign;
+    }
+    
     /**
      * Frees relations used by this program analysis if they are in memory.
      * <p>
