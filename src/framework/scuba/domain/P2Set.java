@@ -18,17 +18,22 @@ public class P2Set {
 		p2Set.put(obj, constraint);
 	}
 
+	// this is the default p2set
 	public P2Set(HeapObject obj) {
 		assert (obj.isArgDerived()) : obj + " is not argument derived!";
 		assert (obj instanceof HeapObject) : obj + " is not a heap object!";
 		p2Set = new HashMap<HeapObject, Constraint>();
-		p2Set.put(obj, new TrueConstraint());
+		p2Set.put(obj, ConstraintManager.genTrue());
+	}
+
+	public boolean isEmpty() {
+		return p2Set.isEmpty();
 	}
 
 	// this join method implements the join operation described in definition 8
 	// of the paper, in which it only reads other and write this.p2Set
-	public void join(P2Set other) {
-		for (HeapObject obj : other.getP2HeapObjects()) {
+	public P2Set join(P2Set other) {
+		for (HeapObject obj : other.getHeapObjects()) {
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets
 				Constraint otherConstraint = other.getConstraint(obj);
@@ -40,17 +45,19 @@ public class P2Set {
 				p2Set.put(obj, other.getConstraint(obj));
 			}
 		}
+		return this;
 	}
 
 	// this project method implements the projection operation described in
 	// definition 9 of the paper, in which it writes this.p2Set and only reads
 	// the other constraint
-	public void project(Constraint otherConstraint) {
+	public P2Set project(Constraint otherConstraint) {
 		for (HeapObject obj : p2Set.keySet()) {
 			Constraint newCst = ConstraintManager.intersect(p2Set.get(obj),
 					otherConstraint);
 			p2Set.put(obj, newCst);
 		}
+		return this;
 	}
 
 	// replace the previous value (constraint) in the map
@@ -65,7 +72,7 @@ public class P2Set {
 		return p2Set.containsKey(obj);
 	}
 
-	public Set<HeapObject> getP2HeapObjects() {
+	public Set<HeapObject> getHeapObjects() {
 		return p2Set.keySet();
 	}
 

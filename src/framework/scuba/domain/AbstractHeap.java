@@ -5,11 +5,13 @@ import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
+import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.RegisterFactory.Register;
-import framework.scuba.domain.AbstractMemLoc.ArgDerivedType;
 import framework.scuba.helper.ArgDerivedHelper;
+import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.P2SetHelper;
 
 public class AbstractHeap {
 
@@ -29,6 +31,8 @@ public class AbstractHeap {
 
 	// all the abstract memory locations that have been CREATED as instances in
 	// the heap, and this is a map mapping key to value which is the key itself
+	// this should include the keySet of heap but include more than that (maybe
+	// some locations are not used in the program
 	protected Map<AbstractMemLoc, AbstractMemLoc> memLocFactory;
 
 	// protected ArgDerivedHelper argDerivedHelper = new ArgDerivedHelper();
@@ -39,18 +43,104 @@ public class AbstractHeap {
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
 	}
 
-	// field look-up for location which is decribed in definition 7 of the paper
+	// field look-up for location which is described in definition 7 of the
+	// paper
 	public P2Set lookup(AbstractMemLoc loc, FieldElem field) {
+		HeapObject loc1 = getAbstractMemLoc(loc, field);
 		if (loc.isArgDerived()) {
-			AbstractMemLoc loc1 = getAbstractMemLoc(loc, field);
-			
+			P2Set defaultP2Set = new P2Set(loc1);
+			if (heapObjectsToP2Set.containsKey(loc1)) {
+				return P2SetHelper.join(heapObjectsToP2Set.get(loc1),
+						defaultP2Set);
+			} else {
+				return defaultP2Set;
+			}
 		} else if (loc.isNotArgDerived()) {
-
+			return heapObjectsToP2Set.get(loc1);
 		} else {
 			assert false : "we have not mark the argument derived marker before lookup!";
 		}
 
 		return null;
+	}
+
+	// generalized field look-up for location which is described in definition
+	// 10 of the paper
+	public P2Set lookup(P2Set p2Set, FieldElem field) {
+		P2Set ret = new P2Set();
+		for (HeapObject obj : p2Set.getHeapObjects()) {
+			Constraint cst = p2Set.getConstraint(obj);
+			P2Set tgt = lookup(obj, field);
+			P2Set projP2Set = P2SetHelper.project(tgt, cst);
+			ret.join(projP2Set);
+		}
+
+		return ret;
+	}
+
+	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
+	// v1 = v2
+	public void handleAssgnStmt(jq_Class clazz, jq_Method method,
+			Register left, Register right) {
+		LocalVarElem v1 = getAbstractMemLoc(clazz, method, left);
+		LocalVarElem v2 = getAbstractMemLoc(clazz, method, right);
+		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		HeapObject h1 = getAbstractMemLoc(v1, new EpsilonFieldElem());
+		weakUpdate(h1, p2Setv2);
+	}
+
+	// handleLoadStmt implements rule (2) in Figure 8 of the paper
+	// v1 = v2.f
+	public void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
+			Register rightBase, jq_Field rightField) {
+		LocalVarElem v1 = getAbstractMemLoc(clazz, method, left);
+		LocalVarElem v2 = getAbstractMemLoc(clazz, method, rightBase);
+		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		NormalFieldElem f = new NormalFieldElem(rightField);
+		P2Set p2Setv2Epsilon = lookup(p2Setv2, f);
+		HeapObject h1 = getAbstractMemLoc(v1, new EpsilonFieldElem());
+		weakUpdate(h1, p2Setv2Epsilon);
+	}
+
+	// handleLoadStmt implements rule (2) in Figure 8 of the paper
+	// v1 = A.f, where A is a class and f is a static field
+	public void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
+			jq_Class rightBase, jq_Field rightField) {
+		LocalVarElem v1 = getAbstractMemLoc(clazz, method, left);
+		ClassElem v2 = getAbstractMemLoc(rightBase);
+		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		NormalFieldElem f = new NormalFieldElem(rightField);
+		P2Set p2Setv2Epsilon = lookup(p2Setv2, f);
+		HeapObject h1 = getAbstractMemLoc(v1, new EpsilonFieldElem());
+		weakUpdate(h1, p2Setv2Epsilon);
+	}
+
+	// handleStoreStmt implements rule (3) in Figure 8 of the paper
+	// v1.f = v2
+	public void handleStoreStmt(jq_Class clazz, jq_Method method,
+			Register leftBase, jq_Field leftField, Register right) {
+		LocalVarElem v1 = getAbstractMemLoc(clazz, method, leftBase);
+		LocalVarElem v2 = getAbstractMemLoc(clazz, method, right);
+		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
+		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		NormalFieldElem f = new NormalFieldElem(leftField);
+		for (HeapObject obj : p2Setv1.getHeapObjects()) {
+			Constraint cst = p2Setv1.getConstraint(obj);
+			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
+			HeapObject tgtObj = getAbstractMemLoc(obj, f);
+			weakUpdate(tgtObj, projP2Set);
+		}
+
+	}
+
+	// handleNewStmt implements rule (4) in Figure 8 of the paper
+	// v = new T
+	public void handleNewStmt(jq_Class clazz, jq_Method method, Register left,
+			jq_Type right, int line) {
+		AllocElem allocT = getAbstractMemLoc(clazz, method, right, line);
+		LocalVarElem v = getAbstractMemLoc(clazz, method, left);
+		HeapObject h1 = getAbstractMemLoc(v, new EpsilonFieldElem());
+		weakUpdate(h1, new P2Set(allocT, ConstraintManager.genTrue()));
 	}
 
 	// check whether some abstract memory location is contained in the heap
@@ -63,9 +153,8 @@ public class AbstractHeap {
 		return heap.containsKey(loc);
 	}
 
-	protected AbstractMemLoc getAbstractMemLoc(AbstractMemLoc base,
-			FieldElem field) {
-		AbstractMemLoc ret = null;
+	protected HeapObject getAbstractMemLoc(AbstractMemLoc base, FieldElem field) {
+		HeapObject ret = null;
 		if (base instanceof HeapObject) {
 			ret = getAbstractMemLoc(((HeapObject) base), field);
 		} else if (base instanceof ParamElem) {
@@ -79,10 +168,10 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	protected AbstractMemLoc getAbstractMemLoc(ParamElem base, FieldElem field) {
+	protected HeapObject getAbstractMemLoc(ParamElem base, FieldElem field) {
 		AccessPath ret = new AccessPath(base, field);
 		if (memLocFactory.containsKey(ret)) {
-			return memLocFactory.get(ret);
+			return (HeapObject) memLocFactory.get(ret);
 		}
 
 		memLocFactory.put(ret, ret);
@@ -92,10 +181,10 @@ public class AbstractHeap {
 
 	// get the AccessPath object using memLocFactory which generates that if it
 	// is not in the factory
-	protected AbstractMemLoc getAbstractMemLoc(HeapObject base, FieldElem field) {
+	protected HeapObject getAbstractMemLoc(HeapObject base, FieldElem field) {
 		AccessPath ret = new AccessPath(base, field);
 		if (memLocFactory.containsKey(ret)) {
-			return memLocFactory.get(ret);
+			return (HeapObject) memLocFactory.get(ret);
 		}
 
 		memLocFactory.put(ret, ret);
@@ -105,13 +194,13 @@ public class AbstractHeap {
 
 	// given a local variable in the bytecode, get the corresponding
 	// LocalVarElem
-	public AbstractMemLoc getAbstractMemLoc(jq_Class clazz, jq_Method method,
+	public LocalVarElem getAbstractMemLoc(jq_Class clazz, jq_Method method,
 			Register local) {
 		// create a wrapper
 		LocalVarElem ret = new LocalVarElem(clazz, method, local);
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
-			return memLocFactory.get(ret);
+			return (LocalVarElem) memLocFactory.get(ret);
 		}
 
 		// not found in the factory
@@ -124,14 +213,34 @@ public class AbstractHeap {
 	}
 
 	// given a new instruction in the bytecode, create the corresponding
-	public AbstractMemLoc getAbstractMemLoc(jq_Class clazz, jq_Method method,
+	// AllocElem
+	public AllocElem getAbstractMemLoc(jq_Class clazz, jq_Method method,
 			jq_Type type, int line) {
 		Context context = new Context(new ProgramPoint(clazz, method, line));
 		// create an AllocElem wrapper
 		AllocElem ret = new AllocElem(new Alloc(type), context);
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
-			return memLocFactory.get(ret);
+			return (AllocElem) memLocFactory.get(ret);
+		}
+
+		// not found in the factory
+		// every time generating a memory location, do this marking
+		ArgDerivedHelper.markArgDerived(ret);
+
+		memLocFactory.put(ret, ret);
+
+		return ret;
+	}
+
+	// given a class (thinking about static field like A.f), create the
+	// corresponding ClassElem
+	public ClassElem getAbstractMemLoc(jq_Class clazz) {
+		// create a wrapper
+		ClassElem ret = new ClassElem(clazz);
+		// try to look up this wrapper in the memory location factory
+		if (memLocFactory.containsKey(ret)) {
+			return (ClassElem) memLocFactory.get(ret);
 		}
 
 		// not found in the factory
@@ -148,7 +257,7 @@ public class AbstractHeap {
 		return false;
 	}
 
-	public boolean weakUpdate(HeapObject obj, P2Set p2Set) {
+	public P2Set weakUpdate(HeapObject obj, P2Set p2Set) {
 		P2Set ret = null;
 		if (heapObjectsToP2Set.containsKey(obj)) {
 			ret = heapObjectsToP2Set.get(obj);
@@ -159,6 +268,6 @@ public class AbstractHeap {
 
 		ret.join(p2Set);
 
-		return false;
+		return ret;
 	}
 }
