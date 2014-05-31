@@ -32,6 +32,8 @@ public class P2Set {
 
 	// this join method implements the join operation described in definition 8
 	// of the paper, in which it only reads other and write this.p2Set
+	// this method will never get the pointer to the other p2set so do not worry
+	// about modifying the other p2set by modifying this p2set
 	public P2Set join(P2Set other) {
 		for (HeapObject obj : other.getHeapObjects()) {
 			if (p2Set.containsKey(obj)) {
@@ -57,12 +59,14 @@ public class P2Set {
 	// this project method implements the projection operation described in
 	// definition 9 of the paper, in which it writes this.p2Set and only reads
 	// the other constraint
-	public P2Set project(Constraint otherConstraint) {
+	// this method will never modify the other constraints, either not get the
+	// pointer to the other constraint
+	public P2Set project(Constraint otherCst) {
 		for (HeapObject obj : p2Set.keySet()) {
 			// this newCst is a copy with the same content but different
 			// constraint instances
 			Constraint newCst = ConstraintManager.intersect(p2Set.get(obj),
-					otherConstraint);
+					otherCst);
 			p2Set.put(obj, newCst);
 		}
 		return this;

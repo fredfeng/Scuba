@@ -557,6 +557,9 @@ public class AbstractHeap {
 
 	protected boolean strongUpdate(Pair<AbstractMemLoc, FieldElem> pair,
 			P2Set p2Set) {
+		assert (pair.val0 instanceof StackObject) : "Only stack objects can do strong update!";
+		assert (pair.val1 instanceof EpsilonFieldElem) : "Only stack objects with epsilon field can do strong update!";
+		pair.val0.addField(pair.val1);
 		heapObjectsToP2Set.put(pair, p2Set);
 		return false;
 	}
