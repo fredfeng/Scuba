@@ -30,15 +30,6 @@ import framework.scuba.domain.Summary;
  */
 public class IntraProcHarness {
 
-    public static IntraProcSumAnalysis solve(ControlFlowGraph cfg) {
-    	IntraProcSumAnalysis p = new IntraProcSumAnalysis();
-        Solver s1 = new IterativeSolver();
-        p.mySolver = s1;
-        solve(cfg, s1, p);
-        System.out.println("Finished solving IntraProcSumAnalysis.");
-        return p;
-    }
-    
     private static void solve(ControlFlowGraph cfg, Solver s, Problem p) {
         s.initialize(p, new EdgeGraph(new ReverseGraph(cfg, Collections.singleton(cfg.exit()))));
         s.solve();
@@ -58,23 +49,16 @@ public class IntraProcHarness {
             
 		IntraProcSumAnalysis p = new IntraProcSumAnalysis();
         Solver s1 = new IterativeSolver();
-//        Solver s2 = new SortedSetSolver(BBComparator.INSTANCE);
-//        Solver s3 = new PriorityQueueSolver();
         for (Iterator<jq_Method> i = set.iterator(); i.hasNext(); ) {
             jq_Method m = (jq_Method) i.next();
             
             Summary summary = SummariesEnv.v().getSummary(m);
             p.setSummary(summary);
             if (m.getBytecode() == null) continue;
-            System.out.println("Method "+m);
             ControlFlowGraph cfg = CodeCache.getCode(m);
             System.out.println(cfg.fullDump());
             solve(cfg, s1, p);
-//            solve(cfg, s2, p);
-//            solve(cfg, s3, p);
             Solver.dumpResults(cfg, s1);
-//            Solver.compareResults(cfg, s1, s2);
-//            Solver.compareResults(cfg, s2, s3);
         }
     }
 
