@@ -46,7 +46,8 @@ public class Summary {
 	
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
 
-		public void visitALenth(Quad stmt) {
+	    public void visitALength(Quad stmt) {
+
 		}
 
 		public void visitALoad(Quad stmt) {
@@ -82,6 +83,7 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 			// TODO
+			
 		}
 
 		public void visitMemLoad(Quad stmt) {
@@ -109,7 +111,7 @@ public class Summary {
 			// TODO
 		}
 
-		public void visitNulCheck(Quad stmt) {
+		public void visitNullCheck(Quad stmt) {
 		}
 
 		public void visitPhi(Quad stmt) {
