@@ -4,26 +4,25 @@ import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.QuadVisitor;
 
-
 /**
- * Representing the summary for a method.
- * Now it only contains abstractHeap.
+ * Representing the summary for a method. Now it only contains abstractHeap.
+ * 
  * @author yufeng
- *
+ * 
  */
 public class Summary {
-	
+
 	private jq_Method method;
 	private AbstractHeap absHeap;
-	
-	//finish current summary.
+
+	// finish current summary.
 	private boolean terminated;
-	
+
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();
 	}
-	
+
 	public boolean isTerminated() {
 		return terminated;
 	}
@@ -31,27 +30,28 @@ public class Summary {
 	public void setTerminated(boolean terminated) {
 		this.terminated = terminated;
 	}
-	
+
 	public AbstractHeap getAbstractHeap() {
 		return absHeap;
 	}
-	
+
 	public jq_Method getMethod() {
 		return method;
 	}
-	
+
 	public void handleStmt(Quad quad) {
 		quad.accept(qv);
 	}
-	
+
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
 
-	    public void visitALength(Quad stmt) {
+		public void visitALength(Quad stmt) {
 
 		}
 
 		public void visitALoad(Quad stmt) {
 			// TODO
+			absHeap.handleALoadStmt(stmt);
 		}
 
 		public void visitAStore(Quad stmt) {
@@ -83,7 +83,7 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 			// TODO
-			
+
 		}
 
 		public void visitMemLoad(Quad stmt) {

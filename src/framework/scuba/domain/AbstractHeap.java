@@ -295,59 +295,60 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	protected void handleALoadStmt(Quad stmt) {
+	// v1.f = v2
+	public void handleALoadStmt(Quad stmt) {
 
 	}
 
-	protected void handleAStoreStmt(Quad stmt) {
+	public void handleAStoreStmt(Quad stmt) {
 
 	}
 
-	protected void handleGetfieldStmt(Quad stmt) {
+	public void handleGetfieldStmt(Quad stmt) {
 
 	}
 
-	protected void handleGetstaticStmt(Quad stmt) {
+	public void handleGetstaticStmt(Quad stmt) {
 
 	}
 
-	protected void handleInvokeStmt(Quad stmt) {
+	public void handleInvokeStmt(Quad stmt) {
 
 	}
 
-	protected void handleMemLoadStmt(Quad stmt) {
+	public void handleMemLoadStmt(Quad stmt) {
 
 	}
 
-	protected void handleMemStoreStmt(Quad stmt) {
+	public void handleMemStoreStmt(Quad stmt) {
 
 	}
 
-	protected void handleMoveStmt(Quad stmt) {
+	public void handleMoveStmt(Quad stmt) {
 
 	}
 
-	protected void handleMultiNewArrayStmt(Quad stmt) {
+	public void handleMultiNewArrayStmt(Quad stmt) {
 
 	}
 
-	protected void handleNewStmt(Quad stmt) {
+	public void handleNewStmt(Quad stmt) {
 
 	}
 
-	protected void handleNewArrayStmt(Quad stmt) {
+	public void handleNewArrayStmt(Quad stmt) {
 
 	}
 
-	protected void handlePutfieldStmt(Quad stmt) {
+	public void handlePutfieldStmt(Quad stmt) {
 
 	}
 
-	protected void handlePutstaticStmt(Quad stmt) {
+	public void handlePutstaticStmt(Quad stmt) {
 
 	}
 
-	protected void handleReturnStmt(Quad stmt) {
+	public void handleReturnStmt(Quad stmt) {
 
 	}
 
