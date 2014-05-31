@@ -3,6 +3,7 @@ package framework.scuba.domain;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,7 +37,7 @@ public class AbstractHeap {
 	// THIS IS the main data structure to represent the abstract heap
 	// every time we refer to a heap, it means this heap topology
 	// MAYBE we will not use this? we can use memLocFactory
-	protected Map<AbstractMemLoc, Set<HeapObject>> heap;
+	final protected Set<AbstractMemLoc> heap;
 
 	// heap is a mapping described in Figure 7 of the paper
 	// mapping: (\pi, f) --> \theta
@@ -55,7 +56,7 @@ public class AbstractHeap {
 
 	public AbstractHeap() {
 		// this.method = method;
-		heap = new HashMap<AbstractMemLoc, Set<HeapObject>>();
+		heap = new HashSet<AbstractMemLoc>();
 		heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
 	}
@@ -319,14 +320,14 @@ public class AbstractHeap {
 
 	// v1 = v2.f
 	public void handleGetfieldStmt(Quad stmt) {
-		assert(stmt.getOperator() instanceof Getfield);
+		assert (stmt.getOperator() instanceof Getfield);
 		RegisterOperand lhs = Getfield.getDest(stmt);
-		RegisterOperand rhsBase = (RegisterOperand)Getfield.getBase(stmt);
+		RegisterOperand rhsBase = (RegisterOperand) Getfield.getBase(stmt);
 		FieldOperand rhsField = Getfield.getField(stmt);
 		jq_Method meth = stmt.getMethod();
 		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 		VariableType rvt = getVarType(stmt.getMethod(), rhsBase.getRegister());
-		
+
 		this.handleLoadStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
 				lvt, rhsBase.getRegister(), rhsField.getField(), rvt);
 	}
@@ -369,7 +370,7 @@ public class AbstractHeap {
 		jq_Method meth = stmt.getMethod();
 		TypeOperand to = New.getType(stmt);
 		RegisterOperand rop = New.getDest(stmt);
-		VariableType vt = getVarType(meth, rop.getRegister());	
+		VariableType vt = getVarType(meth, rop.getRegister());
 
 		handleNewStmt(stmt.getMethod().getDeclaringClass(), meth,
 				rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
@@ -381,14 +382,14 @@ public class AbstractHeap {
 
 	// v1.f = v2
 	public void handlePutfieldStmt(Quad stmt) {
-		assert(stmt.getOperator() instanceof Putfield);
+		assert (stmt.getOperator() instanceof Putfield);
 		jq_Method meth = stmt.getMethod();
 		RegisterOperand rhs = (RegisterOperand) Putfield.getSrc(stmt);
 		RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
 		FieldOperand field = Putfield.getField(stmt);
 		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 		VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
-		
+
 		this.handleStoreStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
 				lvt, field.getField(), rhs.getRegister(), rvt);
 	}
@@ -400,18 +401,18 @@ public class AbstractHeap {
 	public void handleReturnStmt(Quad stmt) {
 
 	}
-	
-	//is this a param or local. helper function.
-	public VariableType getVarType(jq_Method meth, Register r) {
-		VariableType vt = VariableType.LOCAL_VARIABLE;	
 
-        ControlFlowGraph cfg = meth.getCFG();
-        RegisterFactory rf = cfg.getRegisterFactory();
-        int numArgs = meth.getParamTypes().length;
+	// is this a param or local. helper function.
+	public VariableType getVarType(jq_Method meth, Register r) {
+		VariableType vt = VariableType.LOCAL_VARIABLE;
+
+		ControlFlowGraph cfg = meth.getCFG();
+		RegisterFactory rf = cfg.getRegisterFactory();
+		int numArgs = meth.getParamTypes().length;
 		for (int zIdx = 0; zIdx < numArgs; zIdx++) {
 			Register v = rf.get(zIdx);
-			if(v.equals(r)) {
-				vt = VariableType.PARAMEMTER;	
+			if (v.equals(r)) {
+				vt = VariableType.PARAMEMTER;
 				break;
 			}
 		}
@@ -420,7 +421,7 @@ public class AbstractHeap {
 
 	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
 	// v1 = v2
-	protected void handleAssgnStmt(jq_Class clazz, jq_Method method,
+	protected boolean handleAssgnStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register right,
 			VariableType rightVType) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
@@ -428,12 +429,12 @@ public class AbstractHeap {
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, new EpsilonFieldElem());
-		weakUpdate(pair, p2Setv2);
+		return weakUpdate(pair, p2Setv2);
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = v2.f
-	protected void handleLoadStmt(jq_Class clazz, jq_Method method,
+	protected boolean handleLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register rightBase,
 			jq_Field rightField, VariableType rightBaseVType) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
@@ -444,12 +445,12 @@ public class AbstractHeap {
 		P2Set p2Setv2Epsilon = lookup(p2Setv2, f);
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, new EpsilonFieldElem());
-		weakUpdate(pair, p2Setv2Epsilon);
+		return weakUpdate(pair, p2Setv2Epsilon);
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = A.f, where A is a class and f is a static field
-	protected void handleStatLoadStmt(jq_Class clazz, jq_Method method,
+	protected boolean handleStatLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Class rightBase,
 			jq_Field rightField) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
@@ -459,14 +460,15 @@ public class AbstractHeap {
 		P2Set p2SetAf = lookup(p2SetA, f);
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, new EpsilonFieldElem());
-		weakUpdate(pair, p2SetAf);
+		return weakUpdate(pair, p2SetAf);
 	}
 
 	// handleStoreStmt implements rule (3) in Figure 8 of the paper
 	// v1.f = v2
-	protected void handleStoreStmt(jq_Class clazz, jq_Method method,
+	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
 			Register leftBase, VariableType leftBaseVType, jq_Field leftField,
 			Register right, VariableType rightVType) {
+		boolean ret = false;
 		StackObject v1 = getAbstractMemLoc(clazz, method, leftBase,
 				leftBaseVType);
 		StackObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
@@ -481,19 +483,20 @@ public class AbstractHeap {
 
 			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 					obj, f);
-			weakUpdate(pair, projP2Set);
+			ret = weakUpdate(pair, projP2Set) | ret;
 		}
+		return ret;
 	}
 
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
 	// v = new T
-	protected void handleNewStmt(jq_Class clazz, jq_Method method,
+	protected boolean handleNewStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int line) {
 		AllocElem allocT = getAbstractMemLoc(clazz, method, right, line);
 		StackObject v = getAbstractMemLoc(clazz, method, left, leftVType);
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v, new EpsilonFieldElem());
-		weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()));
+		return weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()));
 	}
 
 	// check whether some abstract memory location is contained in the heap
@@ -503,7 +506,7 @@ public class AbstractHeap {
 
 	// check whether some abstract memory location is in the heap
 	public boolean isInHeap(AbstractMemLoc loc) {
-		return heap.containsKey(loc);
+		return heap.contains(loc);
 	}
 
 	protected AccessPath getAbstractMemLoc(AbstractMemLoc base, FieldElem field) {
@@ -649,19 +652,25 @@ public class AbstractHeap {
 		return false;
 	}
 
-	protected P2Set weakUpdate(Pair<AbstractMemLoc, FieldElem> pair, P2Set p2Set) {
-		P2Set ret = null;
+	protected boolean weakUpdate(Pair<AbstractMemLoc, FieldElem> pair,
+			P2Set p2Set) {
+		boolean ret = false;
+		P2Set currentHeap = null;
 		if (heapObjectsToP2Set.containsKey(pair)) {
-			ret = heapObjectsToP2Set.get(pair);
+			currentHeap = heapObjectsToP2Set.get(pair);
 		} else {
-			ret = new P2Set();
-			heapObjectsToP2Set.put(pair, ret);
+			currentHeap = new P2Set();
+			heapObjectsToP2Set.put(pair, currentHeap);
 			// fill the fields of the abstract memory location so that we can
 			// conveniently dump the topology of the heap
 			pair.val0.addField(pair.val1);
 		}
+		
+		// update the locations in the real heap graph
+		heap.add(pair.val0);
+		heap.addAll(p2Set.getHeapObjects());
 
-		ret.join(p2Set);
+		ret = currentHeap.join(p2Set);
 
 		return ret;
 	}

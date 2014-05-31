@@ -34,26 +34,32 @@ public class P2Set {
 	// of the paper, in which it only reads other and write this.p2Set
 	// this method will never get the pointer to the other p2set so do not worry
 	// about modifying the other p2set by modifying this p2set
-	public P2Set join(P2Set other) {
+	public boolean join(P2Set other) {
+		boolean ret = false;
 		for (HeapObject obj : other.getHeapObjects()) {
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets
 				// directly get the other p2set's constraints
 				Constraint otherCst = other.getConstraint(obj);
+				// check whether we need to update the p2set of this heap object
+				if (p2Set.get(obj).equals(otherCst))
+					continue;
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)
 				Constraint newCst = ConstraintManager.union(p2Set.get(obj),
 						otherCst);
 
 				p2Set.put(obj, newCst);
+				ret = true;
 			} else {
 				// obj is only in other's p2set
 				// AVOID directly get the constraint instance of the other
 				// p2set!!!! only get the shallow copy of the other constraints
 				p2Set.put(obj, other.getConstraint(obj).clone());
+				ret = true;
 			}
 		}
-		return this;
+		return ret;
 	}
 
 	// this project method implements the projection operation described in
