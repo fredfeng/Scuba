@@ -51,7 +51,6 @@ public class Summary {
 
 		public void visitALoad(Quad stmt) {
 			// TODO
-			absHeap.handleALoadStmt(stmt);
 		}
 
 		public void visitAStore(Quad stmt) {
@@ -70,8 +69,10 @@ public class Summary {
 		public void visitCheckCast(Quad stmt) {
 		}
 
+		// v1 = v2.f
 		public void visitGetfield(Quad stmt) {
 			// TODO
+			absHeap.handleGetfieldStmt(stmt);
 		}
 
 		public void visitGetstatic(Quad stmt) {
@@ -97,6 +98,7 @@ public class Summary {
 
 		public void visitMove(Quad stmt) {
 			// TODO
+			absHeap.handleMoveStmt(stmt);
 		}
 
 		public void visitMultiNewArray(Quad stmt) {
@@ -105,6 +107,7 @@ public class Summary {
 
 		public void visitNew(Quad stmt) {
 			// TODO
+			absHeap.handleNewStmt(stmt);
 		}
 
 		public void visitNewArray(Quad stmt) {
@@ -119,6 +122,7 @@ public class Summary {
 
 		public void visitPutfield(Quad stmt) {
 			// TODO
+			absHeap.handlePutfieldStmt(stmt);
 		}
 
 		public void visitPutstatic(Quad stmt) {

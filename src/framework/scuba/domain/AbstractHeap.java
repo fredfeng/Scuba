@@ -10,7 +10,12 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
+import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operand.RegisterOperand;
+import joeq.Compiler.Quad.Operand.TypeOperand;
+import joeq.Compiler.Quad.Operator.New;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 import framework.scuba.helper.ArgDerivedHelper;
@@ -299,7 +304,6 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	// v1.f = v2
 	public void handleALoadStmt(Quad stmt) {
 
 	}
@@ -308,6 +312,7 @@ public class AbstractHeap {
 
 	}
 
+	// v1 = v2.f
 	public void handleGetfieldStmt(Quad stmt) {
 
 	}
@@ -328,6 +333,7 @@ public class AbstractHeap {
 
 	}
 
+	//v1 = v2.
 	public void handleMoveStmt(Quad stmt) {
 
 	}
@@ -336,14 +342,34 @@ public class AbstractHeap {
 
 	}
 
+	//v1 = new A();
 	public void handleNewStmt(Quad stmt) {
+		assert (stmt.getOperator() instanceof New);
+		jq_Method meth = stmt.getMethod();
+		TypeOperand to = New.getType(stmt);
+		VariableType vt = VariableType.LOCAL_VARIABLE;	
+        RegisterOperand rop = New.getDest(stmt);
 
+        ControlFlowGraph cfg = meth.getCFG();
+        RegisterFactory rf = cfg.getRegisterFactory();
+        int numArgs = meth.getParamTypes().length;
+		for (int zIdx = 0; zIdx < numArgs; zIdx++) {
+			Register v = rf.get(zIdx);
+			if(v.equals(rop.getRegister())) {
+				vt = VariableType.PARAMEMTER;	
+				break;
+			}
+		}
+        
+		handleNewStmt(stmt.getMethod().getDeclaringClass(), meth,
+				rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
 	}
 
 	public void handleNewArrayStmt(Quad stmt) {
 
 	}
 
+	// v1.f = v2
 	public void handlePutfieldStmt(Quad stmt) {
 
 	}
