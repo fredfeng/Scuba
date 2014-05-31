@@ -9,6 +9,7 @@ public class AccessPath extends HeapObject {
 	public AccessPath(AbstractMemLoc base, FieldElem field) {
 		this.base = base;
 		this.field = field;
+		base.addField(field);
 	}
 
 	public AbstractMemLoc getBase() {

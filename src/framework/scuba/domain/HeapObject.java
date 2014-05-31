@@ -5,8 +5,6 @@ import java.util.Set;
 
 public abstract class HeapObject extends AbstractMemLoc {
 
-	protected Set<FieldElem> fields = new HashSet<FieldElem>();
-
-	abstract public AbstractMemLoc findRoot();
+	// abstract public AbstractMemLoc findRoot();
 
 }

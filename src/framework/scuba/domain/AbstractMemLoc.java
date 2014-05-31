@@ -1,6 +1,11 @@
 package framework.scuba.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public abstract class AbstractMemLoc {
+
+	protected Set<FieldElem> fields = new HashSet<FieldElem>();
 
 	public static enum ArgDerivedType {
 		IS_ARG_DERIVED, NOT_ARG_DERIVED, UN_KNOWN;
@@ -8,6 +13,7 @@ public abstract class AbstractMemLoc {
 
 	ArgDerivedType argDerived;
 
+	// abstract methods
 	abstract public AbstractMemLoc findRoot();
 
 	public void setArgDerived() {
@@ -38,12 +44,20 @@ public abstract class AbstractMemLoc {
 		return (this.argDerived == ArgDerivedType.NOT_ARG_DERIVED);
 	}
 
-	public boolean hasFieldSelector(FieldElem f) {
+	public boolean hasFieldSelector(FieldElem field) {
 		if (!(this instanceof AccessPath)) {
 			return false;
 		}
 
 		return false;
+	}
+
+	public void addField(FieldElem field) {
+		fields.add(field);
+	}
+
+	public Set<FieldElem> getFields() {
+		return this.fields;
 	}
 
 	@Override

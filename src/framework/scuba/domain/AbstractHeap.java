@@ -37,10 +37,55 @@ public class AbstractHeap {
 
 	// protected ArgDerivedHelper argDerivedHelper = new ArgDerivedHelper();
 
+	public static enum VariableType {
+		PARAMEMTER, LOCAL_VARIABLE;
+	}
+
 	public AbstractHeap() {
 		heap = new HashMap<AbstractMemLoc, Set<HeapObject>>();
 		heapObjectsToP2Set = new HashMap<HeapObject, P2Set>();
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
+	}
+
+	public void dump() {
+		StringBuilder b = new StringBuilder("Abstract Heap {\n");
+		b.append("  rankdir = LR;\n");
+
+		for (AbstractMemLoc loc : memLocFactory.keySet()) {
+			if (loc instanceof AccessPath) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=circle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof AllocElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=doublecircle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof StaticElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=circle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof LocalVarElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=rectangle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof ParamElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=oval,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else {
+				assert false : "wried things!";
+			}
+		}
+
+		for (AbstractMemLoc loc : memLocFactory.keySet()) {
+			
+		}
+
 	}
 
 	// field look-up for location which is described in definition 7 of the
@@ -81,9 +126,10 @@ public class AbstractHeap {
 	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
 	// v1 = v2
 	public void handleAssgnStmt(jq_Class clazz, jq_Method method,
-			Register left, Register right) {
-		LocalVarElem v1 = getAbstractMemLoc(clazz, method, left);
-		LocalVarElem v2 = getAbstractMemLoc(clazz, method, right);
+			Register left, VariableType leftVType, Register right,
+			VariableType rightVType) {
+		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
+		StackObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
 		HeapObject h1 = getAbstractMemLoc(v1, new EpsilonFieldElem());
 		weakUpdate(h1, p2Setv2);
@@ -92,9 +138,11 @@ public class AbstractHeap {
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = v2.f
 	public void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
-			Register rightBase, jq_Field rightField) {
-		LocalVarElem v1 = getAbstractMemLoc(clazz, method, left);
-		LocalVarElem v2 = getAbstractMemLoc(clazz, method, rightBase);
+			VariableType leftVType, Register rightBase, jq_Field rightField,
+			VariableType rightBaseVType) {
+		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
+		StackObject v2 = getAbstractMemLoc(clazz, method, rightBase,
+				rightBaseVType);
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
 		NormalFieldElem f = new NormalFieldElem(rightField);
 		P2Set p2Setv2Epsilon = lookup(p2Setv2, f);
@@ -105,8 +153,8 @@ public class AbstractHeap {
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = A.f, where A is a class and f is a static field
 	public void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
-			jq_Class rightBase, jq_Field rightField) {
-		LocalVarElem v1 = getAbstractMemLoc(clazz, method, left);
+			VariableType leftVType, jq_Class rightBase, jq_Field rightField) {
+		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
 		StaticElem v2 = getAbstractMemLoc(rightBase);
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
 		NormalFieldElem f = new NormalFieldElem(rightField);
@@ -118,9 +166,11 @@ public class AbstractHeap {
 	// handleStoreStmt implements rule (3) in Figure 8 of the paper
 	// v1.f = v2
 	public void handleStoreStmt(jq_Class clazz, jq_Method method,
-			Register leftBase, jq_Field leftField, Register right) {
-		LocalVarElem v1 = getAbstractMemLoc(clazz, method, leftBase);
-		LocalVarElem v2 = getAbstractMemLoc(clazz, method, right);
+			Register leftBase, VariableType leftBaseVType, jq_Field leftField,
+			Register right, VariableType rightVType) {
+		StackObject v1 = getAbstractMemLoc(clazz, method, leftBase,
+				leftBaseVType);
+		StackObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
 		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
 		NormalFieldElem f = new NormalFieldElem(leftField);
@@ -135,9 +185,9 @@ public class AbstractHeap {
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
 	// v = new T
 	public void handleNewStmt(jq_Class clazz, jq_Method method, Register left,
-			jq_Type right, int line) {
+			VariableType leftVType, jq_Type right, int line) {
 		AllocElem allocT = getAbstractMemLoc(clazz, method, right, line);
-		LocalVarElem v = getAbstractMemLoc(clazz, method, left);
+		StackObject v = getAbstractMemLoc(clazz, method, left, leftVType);
 		HeapObject h1 = getAbstractMemLoc(v, new EpsilonFieldElem());
 		weakUpdate(h1, new P2Set(allocT, ConstraintManager.genTrue()));
 	}
@@ -167,10 +217,10 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	protected HeapObject getAbstractMemLoc(ParamElem base, FieldElem field) {
+	protected AccessPath getAbstractMemLoc(ParamElem base, FieldElem field) {
 		AccessPath ret = new AccessPath(base, field);
 		if (memLocFactory.containsKey(ret)) {
-			return (HeapObject) memLocFactory.get(ret);
+			return (AccessPath) memLocFactory.get(ret);
 		}
 
 		memLocFactory.put(ret, ret);
@@ -180,10 +230,10 @@ public class AbstractHeap {
 
 	// get the AccessPath object using memLocFactory which generates that if it
 	// is not in the factory
-	protected HeapObject getAbstractMemLoc(HeapObject base, FieldElem field) {
+	protected AccessPath getAbstractMemLoc(HeapObject base, FieldElem field) {
 		AccessPath ret = new AccessPath(base, field);
 		if (memLocFactory.containsKey(ret)) {
-			return (HeapObject) memLocFactory.get(ret);
+			return (AccessPath) memLocFactory.get(ret);
 		}
 
 		memLocFactory.put(ret, ret);
@@ -191,24 +241,39 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	// given a local variable in the bytecode, get the corresponding
-	// LocalVarElem
-	public LocalVarElem getAbstractMemLoc(jq_Class clazz, jq_Method method,
-			Register local) {
-		// create a wrapper
-		LocalVarElem ret = new LocalVarElem(clazz, method, local);
-		// try to look up this wrapper in the memory location factory
-		if (memLocFactory.containsKey(ret)) {
-			return (LocalVarElem) memLocFactory.get(ret);
+	public StackObject getAbstractMemLoc(jq_Class clazz, jq_Method method,
+			Register variable, VariableType vType) {
+		if (vType == VariableType.LOCAL_VARIABLE) {
+			// create a wrapper
+			LocalVarElem ret = new LocalVarElem(clazz, method, variable);
+			// try to look up this wrapper in the memory location factory
+			if (memLocFactory.containsKey(ret)) {
+				return (LocalVarElem) memLocFactory.get(ret);
+			}
+
+			// not found in the factory
+			// every time generating a memory location, do this marking
+			ArgDerivedHelper.markArgDerived(ret);
+
+			memLocFactory.put(ret, ret);
+
+			return ret;
+		} else {
+			// create a wrapper
+			ParamElem ret = new ParamElem(clazz, method, variable);
+			// try to look up this wrapper in the memory location factory
+			if (memLocFactory.containsKey(ret)) {
+				return (ParamElem) memLocFactory.get(ret);
+			}
+
+			// not found in the factory
+			// every time generating a memory location, do this marking
+			ArgDerivedHelper.markArgDerived(ret);
+
+			memLocFactory.put(ret, ret);
+
+			return ret;
 		}
-
-		// not found in the factory
-		// every time generating a memory location, do this marking
-		ArgDerivedHelper.markArgDerived(ret);
-
-		memLocFactory.put(ret, ret);
-
-		return ret;
 	}
 
 	// given a new instruction in the bytecode, create the corresponding
