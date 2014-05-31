@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import framework.scuba.helper.ConstraintManager;
+
 public class P2Set {
 
 	Map<HeapObject, Constraint> p2Set = new HashMap<HeapObject, Constraint>();
@@ -30,7 +32,9 @@ public class P2Set {
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets
 				Constraint otherConstraint = other.getConstraint(obj);
-				p2Set.get(obj).union(otherConstraint);
+				Constraint newCst = ConstraintManager.union(p2Set.get(obj),
+						otherConstraint);
+				p2Set.put(obj, newCst);
 			} else {
 				// obj is only in other's p2set
 				p2Set.put(obj, other.getConstraint(obj));
@@ -43,7 +47,9 @@ public class P2Set {
 	// the other constraint
 	public void project(Constraint otherConstraint) {
 		for (HeapObject obj : p2Set.keySet()) {
-			p2Set.get(obj).intersect(otherConstraint);
+			Constraint newCst = ConstraintManager.intersect(p2Set.get(obj),
+					otherConstraint);
+			p2Set.put(obj, newCst);
 		}
 	}
 

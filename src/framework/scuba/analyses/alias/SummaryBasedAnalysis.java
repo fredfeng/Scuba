@@ -38,13 +38,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private void init() {
 		getCallGraph();
 		System.out.println("Total nodes in CG---------" + callGraph.getNodes().size());
-		List<Set<jq_Method>> sccList = callGraph.getTopSortedSCCs();
-		//init \gamma
+		//init \gamma here.
 		//compute SCCs and their representative nodes.
+		sumAnalyze();
 	}
 	
 	
 	private void sumAnalyze() {
+		Set<jq_Method> roots = callGraph.getRoots();
+		for(Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
+			System.out.println("SCC List---" + scc);
+		}
 		//foreach leaf in the callgraph. Add them to the worklist.
 		/*LinkedList worklist = new LinkedList();
 		while(!worklist.isEmpty()) {
