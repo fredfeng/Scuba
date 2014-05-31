@@ -1,5 +1,7 @@
 package framework.scuba.domain;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -8,33 +10,6 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
-import joeq.Compiler.Quad.Operator.ALength;
-import joeq.Compiler.Quad.Operator.ALoad;
-import joeq.Compiler.Quad.Operator.AStore;
-import joeq.Compiler.Quad.Operator.Binary;
-import joeq.Compiler.Quad.Operator.BoundsCheck;
-import joeq.Compiler.Quad.Operator.Branch;
-import joeq.Compiler.Quad.Operator.CheckCast;
-import joeq.Compiler.Quad.Operator.Getfield;
-import joeq.Compiler.Quad.Operator.Getstatic;
-import joeq.Compiler.Quad.Operator.InstanceOf;
-import joeq.Compiler.Quad.Operator.Invoke;
-import joeq.Compiler.Quad.Operator.MemLoad;
-import joeq.Compiler.Quad.Operator.MemStore;
-import joeq.Compiler.Quad.Operator.Monitor;
-import joeq.Compiler.Quad.Operator.Move;
-import joeq.Compiler.Quad.Operator.MultiNewArray;
-import joeq.Compiler.Quad.Operator.New;
-import joeq.Compiler.Quad.Operator.NewArray;
-import joeq.Compiler.Quad.Operator.NullCheck;
-import joeq.Compiler.Quad.Operator.Phi;
-import joeq.Compiler.Quad.Operator.Putfield;
-import joeq.Compiler.Quad.Operator.Putstatic;
-import joeq.Compiler.Quad.Operator.Return;
-import joeq.Compiler.Quad.Operator.Special;
-import joeq.Compiler.Quad.Operator.StoreCheck;
-import joeq.Compiler.Quad.Operator.Unary;
-import joeq.Compiler.Quad.Operator.ZeroCheck;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.QuadVisitor;
 import joeq.Compiler.Quad.RegisterFactory.Register;
@@ -78,7 +53,106 @@ public class AbstractHeap {
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
 	}
 
+	public boolean validate() {
+
+		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
+			AbstractMemLoc loc = pair.val0;
+			FieldElem f = pair.val1;
+			P2Set p2Set = heapObjectsToP2Set.get(pair);
+			// validate all abstract memory locations appeared in the key set of
+			// heapObjectsToP2Set are either heap objects or stack objects
+			assert (loc instanceof HeapObject || loc instanceof StackObject) : loc
+					+ " is NOT a proper object";
+			// validate the field element is an element of the fields of the
+			// corresponding abstract memory location
+			assert (loc.getFields().contains(f)) : f
+					+ " is NOT in the fields of the abstract memory location "
+					+ loc;
+			// validate the elements in the key set of the P2Set are all heap
+			// objects
+			for (HeapObject hobj : p2Set.getHeapObjects()) {
+				assert (hobj instanceof HeapObject) : hobj
+						+ " should be appeared as a heap object!";
+			}
+			// validate that all the elements in the key set of the
+			// heapObjectsToP2Set are appeared in the key set of memLocFacotry
+			assert memLocFactory.containsKey(loc) : loc
+					+ " should be contained in the memory location factory!";
+			// validate that all the elements in the key set of the p2Set should
+			// appear in the key set of memLocFactory
+			for (HeapObject hobj : p2Set.getHeapObjects()) {
+				assert (memLocFactory.containsKey(hobj)) : hobj
+						+ " should be contained in the memory location factory!";
+			}
+			//
+		}
+
+		return false;
+	}
+
 	public void dump() {
+		StringBuilder b = new StringBuilder("Abstract Heap {\n");
+		b.append("  rankdir = LR;\n");
+
+		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
+			AbstractMemLoc loc = pair.val0;
+			if (loc instanceof AccessPath) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=circle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof AllocElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=doublecircle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof StaticElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=circle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof LocalVarElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=rectangle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof ParamElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=oval,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else {
+				assert false : "wried things!";
+			}
+		}
+
+		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
+			AbstractMemLoc loc = pair.val0;
+			FieldElem f = pair.val1;
+			P2Set p2Set = heapObjectsToP2Set.get(pair);
+			for (HeapObject hObj : p2Set.getHeapObjects()) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" -> ").append("\"" + hObj + "\"")
+						.append(" [label=\"");
+				b.append("\"" + f + "\"");
+				b.append("\"]\n");
+			}
+		}
+
+		b.append("}\n");
+
+		try {
+			BufferedWriter bufw = new BufferedWriter(new FileWriter(
+					"output/abstractHeap.dot"));
+			bufw.write(b.toString());
+			bufw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+	}
+
+	public void dumpAllMemLocs() {
 		StringBuilder b = new StringBuilder("Abstract Heap {\n");
 		b.append("  rankdir = LR;\n");
 
@@ -126,6 +200,19 @@ public class AbstractHeap {
 				}
 			}
 		}
+
+		b.append("}\n");
+
+		try {
+			BufferedWriter bufw = new BufferedWriter(new FileWriter(
+					"output/allMemLocs.dot"));
+			bufw.write(b.toString());
+			bufw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+
 	}
 
 	// field look-up for location which is described in definition 7 of the
@@ -239,9 +326,9 @@ public class AbstractHeap {
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = v2.f
-	protected void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
-			VariableType leftVType, Register rightBase, jq_Field rightField,
-			VariableType rightBaseVType) {
+	protected void handleLoadStmt(jq_Class clazz, jq_Method method,
+			Register left, VariableType leftVType, Register rightBase,
+			jq_Field rightField, VariableType rightBaseVType) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
 		StackObject v2 = getAbstractMemLoc(clazz, method, rightBase,
 				rightBaseVType);
@@ -255,8 +342,9 @@ public class AbstractHeap {
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = A.f, where A is a class and f is a static field
-	protected void handleLoadStmt(jq_Class clazz, jq_Method method, Register left,
-			VariableType leftVType, jq_Class rightBase, jq_Field rightField) {
+	protected void handleLoadStmt(jq_Class clazz, jq_Method method,
+			Register left, VariableType leftVType, jq_Class rightBase,
+			jq_Field rightField) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
 		StaticElem A = getAbstractMemLoc(rightBase);
 		P2Set p2SetA = lookup(A, new EpsilonFieldElem());
@@ -292,8 +380,8 @@ public class AbstractHeap {
 
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
 	// v = new T
-	protected void handleNewStmt(jq_Class clazz, jq_Method method, Register left,
-			VariableType leftVType, jq_Type right, int line) {
+	protected void handleNewStmt(jq_Class clazz, jq_Method method,
+			Register left, VariableType leftVType, jq_Type right, int line) {
 		AllocElem allocT = getAbstractMemLoc(clazz, method, right, line);
 		StackObject v = getAbstractMemLoc(clazz, method, left, leftVType);
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
