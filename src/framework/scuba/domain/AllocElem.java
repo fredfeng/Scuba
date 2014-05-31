@@ -2,12 +2,12 @@ package framework.scuba.domain;
 
 public class AllocElem extends HeapObject {
 
-	protected Alloc allocSite;
+	protected Alloc alloc;
 
 	protected Context context;
 
 	public AllocElem(Alloc allocSite, Context context) {
-		this.allocSite = allocSite;
+		this.alloc = allocSite;
 		this.context = context;
 	}
 
@@ -23,22 +23,26 @@ public class AllocElem extends HeapObject {
 		this.context.appendEnd(point);
 	}
 
+	public Alloc getAlloc() {
+		return this.alloc;
+	}
+
 	@Override
 	public String toString() {
-		return allocSite + " || " + context;
+		return alloc + " || " + context;
 	}
 
 	@Override
 	public boolean equals(Object other) {
 
 		return (other instanceof AllocElem)
-				&& (allocSite.equals(((AllocElem) other).allocSite))
+				&& (alloc.equals(((AllocElem) other).alloc))
 				&& (context.equals(((AllocElem) other).context));
 	}
 
 	@Override
 	public int hashCode() {
-		return 37 * allocSite.hashCode() + context.hashCode();
+		return 37 * alloc.hashCode() + context.hashCode();
 	}
 
 }

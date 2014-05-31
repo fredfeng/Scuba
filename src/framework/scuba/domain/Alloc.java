@@ -13,8 +13,11 @@ public class Alloc {
 
 	@Override
 	public boolean equals(Object other) {
-		return (other instanceof Alloc)
-				&& (type.equals(((Alloc) other).type));
+		return (other instanceof Alloc) && (type.equals(((Alloc) other).type));
+	}
+
+	public jq_Type getType() {
+		return this.type;
 	}
 
 	@Override
