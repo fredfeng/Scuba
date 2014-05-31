@@ -1,6 +1,8 @@
 package framework.scuba.domain;
 
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.QuadVisitor;
 
 
 /**
@@ -14,9 +16,20 @@ public class Summary {
 	private jq_Method method;
 	private AbstractHeap absHeap;
 	
-	public Summary(jq_Method meth, AbstractHeap heap) {
+	//finish current summary.
+	private boolean terminated;
+	
+	public Summary(jq_Method meth) {
 		method = meth;
-		absHeap = heap;
+		absHeap = new AbstractHeap();
+	}
+	
+	public boolean isTerminated() {
+		return terminated;
+	}
+
+	public void setTerminated(boolean terminated) {
+		this.terminated = terminated;
 	}
 	
 	public AbstractHeap getAbstractHeap() {
@@ -26,4 +39,105 @@ public class Summary {
 	public jq_Method getMethod() {
 		return method;
 	}
+	
+	public void handleStmt(Quad quad) {
+		quad.accept(qv);
+	}
+	
+	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
+
+		public void visitALenth(Quad stmt) {
+		}
+
+		public void visitALoad(Quad stmt) {
+			// TODO
+		}
+
+		public void visitAStore(Quad stmt) {
+			// TODO
+		}
+
+		public void visitBinary(Quad stmt) {
+		}
+
+		public void visitBoundsCheck(Quad stmt) {
+		}
+
+		public void visitBranch(Quad stmt) {
+		}
+
+		public void visitCheckCast(Quad stmt) {
+		}
+
+		public void visitGetfield(Quad stmt) {
+			// TODO
+		}
+
+		public void visitGetstatic(Quad stmt) {
+			// TODO
+		}
+
+		public void visitInstanceOf(Quad stmt) {
+		}
+
+		public void visitInvoke(Quad stmt) {
+			// TODO
+		}
+
+		public void visitMemLoad(Quad stmt) {
+		}
+
+		public void visitMemStore(Quad stmt) {
+		}
+
+		public void visitMonitor(Quad stmt) {
+		}
+
+		public void visitMove(Quad stmt) {
+			// TODO
+		}
+
+		public void visitMultiNewArray(Quad stmt) {
+			// TODO
+		}
+
+		public void visitNew(Quad stmt) {
+			// TODO
+		}
+
+		public void visitNewArray(Quad stmt) {
+			// TODO
+		}
+
+		public void visitNulCheck(Quad stmt) {
+		}
+
+		public void visitPhi(Quad stmt) {
+		}
+
+		public void visitPutfield(Quad stmt) {
+			// TODO
+		}
+
+		public void visitPutstatic(Quad stmt) {
+			// TODO
+		}
+
+		public void visitReturn(Quad stmt) {
+			// TODO
+		}
+
+		public void visitSpecial(Quad stmt) {
+		}
+
+		public void visitStoreCheck(Quad stmt) {
+		}
+
+		public void visitUnary(Quad stmt) {
+		}
+
+		public void visitZeroCheck(Quad stmt) {
+		}
+
+	};
 }
