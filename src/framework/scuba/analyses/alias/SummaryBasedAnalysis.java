@@ -110,7 +110,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("*****************************************");
 
 		intrapro.analyze(cfg);
-
 		//mark terminated
 	}
 	
