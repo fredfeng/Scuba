@@ -665,6 +665,15 @@ public class AbstractHeap {
 			P2Set p2Set) {
 		boolean ret = false;
 		P2Set currentHeap = null;
+		// first clean up the default targets in the p2set given the pair
+		cleanup(p2Set, pair);
+		// if the new p2Set is empty then return immediately
+		if (!p2Set.isEmpty())
+			pair.val0.addField(pair.val1);
+		else
+			return ret;
+
+		// then get the current heap given the memory location and the field
 		if (heapObjectsToP2Set.containsKey(pair)) {
 			currentHeap = heapObjectsToP2Set.get(pair);
 		} else {
@@ -672,7 +681,6 @@ public class AbstractHeap {
 			heapObjectsToP2Set.put(pair, currentHeap);
 			// fill the fields of the abstract memory location so that we can
 			// conveniently dump the topology of the heap
-			pair.val0.addField(pair.val1);
 		}
 
 		// update the locations in the real heap graph
@@ -682,5 +690,12 @@ public class AbstractHeap {
 		ret = currentHeap.join(p2Set);
 
 		return ret;
+	}
+
+	protected void cleanup(P2Set p2Set, Pair<AbstractMemLoc, FieldElem> pair) {
+		HeapObject defaultTarget = getDefaultTarget(pair.val0, pair.val1);
+		if (p2Set.containsHeapObject(defaultTarget)) {
+			p2Set.remove(defaultTarget);
+		}
 	}
 }
