@@ -18,7 +18,8 @@ public class Node {
 	}
 
 	public void addSuccessor(Node succ) {
-		successors.add(succ);
+		if(!successors.contains(succ))
+			successors.add(succ);
 	}
 
 	public String toString() {
