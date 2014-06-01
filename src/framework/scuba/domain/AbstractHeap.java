@@ -265,17 +265,11 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				loc, field);
 		if (loc.isArgDerived()) {
+			// get the default target given the memory location and the field
+			HeapObject defaultTarget = getDefaultTarget(loc, field);
 			// always find the default p2set of (loc, field)
-			P2Set defaultP2Set = null;
-			if (loc.hasFieldSelector(field)) {
-				// only AccessPath has field selectors
-				AccessPath path = ((AccessPath) loc).getPrefix(field);
-				path = getAbstractMemLoc(path);
-				defaultP2Set = new P2Set(path);
-			} else {
-				AccessPath hObj = getAbstractMemLoc(loc, field);
-				defaultP2Set = new P2Set(hObj);
-			}
+			P2Set defaultP2Set = new P2Set(defaultTarget);
+
 			// return the p2set always including the default p2set
 			if (heapObjectsToP2Set.containsKey(pair)) {
 				return P2SetHelper.join(heapObjectsToP2Set.get(pair),
@@ -652,6 +646,21 @@ public class AbstractHeap {
 		return false;
 	}
 
+	protected HeapObject getDefaultTarget(AbstractMemLoc loc, FieldElem field) {
+		AccessPath ret = null;
+		if (loc.isArgDerived()) {
+			if (loc.hasFieldSelector(field)) {
+				// only AccessPath has field selectors
+				AccessPath path = ((AccessPath) loc).getPrefix(field);
+				ret = getAbstractMemLoc(path);
+			} else {
+				ret = getAbstractMemLoc(loc, field);
+			}
+		}
+
+		return ret;
+	}
+
 	protected boolean weakUpdate(Pair<AbstractMemLoc, FieldElem> pair,
 			P2Set p2Set) {
 		boolean ret = false;
@@ -665,7 +674,7 @@ public class AbstractHeap {
 			// conveniently dump the topology of the heap
 			pair.val0.addField(pair.val1);
 		}
-		
+
 		// update the locations in the real heap graph
 		heap.add(pair.val0);
 		heap.addAll(p2Set.getHeapObjects());
