@@ -669,6 +669,8 @@ public class AbstractHeap {
 		cleanup(p2Set, pair);
 		// if the new p2Set is empty then return immediately
 		if (!p2Set.isEmpty())
+			// fill the fields of the abstract memory location so that we can
+			// conveniently dump the topology of the heap
 			pair.val0.addField(pair.val1);
 		else
 			return ret;
@@ -679,8 +681,6 @@ public class AbstractHeap {
 		} else {
 			currentHeap = new P2Set();
 			heapObjectsToP2Set.put(pair, currentHeap);
-			// fill the fields of the abstract memory location so that we can
-			// conveniently dump the topology of the heap
 		}
 
 		// update the locations in the real heap graph
