@@ -1,15 +1,17 @@
 package framework.scuba.analyses.dataflow;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
 
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
-import joeq.Compiler.Quad.RegisterFactory;
-import joeq.Compiler.Quad.RegisterFactory.Register;
 import framework.scuba.domain.Summary;
-import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.SCCHelper;
+import framework.scuba.utils.Graph;
+import framework.scuba.utils.Node;
 
 /**
  * Intra-proc summary-based analysis
@@ -21,19 +23,82 @@ public class IntraProcSumAnalysis {
     
     Summary summary; 
 
-    //now we assume there is no scc in basicblock.
     public void analyze(ControlFlowGraph g) {
     	BasicBlock entry = g.entry();
     	HashSet<BasicBlock> roots = new HashSet();
+    	HashMap<Node, Set<BasicBlock>> nodeToScc = new HashMap();
+    	HashMap<Set<BasicBlock>, Node> sccToNode = new HashMap();
+    	HashMap<BasicBlock, Node> bbToNode = new HashMap();
+
+
     	roots.add(entry);
+    	Graph repGraph = new Graph();
     	SCCHelper sccManager = new SCCHelper(g, roots);
     	System.out.println("SCC List in BBs:-----" + sccManager.getComponents());
+    	int idx = 0;
     	//compute SCC in current CFG.
-    	//for now, use the default reversePostOrder from joeq. 
-    	//I will implement a new version to support scc later.
-    	g.reversePostOrder();
-    	for(BasicBlock bb : g.reversePostOrder()) {
-    		handleBasicBlock(bb);
+    	for(Set<BasicBlock> scc : sccManager.getComponents()){
+    		//create a representation node for each scc.
+    		idx++;
+    		Node node = new Node("scc" + idx);
+    		nodeToScc.put(node, scc);
+    		sccToNode.put(scc, node);
+    		for(BasicBlock mb : scc) 
+    			bbToNode.put(mb, node);
+    		
+    		repGraph.addNode(node);
+    		if(scc.contains(entry))
+    			repGraph.setEntry(node);
+    	}
+    	
+    	for(Set<BasicBlock> scc : sccManager.getComponents()){
+    		Node cur = sccToNode.get(scc);
+    		for(BasicBlock nb : scc) {
+    			for(BasicBlock sucb : nb.getSuccessors()) {
+    				if(scc.contains(sucb))
+    					continue;
+    				else {
+    					Node scNode = bbToNode.get(sucb);
+    					cur.addSuccessor(scNode);
+    				}
+    			}
+    		}
+    	}
+    	
+    	for(Node rep : repGraph.getReversePostOrder()) {
+    		Set<BasicBlock> scc = nodeToScc.get(rep);
+    		if(scc.size() == 1) {
+    			BasicBlock sccB = scc.iterator().next();
+    			//self loop in current block.
+    			if(sccB.getSuccessors().contains(sccB))
+    				handleSCC(scc);
+    			else
+    				this.handleBasicBlock(sccB);
+    		} else {
+				handleSCC(scc);
+    		}
+    	}
+    }
+    
+	//compute the fixed-point for this scc.
+    public void handleSCC(Set<BasicBlock> scc) {
+    	LinkedList<BasicBlock> wl = new LinkedList();
+    	HashMap<BasicBlock, Boolean> visit = new HashMap();
+    	for(BasicBlock b : scc)
+    		visit.put(b, false);
+    	
+    	wl.addAll(scc);
+    	while(true) {
+    		BasicBlock bb = wl.poll();
+    		boolean flag = handleBasicBlock(bb);
+    		if(flag) 
+    			for(BasicBlock b : scc)
+    				visit.put(b, false);
+    		else
+    			visit.put(bb, true);
+    		boolean allTrue = visit.values().contains(false);
+    		
+    		if(allTrue) break;
     	}
     }
     

@@ -13,13 +13,13 @@ import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 
 public class SCCHelper {
-	protected final List<Set<Object>> componentList = new ArrayList<Set<Object>>();
+	protected final List<Set<BasicBlock>> componentList = new ArrayList<Set<BasicBlock>>();
 
 	protected int index = 0;
 
 	protected Map<Object, Integer> indexForNode, lowlinkForNode;
 
-	protected Stack<Object> s;
+	protected Stack<BasicBlock> s;
 
 	protected ControlFlowGraph g;
 
@@ -29,7 +29,7 @@ public class SCCHelper {
 	 */
 	public SCCHelper(ControlFlowGraph g, Set roots) {
 		this.g = g;
-		s = new Stack<Object>();
+		s = new Stack<BasicBlock>();
 		Set<Object> heads = roots;
 
 		indexForNode = new HashMap<Object, Integer>();
@@ -70,8 +70,8 @@ public class SCCHelper {
 			}
 		}
 		if (lowlinkForNode.get(v).intValue() == indexForNode.get(v).intValue()) {
-			Set<Object> scc = new HashSet<Object>();
-			Object v2;
+			Set<BasicBlock> scc = new HashSet<BasicBlock>();
+			BasicBlock v2;
 			do {
 				v2 = s.pop();
 				scc.add(v2);
@@ -83,7 +83,7 @@ public class SCCHelper {
 	/**
 	 * @return the list of the strongly-connected components
 	 */
-	public List<Set<Object>> getComponents() {
+	public List<Set<BasicBlock>> getComponents() {
 		return componentList;
 	}
 }
