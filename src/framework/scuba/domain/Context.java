@@ -1,10 +1,14 @@
 package framework.scuba.domain;
 
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 public class Context {
 
 	protected LinkedList<ProgramPoint> context;
+
+	protected Set<ProgramPoint> points;
 
 	public Context() {
 
@@ -13,17 +17,23 @@ public class Context {
 	public Context(ProgramPoint point) {
 		this.context = new LinkedList<ProgramPoint>();
 		this.context.add(point);
+		this.points = new HashSet<ProgramPoint>();
+		this.points.add(point);
 	}
 
 	public void appendFront(ProgramPoint point) {
-
-		this.context.addFirst(point);
+		context.addFirst(point);
+		points.add(point);
 
 	}
 
 	public void appendEnd(ProgramPoint point) {
+		context.addLast(point);
+		points.add(point);
+	}
 
-		this.context.addLast(point);
+	public boolean contains(ProgramPoint point) {
+		return points.contains(point);
 	}
 
 	public int size() {
