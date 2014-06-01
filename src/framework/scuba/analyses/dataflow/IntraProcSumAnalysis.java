@@ -37,6 +37,7 @@ public class IntraProcSumAnalysis {
     	System.out.println("SCC List in BBs:-----" + sccManager.getComponents());
     	int idx = 0;
     	//compute SCC in current CFG.
+    	//step 1: collapse scc into one node.
     	for(Set<BasicBlock> scc : sccManager.getComponents()){
     		//create a representation node for each scc.
     		idx++;
@@ -65,6 +66,7 @@ public class IntraProcSumAnalysis {
     		}
     	}
     	
+    	//step2: analyzing through normal post reverse order.
     	for(Node rep : repGraph.getReversePostOrder()) {
     		Set<BasicBlock> scc = nodeToScc.get(rep);
     		if(scc.size() == 1) {
@@ -87,7 +89,15 @@ public class IntraProcSumAnalysis {
     	for(BasicBlock b : scc)
     		visit.put(b, false);
     	
-    	wl.addAll(scc);
+    	//add all members which have preds outside the scc. 
+    	for(BasicBlock entry : scc)
+    		if(!scc.containsAll(entry.getPredecessors()))
+    			wl.add(entry);
+    	
+    	//strange case.
+    	if(wl.size() == 0) 
+    		wl.add(scc.iterator().next());
+    	
     	while(true) {
     		BasicBlock bb = wl.poll();
     		boolean flag = handleBasicBlock(bb);
@@ -96,6 +106,8 @@ public class IntraProcSumAnalysis {
     				visit.put(b, false);
     		else
     			visit.put(bb, true);
+    		
+    		wl.addAll(bb.getSuccessors());
     		boolean allTrue = !visit.values().contains(false);
     		
     		if(allTrue) break;
