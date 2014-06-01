@@ -1,12 +1,16 @@
 package framework.scuba.analyses.alias;
 
 import java.io.PrintWriter;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.CodeCache;
+import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.SSA.EnterSSA;
 import chord.analyses.alias.CICG;
 import chord.analyses.alias.ICICG;
 import chord.analyses.method.DomM;
@@ -16,6 +20,9 @@ import chord.project.ClassicProject;
 import chord.project.OutDirUtils;
 import chord.project.analyses.JavaAnalysis;
 import chord.project.analyses.ProgramRel;
+import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
+import framework.scuba.domain.SummariesEnv;
+import framework.scuba.domain.Summary;
 
 /**
  * Summary-based analysis.
@@ -40,6 +47,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
     protected ProgramRel relMM;
     protected CICG callGraph;
     
+	IntraProcSumAnalysis intrapro = new IntraProcSumAnalysis();
+
 	private void init() {
 		getCallGraph();
 		System.out.println("Total nodes in CG---------" + callGraph.getNodes().size());
@@ -81,9 +90,27 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 	}
 	
-	private void analyze(jq_Method method) {
+	private void analyze(jq_Method m) {
 		//do interproc
-		System.out.println("Analyzing----------->" + method);
+		System.out
+				.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+		System.out.println("Handling the method: ");
+		System.out.println(m);
+
+		Summary summary = SummariesEnv.v().getSummary(m);
+		intrapro.setSummary(summary);
+		if (m.getBytecode() == null)
+			return;
+
+		ControlFlowGraph cfg = CodeCache.getCode(m);
+		EnterSSA ssa = new EnterSSA();
+		ssa.visitCFG(cfg);
+		System.out.println("*****************************************");
+		System.out.println(cfg.fullDump());
+		System.out.println("*****************************************");
+
+		intrapro.analyze(cfg);
+
 		//mark terminated
 	}
 	
