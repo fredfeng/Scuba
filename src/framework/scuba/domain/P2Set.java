@@ -6,12 +6,11 @@ import java.util.Set;
 
 import framework.scuba.helper.ConstraintManager;
 
-public class P2Set {
+public class P2Set extends AbstractMemLocConstraintSet {
 
 	Map<HeapObject, Constraint> p2Set = new HashMap<HeapObject, Constraint>();
 
 	public P2Set() {
-
 	}
 
 	public P2Set(HeapObject obj, Constraint constraint) {
@@ -22,8 +21,15 @@ public class P2Set {
 	public P2Set(HeapObject obj) {
 		assert (obj.isArgDerived()) : obj + " is not argument derived!";
 		assert (obj instanceof HeapObject) : obj + " is not a heap object!";
-		p2Set = new HashMap<HeapObject, Constraint>();
 		p2Set.put(obj, ConstraintManager.genTrue());
+	}
+
+	public P2Set(NullElem nullElem) {
+		assert (nullElem instanceof NullElem) : nullElem
+				+ " should be a NullElem!";
+		assert (nullElem.isNotArgDerived()) : nullElem
+				+ " is a null elem and should be marked as not argument derived!";
+		p2Set.put(nullElem, ConstraintManager.genTrue());
 	}
 
 	public boolean isEmpty() {

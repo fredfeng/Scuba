@@ -135,7 +135,7 @@ public class AbstractHeap {
 		}
 	}
 
-	// print the heapObjectsToP2Set mapping in console
+	// print the heapObjectsToP2Set mapping in file
 	public void dumpHeapMappingToFile() {
 		StringBuilder b = new StringBuilder("");
 		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
@@ -197,7 +197,7 @@ public class AbstractHeap {
 				b.append("\"];\n");
 			} else if (loc instanceof AllocElem) {
 				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=doublecircle,label=\"");
+				b.append(" [shape=rectangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof StaticElem) {
@@ -207,7 +207,7 @@ public class AbstractHeap {
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
 				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=rectangle,label=\"");
+				b.append(" [shape=triangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof ParamElem) {
@@ -215,8 +215,13 @@ public class AbstractHeap {
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
+			} else if (loc instanceof NullElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=point,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
 			} else {
-				assert false : "wried things!";
+				assert false : "wried things! Unknow memory location";
 			}
 		}
 
@@ -260,7 +265,7 @@ public class AbstractHeap {
 				b.append("\"];\n");
 			} else if (loc instanceof AllocElem) {
 				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=doublecircle,label=\"");
+				b.append(" [shape=rectangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof StaticElem) {
@@ -270,7 +275,7 @@ public class AbstractHeap {
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
 				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=rectangle,label=\"");
+				b.append(" [shape=triangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof ParamElem) {
@@ -278,8 +283,13 @@ public class AbstractHeap {
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
+			} else if (loc instanceof NullElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=point,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
 			} else {
-				assert false : "wried things!";
+				assert false : "wried things! Unknown memory location.";
 			}
 		}
 
@@ -339,9 +349,16 @@ public class AbstractHeap {
 			}
 		} else if (loc.isNotArgDerived()) {
 			// TODO maybe we need a clone()?
-			assert (heapObjectsToP2Set.containsKey(pair)) : loc
-					+ " with field " + field + " should have a p2 set?";
-			return heapObjectsToP2Set.get(pair);
+			this.dumpHeapToFile();
+			// it is possible to have null pointers
+			// assert (heapObjectsToP2Set.containsKey(pair)) : loc
+			// + " with field " + field + " should have a p2 set?";
+			P2Set ret = heapObjectsToP2Set.get(pair);
+			if (ret != null) {
+				return ret;
+			} else {
+				return new P2Set(getAbstractMemLoc());
+			}
 		} else {
 			assert false : "you have not mark the argument derived marker before lookup!";
 		}
@@ -709,6 +726,18 @@ public class AbstractHeap {
 		return ret;
 	}
 
+	protected NullElem getAbstractMemLoc() {
+		NullElem ret = new NullElem();
+		if (memLocFactory.containsKey(ret)) {
+			return (NullElem) memLocFactory.get(ret);
+		}
+
+		ArgDerivedHelper.markArgDerived(ret);
+		memLocFactory.put(ret, ret);
+
+		return ret;
+	}
+
 	protected boolean strongUpdate(Pair<AbstractMemLoc, FieldElem> pair,
 			P2Set p2Set) {
 		assert (pair.val0 instanceof StackObject) : "Only stack objects can do strong update!";
@@ -740,6 +769,7 @@ public class AbstractHeap {
 		P2Set currentHeap = null;
 		// first clean up the default targets in the p2set given the pair
 		cleanup(p2Set, pair);
+
 		// if the new p2Set is empty then return immediately
 		if (!p2Set.isEmpty())
 			// fill the fields of the abstract memory location so that we can
@@ -776,5 +806,13 @@ public class AbstractHeap {
 		// do we need to check whether after removing the p2set is empty so that
 		// we can directly remove that whole entry?
 		// TODO
+	}
+
+	public Map<Pair<AbstractMemLoc, FieldElem>, P2Set> getHeap() {
+		return this.heapObjectsToP2Set;
+	}
+
+	public Set<AbstractMemLoc> getAllMemLocs() {
+		return this.memLocFactory.keySet();
 	}
 }
