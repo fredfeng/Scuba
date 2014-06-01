@@ -2,9 +2,9 @@ package framework.scuba.domain;
 
 public class AccessPath extends HeapObject {
 
-	protected AbstractMemLoc base;
+	final protected AbstractMemLoc base;
 
-	protected FieldElem field;
+	final protected FieldElem field;
 
 	public AccessPath(AbstractMemLoc base, FieldElem field) {
 		this.base = base;

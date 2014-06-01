@@ -6,13 +6,13 @@ import joeq.Class.jq_Method;
 public class ProgramPoint {
 
 	// the class this program point is in
-	protected jq_Class clazz;
+	final protected jq_Class clazz;
 
 	// the method this program point is in
-	protected jq_Method method;
+	final protected jq_Method method;
 
 	// the line number of this program point in the method of the class
-	protected int line;
+	final protected int line;
 
 	public ProgramPoint(jq_Class clazz, jq_Method method, int line) {
 		this.clazz = clazz;

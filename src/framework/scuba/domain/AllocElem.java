@@ -2,15 +2,16 @@ package framework.scuba.domain;
 
 public class AllocElem extends HeapObject {
 
-	protected Alloc alloc;
+	final protected Alloc alloc;
 
-	protected Context context;
+	final protected Context context;
 
 	public AllocElem(Alloc allocSite, Context context) {
 		this.alloc = allocSite;
 		this.context = context;
 	}
 
+	
 	public AbstractMemLoc findRoot() {
 		return this;
 	}

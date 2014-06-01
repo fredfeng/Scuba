@@ -45,9 +45,11 @@ public class P2Set {
 				// obj is in both p2sets
 				// directly get the other p2set's constraints
 				Constraint otherCst = other.getConstraint(obj);
+
 				// check whether we need to update the p2set of this heap object
 				if (p2Set.get(obj).equals(otherCst))
 					continue;
+
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)
 				Constraint newCst = ConstraintManager.union(p2Set.get(obj),
@@ -59,6 +61,8 @@ public class P2Set {
 				// obj is only in other's p2set
 				// AVOID directly get the constraint instance of the other
 				// p2set!!!! only get the shallow copy of the other constraints
+
+				// for this case, we should add a new edge
 				p2Set.put(obj, other.getConstraint(obj).clone());
 				ret = true;
 			}
