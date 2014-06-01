@@ -96,7 +96,7 @@ public class IntraProcSumAnalysis {
     				visit.put(b, false);
     		else
     			visit.put(bb, true);
-    		boolean allTrue = visit.values().contains(false);
+    		boolean allTrue = !visit.values().contains(false);
     		
     		if(allTrue) break;
     	}
