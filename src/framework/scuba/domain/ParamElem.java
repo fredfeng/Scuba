@@ -42,8 +42,10 @@ public class ParamElem extends StackObject {
 
 	@Override
 	public String toString() {
-		return "[Class] " + clazz + " [Method] " + method + " [Parameter] "
-				+ parameter;
+		// return "[C] " + clazz.getName() + " [M] " + method.getName() +
+		// " [P] "
+		// + parameter;
+		return "[P]" + parameter;
 	}
 
 	// getClass method

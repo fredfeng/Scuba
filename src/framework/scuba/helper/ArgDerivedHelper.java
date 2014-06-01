@@ -10,6 +10,7 @@ import framework.scuba.domain.StaticElem;
 public class ArgDerivedHelper {
 
 	public static ArgDerivedType markArgDerived(AbstractMemLoc loc) {
+		assert (loc.unknowArgDerived());
 		// if root has been analyzed for arg-derived
 		if (loc.knownArgDerived()) {
 			return loc.getArgDerivedMarker();
@@ -20,8 +21,10 @@ public class ArgDerivedHelper {
 		// if not, do the arg-derived analysis
 		if (root instanceof LocalVarElem || root instanceof AllocElem) {
 			loc.resetArgDerived();
+			assert loc.isNotArgDerived();
 		} else if (root instanceof ParamElem || root instanceof StaticElem) {
 			loc.setArgDerived();
+			assert loc.isArgDerived();
 		} else {
 			assert false : "ArgDerivedHelper wrong!";
 		}

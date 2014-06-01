@@ -14,7 +14,7 @@ public class EpsilonFieldElem extends FieldElem {
 
 	@Override
 	public String toString() {
-		return "[Field] Epsilon Field";
+		return "[F]e";
 	}
 
 }

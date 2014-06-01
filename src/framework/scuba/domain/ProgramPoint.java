@@ -50,7 +50,7 @@ public class ProgramPoint {
 
 	@Override
 	public String toString() {
-		return "[Class] " + clazz + " [Method] " + method + " [Line] " + line;
+		return "[C]" + clazz + " [M]" + method + "[L]" + line;
 	}
 
 }

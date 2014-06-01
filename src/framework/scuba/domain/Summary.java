@@ -23,6 +23,18 @@ public class Summary {
 		absHeap = new AbstractHeap();
 	}
 
+	public void dump() {
+		absHeap.dump();
+	}
+
+	public void dumpAllLocs() {
+		absHeap.dumpAllMemLocs();
+	}
+
+	public void validate() {
+		absHeap.validate();
+	}
+
 	public boolean isTerminated() {
 		return terminated;
 	}

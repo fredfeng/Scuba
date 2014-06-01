@@ -11,7 +11,7 @@ public abstract class AbstractMemLoc {
 		IS_ARG_DERIVED, NOT_ARG_DERIVED, UN_KNOWN;
 	}
 
-	ArgDerivedType argDerived;
+	ArgDerivedType argDerived = ArgDerivedType.UN_KNOWN;
 
 	// abstract methods
 	abstract public AbstractMemLoc findRoot();

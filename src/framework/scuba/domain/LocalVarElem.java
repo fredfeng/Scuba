@@ -43,8 +43,9 @@ public class LocalVarElem extends StackObject {
 	@Override
 	public String toString() {
 
-		return "[Class] " + clazz + " [Method] " + method + " [LocalVar] "
-				+ local;
+		//return "[C]" + clazz.getName() + "[M]" + method.getName() + "[LocalVar]"
+				//+ local;
+		return "[V]" + local;
 	}
 
 	// getClass method

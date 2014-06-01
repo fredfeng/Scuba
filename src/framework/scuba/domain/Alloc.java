@@ -27,6 +27,7 @@ public class Alloc {
 
 	@Override
 	public String toString() {
-		return "[Alloc] " + type;
+		return "[A]" + type.getName();
 	}
+
 }

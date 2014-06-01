@@ -29,7 +29,7 @@ public class StaticElem extends HeapObject {
 
 	@Override
 	public String toString() {
-		return "[Static Class] " + clazz;
+		return "[SC]" + clazz.getName();
 	}
 
 	@Override

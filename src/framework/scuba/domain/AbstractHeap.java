@@ -49,7 +49,7 @@ public class AbstractHeap {
 	// this should include the keySet of heap but include more than that (maybe
 	// some locations are not used in the program
 	final private Map<AbstractMemLoc, AbstractMemLoc> memLocFactory;
-	
+
 	public boolean isChanged = false;
 
 	public static enum VariableType {
@@ -136,11 +136,20 @@ public class AbstractHeap {
 	}
 
 	public void dump() {
-		StringBuilder b = new StringBuilder("Abstract Heap {\n");
+		StringBuilder b = new StringBuilder("digraph AbstractHeap {\n");
 		b.append("  rankdir = LR;\n");
 
+		Set<AbstractMemLoc> allLocs = new HashSet<AbstractMemLoc>();
+
 		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
-			AbstractMemLoc loc = pair.val0;
+			allLocs.add(pair.val0);
+			for (HeapObject hObj : heapObjectsToP2Set.get(pair)
+					.getHeapObjects()) {
+				allLocs.add(hObj);
+			}
+		}
+
+		for (AbstractMemLoc loc : allLocs) {
 			if (loc instanceof AccessPath) {
 				b.append("  ").append("\"" + loc + "\"");
 				b.append(" [shape=circle,label=\"");
@@ -179,7 +188,7 @@ public class AbstractHeap {
 				b.append("  ").append("\"" + loc + "\"");
 				b.append(" -> ").append("\"" + hObj + "\"")
 						.append(" [label=\"");
-				b.append("\"" + f + "\"");
+				b.append(f);
 				b.append("\"]\n");
 			}
 		}
@@ -198,7 +207,7 @@ public class AbstractHeap {
 	}
 
 	public void dumpAllMemLocs() {
-		StringBuilder b = new StringBuilder("Abstract Heap {\n");
+		StringBuilder b = new StringBuilder("Digraph allMemLocs {\n");
 		b.append("  rankdir = LR;\n");
 
 		for (AbstractMemLoc loc : memLocFactory.keySet()) {
@@ -235,12 +244,17 @@ public class AbstractHeap {
 		for (AbstractMemLoc loc : memLocFactory.keySet()) {
 			Set<FieldElem> fields = loc.getFields();
 			for (FieldElem f : fields) {
-				P2Set p2Set = heapObjectsToP2Set.get(getAbstractMemLoc(loc, f));
+				System.out.println(loc);
+				System.out.println(f);
+				// P2Set p2Set = heapObjectsToP2Set.get(getAbstractMemLoc(loc,
+				// f));
+				P2Set p2Set = lookup(loc, f);
+
 				for (HeapObject obj : p2Set.getHeapObjects()) {
 					b.append("  ").append("\"" + loc + "\"");
 					b.append(" -> ").append("\"" + obj + "\"")
 							.append(" [label=\"");
-					b.append("\"" + f + "\"");
+					b.append(f);
 					b.append("\"]\n");
 				}
 			}
@@ -257,18 +271,21 @@ public class AbstractHeap {
 			e.printStackTrace();
 			System.exit(0);
 		}
-
 	}
 
 	// field look-up for location which is described in definition 7 of the
 	// paper
 	public P2Set lookup(AbstractMemLoc loc, FieldElem field) {
 		// create a pair wrapper for lookup
+
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				loc, field);
+		System.out.println(loc.getArgDerivedMarker());
 		if (loc.isArgDerived()) {
+
 			// get the default target given the memory location and the field
 			HeapObject defaultTarget = getDefaultTarget(loc, field);
+
 			// always find the default p2set of (loc, field)
 			P2Set defaultP2Set = new P2Set(defaultTarget);
 
@@ -324,8 +341,9 @@ public class AbstractHeap {
 		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 		VariableType rvt = getVarType(stmt.getMethod(), rhsBase.getRegister());
 
-		boolean flag = this.handleLoadStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
-				lvt, rhsBase.getRegister(), rhsField.getField(), rvt);
+		boolean flag = this.handleLoadStmt(meth.getDeclaringClass(), meth,
+				lhs.getRegister(), lvt, rhsBase.getRegister(),
+				rhsField.getField(), rvt);
 		isChanged = (flag || isChanged);
 
 	}
@@ -354,8 +372,8 @@ public class AbstractHeap {
 		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 		VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
-		boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
-				rhs.getRegister(), rvt);
+		boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
+				lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 		isChanged = (flag || isChanged);
 	}
 
@@ -371,8 +389,8 @@ public class AbstractHeap {
 		RegisterOperand rop = New.getDest(stmt);
 		VariableType vt = getVarType(meth, rop.getRegister());
 
-		boolean flag = handleNewStmt(stmt.getMethod().getDeclaringClass(), meth,
-				rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
+		boolean flag = handleNewStmt(stmt.getMethod().getDeclaringClass(),
+				meth, rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
 		isChanged = (flag || isChanged);
 	}
 
@@ -390,8 +408,9 @@ public class AbstractHeap {
 		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 		VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
-		boolean flag = this.handleStoreStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
-				lvt, field.getField(), rhs.getRegister(), rvt);
+		boolean flag = this.handleStoreStmt(meth.getDeclaringClass(), meth,
+				lhs.getRegister(), lvt, field.getField(), rhs.getRegister(),
+				rvt);
 		isChanged = (flag || isChanged);
 	}
 
@@ -426,7 +445,10 @@ public class AbstractHeap {
 			Register left, VariableType leftVType, Register right,
 			VariableType rightVType) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
+		assert v1.knownArgDerived();
 		StackObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
+		assert v2.knownArgDerived();
+
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, new EpsilonFieldElem());
@@ -531,6 +553,7 @@ public class AbstractHeap {
 			return (AccessPath) memLocFactory.get(ret);
 		}
 
+		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
 
 		return ret;
@@ -545,6 +568,7 @@ public class AbstractHeap {
 			return (AccessPath) memLocFactory.get(ret);
 		}
 
+		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
 
 		return ret;
@@ -555,6 +579,7 @@ public class AbstractHeap {
 			return (AccessPath) memLocFactory.get(path);
 		}
 
+		ArgDerivedHelper.markArgDerived(path);
 		memLocFactory.put(path, path);
 
 		return path;
@@ -700,9 +725,15 @@ public class AbstractHeap {
 	}
 
 	protected void cleanup(P2Set p2Set, Pair<AbstractMemLoc, FieldElem> pair) {
+		if (p2Set == null)
+			return;
+
 		HeapObject defaultTarget = getDefaultTarget(pair.val0, pair.val1);
 		if (p2Set.containsHeapObject(defaultTarget)) {
 			p2Set.remove(defaultTarget);
 		}
+		// do we need to check whether after removing the p2set is empty so that
+		// we can directly remove that whole entry?
+		// TODO
 	}
 }

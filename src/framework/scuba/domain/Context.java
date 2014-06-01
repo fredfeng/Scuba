@@ -84,7 +84,7 @@ public class Context {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("[Context]");
+		sb.append("[Ctx]");
 		for (ProgramPoint point : context) {
 			sb.append(point + "@");
 		}
