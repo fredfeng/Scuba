@@ -89,12 +89,12 @@ public class Summary {
     	System.out.println("**************************************");
     }
 
-	public void dump() {
-		absHeap.dump();
+	public void dumpSummaryToFile() {
+		absHeap.dumpHeapToFile();
 	}
 
-	public void dumpAllLocs() {
-		absHeap.dumpAllMemLocs();
+	public void dumpAllMemLocsHeapToFile() {
+		absHeap.dumpAllMemLocsHeapToFile();
 	}
 
 	public void validate() {

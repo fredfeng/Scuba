@@ -135,7 +135,47 @@ public class AbstractHeap {
 		}
 	}
 
-	public void dump() {
+	// print the heapObjectsToP2Set mapping in console
+	public void dumpHeapMappingToFile() {
+		StringBuilder b = new StringBuilder("");
+		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
+			AbstractMemLoc loc = pair.val0;
+			FieldElem f = pair.val1;
+			P2Set p2set = heapObjectsToP2Set.get(pair);
+			b.append("(" + loc + "," + f + ")\n");
+			b.append(p2set + "\n");
+		}
+
+		try {
+			BufferedWriter bufw = new BufferedWriter(new FileWriter(
+					"output/heapMapping.dot"));
+			bufw.write(b.toString());
+			bufw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+	}
+
+	public void dumpAllMemLocsToFile() {
+		StringBuilder b = new StringBuilder("");
+		for (AbstractMemLoc loc : memLocFactory.keySet()) {
+			b.append(loc + "\n");
+		}
+
+		try {
+			BufferedWriter bufw = new BufferedWriter(new FileWriter(
+					"output/createdLocations.dot"));
+			bufw.write(b.toString());
+			bufw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+	}
+
+	// draw the heap (without default edges) in the dot file
+	public void dumpHeapToFile() {
 		StringBuilder b = new StringBuilder("digraph AbstractHeap {\n");
 		b.append("  rankdir = LR;\n");
 
@@ -206,7 +246,9 @@ public class AbstractHeap {
 		}
 	}
 
-	public void dumpAllMemLocs() {
+	// draw the heap (with all memory locations created and all default edges
+	// used) in the dot file
+	public void dumpAllMemLocsHeapToFile() {
 		StringBuilder b = new StringBuilder("Digraph allMemLocs {\n");
 		b.append("  rankdir = LR;\n");
 
@@ -244,10 +286,10 @@ public class AbstractHeap {
 		for (AbstractMemLoc loc : memLocFactory.keySet()) {
 			Set<FieldElem> fields = loc.getFields();
 			for (FieldElem f : fields) {
-				System.out.println(loc);
-				System.out.println(f);
+				// we should not use the following commented to print the p2set
 				// P2Set p2Set = heapObjectsToP2Set.get(getAbstractMemLoc(loc,
 				// f));
+				// instead we should use the following
 				P2Set p2Set = lookup(loc, f);
 
 				for (HeapObject obj : p2Set.getHeapObjects()) {
@@ -280,7 +322,6 @@ public class AbstractHeap {
 
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				loc, field);
-		System.out.println(loc.getArgDerivedMarker());
 		if (loc.isArgDerived()) {
 
 			// get the default target given the memory location and the field
