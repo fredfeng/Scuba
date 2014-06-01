@@ -50,8 +50,8 @@ public class IntraProcHarness {
 			System.out.println(cfg.fullDump());
 			p.analyze(cfg);
 
-			summary.dump();
-			summary.dumpAllLocs();
+			summary.dumpSummaryToFile();
+			summary.dumpAllMemLocsHeapToFile();
 			summary.validate();
 			break;
 		}
