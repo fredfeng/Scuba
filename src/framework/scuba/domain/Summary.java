@@ -8,7 +8,9 @@ import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operator;
+import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operator.Getfield;
+import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.MultiNewArray;
 import joeq.Compiler.Quad.Operator.New;
 import joeq.Compiler.Quad.Operator.NewArray;
@@ -176,7 +178,8 @@ public class Summary {
 
 		public void visitMove(Quad stmt) {
 			// TODO
-			absHeap.handleMoveStmt(stmt);
+			if(Move.getSrc(stmt) instanceof RegisterOperand)
+				absHeap.handleMoveStmt(stmt);
 		}
 
 		public void visitMultiNewArray(Quad stmt) {
