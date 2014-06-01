@@ -1,12 +1,15 @@
 package framework.scuba.analyses.dataflow;
 
 import java.util.HashSet;
-import java.util.LinkedList;
 
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.RegisterFactory;
+import joeq.Compiler.Quad.RegisterFactory.Register;
 import framework.scuba.domain.Summary;
+import framework.scuba.domain.AbstractHeap.VariableType;
+import framework.scuba.helper.SCCHelper;
 
 /**
  * Intra-proc summary-based analysis
@@ -21,14 +24,16 @@ public class IntraProcSumAnalysis {
     //now we assume there is no scc in basicblock.
     public void analyze(ControlFlowGraph g) {
     	BasicBlock entry = g.entry();
-    	visitSubBlocks(entry);
-    }
-    
-    //recursive visit blocks.
-    public void visitSubBlocks(BasicBlock bb) {
-		handleBasicBlock(bb);
-    	for(BasicBlock succ : bb.getSuccessors()) {
-    		visitSubBlocks(succ);
+    	HashSet<BasicBlock> roots = new HashSet();
+    	roots.add(entry);
+    	SCCHelper sccManager = new SCCHelper(g, roots);
+    	System.out.println("SCC List in BBs:-----" + sccManager.getComponents());
+    	//compute SCC in current CFG.
+    	//for now, use the default reversePostOrder from joeq. 
+    	//I will implement a new version to support scc later.
+    	g.reversePostOrder();
+    	for(BasicBlock bb : g.reversePostOrder()) {
+    		handleBasicBlock(bb);
     	}
     }
     
