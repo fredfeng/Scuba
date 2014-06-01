@@ -1,8 +1,22 @@
 package framework.scuba.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.BasicBlock;
+import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operand;
+import joeq.Compiler.Quad.Operator;
+import joeq.Compiler.Quad.Operator.Getfield;
+import joeq.Compiler.Quad.Operator.MultiNewArray;
+import joeq.Compiler.Quad.Operator.New;
+import joeq.Compiler.Quad.Operator.NewArray;
+import joeq.Compiler.Quad.Operator.Putfield;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.QuadVisitor;
+import joeq.Compiler.Quad.RegisterFactory;
+import joeq.Compiler.Quad.RegisterFactory.Register;
 
 /**
  * Representing the summary for a method. Now it only contains abstractHeap.
@@ -21,7 +35,59 @@ public class Summary {
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();
+		this.dumpSummary4Method(meth);
 	}
+	
+    public void dumpSummary4Method(jq_Method meth) {
+    	System.out.println("Summary for method: " + meth.getName());
+    	System.out.println("**************************************");
+		ControlFlowGraph cfg = meth.getCFG();
+		String params = "";
+		RegisterFactory rf = cfg.getRegisterFactory();
+		int numArgs = meth.getParamTypes().length;
+		for (int zIdx = 0; zIdx < numArgs; zIdx++) {
+			Register v = rf.get(zIdx);
+			params = params + " " + v;
+		}
+		
+		Set<Register> locals = new HashSet();
+        for (Register v : meth.getLiveRefVars()) {
+        	if(!params.contains(v.toString()))
+        		locals.add(v);
+        }
+        
+		Set<String> allocs = new HashSet();
+		Set<Operand> fieldsBase = new HashSet();
+
+		for (BasicBlock bb : cfg.reversePostOrder()) {
+			for (Quad q : bb.getQuads()) {
+				Operator op = q.getOperator();
+				if (op instanceof New)
+					allocs.add(New.getType(q).getType().getName());
+
+				if (op instanceof NewArray)
+					allocs.add(NewArray.getType(q).getType().getName());
+
+				if (op instanceof MultiNewArray) 
+					allocs.add(MultiNewArray.getType(q).getType().getName());
+				
+				if (op instanceof Putfield) 
+					fieldsBase.add(Putfield.getBase(q));
+
+				if (op instanceof Getfield) 
+					fieldsBase.add(Getfield.getBase(q));
+
+			}
+		}
+
+		System.out.println("PARAM List: " + params);
+		System.out.println("Local List: " + locals);
+		System.out.println("Alloc List: " + allocs);
+		System.out.println("Field access List: " + fieldsBase);
+
+
+    	System.out.println("**************************************");
+    }
 
 	public void dump() {
 		absHeap.dump();

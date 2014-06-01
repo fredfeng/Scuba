@@ -32,7 +32,7 @@ public class IntraProcHarness {
 		// String s = "test.intraproc.TestRule1";
 		// String s = "test.intraproc.TestRule2";
 		// String s = "test.intraproc.TestRule3";
-		String s = "test.intraproc.TestRule4";
+		String s = "test.intraproc.TestRule3";
 		jq_Class c = (jq_Class) jq_Type.parseType(s);
 		c.load();
 		set.addAll(Arrays.asList(c.getDeclaredStaticMethods()));
