@@ -349,7 +349,6 @@ public class AbstractHeap {
 			}
 		} else if (loc.isNotArgDerived()) {
 			// TODO maybe we need a clone()?
-			this.dumpHeapToFile();
 			// it is possible to have null pointers
 			// assert (heapObjectsToP2Set.containsKey(pair)) : loc
 			// + " with field " + field + " should have a p2 set?";

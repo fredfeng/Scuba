@@ -31,7 +31,8 @@ public class NullElem extends HeapObject {
 
 	@Override
 	public void addField(FieldElem field) {
-		assert false : "You can NOT add fields to a NullElem!!";
+		// we do not add any field for a null element
+		// assert false : "You can NOT add fields to a NullElem!!";
 	}
 
 	@Override
