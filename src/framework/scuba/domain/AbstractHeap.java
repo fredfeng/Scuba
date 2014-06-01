@@ -49,6 +49,8 @@ public class AbstractHeap {
 	// this should include the keySet of heap but include more than that (maybe
 	// some locations are not used in the program
 	final private Map<AbstractMemLoc, AbstractMemLoc> memLocFactory;
+	
+	public boolean isChanged = false;
 
 	public static enum VariableType {
 		PARAMEMTER, LOCAL_VARIABLE;
@@ -322,8 +324,10 @@ public class AbstractHeap {
 		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 		VariableType rvt = getVarType(stmt.getMethod(), rhsBase.getRegister());
 
-		this.handleLoadStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
+		boolean flag = this.handleLoadStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
 				lvt, rhsBase.getRegister(), rhsField.getField(), rvt);
+		isChanged = (flag || isChanged);
+
 	}
 
 	public void handleGetstaticStmt(Quad stmt) {
@@ -350,8 +354,9 @@ public class AbstractHeap {
 		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 		VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
-		handleAssgnStmt(meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
+		boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 				rhs.getRegister(), rvt);
+		isChanged = (flag || isChanged);
 	}
 
 	public void handleMultiNewArrayStmt(Quad stmt) {
@@ -366,8 +371,9 @@ public class AbstractHeap {
 		RegisterOperand rop = New.getDest(stmt);
 		VariableType vt = getVarType(meth, rop.getRegister());
 
-		handleNewStmt(stmt.getMethod().getDeclaringClass(), meth,
+		boolean flag = handleNewStmt(stmt.getMethod().getDeclaringClass(), meth,
 				rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
+		isChanged = (flag || isChanged);
 	}
 
 	public void handleNewArrayStmt(Quad stmt) {
@@ -384,8 +390,9 @@ public class AbstractHeap {
 		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 		VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
-		this.handleStoreStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
+		boolean flag = this.handleStoreStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
 				lvt, field.getField(), rhs.getRegister(), rvt);
+		isChanged = (flag || isChanged);
 	}
 
 	public void handlePutstaticStmt(Quad stmt) {

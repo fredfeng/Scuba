@@ -1,24 +1,15 @@
 package test.intraproc;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
-import joeq.Compiler.Dataflow.BBComparator;
-import joeq.Compiler.Dataflow.IterativeSolver;
-import joeq.Compiler.Dataflow.PriorityQueueSolver;
-import joeq.Compiler.Dataflow.Problem;
-import joeq.Compiler.Dataflow.Solver;
-import joeq.Compiler.Dataflow.SortedSetSolver;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Main.HostedVM;
-import jwutil.graphs.EdgeGraph;
-import jwutil.graphs.ReverseGraph;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
@@ -29,11 +20,6 @@ import framework.scuba.domain.Summary;
  *
  */
 public class IntraProcHarness {
-
-    private static void solve(ControlFlowGraph cfg, Solver s, Problem p) {
-        s.initialize(p, new EdgeGraph(new ReverseGraph(cfg, Collections.singleton(cfg.exit()))));
-        s.solve();
-    }
 
     //temporary entry point for intra-proc analysis.
     public static void main(String[] args) {
@@ -48,7 +34,6 @@ public class IntraProcHarness {
 		set.addAll(Arrays.asList(c.getDeclaredInstanceMethods()));
             
 		IntraProcSumAnalysis p = new IntraProcSumAnalysis();
-        Solver s1 = new IterativeSolver();
         for (Iterator<jq_Method> i = set.iterator(); i.hasNext(); ) {
             jq_Method m = (jq_Method) i.next();
             
@@ -57,8 +42,7 @@ public class IntraProcHarness {
             if (m.getBytecode() == null) continue;
             ControlFlowGraph cfg = CodeCache.getCode(m);
             System.out.println(cfg.fullDump());
-            solve(cfg, s1, p);
-            Solver.dumpResults(cfg, s1);
+            p.analyze(cfg);
         }
     }
 
