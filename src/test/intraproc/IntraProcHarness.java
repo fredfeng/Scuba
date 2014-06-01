@@ -32,7 +32,8 @@ public class IntraProcHarness {
 		// String s = "test.intraproc.TestRule1";
 		// String s = "test.intraproc.TestRule2";
 		// String s = "test.intraproc.TestRule3";
-		String s = "test.intraproc.TestRule3";
+		// String s = "test.intraproc.TestRule4";
+		String s = "test.intraproc.TestRule6";
 		jq_Class c = (jq_Class) jq_Type.parseType(s);
 		c.load();
 		set.addAll(Arrays.asList(c.getDeclaredStaticMethods()));
@@ -42,18 +43,30 @@ public class IntraProcHarness {
 		for (Iterator<jq_Method> i = set.iterator(); i.hasNext();) {
 			jq_Method m = (jq_Method) i.next();
 
+			System.out
+					.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+			System.out.println("Handling the method: ");
+			System.out.println(m);
+
 			Summary summary = SummariesEnv.v().getSummary(m);
 			p.setSummary(summary);
 			if (m.getBytecode() == null)
 				continue;
 			ControlFlowGraph cfg = CodeCache.getCode(m);
+			System.out.println("*****************************************");
 			System.out.println(cfg.fullDump());
+			System.out.println("*****************************************");
+
 			p.analyze(cfg);
 
 			summary.dumpSummaryToFile();
 			summary.dumpAllMemLocsHeapToFile();
 			summary.validate();
-			break;
+
+			System.out.println("Finish handling the method.");
+			System.out
+					.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
+			// break;
 		}
 
 	}
