@@ -30,6 +30,10 @@ public class P2Set {
 		return p2Set.isEmpty();
 	}
 
+	public Constraint remove(HeapObject hObj) {
+		return p2Set.remove(hObj);
+	}
+
 	// this join method implements the join operation described in definition 8
 	// of the paper, in which it only reads other and write this.p2Set
 	// this method will never get the pointer to the other p2set so do not worry

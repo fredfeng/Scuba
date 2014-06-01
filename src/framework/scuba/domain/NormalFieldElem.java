@@ -1,6 +1,5 @@
 package framework.scuba.domain;
 
-import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 
 public class NormalFieldElem extends FieldElem {
