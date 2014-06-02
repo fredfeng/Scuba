@@ -4,11 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Reference;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
-import joeq.Compiler.Quad.Operator;
+import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
+import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.MultiNewArray;
@@ -152,7 +154,9 @@ public class Summary {
 		// v1 = v2.f
 		public void visitGetfield(Quad stmt) {
 			// TODO
-			absHeap.handleGetfieldStmt(stmt);
+			FieldOperand field = Getfield.getField(stmt);
+			if(field.getField().getType() instanceof jq_Reference)
+				absHeap.handleGetfieldStmt(stmt);
 		}
 
 		public void visitGetstatic(Quad stmt) {
@@ -203,7 +207,9 @@ public class Summary {
 
 		public void visitPutfield(Quad stmt) {
 			// TODO
-			absHeap.handlePutfieldStmt(stmt);
+			FieldOperand field = Putfield.getField(stmt);
+			if(field.getField().getType() instanceof jq_Reference)
+				absHeap.handlePutfieldStmt(stmt);
 		}
 
 		public void visitPutstatic(Quad stmt) {
