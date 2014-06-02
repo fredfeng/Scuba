@@ -1,0 +1,14 @@
+chord.main.class=Harness
+chord.class.path=classes:/home/yufeng/research/dacapo/lib/sunflow-0.07.2.jar:/home/yufeng/research/dacapo/lib/janino-2.5.12.jar:/home/yufeng/research/dacapo/lib/jce.jar:/home/yufeng/research/dacapo/lib/rt.jar:/home/yufeng/research/dacapo/lib/commons-cli-1.2.jar:/home/yufeng/research/dacapo/lib/apache-ant-1.8.2.jar
+chord.src.path=src/
+chord.max.heap=2048m
+chord.max.stack=256m
+chord.bddbddb.max.heap=1048m
+chord.scope.kind=rta
+chord.java.analysis.path=/home/yufeng/research/Scuba/lib/chord.jar:/home/yufeng/research/Scuba/scuba.jar
+#chord.scope.exclude=java.,javax.,sun.,com.sun.,com.ibm.,org.apache.harmony.
+chord.print.rels=
+chord.ssa=true
+chord.ssa.kind=phi
+chord.print.all.classes=false
+chord.out.dir=/home/yufeng/research/Scuba/chord_output/
