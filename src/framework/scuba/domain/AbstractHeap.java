@@ -697,6 +697,8 @@ public class AbstractHeap {
 			ret = getAbstractMemLoc(((HeapObject) base), field);
 		} else if (base instanceof ParamElem) {
 			ret = getAbstractMemLoc(((ParamElem) base), field);
+		} else if (base instanceof StaticElem) {
+			ret = getAbstractMemLoc(((StaticElem) base), field);
 		} else if (base instanceof LocalVarElem) {
 			assert false : base + " can NOT be a LocalVarElem";
 		} else {
