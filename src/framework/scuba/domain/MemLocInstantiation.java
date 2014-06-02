@@ -5,7 +5,6 @@ import java.util.Map;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
-import chord.util.tuple.object.Pair;
 
 public class MemLocInstantiation {
 

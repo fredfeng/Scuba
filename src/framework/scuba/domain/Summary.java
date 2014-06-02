@@ -134,16 +134,16 @@ public class Summary {
 		System.out.println("Alloc List: " + allocList);
 
 		System.out.println("Field base Set: " + fieldsBase);
-		System.out.println("Field base List: " + fieldsBase);
+		System.out.println("Field base List: " + fieldsBaseList);
 
-		System.out.println("Field access Set: " + fieldsAccList);
-		System.out.println("Field access List: " + fieldsAccess);
+		System.out.println("Field access List: " + fieldsAccList);
+		System.out.println("Field access Set: " + fieldsAccess);
 
 		System.out.println("**************************************");
 	}
 
 	public void dumpSummaryToFile(int count) {
-		if(G.debug)
+		if (G.debug)
 			absHeap.dumpHeapToFile(count);
 	}
 

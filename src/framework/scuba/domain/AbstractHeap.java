@@ -10,7 +10,6 @@ import java.util.Set;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
-import joeq.Class.jq_Reference.jq_NullType;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
@@ -77,11 +76,8 @@ public class AbstractHeap {
 			// is just a stack local variable
 			if (loc instanceof AccessPath) {
 				AbstractMemLoc root = loc.findRoot();
-				assert (root instanceof ParamElem || root instanceof StaticElem) : "Root of "
-						+ loc
-						+ " : "
-						+ root
-						+ " should be either ParamElem or StaticElem!";
+				assert (root instanceof ParamElem) : "Root of " + loc + " : "
+						+ root + " should be either ParamElem";
 			} else if (loc instanceof StaticElem) {
 				AbstractMemLoc root = loc.findRoot();
 				assert (loc.equals(root)) : "Root of " + loc + " : " + root
@@ -209,7 +205,7 @@ public class AbstractHeap {
 				b.append("\"];\n");
 			} else if (loc instanceof StaticElem) {
 				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=circle,label=\"");
+				b.append(" [shape=triangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
@@ -273,7 +269,7 @@ public class AbstractHeap {
 				b.append("\"];\n");
 			} else if (loc instanceof StaticElem) {
 				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=circle,label=\"");
+				b.append(" [shape=triangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
@@ -370,6 +366,9 @@ public class AbstractHeap {
 	// generalized field look-up for location which is described in definition
 	// 10 of the paper
 	public P2Set lookup(P2Set p2Set, FieldElem field) {
+
+		assert (!p2Set.isEmpty()) : "doing a p2set look up, we can NOT have an empty pt set!"
+				+ " (null pointer derefence)";
 
 		P2Set ret = new P2Set();
 		for (HeapObject obj : p2Set.getHeapObjects()) {
@@ -527,7 +526,7 @@ public class AbstractHeap {
 					encloseClass, field.getField(), rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
 
-		} 
+		}
 	}
 
 	public void handleReturnStmt(Quad stmt) {
@@ -553,6 +552,8 @@ public class AbstractHeap {
 
 	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
 	// v1 = v2
+	// v1: parameter / local
+	// v2: parameter / local (for SSA, only local is possible)
 	protected boolean handleAssgnStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register right,
 			VariableType rightVType) {
@@ -569,6 +570,9 @@ public class AbstractHeap {
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = v2.f
+	// v1: parameter / local (for SSA, only local)
+	// v2: parameter / local
+	// f: non-static field
 	protected boolean handleLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register rightBase,
 			jq_Field rightField, VariableType rightBaseVType) {
@@ -585,14 +589,17 @@ public class AbstractHeap {
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
 	// v1 = A.f, where A is a class and f is a static field
+	// v1: parameter / local (for SSA, only local_
+	// A: jq_Class
+	// f: a static field declared in class A
 	protected boolean handleStatLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Class rightBase,
 			jq_Field rightField) {
 		StackObject v1 = getAbstractMemLoc(clazz, method, left, leftVType);
-		StaticElem A = getAbstractMemLoc(rightBase);
-		P2Set p2SetA = lookup(A, new EpsilonFieldElem());
+		StaticElem v2 = getAbstractMemLoc(rightBase, rightField);
+		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
 		NormalFieldElem f = new NormalFieldElem(rightField);
-		P2Set p2SetAf = lookup(p2SetA, f);
+		P2Set p2SetAf = lookup(p2Setv2, f);
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, new EpsilonFieldElem());
 		return weakUpdate(pair, p2SetAf);
@@ -633,6 +640,9 @@ public class AbstractHeap {
 
 	// handleStoreStmt implements rule (3) in Figure 8 of the paper
 	// A.f = v2
+	// A: jq_Class
+	// f: a static field declared in class A
+	// v2: local / parameter
 	protected boolean handleStaticStoreStmt(jq_Class clazz, jq_Method method,
 			jq_Class leftBase, jq_Field leftField, Register right,
 			VariableType rightVType) {
@@ -642,7 +652,7 @@ public class AbstractHeap {
 				+ " variables and parameters as RHS";
 
 		boolean ret = false;
-		StaticElem v1 = getAbstractMemLoc(leftBase);
+		StaticElem v1 = getAbstractMemLoc(leftBase, leftField);
 		StackObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
 		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
@@ -800,9 +810,9 @@ public class AbstractHeap {
 
 	// given a class (thinking about static field like A.f), create the
 	// corresponding ClassElem
-	protected StaticElem getAbstractMemLoc(jq_Class clazz) {
+	protected StaticElem getAbstractMemLoc(jq_Class clazz, jq_Field field) {
 		// create a wrapper
-		StaticElem ret = new StaticElem(clazz);
+		StaticElem ret = new StaticElem(clazz, field);
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (StaticElem) memLocFactory.get(ret);
@@ -842,6 +852,8 @@ public class AbstractHeap {
 		return ret;
 	}
 
+	// TODO
+	// still need to check whether this returned boolean value is correct
 	protected boolean weakUpdate(Pair<AbstractMemLoc, FieldElem> pair,
 			P2Set p2Set) {
 		boolean ret = false;

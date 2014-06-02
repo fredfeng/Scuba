@@ -23,13 +23,17 @@ public class AccessPath extends HeapObject {
 	public AbstractMemLoc findRoot() {
 
 		if (base instanceof StackObject) {
-			return (StackObject) base;
+			assert (base instanceof ParamElem) : "the base must be a ParamElem!";
+			if (base instanceof ParamElem) {
+				return (StackObject) base;
+			} else {
+				assert false : "the base MUST be a ParamElem!";
+				return null;
+			}
 		} else if (base instanceof HeapObject) {
 
 			if (base instanceof AllocElem) {
 				return (AllocElem) base;
-			} else if (base instanceof StaticElem) {
-				return (StaticElem) base;
 			} else if (base instanceof AccessPath) {
 				return ((AccessPath) base).findRoot();
 			} else {

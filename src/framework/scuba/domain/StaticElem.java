@@ -1,14 +1,19 @@
 package framework.scuba.domain;
 
 import joeq.Class.jq_Class;
+import joeq.Class.jq_Field;
 
-public class StaticElem extends HeapObject {
+public class StaticElem extends StackObject {
 
-	// the class this belongs to
+	// the class this static field is declared in
 	protected jq_Class clazz;
 
-	public StaticElem(jq_Class clazz) {
+	// the field this static element denotes
+	protected jq_Field field;
+
+	public StaticElem(jq_Class clazz, jq_Field field) {
 		this.clazz = clazz;
+		this.field = field;
 	}
 
 	@Override
