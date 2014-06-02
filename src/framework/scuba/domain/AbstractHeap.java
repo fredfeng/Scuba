@@ -12,6 +12,7 @@ import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operand.AConstOperand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
@@ -53,7 +54,7 @@ public class AbstractHeap {
 	public boolean isChanged = false;
 
 	public static enum VariableType {
-		PARAMEMTER, LOCAL_VARIABLE;
+		PARAMEMTER, LOCAL_VARIABLE, NULL_POINTER, CONSTANT;
 	}
 
 	public AbstractHeap() {
@@ -175,7 +176,7 @@ public class AbstractHeap {
 	}
 
 	// draw the heap (without default edges) in the dot file
-	public void dumpHeapToFile() {
+	public void dumpHeapToFile(int count) {
 		StringBuilder b = new StringBuilder("digraph AbstractHeap {\n");
 		b.append("  rankdir = LR;\n");
 
@@ -242,7 +243,8 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					"output/abstractHeap.dot"));
+					"/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/abstractHeap"
+							+ count + ".dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {
@@ -253,7 +255,7 @@ public class AbstractHeap {
 
 	// draw the heap (with all memory locations created and all default edges
 	// used) in the dot file
-	public void dumpAllMemLocsHeapToFile() {
+	public void dumpAllMemLocsHeapToFile(int count) {
 		StringBuilder b = new StringBuilder("Digraph allMemLocs {\n");
 		b.append("  rankdir = LR;\n");
 
@@ -316,7 +318,8 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					"output/allMemLocs.dot"));
+					"/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/allMemLocs"
+							+ count + ".dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {
@@ -548,12 +551,107 @@ public class AbstractHeap {
 	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
 			Register leftBase, VariableType leftBaseVType, jq_Field leftField,
 			Register right, VariableType rightVType) {
+
+		assert (rightVType == VariableType.PARAMEMTER)
+				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
+				+ " variables and parameters as RHS";
+		assert (leftBaseVType == VariableType.PARAMEMTER)
+				|| (leftBaseVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
+				+ " variables and parameters as LHS";
+
 		boolean ret = false;
 		StackObject v1 = getAbstractMemLoc(clazz, method, leftBase,
 				leftBaseVType);
 		StackObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
 		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
 		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		NormalFieldElem f = new NormalFieldElem(leftField);
+		for (HeapObject obj : p2Setv1.getHeapObjects()) {
+			Constraint cst = p2Setv1.getConstraint(obj);
+			// projP2Set is a new P2Set with copies of the constraints (same
+			// content but different constraint instances)
+			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
+
+			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+					obj, f);
+			ret = weakUpdate(pair, projP2Set) | ret;
+		}
+		return ret;
+	}
+
+	// handleStoreStmt implements rule (3) in Figure 8 of the paper
+	// A.f = v2
+	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
+			jq_Class leftBase, jq_Field leftField, Register right,
+			VariableType rightVType) {
+
+		assert (rightVType == VariableType.PARAMEMTER)
+				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
+				+ " variables and parameters as RHS";
+
+		boolean ret = false;
+		StaticElem v1 = getAbstractMemLoc(leftBase);
+		StackObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
+		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
+		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		NormalFieldElem f = new NormalFieldElem(leftField);
+		for (HeapObject obj : p2Setv1.getHeapObjects()) {
+			Constraint cst = p2Setv1.getConstraint(obj);
+			// projP2Set is a new P2Set with copies of the constraints (same
+			// content but different constraint instances)
+			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
+
+			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+					obj, f);
+			ret = weakUpdate(pair, projP2Set) | ret;
+		}
+		return ret;
+	}
+
+	// v1.f = constant operand
+	// (1). v1.f = null
+	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
+			Register leftBase, VariableType leftBaseVType, jq_Field leftField,
+			AConstOperand right, VariableType rightVType) {
+
+		assert (rightVType == VariableType.NULL_POINTER) : "we are only considering null pointer!";
+		assert (leftBaseVType == VariableType.PARAMEMTER)
+				|| (leftBaseVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
+				+ " variables and parameters as LHS";
+
+		boolean ret = false;
+		StackObject v1 = getAbstractMemLoc(clazz, method, leftBase,
+				leftBaseVType);
+		HeapObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
+		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
+		P2Set p2Setv2 = new P2Set(v2);
+		NormalFieldElem f = new NormalFieldElem(leftField);
+		for (HeapObject obj : p2Setv1.getHeapObjects()) {
+			Constraint cst = p2Setv1.getConstraint(obj);
+			// projP2Set is a new P2Set with copies of the constraints (same
+			// content but different constraint instances)
+			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
+
+			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+					obj, f);
+			ret = weakUpdate(pair, projP2Set) | ret;
+		}
+		return ret;
+	}
+
+	// v1.f = constant operand
+	// (1). A.f = null
+	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
+			jq_Class leftBase, jq_Field leftField, AConstOperand right,
+			VariableType rightVType) {
+
+		assert (rightVType == VariableType.NULL_POINTER) : "we are only considering null pointer!";
+
+		boolean ret = false;
+		StaticElem v1 = getAbstractMemLoc(leftBase);
+		HeapObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
+		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
+		P2Set p2Setv2 = new P2Set(v2);
 		NormalFieldElem f = new NormalFieldElem(leftField);
 		for (HeapObject obj : p2Setv1.getHeapObjects()) {
 			Constraint cst = p2Setv1.getConstraint(obj);
@@ -681,6 +779,31 @@ public class AbstractHeap {
 			return ret;
 		} else {
 			assert false : "wried things!";
+			return null;
+		}
+	}
+
+	// TODO maybe we need to handle more AConstOperand cases
+	// if we only handle the null pointer case, we can return NullElem
+	protected HeapObject getAbstractMemLoc(jq_Class clazz, jq_Method method,
+			AConstOperand variable, VariableType vType) {
+		if (vType == VariableType.NULL_POINTER) {
+			// create a wrapper
+			NullElem ret = new NullElem();
+			// try to look up this wrapper in the memory location factory
+			if (memLocFactory.containsKey(ret)) {
+				return (NullElem) memLocFactory.get(ret);
+			}
+
+			// not found in the factory
+			// every time generating a memory location, do this marking
+			ArgDerivedHelper.markArgDerived(ret);
+
+			memLocFactory.put(ret, ret);
+
+			return ret;
+		} else {
+			assert false : "wried things! Unknown Type";
 			return null;
 		}
 	}
