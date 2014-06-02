@@ -1,6 +1,7 @@
 package framework.scuba.analyses.alias;
 
 import java.io.PrintWriter;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -72,10 +73,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		}
 		// foreach leaf in the callgraph. Add them to the worklist.
+		HashSet<jq_Method> visited = new HashSet();
 		while (!worklist.isEmpty()) {
 			jq_Method worker = worklist.poll();
 			// if(success terminated) {
+			//now just analyze once.
+			if(visited.contains(worker)) continue;
 			analyze(worker);
+			visited.add(worker);
 			// } else
 			// append worker to the end of the List.class
 
@@ -87,7 +92,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	public static int count = 0;
 
 	private void analyze(jq_Method m) {
-
+		System.out.println("analyzing method " + count + " " + m);
+		count++;
 		// do interproc
 		if (G.debug) {
 			count++;
@@ -113,7 +119,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 		intrapro.analyze(cfg);
 		// mark terminated
-		summary.dumpSummaryToFile(count);
+		if(G.debug)
+			summary.dumpSummaryToFile(count);
 	}
 
 	private void analyzeSCC() {
