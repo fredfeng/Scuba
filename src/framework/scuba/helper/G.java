@@ -6,5 +6,8 @@ package framework.scuba.helper;
  *
  */
 public class G {
-	public static boolean debug = true;
+	public static boolean debug = false;
+
+	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
+
 }
