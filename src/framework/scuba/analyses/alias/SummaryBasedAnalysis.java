@@ -43,6 +43,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void init() {
 		getCallGraph();
+
 		System.out.println("Total nodes in CG---------"
 				+ callGraph.getNodes().size());
 		// init \gamma here.
@@ -77,8 +78,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		while (!worklist.isEmpty()) {
 			jq_Method worker = worklist.poll();
 			// if(success terminated) {
-			//now just analyze once.
-			if(visited.contains(worker)) continue;
+			// now just analyze once.
+			if (visited.contains(worker))
+				continue;
 			analyze(worker);
 			visited.add(worker);
 			// } else
@@ -119,7 +121,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 		intrapro.analyze(cfg);
 		// mark terminated
-		if(G.debug)
+		if (G.debug)
 			summary.dumpSummaryToFile(count);
 	}
 
