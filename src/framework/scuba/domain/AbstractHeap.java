@@ -10,8 +10,10 @@ import java.util.Set;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Reference.jq_NullType;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.AConstOperand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
@@ -20,6 +22,7 @@ import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.New;
 import joeq.Compiler.Quad.Operator.Putfield;
+import joeq.Compiler.Quad.Operator.Putstatic;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
@@ -462,19 +465,63 @@ public class AbstractHeap {
 	public void handlePutfieldStmt(Quad stmt) {
 		assert (stmt.getOperator() instanceof Putfield);
 		jq_Method meth = stmt.getMethod();
-		RegisterOperand rhs = (RegisterOperand) Putfield.getSrc(stmt);
-		RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
-		FieldOperand field = Putfield.getField(stmt);
-		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-		VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
-		boolean flag = this.handleStoreStmt(meth.getDeclaringClass(), meth,
-				lhs.getRegister(), lvt, field.getField(), rhs.getRegister(),
-				rvt);
-		isChanged = (flag || isChanged);
+		Operand rhso = Putfield.getSrc(stmt);
+		if (rhso instanceof RegisterOperand) {
+			RegisterOperand rhs = (RegisterOperand) rhso;
+			RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
+			FieldOperand field = Putfield.getField(stmt);
+			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
+			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
+
+			boolean flag = this.handleStoreStmt(meth.getDeclaringClass(), meth,
+					lhs.getRegister(), lvt, field.getField(),
+					rhs.getRegister(), rvt);
+			isChanged = (flag || isChanged);
+		} else if (rhso instanceof AConstOperand) {
+			AConstOperand rhs = (AConstOperand) rhso;
+			// handle v.f = null;
+			if (rhs.getType() instanceof jq_NullType) {
+				RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
+				FieldOperand field = Putfield.getField(stmt);
+				VariableType lvt = getVarType(stmt.getMethod(),
+						lhs.getRegister());
+				VariableType rvt = VariableType.NULL_POINTER;
+
+				this.handleStoreStmt(meth.getDeclaringClass(), meth,
+						lhs.getRegister(), lvt, field.getField(), rhs, rvt);
+			} else {
+				// for now, we just ignore string case.
+			}
+
+		} else {
+			assert false : "strange case that we haven't consider.";
+		}
 	}
 
+	//A.f = b;
 	public void handlePutstaticStmt(Quad stmt) {
+		jq_Method meth = stmt.getMethod();
+		Operand rhso = Putstatic.getSrc(stmt);
+
+		if (rhso instanceof RegisterOperand) {
+			RegisterOperand rhs = (RegisterOperand) rhso;
+			RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
+			FieldOperand field = Putfield.getField(stmt);
+			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
+			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
+			
+//			handleStaticStoreStmt(meth.getDeclaringClass(), meth, leftBase, leftField, right, rightVType)
+
+		} else if (rhso instanceof AConstOperand) {
+			AConstOperand rhs = (AConstOperand) rhso;
+			// handle v.f = null;
+			if (rhs.getType() instanceof jq_NullType) {
+//				handleStaticStoreStmt(clazz, method, leftBase, leftField, right, rightVType);
+			}
+		} else {
+			assert false : "strange case that we haven't consider.";
+		}
 
 	}
 
@@ -581,7 +628,7 @@ public class AbstractHeap {
 
 	// handleStoreStmt implements rule (3) in Figure 8 of the paper
 	// A.f = v2
-	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
+	protected boolean handleStaticStoreStmt(jq_Class clazz, jq_Method method,
 			jq_Class leftBase, jq_Field leftField, Register right,
 			VariableType rightVType) {
 
@@ -641,7 +688,7 @@ public class AbstractHeap {
 
 	// v1.f = constant operand
 	// (1). A.f = null
-	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
+	protected boolean handleStaticStoreStmt(jq_Class clazz, jq_Method method,
 			jq_Class leftBase, jq_Field leftField, AConstOperand right,
 			VariableType rightVType) {
 

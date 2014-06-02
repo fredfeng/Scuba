@@ -94,11 +94,11 @@ public class Summary {
     }
 
 	public void dumpSummaryToFile() {
-		absHeap.dumpHeapToFile();
+		absHeap.dumpHeapToFile(2);
 	}
 
 	public void dumpAllMemLocsHeapToFile() {
-		absHeap.dumpAllMemLocsHeapToFile();
+		absHeap.dumpAllMemLocsHeapToFile(2);
 	}
 
 	public void validate() {
