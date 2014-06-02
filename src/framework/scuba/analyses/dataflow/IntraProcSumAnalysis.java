@@ -9,6 +9,7 @@ import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
 import framework.scuba.domain.Summary;
+import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper;
 import framework.scuba.utils.Graph;
 import framework.scuba.utils.Node;
@@ -117,26 +118,33 @@ public class IntraProcSumAnalysis {
 
 	public boolean handleBasicBlock(BasicBlock bb) {
 
-		System.out.println("=========================");
-		System.out.println("Handling the basic block: ");
-		System.out.println(bb);
+		if (G.debug) {
+			System.out.println("=========================");
+			System.out.println("Handling the basic block: ");
+			System.out.println(bb);
+		}
 
 		summary.getAbstractHeap().isChanged = false;
 		// handle each quad in the basicblock.
 		for (Quad q : bb.getQuads()) {
 			
-			System.out.println("-------------------------");
-			System.out.println("Handling the statement: ");
-			System.out.println(q);
-
+			if (G.debug) {
+				System.out.println("-------------------------");
+				System.out.println("Handling the statement: ");
+				System.out.println(q);
+			}
 			summary.handleStmt(q);
 
-			System.out.println("Finish handling the statement.");
-			System.out.println("-------------------------");
+			if (G.debug) {
+				System.out.println("Finish handling the statement.");
+				System.out.println("-------------------------");
+			}
 		}
 
-		System.out.println("Finish handling the basic block.");
-		System.out.println("=========================");
+		if (G.debug) {
+			System.out.println("Finish handling the basic block.");
+			System.out.println("=========================");
+		}
 		return summary.getAbstractHeap().isChanged;
 	}
 

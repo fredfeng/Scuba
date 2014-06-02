@@ -1,24 +1,20 @@
 package test.intraproc;
 
 /**
- * Test case for null assignment.
+ * Test case for static put/load.
  * 
  * @author yufeng
  * 
  */
-public class TestRule8 {
+public class TestRule9 {
 
+	static Z z;
 	class Z {
-		G g;
-	}
-	
-	class G {
-		G g = new G();
+
 	}
 	
 	class X {
-		Z z;
-		Y y;
+		Z z = new Z();
 	}
 
 	class Y extends X {
@@ -28,10 +24,10 @@ public class TestRule8 {
 	void foo(Z a) {
 		Y y = new Y();
 		X x = new X();
-		
-		Z z = x.z;
-		y.z = null;
-		x.y = new Y();
-		Z z1 = y.z;
+		z = x.z;
+		y.z = new Z();
+		x = y;
+		y.z = z;
+
 	}
 }

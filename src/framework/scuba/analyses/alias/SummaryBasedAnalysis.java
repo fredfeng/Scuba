@@ -22,6 +22,7 @@ import chord.project.analyses.ProgramRel;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
+import framework.scuba.helper.G;
 
 /**
  * Summary-based analysis. 1. Build and get a CHA-based CallGraph. 2. Compute
@@ -51,11 +52,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void sumAnalyze() {
 		Set<jq_Method> roots = callGraph.getRoots();
-		dumpCallGraph();
-		System.out.println("Root nodes: ---" + roots);
-		for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
-			System.out.println("SCC List---" + scc);
+
+		if (G.debug) {
+			dumpCallGraph();
+			System.out.println("Root nodes: ---" + roots);
+			for (Set<jq_Method> scc : callGraph.getTopSortedSCCs())
+				System.out.println("SCC List---" + scc);
 		}
+
 		// for now, assume there is no SCC.
 		LinkedList<jq_Method> worklist = new LinkedList<jq_Method>();
 		for (jq_Method meth : callGraph.getNodes()) {
@@ -84,15 +88,18 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	public static int count = 0;
 
 	private void analyze(jq_Method m) {
-		count++;
 
 		// do interproc
-		System.out.println("+++++++++++++++++   " + count
-				+ "   +++++++++++++++++");
-		System.out
-				.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-		System.out.println("Handling the method: ");
-		System.out.println(m);
+		if (G.debug) {
+			count++;
+
+			System.out.println("+++++++++++++++++   " + count
+					+ "   +++++++++++++++++");
+			System.out
+					.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+			System.out.println("Handling the method: ");
+			System.out.println(m);
+		}
 
 		Summary summary = SummariesEnv.v().getSummary(m);
 		intrapro.setSummary(summary);
@@ -100,12 +107,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			return;
 
 		ControlFlowGraph cfg = CodeCache.getCode(m);
-		EnterSSA ssa = new EnterSSA();
-		ssa.visitCFG(cfg);
-		System.out.println("*****************************************");
-		System.out.println(cfg.fullDump());
-		System.out.println("*****************************************");
-
+		if (G.debug) {
+			System.out.println("*****************************************");
+			System.out.println(cfg.fullDump());
+			System.out.println("*****************************************");
+		}
 		intrapro.analyze(cfg);
 		// mark terminated
 		summary.dumpSummaryToFile(count);
