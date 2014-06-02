@@ -34,8 +34,9 @@ public class IntraProcSumAnalysis {
 		roots.add(entry);
 		Graph repGraph = new Graph();
 		SCCHelper sccManager = new SCCHelper(g, roots);
-		System.out
-				.println("SCC List in BBs:-----" + sccManager.getComponents());
+		if (G.debug)
+			System.out.println("SCC List in BBs:-----"
+					+ sccManager.getComponents());
 		int idx = 0;
 		// compute SCC in current CFG.
 		//step 1: collapse scc into one node.
