@@ -702,13 +702,25 @@ public class AbstractHeap {
 		} else if (base instanceof LocalVarElem) {
 			assert false : base + " can NOT be a LocalVarElem";
 		} else {
-			assert false : "wried things!";
+			assert false : "wried things! Unkown memory location.";
 		}
 
 		return ret;
 	}
 
 	protected AccessPath getAbstractMemLoc(ParamElem base, FieldElem field) {
+		AccessPath ret = new AccessPath(base, field);
+		if (memLocFactory.containsKey(ret)) {
+			return (AccessPath) memLocFactory.get(ret);
+		}
+
+		ArgDerivedHelper.markArgDerived(ret);
+		memLocFactory.put(ret, ret);
+
+		return ret;
+	}
+
+	protected AccessPath getAbstractMemLoc(StaticElem base, FieldElem field) {
 		AccessPath ret = new AccessPath(base, field);
 		if (memLocFactory.containsKey(ret)) {
 			return (AccessPath) memLocFactory.get(ret);
