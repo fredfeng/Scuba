@@ -182,8 +182,7 @@ public class Summary {
 
 		public void visitMove(Quad stmt) {
 			// TODO
-			if(Move.getSrc(stmt) instanceof RegisterOperand)
-				absHeap.handleMoveStmt(stmt);
+			absHeap.handleMoveStmt(stmt);
 		}
 
 		public void visitMultiNewArray(Quad stmt) {

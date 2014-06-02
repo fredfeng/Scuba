@@ -438,14 +438,20 @@ public class AbstractHeap {
 	// v1 = v2.
 	public void handleMoveStmt(Quad stmt) {
 		jq_Method meth = stmt.getMethod();
-		RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
-		RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
-		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-		VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
+		Operand rhso = Putfield.getSrc(stmt);
+		if (rhso instanceof RegisterOperand) {
+			RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
+			RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
+			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
+			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
-		boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
-				lhs.getRegister(), lvt, rhs.getRegister(), rvt);
-		isChanged = (flag || isChanged);
+			boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
+					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
+			isChanged = (flag || isChanged);
+		} else if (rhso instanceof AConstOperand) {
+			//need xinyu's support for v1=null
+		}
+
 	}
 
 	public void handleMultiNewArrayStmt(Quad stmt) {
@@ -473,7 +479,7 @@ public class AbstractHeap {
 	public void handlePutfieldStmt(Quad stmt) {
 		assert (stmt.getOperator() instanceof Putfield);
 		jq_Method meth = stmt.getMethod();
-
+		boolean flag;
 		Operand rhso = Putfield.getSrc(stmt);
 		if (rhso instanceof RegisterOperand) {
 			RegisterOperand rhs = (RegisterOperand) rhso;
@@ -482,7 +488,7 @@ public class AbstractHeap {
 			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
-			boolean flag = this.handleStoreStmt(meth.getDeclaringClass(), meth,
+			flag = this.handleStoreStmt(meth.getDeclaringClass(), meth,
 					lhs.getRegister(), lvt, field.getField(),
 					rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
@@ -496,10 +502,11 @@ public class AbstractHeap {
 						lhs.getRegister());
 				VariableType rvt = VariableType.NULL_POINTER;
 
-				this.handleStoreStmt(meth.getDeclaringClass(), meth,
+				flag = this.handleStoreStmt(meth.getDeclaringClass(), meth,
 						lhs.getRegister(), lvt, field.getField(), rhs, rvt);
+				isChanged = (flag || isChanged);
 			} else {
-				// for now, we just ignore string case.
+				// for now, ignore string case.
 			}
 
 		} else {
@@ -511,21 +518,28 @@ public class AbstractHeap {
 	public void handlePutstaticStmt(Quad stmt) {
 		jq_Method meth = stmt.getMethod();
 		Operand rhso = Putstatic.getSrc(stmt);
-
+		FieldOperand field = Putstatic.getField(stmt);
+		jq_Class encloseClass = field.getField().getDeclaringClass();
+		boolean flag;
+		
 		if (rhso instanceof RegisterOperand) {
 			RegisterOperand rhs = (RegisterOperand) rhso;
-			RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
-			FieldOperand field = Putfield.getField(stmt);
-			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 			
-//			handleStaticStoreStmt(meth.getDeclaringClass(), meth, leftBase, leftField, right, rightVType)
+			flag = handleStaticStoreStmt(meth.getDeclaringClass(), meth, encloseClass,
+					field.getField(), rhs.getRegister(), rvt);
+			isChanged = (flag || isChanged);
 
 		} else if (rhso instanceof AConstOperand) {
 			AConstOperand rhs = (AConstOperand) rhso;
 			// handle v.f = null;
 			if (rhs.getType() instanceof jq_NullType) {
-//				handleStaticStoreStmt(clazz, method, leftBase, leftField, right, rightVType);
+				flag = handleStaticStoreStmt(meth.getDeclaringClass(), meth,
+						encloseClass, field.getField(), rhs,
+						VariableType.NULL_POINTER);
+				isChanged = (flag || isChanged);
+			} else {
+				// for now, ignore string case. like A.f = "";
 			}
 		} else {
 			assert false : "strange case that we haven't consider.";
