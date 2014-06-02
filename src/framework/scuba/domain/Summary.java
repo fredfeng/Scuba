@@ -143,7 +143,8 @@ public class Summary {
 	}
 
 	public void dumpSummaryToFile(int count) {
-		absHeap.dumpHeapToFile(count);
+		if(G.debug)
+			absHeap.dumpHeapToFile(count);
 	}
 
 	public void dumpAllMemLocsHeapToFile(int count) {

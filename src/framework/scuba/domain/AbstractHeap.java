@@ -508,25 +508,6 @@ public class AbstractHeap {
 					lhs.getRegister(), lvt, field.getField(),
 					rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
-		} else if (rhso instanceof AConstOperand) {
-			AConstOperand rhs = (AConstOperand) rhso;
-			// handle v.f = null;
-			if (rhs.getType() instanceof jq_NullType) {
-				RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
-				FieldOperand field = Putfield.getField(stmt);
-				VariableType lvt = getVarType(stmt.getMethod(),
-						lhs.getRegister());
-				VariableType rvt = VariableType.NULL_POINTER;
-
-				flag = this.handleStoreStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, field.getField(), rhs, rvt);
-				isChanged = (flag || isChanged);
-			} else {
-				// for now, ignore string case.
-			}
-
-		} else {
-			assert false : "strange case that we haven't consider.";
 		}
 	}
 
@@ -546,21 +527,7 @@ public class AbstractHeap {
 					encloseClass, field.getField(), rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
 
-		} else if (rhso instanceof AConstOperand) {
-			AConstOperand rhs = (AConstOperand) rhso;
-			// handle v.f = null;
-			if (rhs.getType() instanceof jq_NullType) {
-				flag = handleStaticStoreStmt(meth.getDeclaringClass(), meth,
-						encloseClass, field.getField(), rhs,
-						VariableType.NULL_POINTER);
-				isChanged = (flag || isChanged);
-			} else {
-				// for now, ignore string case. like A.f = "";
-			}
-		} else {
-			assert false : "strange case that we haven't consider.";
-		}
-
+		} 
 	}
 
 	public void handleReturnStmt(Quad stmt) {
