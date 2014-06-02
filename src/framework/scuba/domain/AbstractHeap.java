@@ -222,11 +222,6 @@ public class AbstractHeap {
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
-			} else if (loc instanceof NullElem) {
-				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=point,label=\"");
-				b.append(loc.toString());
-				b.append("\"];\n");
 			} else {
 				assert false : "wried things! Unknow memory location";
 			}
@@ -291,11 +286,6 @@ public class AbstractHeap {
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
-			} else if (loc instanceof NullElem) {
-				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=point,label=\"");
-				b.append(loc.toString());
-				b.append("\"];\n");
 			} else {
 				assert false : "wried things! Unknown memory location.";
 			}
@@ -339,7 +329,6 @@ public class AbstractHeap {
 	public P2Set lookup(AbstractMemLoc loc, FieldElem field) {
 		// create a pair wrapper for lookup
 
-		assert (!(loc instanceof NullElem)) : "we cannot get some filed of a null pointer!";
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				loc, field);
 		if (loc.isArgDerived()) {
@@ -360,13 +349,16 @@ public class AbstractHeap {
 		} else if (loc.isNotArgDerived()) {
 			// TODO maybe we need a clone()?
 			// it is possible to have null pointers
-			// assert (heapObjectsToP2Set.containsKey(pair)) : loc
-			// + " with field " + field + " should have a p2 set?";
+
 			P2Set ret = heapObjectsToP2Set.get(pair);
 			if (ret != null) {
+				// if the field of this memory does point to something, return
+				// that memory location
 				return ret;
 			} else {
-				return new P2Set(getAbstractMemLoc());
+				// if the field of this memory does NOT point to anything, just
+				// return an empty P2Set
+				return new P2Set();
 			}
 		} else {
 			assert false : "you have not mark the argument derived marker before lookup!";
@@ -382,12 +374,6 @@ public class AbstractHeap {
 		P2Set ret = new P2Set();
 		for (HeapObject obj : p2Set.getHeapObjects()) {
 			Constraint cst = p2Set.getConstraint(obj);
-
-			// TODO
-			// if we want to lookup some field of a null pointer
-			// just ignore and jump to the next one
-			if (obj instanceof NullElem)
-				continue;
 
 			P2Set tgt = lookup(obj, field);
 			P2Set projP2Set = P2SetHelper.project(tgt, cst);
@@ -422,7 +408,7 @@ public class AbstractHeap {
 
 	}
 
-	//v = A.f.
+	// v = A.f.
 	public void handleGetstaticStmt(Quad stmt) {
 		jq_Method meth = stmt.getMethod();
 		RegisterOperand lhs = Getstatic.getDest(stmt);
@@ -430,8 +416,8 @@ public class AbstractHeap {
 		jq_Class encloseClass = field.getField().getDeclaringClass();
 		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 
-		boolean flag = handleStatLoadStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
-				lvt, encloseClass, field.getField());
+		boolean flag = handleStatLoadStmt(meth.getDeclaringClass(), meth,
+				lhs.getRegister(), lvt, encloseClass, field.getField());
 		isChanged = (flag || isChanged);
 	}
 
@@ -461,7 +447,7 @@ public class AbstractHeap {
 					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
 		} else if (rhso instanceof AConstOperand) {
-			//need xinyu's support for v1=null
+			// need xinyu's support for v1=null
 		}
 
 	}
@@ -491,7 +477,8 @@ public class AbstractHeap {
 		isChanged = (flag || isChanged);
 	}
 
-	//v = new Array(); is it ok if we use the same handler as handlerNew for array?
+	// v = new Array(); is it ok if we use the same handler as handlerNew for
+	// array?
 	public void handleNewArrayStmt(Quad stmt) {
 		assert (stmt.getOperator() instanceof NewArray);
 		jq_Method meth = stmt.getMethod();
@@ -543,20 +530,20 @@ public class AbstractHeap {
 		}
 	}
 
-	//A.f = b;
+	// A.f = b;
 	public void handlePutstaticStmt(Quad stmt) {
 		jq_Method meth = stmt.getMethod();
 		Operand rhso = Putstatic.getSrc(stmt);
 		FieldOperand field = Putstatic.getField(stmt);
 		jq_Class encloseClass = field.getField().getDeclaringClass();
 		boolean flag;
-		
+
 		if (rhso instanceof RegisterOperand) {
 			RegisterOperand rhs = (RegisterOperand) rhso;
 			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
-			
-			flag = handleStaticStoreStmt(meth.getDeclaringClass(), meth, encloseClass,
-					field.getField(), rhs.getRegister(), rvt);
+
+			flag = handleStaticStoreStmt(meth.getDeclaringClass(), meth,
+					encloseClass, field.getField(), rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
 
 		} else if (rhso instanceof AConstOperand) {
@@ -706,64 +693,6 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	// v1.f = constant operand
-	// (1). v1.f = null
-	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
-			Register leftBase, VariableType leftBaseVType, jq_Field leftField,
-			AConstOperand right, VariableType rightVType) {
-
-		assert (rightVType == VariableType.NULL_POINTER) : "we are only considering null pointer!";
-		assert (leftBaseVType == VariableType.PARAMEMTER)
-				|| (leftBaseVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
-				+ " variables and parameters as LHS";
-
-		boolean ret = false;
-		StackObject v1 = getAbstractMemLoc(clazz, method, leftBase,
-				leftBaseVType);
-		HeapObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
-		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
-		P2Set p2Setv2 = new P2Set(v2);
-		NormalFieldElem f = new NormalFieldElem(leftField);
-		for (HeapObject obj : p2Setv1.getHeapObjects()) {
-			Constraint cst = p2Setv1.getConstraint(obj);
-			// projP2Set is a new P2Set with copies of the constraints (same
-			// content but different constraint instances)
-			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
-
-			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
-					obj, f);
-			ret = weakUpdate(pair, projP2Set) | ret;
-		}
-		return ret;
-	}
-
-	// v1.f = constant operand
-	// (1). A.f = null
-	protected boolean handleStaticStoreStmt(jq_Class clazz, jq_Method method,
-			jq_Class leftBase, jq_Field leftField, AConstOperand right,
-			VariableType rightVType) {
-
-		assert (rightVType == VariableType.NULL_POINTER) : "we are only considering null pointer!";
-
-		boolean ret = false;
-		StaticElem v1 = getAbstractMemLoc(leftBase);
-		HeapObject v2 = getAbstractMemLoc(clazz, method, right, rightVType);
-		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
-		P2Set p2Setv2 = new P2Set(v2);
-		NormalFieldElem f = new NormalFieldElem(leftField);
-		for (HeapObject obj : p2Setv1.getHeapObjects()) {
-			Constraint cst = p2Setv1.getConstraint(obj);
-			// projP2Set is a new P2Set with copies of the constraints (same
-			// content but different constraint instances)
-			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
-
-			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
-					obj, f);
-			ret = weakUpdate(pair, projP2Set) | ret;
-		}
-		return ret;
-	}
-
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
 	// v = new T
 	protected boolean handleNewStmt(jq_Class clazz, jq_Method method,
@@ -881,18 +810,6 @@ public class AbstractHeap {
 		}
 	}
 
-	// TODO maybe we need to handle more AConstOperand cases
-	// if we only handle the null pointer case, we can return NullElem
-	protected HeapObject getAbstractMemLoc(jq_Class clazz, jq_Method method,
-			AConstOperand variable, VariableType vType) {
-		if (vType == VariableType.NULL_POINTER) {
-			return getAbstractMemLoc();
-		} else {
-			assert false : "wried things! Unknown Type";
-			return null;
-		}
-	}
-
 	// given a new instruction in the bytecode, create the corresponding
 	// AllocElem
 	protected AllocElem getAbstractMemLoc(jq_Class clazz, jq_Method method,
@@ -928,18 +845,6 @@ public class AbstractHeap {
 		// every time generating a memory location, do this marking
 		ArgDerivedHelper.markArgDerived(ret);
 
-		memLocFactory.put(ret, ret);
-
-		return ret;
-	}
-
-	protected NullElem getAbstractMemLoc() {
-		NullElem ret = new NullElem();
-		if (memLocFactory.containsKey(ret)) {
-			return (NullElem) memLocFactory.get(ret);
-		}
-
-		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
 
 		return ret;

@@ -10,7 +10,9 @@ public class P2Set extends AbstractMemLocConstraintSet {
 
 	Map<HeapObject, Constraint> p2Set = new HashMap<HeapObject, Constraint>();
 
+	// this is an empty p2set which is often used in dealing with null
 	public P2Set() {
+
 	}
 
 	public P2Set(HeapObject obj, Constraint constraint) {
@@ -22,14 +24,6 @@ public class P2Set extends AbstractMemLocConstraintSet {
 		assert (obj.isArgDerived()) : obj + " is not argument derived!";
 		assert (obj instanceof HeapObject) : obj + " is not a heap object!";
 		p2Set.put(obj, ConstraintManager.genTrue());
-	}
-
-	public P2Set(NullElem nullElem) {
-		assert (nullElem instanceof NullElem) : nullElem
-				+ " should be a NullElem!";
-		assert (nullElem.isNotArgDerived()) : nullElem
-				+ " is a null elem and should be marked as not argument derived!";
-		p2Set.put(nullElem, ConstraintManager.genTrue());
 	}
 
 	public boolean isEmpty() {
