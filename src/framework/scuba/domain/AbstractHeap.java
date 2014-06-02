@@ -435,8 +435,7 @@ public class AbstractHeap {
 	// v1 = v2.
 	public void handleMoveStmt(Quad stmt) {
 		jq_Method meth = stmt.getMethod();
-		Operand rhso = Putfield.getSrc(stmt);
-		if (rhso instanceof RegisterOperand) {
+		if (Move.getSrc(stmt) instanceof RegisterOperand) {
 			RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
 			RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
 			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
@@ -445,10 +444,7 @@ public class AbstractHeap {
 			boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
 					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
-		} else if (rhso instanceof AConstOperand) {
-			// need xinyu's support for v1=null
-		}
-
+		} 
 	}
 
 	public void handleMultiNewArrayStmt(Quad stmt) {
