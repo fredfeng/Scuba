@@ -239,6 +239,7 @@ public class Summary {
 
 		public void visitMultiNewArray(Quad stmt) {
 			// TODO
+			absHeap.handleMultiNewArrayStmt(stmt);
 		}
 
 		public void visitNew(Quad stmt) {
@@ -248,6 +249,7 @@ public class Summary {
 
 		public void visitNewArray(Quad stmt) {
 			// TODO
+			absHeap.handleNewArrayStmt(stmt);
 		}
 
 		public void visitNullCheck(Quad stmt) {

@@ -19,8 +19,11 @@ import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
 import joeq.Compiler.Quad.Operator.Getfield;
+import joeq.Compiler.Quad.Operator.Getstatic;
 import joeq.Compiler.Quad.Operator.Move;
+import joeq.Compiler.Quad.Operator.MultiNewArray;
 import joeq.Compiler.Quad.Operator.New;
+import joeq.Compiler.Quad.Operator.NewArray;
 import joeq.Compiler.Quad.Operator.Putfield;
 import joeq.Compiler.Quad.Operator.Putstatic;
 import joeq.Compiler.Quad.Quad;
@@ -419,8 +422,17 @@ public class AbstractHeap {
 
 	}
 
+	//v = A.f.
 	public void handleGetstaticStmt(Quad stmt) {
+		jq_Method meth = stmt.getMethod();
+		RegisterOperand lhs = Getstatic.getDest(stmt);
+		FieldOperand field = Getstatic.getField(stmt);
+		jq_Class encloseClass = field.getField().getDeclaringClass();
+		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 
+		boolean flag = handleStatLoadStmt(meth.getDeclaringClass(), meth, lhs.getRegister(),
+				lvt, encloseClass, field.getField());
+		isChanged = (flag || isChanged);
 	}
 
 	public void handleInvokeStmt(Quad stmt) {
@@ -455,7 +467,15 @@ public class AbstractHeap {
 	}
 
 	public void handleMultiNewArrayStmt(Quad stmt) {
+		assert (stmt.getOperator() instanceof MultiNewArray);
+		jq_Method meth = stmt.getMethod();
+		TypeOperand to = MultiNewArray.getType(stmt);
+		RegisterOperand rop = MultiNewArray.getDest(stmt);
+		VariableType vt = getVarType(meth, rop.getRegister());
 
+		boolean flag = handleNewStmt(stmt.getMethod().getDeclaringClass(),
+				meth, rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
+		isChanged = (flag || isChanged);
 	}
 
 	// v1 = new A();
@@ -471,8 +491,17 @@ public class AbstractHeap {
 		isChanged = (flag || isChanged);
 	}
 
+	//v = new Array(); is it ok if we use the same handler as handlerNew for array?
 	public void handleNewArrayStmt(Quad stmt) {
+		assert (stmt.getOperator() instanceof NewArray);
+		jq_Method meth = stmt.getMethod();
+		TypeOperand to = NewArray.getType(stmt);
+		RegisterOperand rop = NewArray.getDest(stmt);
+		VariableType vt = getVarType(meth, rop.getRegister());
 
+		boolean flag = handleNewStmt(stmt.getMethod().getDeclaringClass(),
+				meth, rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
+		isChanged = (flag || isChanged);
 	}
 
 	// v1.f = v2
