@@ -1,26 +1,31 @@
 package framework.scuba.domain;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Reference;
+import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
-import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Operator.Getfield;
-import joeq.Compiler.Quad.Operator.Move;
+import joeq.Compiler.Quad.Operator.Getstatic;
 import joeq.Compiler.Quad.Operator.MultiNewArray;
 import joeq.Compiler.Quad.Operator.New;
 import joeq.Compiler.Quad.Operator.NewArray;
 import joeq.Compiler.Quad.Operator.Putfield;
+import joeq.Compiler.Quad.Operator.Putstatic;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.QuadVisitor;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import framework.scuba.helper.G;
 
 /**
  * Representing the summary for a method. Now it only contains abstractHeap.
@@ -39,12 +44,24 @@ public class Summary {
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();
-		this.dumpSummary4Method(meth);
+    	if(G.debug)
+			this.dumpSummary4Method(meth);
 	}
 	
     public void dumpSummary4Method(jq_Method meth) {
-    	System.out.println("Summary for method: " + meth.getName());
-    	System.out.println("**************************************");
+		System.out.println("Summary for method: " + meth.getName());
+		System.out.println("**************************************");
+		Set<jq_Type> allocs = new HashSet();
+		List<jq_Type> allocList = new ArrayList();
+
+		Set<Operand> fieldsBase = new HashSet();
+		List<Operand> fieldsBaseList = new ArrayList();
+		
+		Set<jq_Field> fieldsAccess = new HashSet();
+		List<jq_Field> fieldsAccList = new ArrayList();
+
+		Set<Register> locals = new HashSet();
+
 		ControlFlowGraph cfg = meth.getCFG();
 		String params = "";
 		RegisterFactory rf = cfg.getRegisterFactory();
@@ -54,43 +71,75 @@ public class Summary {
 			params = params + " " + v;
 		}
 		
-		Set<Register> locals = new HashSet();
         for (Register v : meth.getLiveRefVars()) {
         	if(!params.contains(v.toString()))
         		locals.add(v);
         }
-        
-		Set<String> allocs = new HashSet();
-		Set<Operand> fieldsBase = new HashSet();
 
 		for (BasicBlock bb : cfg.reversePostOrder()) {
 			for (Quad q : bb.getQuads()) {
 				Operator op = q.getOperator();
-				if (op instanceof New)
-					allocs.add(New.getType(q).getType().getName());
+				if (op instanceof New) {
+					allocs.add(New.getType(q).getType());
+					allocList.add(New.getType(q).getType());
+				}
 
-				if (op instanceof NewArray)
-					allocs.add(NewArray.getType(q).getType().getName());
+				if (op instanceof NewArray) {
+					allocs.add(NewArray.getType(q).getType());
+					allocList.add(NewArray.getType(q).getType());
 
-				if (op instanceof MultiNewArray) 
-					allocs.add(MultiNewArray.getType(q).getType().getName());
+				}
+
+				if (op instanceof MultiNewArray) {
+					allocs.add(MultiNewArray.getType(q).getType());
+					allocList.add(MultiNewArray.getType(q).getType());
+
+				}
 				
-				if (op instanceof Putfield) 
+				if (op instanceof Putfield) {
 					fieldsBase.add(Putfield.getBase(q));
+					fieldsBaseList.add(Putfield.getBase(q));
+					
+					fieldsAccess.add(Putfield.getField(q).getField());
+					fieldsAccList.add(Putfield.getField(q).getField());
 
-				if (op instanceof Getfield) 
+				}
+
+				if (op instanceof Getfield) {
 					fieldsBase.add(Getfield.getBase(q));
+					fieldsBaseList.add(Putfield.getBase(q));
+					
+					fieldsAccess.add(Getfield.getField(q).getField());
+					fieldsAccList.add(Getfield.getField(q).getField());
+				}
+				
+				if (op instanceof Putstatic) {
+					fieldsAccess.add(Putstatic.getField(q).getField());
+					fieldsAccList.add(Putstatic.getField(q).getField());
+				}
+				
+				if (op instanceof Getstatic) {
+					fieldsAccess.add(Getstatic.getField(q).getField());
+					fieldsAccList.add(Getstatic.getField(q).getField());
+				}
 
 			}
 		}
 
-		System.out.println("PARAM List: " + params);
-		System.out.println("Local List: " + locals);
-		System.out.println("Alloc List: " + allocs);
-		System.out.println("Field access List: " + fieldsBase);
+		System.out.println("PARAM Set: " + params);
 
+		System.out.println("Local Set: " + locals);
 
-    	System.out.println("**************************************");
+		System.out.println("Alloc Set: " + allocs);
+		System.out.println("Alloc List: " + allocList);
+
+		System.out.println("Field base Set: " + fieldsBase);
+		System.out.println("Field base List: " + fieldsBase);
+
+		System.out.println("Field access Set: " + fieldsAccList);
+		System.out.println("Field access List: " + fieldsAccess);
+
+		System.out.println("**************************************");
     }
 
 	public void dumpSummaryToFile() {
@@ -161,6 +210,9 @@ public class Summary {
 
 		public void visitGetstatic(Quad stmt) {
 			// TODO
+			FieldOperand field = Getstatic.getField(stmt);
+			if(field.getField().getType() instanceof jq_Reference)
+				absHeap.handleGetstaticStmt(stmt);
 		}
 
 		public void visitInstanceOf(Quad stmt) {
@@ -213,6 +265,9 @@ public class Summary {
 
 		public void visitPutstatic(Quad stmt) {
 			// TODO
+			FieldOperand field = Putstatic.getField(stmt);
+			if(field.getField().getType() instanceof jq_Reference)
+				absHeap.handlePutstaticStmt(stmt);
 		}
 
 		public void visitReturn(Quad stmt) {
