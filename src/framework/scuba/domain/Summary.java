@@ -41,10 +41,10 @@ public class Summary {
 		absHeap = new AbstractHeap();
 		this.dumpSummary4Method(meth);
 	}
-	
-    public void dumpSummary4Method(jq_Method meth) {
-    	System.out.println("Summary for method: " + meth.getName());
-    	System.out.println("**************************************");
+
+	public void dumpSummary4Method(jq_Method meth) {
+		System.out.println("Summary for method: " + meth.getName());
+		System.out.println("**************************************");
 		ControlFlowGraph cfg = meth.getCFG();
 		String params = "";
 		RegisterFactory rf = cfg.getRegisterFactory();
@@ -53,13 +53,13 @@ public class Summary {
 			Register v = rf.get(zIdx);
 			params = params + " " + v;
 		}
-		
+
 		Set<Register> locals = new HashSet();
-        for (Register v : meth.getLiveRefVars()) {
-        	if(!params.contains(v.toString()))
-        		locals.add(v);
-        }
-        
+		for (Register v : meth.getLiveRefVars()) {
+			if (!params.contains(v.toString()))
+				locals.add(v);
+		}
+
 		Set<String> allocs = new HashSet();
 		Set<Operand> fieldsBase = new HashSet();
 
@@ -72,13 +72,13 @@ public class Summary {
 				if (op instanceof NewArray)
 					allocs.add(NewArray.getType(q).getType().getName());
 
-				if (op instanceof MultiNewArray) 
+				if (op instanceof MultiNewArray)
 					allocs.add(MultiNewArray.getType(q).getType().getName());
-				
-				if (op instanceof Putfield) 
+
+				if (op instanceof Putfield)
 					fieldsBase.add(Putfield.getBase(q));
 
-				if (op instanceof Getfield) 
+				if (op instanceof Getfield)
 					fieldsBase.add(Getfield.getBase(q));
 
 			}
@@ -89,16 +89,15 @@ public class Summary {
 		System.out.println("Alloc List: " + allocs);
 		System.out.println("Field access List: " + fieldsBase);
 
-
-    	System.out.println("**************************************");
-    }
-
-	public void dumpSummaryToFile() {
-		absHeap.dumpHeapToFile();
+		System.out.println("**************************************");
 	}
 
-	public void dumpAllMemLocsHeapToFile() {
-		absHeap.dumpAllMemLocsHeapToFile();
+	public void dumpSummaryToFile(int count) {
+		absHeap.dumpHeapToFile(count);
+	}
+
+	public void dumpAllMemLocsHeapToFile(int count) {
+		absHeap.dumpAllMemLocsHeapToFile(count);
 	}
 
 	public void validate() {
@@ -155,7 +154,7 @@ public class Summary {
 		public void visitGetfield(Quad stmt) {
 			// TODO
 			FieldOperand field = Getfield.getField(stmt);
-			if(field.getField().getType() instanceof jq_Reference)
+			if (field.getField().getType() instanceof jq_Reference)
 				absHeap.handleGetfieldStmt(stmt);
 		}
 
@@ -182,7 +181,7 @@ public class Summary {
 
 		public void visitMove(Quad stmt) {
 			// TODO
-			if(Move.getSrc(stmt) instanceof RegisterOperand)
+			if (Move.getSrc(stmt) instanceof RegisterOperand)
 				absHeap.handleMoveStmt(stmt);
 		}
 
@@ -208,7 +207,7 @@ public class Summary {
 		public void visitPutfield(Quad stmt) {
 			// TODO
 			FieldOperand field = Putfield.getField(stmt);
-			if(field.getField().getType() instanceof jq_Reference)
+			if (field.getField().getType() instanceof jq_Reference)
 				absHeap.handlePutfieldStmt(stmt);
 		}
 

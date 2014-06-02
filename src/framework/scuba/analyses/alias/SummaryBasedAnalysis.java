@@ -1,7 +1,6 @@
 package framework.scuba.analyses.alias;
 
 import java.io.PrintWriter;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -25,73 +24,71 @@ import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
 
 /**
- * Summary-based analysis.
- * 1. Build and get a CHA-based CallGraph.
- * 2. Compute SCC
- * 3. Run the worklist algorithm 
- * author: Yu Feng
- * email: yufeng@cs.utexas.edu
+ * Summary-based analysis. 1. Build and get a CHA-based CallGraph. 2. Compute
+ * SCC 3. Run the worklist algorithm author: Yu Feng email: yufeng@cs.utexas.edu
  */
 
-@Chord(
-	    name = "sum-java",
-	    consumes = { "rootM", "reachableM", "IM", "MM" }
-	)
+@Chord(name = "sum-java", consumes = { "rootM", "reachableM", "IM", "MM" })
 public class SummaryBasedAnalysis extends JavaAnalysis {
-	
 
-    protected DomM domM;
-    protected ProgramRel relRootM;
-    protected ProgramRel relReachableM;
-    protected ProgramRel relIM;
-    protected ProgramRel relMM;
-    protected CICG callGraph;
-    
+	protected DomM domM;
+	protected ProgramRel relRootM;
+	protected ProgramRel relReachableM;
+	protected ProgramRel relIM;
+	protected ProgramRel relMM;
+	protected CICG callGraph;
+
 	IntraProcSumAnalysis intrapro = new IntraProcSumAnalysis();
 
 	private void init() {
 		getCallGraph();
-		System.out.println("Total nodes in CG---------" + callGraph.getNodes().size());
-		//init \gamma here.
-		//compute SCCs and their representative nodes.
+		System.out.println("Total nodes in CG---------"
+				+ callGraph.getNodes().size());
+		// init \gamma here.
+		// compute SCCs and their representative nodes.
 		sumAnalyze();
 	}
-	
-	
+
 	private void sumAnalyze() {
 		Set<jq_Method> roots = callGraph.getRoots();
 		dumpCallGraph();
 		System.out.println("Root nodes: ---" + roots);
-		for(Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
+		for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
 			System.out.println("SCC List---" + scc);
 		}
-		//for now, assume there is no SCC.
+		// for now, assume there is no SCC.
 		LinkedList<jq_Method> worklist = new LinkedList<jq_Method>();
 		for (jq_Method meth : callGraph.getNodes()) {
-			//isolated node.
+			// isolated node.
 			if (roots.contains(meth) && callGraph.getSuccs(meth).size() == 0)
 				continue;
-			
+
 			if ((callGraph.getSuccs(meth).size() == 0)
 					&& (callGraph.getPreds(meth).size() != 0))
 				worklist.add(meth);
-				
+
 		}
-		//foreach leaf in the callgraph. Add them to the worklist.
-		while(!worklist.isEmpty()) {
+		// foreach leaf in the callgraph. Add them to the worklist.
+		while (!worklist.isEmpty()) {
 			jq_Method worker = worklist.poll();
-//			if(success terminated) {
-				analyze(worker);
-//			} else
-//				append worker to the end of the List.class
-				
-//		    add m's pred to worklist
+			// if(success terminated) {
+			analyze(worker);
+			// } else
+			// append worker to the end of the List.class
+
+			// add m's pred to worklist
 			worklist.addAll(callGraph.getPreds(worker));
 		}
 	}
-	
+
+	public static int count = 0;
+
 	private void analyze(jq_Method m) {
-		//do interproc
+		count++;
+
+		// do interproc
+		System.out.println("+++++++++++++++++   " + count
+				+ "   +++++++++++++++++");
 		System.out
 				.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 		System.out.println("Handling the method: ");
@@ -110,94 +107,91 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("*****************************************");
 
 		intrapro.analyze(cfg);
-		//mark terminated
+		// mark terminated
+		summary.dumpSummaryToFile(count);
 	}
-	
+
 	private void analyzeSCC() {
-		//add all methods to worklist
-/*		while(wl is not empty) {
-			gamma = worker.getSummary();
-			m = worklist.poll();
-			analyze(m);
-			reset
-			gammaNew = m.getSummary();
-			if(gammaNew == gamma)
-				set
-			else
-				reset
-			add pred(unterminated)
-		}*/
+		// add all methods to worklist
+		/*
+		 * while(wl is not empty) { gamma = worker.getSummary(); m =
+		 * worklist.poll(); analyze(m); reset gammaNew = m.getSummary();
+		 * if(gammaNew == gamma) set else reset add pred(unterminated) }
+		 */
 	}
-	
-	/*This method will be invoked by Chord automatically.*/
-    public void run() {
-        domM = (DomM) ClassicProject.g().getTrgt("M");
-        relRootM = (ProgramRel) ClassicProject.g().getTrgt("rootM");
-        relReachableM = (ProgramRel) ClassicProject.g().getTrgt("reachableM");
-        relIM = (ProgramRel) ClassicProject.g().getTrgt("IM");
-        relMM = (ProgramRel) ClassicProject.g().getTrgt("MM");
-        //init scuba.
-        init();
-    }
-    /**
-     * Provides the program's context-insensitive call graph.
-     * 
-     * @return The program's context-insensitive call graph.
-     */
-    public ICICG getCallGraph() {
-        if (callGraph == null) {
-            callGraph = new CICG(domM, relRootM, relReachableM, relIM, relMM);
-        }
-        return callGraph;
-    }
-    
-    /*Dump method. Borrowed from Mayur. */
-    public void dumpCallGraph() {
-        ClassicProject project = ClassicProject.g();
 
-        ICICG cicg = this.getCallGraph();
-        domM = (DomM) project.getTrgt("M");
+	/* This method will be invoked by Chord automatically. */
+	public void run() {
+		domM = (DomM) ClassicProject.g().getTrgt("M");
+		relRootM = (ProgramRel) ClassicProject.g().getTrgt("rootM");
+		relReachableM = (ProgramRel) ClassicProject.g().getTrgt("reachableM");
+		relIM = (ProgramRel) ClassicProject.g().getTrgt("IM");
+		relMM = (ProgramRel) ClassicProject.g().getTrgt("MM");
+		// init scuba.
+		init();
+	}
 
-        PrintWriter out = OutDirUtils.newPrintWriter("cicg.dot");
-        out.println("digraph G {");
-        for (jq_Method m1 : cicg.getNodes()) {
-            String id1 = id(m1);
-            out.println("\t" + id1 + " [label=\"" + str(m1) + "\"];");
-            for (jq_Method m2 : cicg.getSuccs(m1)) {
-                String id2 = id(m2);
-                Set<Quad> labels = cicg.getLabels(m1, m2);
-                for (Quad q : labels) {
-                    String el = q.toJavaLocStr();
-                    out.println("\t" + id1 + " -> " + id2 + " [label=\"" + el + "\"];");
-                }
-            }
-        }
-        out.println("}");
-        out.close();
+	/**
+	 * Provides the program's context-insensitive call graph.
+	 * 
+	 * @return The program's context-insensitive call graph.
+	 */
+	public ICICG getCallGraph() {
+		if (callGraph == null) {
+			callGraph = new CICG(domM, relRootM, relReachableM, relIM, relMM);
+		}
+		return callGraph;
+	}
 
-    }
-    
-    private String id(jq_Method m) {
-        return "m" + domM.indexOf(m);
-    }
-    
-    private static String str(jq_Method m) {
-        jq_Class c = m.getDeclaringClass();
-        String desc = m.getDesc().toString();
-        String args = desc.substring(1, desc.indexOf(')'));
-        String sign = "(" + Program.typesToStr(args) + ")";
-        return c.getName() + "." + m.getName().toString() +  sign;
-    }
-    
-    /**
-     * Frees relations used by this program analysis if they are in memory.
-     * <p>
-     * This method must be called after clients are done exercising the interface of this analysis.
-     */
-    public void free() {
-        if (callGraph != null)
-            callGraph.free();
-        
-    }
+	/* Dump method. Borrowed from Mayur. */
+	public void dumpCallGraph() {
+		ClassicProject project = ClassicProject.g();
+
+		ICICG cicg = this.getCallGraph();
+		domM = (DomM) project.getTrgt("M");
+
+		PrintWriter out = OutDirUtils.newPrintWriter("cicg.dot");
+		out.println("digraph G {");
+		for (jq_Method m1 : cicg.getNodes()) {
+			String id1 = id(m1);
+			out.println("\t" + id1 + " [label=\"" + str(m1) + "\"];");
+			for (jq_Method m2 : cicg.getSuccs(m1)) {
+				String id2 = id(m2);
+				Set<Quad> labels = cicg.getLabels(m1, m2);
+				for (Quad q : labels) {
+					String el = q.toJavaLocStr();
+					out.println("\t" + id1 + " -> " + id2 + " [label=\"" + el
+							+ "\"];");
+				}
+			}
+		}
+		out.println("}");
+		out.close();
+
+	}
+
+	private String id(jq_Method m) {
+		return "m" + domM.indexOf(m);
+	}
+
+	private static String str(jq_Method m) {
+		jq_Class c = m.getDeclaringClass();
+		String desc = m.getDesc().toString();
+		String args = desc.substring(1, desc.indexOf(')'));
+		String sign = "(" + Program.typesToStr(args) + ")";
+		return c.getName() + "." + m.getName().toString() + sign;
+	}
+
+	/**
+	 * Frees relations used by this program analysis if they are in memory.
+	 * <p>
+	 * This method must be called after clients are done exercising the
+	 * interface of this analysis.
+	 */
+	public void free() {
+		if (callGraph != null)
+			callGraph.free();
+
+	}
 
 }
