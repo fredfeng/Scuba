@@ -336,6 +336,7 @@ public class AbstractHeap {
 	public P2Set lookup(AbstractMemLoc loc, FieldElem field) {
 		// create a pair wrapper for lookup
 
+		assert (!(loc instanceof NullElem)) : "we cannot get some filed of a null pointer!";
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				loc, field);
 		if (loc.isArgDerived()) {
@@ -378,6 +379,13 @@ public class AbstractHeap {
 		P2Set ret = new P2Set();
 		for (HeapObject obj : p2Set.getHeapObjects()) {
 			Constraint cst = p2Set.getConstraint(obj);
+
+			// TODO
+			// if we want to lookup some field of a null pointer
+			// just ignore and jump to the next one
+			if (obj instanceof NullElem)
+				continue;
+
 			P2Set tgt = lookup(obj, field);
 			P2Set projP2Set = P2SetHelper.project(tgt, cst);
 			ret.join(projP2Set);
@@ -835,20 +843,7 @@ public class AbstractHeap {
 	protected HeapObject getAbstractMemLoc(jq_Class clazz, jq_Method method,
 			AConstOperand variable, VariableType vType) {
 		if (vType == VariableType.NULL_POINTER) {
-			// create a wrapper
-			NullElem ret = new NullElem();
-			// try to look up this wrapper in the memory location factory
-			if (memLocFactory.containsKey(ret)) {
-				return (NullElem) memLocFactory.get(ret);
-			}
-
-			// not found in the factory
-			// every time generating a memory location, do this marking
-			ArgDerivedHelper.markArgDerived(ret);
-
-			memLocFactory.put(ret, ret);
-
-			return ret;
+			return getAbstractMemLoc();
 		} else {
 			assert false : "wried things! Unknown Type";
 			return null;
