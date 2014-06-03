@@ -16,10 +16,14 @@ public class TestRule11 {
 	
 	class X {
 		Z f;
+		Z f3;
+		Z f4;
+		
 	}
 	
 	class Y extends X {
 		Z f;
+		Z f2;
 	}
 	
 	//v1.f = v2.
@@ -29,5 +33,11 @@ public class TestRule11 {
         y1.f = new Z();
         X x1 = y1;
         Z f1 = x1.f;
+        Z f4 = x1.f3;
+
+        Z f2 = y1.f;
+        Z f3 = y1.f2;
+
+
 	}
 }
