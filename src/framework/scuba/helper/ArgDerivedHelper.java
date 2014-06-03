@@ -2,6 +2,7 @@ package framework.scuba.helper;
 
 import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.AbstractMemLoc.ArgDerivedType;
+import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.LocalVarElem;
 import framework.scuba.domain.ParamElem;
@@ -10,6 +11,7 @@ import framework.scuba.domain.StaticElem;
 public class ArgDerivedHelper {
 
 	public static ArgDerivedType markArgDerived(AbstractMemLoc loc) {
+
 		assert (loc.unknowArgDerived());
 		// if root has been analyzed for arg-derived
 		if (loc.knownArgDerived()) {
@@ -28,6 +30,18 @@ public class ArgDerivedHelper {
 			assert loc.isArgDerived();
 		} else {
 			assert false : "ArgDerivedHelper wrong!";
+		}
+
+		if (loc instanceof AccessPath) {
+			assert loc.isArgDerived() : "AccessPath are all arg-derived";
+		} else if (loc instanceof AllocElem) {
+			assert loc.isNotArgDerived() : "AllocElem is not arg-derived";
+		} else if (loc instanceof ParamElem) {
+			assert loc.isArgDerived() : "ParamElem is arg-derived";
+		} else if (loc instanceof StaticElem) {
+			assert loc.isArgDerived() : "StaticElem is arg-derived";
+		} else if (loc instanceof LocalVarElem) {
+			assert loc.isNotArgDerived() : "LocalVarElem shold not be arg-derived";
 		}
 
 		return loc.getArgDerivedMarker();

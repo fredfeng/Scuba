@@ -62,25 +62,39 @@ public class AbstractHeap {
 			// is just a stack local variable
 			if (loc instanceof AccessPath) {
 				AbstractMemLoc root = loc.findRoot();
-				assert (root instanceof ParamElem) : "Root of " + loc + " : "
-						+ root + " should be a ParamElem";
+				assert (root instanceof ParamElem)
+						|| (root instanceof StaticElem) : "Root of " + loc
+						+ " : " + root + " should be a ParamElem or StaticElem";
+				assert (loc.isArgDerived()) : "all AccessPath should be arg-derived";
 			} else if (loc instanceof StaticElem) {
 				AbstractMemLoc root = loc.findRoot();
 				assert (loc.equals(root)) : "Root of " + loc + " : " + root
 						+ " should be the same as " + loc;
+				assert (loc.isArgDerived()) : "StaticElem should be arg-derived";
 			} else if (loc instanceof AllocElem) {
 				AbstractMemLoc root = loc.findRoot();
 				assert (loc.equals(root)) : root + " of " + loc
 						+ " should be the same as " + loc;
+				assert (loc.isNotArgDerived()) : "AllocElem should NOT be arg-derived";
 			} else if (loc instanceof LocalVarElem) {
 				AbstractMemLoc root = loc.findRoot();
 				assert (loc.equals(root)) : root + " of " + loc
 						+ " should be the same as " + loc;
+				assert (loc.isNotArgDerived()) : "LocalVarElem should NOT be arg-derived";
 			} else if (loc instanceof ParamElem) {
 				AbstractMemLoc root = loc.findRoot();
 				assert (loc.equals(root)) : root + " of " + loc
 						+ " should be the same as " + loc;
+				assert (loc.isArgDerived()) : "ParamElem should be arg-derive";
 			}
+			// all arg-derived instances must be:
+			// AccessPath, ParamElem, or StaticElem
+			if (loc.isArgDerived()) {
+				assert (loc instanceof AccessPath)
+						|| (loc instanceof ParamElem)
+						|| (loc instanceof StaticElem);
+			}
+
 			// validate all the argument derived marker are properly set
 			assert (loc.knownArgDerived()) : "we should set the argument derived marker of "
 					+ loc
@@ -313,7 +327,7 @@ public class AbstractHeap {
 				loc, field);
 		if (loc.isArgDerived()) {
 			// get the default target given the memory location and the field
-			HeapObject defaultTarget = getDefaultTarget(loc, field);
+			AccessPath defaultTarget = getDefaultTarget(loc, field);
 			// always find the default p2set of (loc, field)
 			P2Set defaultP2Set = new P2Set(defaultTarget);
 			// return the p2set always including the default p2set
@@ -868,8 +882,9 @@ public class AbstractHeap {
 
 	// get the default target of memory location loc and the field
 	// we can ONLY call this method when ensuring loc is arg-derived
-	protected HeapObject getDefaultTarget(AbstractMemLoc loc, FieldElem field) {
-
+	protected AccessPath getDefaultTarget(AbstractMemLoc loc, FieldElem field) {
+		assert (loc instanceof AccessPath) || (loc instanceof StaticElem)
+				|| (loc instanceof ParamElem);
 		assert loc.knownArgDerived() : "we must first set the argument derived marker "
 				+ "before using the mem loc!";
 		assert loc.isArgDerived() : "you can ONLY get the default target for an arg derived mem loc!";
@@ -936,7 +951,7 @@ public class AbstractHeap {
 		if (!loc.isArgDerived())
 			return;
 
-		HeapObject defaultTarget = getDefaultTarget(loc, f);
+		AccessPath defaultTarget = getDefaultTarget(loc, f);
 
 		if (p2Set.containsHeapObject(defaultTarget)) {
 			p2Set.remove(defaultTarget);

@@ -2,6 +2,8 @@ package framework.scuba.domain;
 
 public class AccessPath extends HeapObject {
 
+	// base can be an AccessPath, a ParamElem or a StaticElem
+	// i.e., AccessPath is a recursive data structure
 	final protected AbstractMemLoc base;
 
 	final protected FieldElem field;
@@ -23,8 +25,8 @@ public class AccessPath extends HeapObject {
 	}
 
 	// find the left-most location, which is the root
-	// for AccessPath, the root must be ParamElem
-	public AbstractMemLoc findRoot() {
+	// for AccessPath, the root must be ParamElem or StaticElem
+	public StackObject findRoot() {
 
 		if (base instanceof StackObject) {
 			assert (base instanceof ParamElem || base instanceof StaticElem) : "the root"
