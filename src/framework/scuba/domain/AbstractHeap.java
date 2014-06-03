@@ -370,11 +370,13 @@ public class AbstractHeap {
 	// v1 = v2
 	// v1: parameter / local
 	// v2: parameter / local (for SSA, only local is possible)
+	// TODO we loose the constraint to allow LHS to be ParamElem (Not SSA)
 	protected boolean handleAssgnStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register right,
 			VariableType rightVType) {
 
-		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for assgn stmt, LHS must be LocalElem";
+		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
+				+ "for assgn stmt, LHS must be LocalElem (or ParamElem, we HAVE NOT fully fixed SSA";
 		assert (rightVType == VariableType.LOCAL_VARIABLE || rightVType == VariableType.PARAMEMTER) : ""
 				+ "for assgn stmt, RHS must be LocalElem or ParamElem!";
 
@@ -383,7 +385,8 @@ public class AbstractHeap {
 
 		// generate the mem loc for LHS
 		if (leftVType == VariableType.PARAMEMTER) {
-			assert false : "for assign stmt, LHS must be LocalElem";
+			// assert false : "for assign stmt, LHS must be LocalElem";
+			v1 = getParamElem(clazz, method, left);
 		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
 			v1 = getLocalVarElem(clazz, method, left);
 		} else {
