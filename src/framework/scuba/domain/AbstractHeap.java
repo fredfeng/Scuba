@@ -206,7 +206,7 @@ public class AbstractHeap {
 				b.append("\"];\n");
 			} else if (loc instanceof StaticElem) {
 				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=triangle,label=\"");
+				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
@@ -270,7 +270,7 @@ public class AbstractHeap {
 				b.append("\"];\n");
 			} else if (loc instanceof StaticElem) {
 				b.append("  ").append("\"" + loc + "\"");
-				b.append(" [shape=triangle,label=\"");
+				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
