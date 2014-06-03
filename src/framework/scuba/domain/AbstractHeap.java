@@ -16,8 +16,6 @@ import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
-import joeq.Compiler.Quad.Operator.ALoad;
-import joeq.Compiler.Quad.Operator.AStore;
 import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Getstatic;
 import joeq.Compiler.Quad.Operator.Move;
@@ -384,33 +382,12 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	//perform array smashing. Use assign to handle array store/load.
 	public void handleALoadStmt(Quad stmt) {
-		jq_Method meth = stmt.getMethod();
-		if (ALoad.getDest(stmt) instanceof RegisterOperand) {
-			RegisterOperand rhs = (RegisterOperand) ALoad.getBase(stmt);
-			RegisterOperand lhs = (RegisterOperand) ALoad.getDest(stmt);
-			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
-			boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
-					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
-			isChanged = (flag || isChanged);
-		} 
 	}
 
 	public void handleAStoreStmt(Quad stmt) {
-		jq_Method meth = stmt.getMethod();
-		if (AStore.getValue(stmt) instanceof RegisterOperand) {
-			RegisterOperand lhs = (RegisterOperand) AStore.getBase(stmt);
-			RegisterOperand rhs = (RegisterOperand) AStore.getValue(stmt);
-			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
 
-			boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
-					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
-			isChanged = (flag || isChanged);
-		} 
 	}
 
 	// v1 = v2.f
@@ -569,6 +546,7 @@ public class AbstractHeap {
 		return vt;
 	}
 
+	
 	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
 	// v1 = v2
 	// v1: parameter / local
@@ -1142,7 +1120,7 @@ public class AbstractHeap {
 		// if (p2Set == null)
 		// return;
 		assert (p2Set != null) : "p2 set is null when doing the cleanup.";
-		
+
 		AbstractMemLoc loc = pair.val0;
 		FieldElem f = pair.val1;
 
