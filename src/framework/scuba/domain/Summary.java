@@ -189,35 +189,41 @@ public class Summary {
 
 		}
 
-		//perform array smashing. Use assign to handle array store/load.
+		// perform array smashing. Use assign to handle array store/load.
 		public void visitALoad(Quad stmt) {
 			// TODO
 			jq_Method meth = stmt.getMethod();
 			if (ALoad.getDest(stmt) instanceof RegisterOperand) {
 				RegisterOperand rhs = (RegisterOperand) ALoad.getBase(stmt);
 				RegisterOperand lhs = (RegisterOperand) ALoad.getDest(stmt);
-				VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-				VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
+				VariableType lvt = getVarType(stmt.getMethod(),
+						lhs.getRegister());
+				VariableType rvt = getVarType(stmt.getMethod(),
+						rhs.getRegister());
 
-				boolean flag = absHeap.handleAssgnStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
+				boolean flag = absHeap.handleAssignStmt(
+						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
+						rhs.getRegister(), rvt);
 				absHeap.markChanged(flag);
-			} 
+			}
 		}
-		
+
 		public void visitAStore(Quad stmt) {
 			// TODO
 			jq_Method meth = stmt.getMethod();
 			if (AStore.getValue(stmt) instanceof RegisterOperand) {
 				RegisterOperand lhs = (RegisterOperand) AStore.getBase(stmt);
 				RegisterOperand rhs = (RegisterOperand) AStore.getValue(stmt);
-				VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-				VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
+				VariableType lvt = getVarType(stmt.getMethod(),
+						lhs.getRegister());
+				VariableType rvt = getVarType(stmt.getMethod(),
+						rhs.getRegister());
 
-				boolean flag = absHeap.handleAssgnStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
+				boolean flag = absHeap.handleAssignStmt(
+						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
+						rhs.getRegister(), rvt);
 				absHeap.markChanged(flag);
-			} 
+			}
 		}
 
 		public void visitBinary(Quad stmt) {
@@ -239,13 +245,16 @@ public class Summary {
 			if (field.getField().getType() instanceof jq_Reference) {
 				assert (stmt.getOperator() instanceof Getfield);
 				RegisterOperand lhs = Getfield.getDest(stmt);
-				RegisterOperand rhsBase = (RegisterOperand) Getfield.getBase(stmt);
+				RegisterOperand rhsBase = (RegisterOperand) Getfield
+						.getBase(stmt);
 				jq_Method meth = stmt.getMethod();
-				VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-				VariableType rvt = getVarType(stmt.getMethod(), rhsBase.getRegister());
+				VariableType lvt = getVarType(stmt.getMethod(),
+						lhs.getRegister());
+				VariableType rvt = getVarType(stmt.getMethod(),
+						rhsBase.getRegister());
 
-				boolean flag = absHeap.handleLoadStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhsBase.getRegister(),
+				boolean flag = absHeap.handleLoadStmt(meth.getDeclaringClass(),
+						meth, lhs.getRegister(), lvt, rhsBase.getRegister(),
 						field.getField(), rvt);
 				absHeap.markChanged(flag);
 			}
@@ -259,10 +268,12 @@ public class Summary {
 				jq_Method meth = stmt.getMethod();
 				RegisterOperand lhs = Getstatic.getDest(stmt);
 				jq_Class encloseClass = field.getField().getDeclaringClass();
-				VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
+				VariableType lvt = getVarType(stmt.getMethod(),
+						lhs.getRegister());
 
-				boolean flag = absHeap.handleStatLoadStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, encloseClass, field.getField());
+				boolean flag = absHeap.handleStatLoadStmt(
+						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
+						encloseClass, field.getField());
 				absHeap.markChanged(flag);
 			}
 		}
@@ -284,17 +295,20 @@ public class Summary {
 		public void visitMonitor(Quad stmt) {
 		}
 
-		//v1 = v2
+		// v1 = v2
 		public void visitMove(Quad stmt) {
 			// TODO
 			jq_Method meth = stmt.getMethod();
 			if (Move.getSrc(stmt) instanceof RegisterOperand) {
 				RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
 				RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
-				VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-				VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
-				boolean flag = absHeap.handleAssgnStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
+				VariableType lvt = getVarType(stmt.getMethod(),
+						lhs.getRegister());
+				VariableType rvt = getVarType(stmt.getMethod(),
+						rhs.getRegister());
+				boolean flag = absHeap.handleAssignStmt(
+						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
+						rhs.getRegister(), rvt);
 				absHeap.markChanged(flag);
 			}
 		}
@@ -307,8 +321,9 @@ public class Summary {
 			RegisterOperand rop = MultiNewArray.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 
-			boolean flag = absHeap.handleNewStmt(stmt.getMethod().getDeclaringClass(),
-					meth, rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
+			boolean flag = absHeap.handleNewStmt(stmt.getMethod()
+					.getDeclaringClass(), meth, rop.getRegister(), vt, to
+					.getType(), stmt.getLineNumber());
 			absHeap.markChanged(flag);
 		}
 
@@ -321,12 +336,14 @@ public class Summary {
 			RegisterOperand rop = New.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 
-			boolean flag = absHeap.handleNewStmt(stmt.getMethod().getDeclaringClass(),
-					meth, rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
+			boolean flag = absHeap.handleNewStmt(stmt.getMethod()
+					.getDeclaringClass(), meth, rop.getRegister(), vt, to
+					.getType(), stmt.getLineNumber());
 			absHeap.markChanged(flag);
 		}
 
-		// v = new Array(); is it ok if we use the same handler as handlerNew for
+		// v = new Array(); is it ok if we use the same handler as handlerNew
+		// for
 		// array?
 		public void visitNewArray(Quad stmt) {
 			// TODO
@@ -336,11 +353,12 @@ public class Summary {
 			RegisterOperand rop = NewArray.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 
-			boolean flag = absHeap.handleNewStmt(stmt.getMethod().getDeclaringClass(),
-					meth, rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
+			boolean flag = absHeap.handleNewStmt(stmt.getMethod()
+					.getDeclaringClass(), meth, rop.getRegister(), vt, to
+					.getType(), stmt.getLineNumber());
 			absHeap.markChanged(flag);
 		}
-		
+
 		public void visitNullCheck(Quad stmt) {
 		}
 
@@ -358,12 +376,15 @@ public class Summary {
 				Operand rhso = Putfield.getSrc(stmt);
 				if (rhso instanceof RegisterOperand) {
 					RegisterOperand rhs = (RegisterOperand) rhso;
-					RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
-					VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-					VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
+					RegisterOperand lhs = (RegisterOperand) Putfield
+							.getBase(stmt);
+					VariableType lvt = getVarType(stmt.getMethod(),
+							lhs.getRegister());
+					VariableType rvt = getVarType(stmt.getMethod(),
+							rhs.getRegister());
 
-					flag = absHeap.handleStoreStmt(meth.getDeclaringClass(), meth,
-							lhs.getRegister(), lvt, field.getField(),
+					flag = absHeap.handleStoreStmt(meth.getDeclaringClass(),
+							meth, lhs.getRegister(), lvt, field.getField(),
 							rhs.getRegister(), rvt);
 					absHeap.markChanged(flag);
 				}
@@ -382,14 +403,16 @@ public class Summary {
 
 				if (rhso instanceof RegisterOperand) {
 					RegisterOperand rhs = (RegisterOperand) rhso;
-					VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
+					VariableType rvt = getVarType(stmt.getMethod(),
+							rhs.getRegister());
 
-					flag = absHeap.handleStaticStoreStmt(meth.getDeclaringClass(), meth,
-							encloseClass, field.getField(), rhs.getRegister(), rvt);
+					flag = absHeap.handleStaticStoreStmt(
+							meth.getDeclaringClass(), meth, encloseClass,
+							field.getField(), rhs.getRegister(), rvt);
 					absHeap.markChanged(flag);
 				}
 			}
-			
+
 		}
 
 		public void visitReturn(Quad stmt) {
@@ -407,7 +430,7 @@ public class Summary {
 
 		public void visitZeroCheck(Quad stmt) {
 		}
-		
+
 		// is this a param or local. helper function.
 		public VariableType getVarType(jq_Method meth, Register r) {
 			VariableType vt = VariableType.LOCAL_VARIABLE;
