@@ -386,6 +386,7 @@ public class AbstractHeap {
 		// generate the mem loc for LHS
 		if (leftVType == VariableType.PARAMEMTER) {
 			// assert false : "for assign stmt, LHS must be LocalElem";
+			System.err.println("ParamElem appears as LHS in the assgn stmt");
 			v1 = getParamElem(clazz, method, left);
 		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
 			v1 = getLocalVarElem(clazz, method, left);
