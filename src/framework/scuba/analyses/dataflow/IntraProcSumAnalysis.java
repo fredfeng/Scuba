@@ -1,8 +1,10 @@
 package framework.scuba.analyses.dataflow;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import joeq.Compiler.Quad.BasicBlock;
@@ -23,9 +25,12 @@ import framework.scuba.utils.Node;
 public class IntraProcSumAnalysis {
 
 	Summary summary;
+	
+	List<BasicBlock> accessBlocksList = new ArrayList();
 
 	public void analyze(ControlFlowGraph g) {
 		BasicBlock entry = g.entry();
+		accessBlocksList.clear();
 		HashSet<BasicBlock> roots = new HashSet();
 		HashMap<Node, Set<BasicBlock>> nodeToScc = new HashMap();
 		HashMap<Set<BasicBlock>, Node> sccToNode = new HashMap();
@@ -76,12 +81,16 @@ public class IntraProcSumAnalysis {
 				// self loop in current block.
 				if (sccB.getSuccessors().contains(sccB))
 					handleSCC(scc);
-				else
+				else {
 					this.handleBasicBlock(sccB);
+				}
 			} else {
 				handleSCC(scc);
 			}
 		}
+		
+		if(G.debug)
+			System.out.println("Sequence of Blocks....." + accessBlocksList);
 	}
 
 	// compute the fixed-point for this scc.
@@ -118,6 +127,7 @@ public class IntraProcSumAnalysis {
 	}
 
 	public boolean handleBasicBlock(BasicBlock bb) {
+		accessBlocksList.add(bb);
 
 		if (G.debug) {
 			System.out.println("=========================");
