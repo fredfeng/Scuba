@@ -6,7 +6,7 @@ import java.util.Set;
 
 import framework.scuba.helper.ConstraintManager;
 
-public class P2Set extends AbstractMemLocConstraintSet {
+public class P2Set {
 
 	Map<HeapObject, Constraint> p2Set = new HashMap<HeapObject, Constraint>();
 
