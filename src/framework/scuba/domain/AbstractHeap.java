@@ -13,7 +13,6 @@ import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
-import joeq.Compiler.Quad.Operand.AConstOperand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
@@ -31,6 +30,7 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.G;
 import framework.scuba.helper.P2SetHelper;
 
 public class AbstractHeap {
@@ -241,7 +241,7 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					"/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/abstractHeap"
+					G.dotOutputPath + "abstractHeap"
 							+ count + ".dot"));
 			bufw.write(b.toString());
 			bufw.close();
@@ -312,7 +312,7 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					"/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/allMemLocs"
+					G.dotOutputPath + "allMemLocs"
 							+ count + ".dot"));
 			bufw.write(b.toString());
 			bufw.close();
@@ -437,8 +437,7 @@ public class AbstractHeap {
 	// v1 = v2.
 	public void handleMoveStmt(Quad stmt) {
 		jq_Method meth = stmt.getMethod();
-		Operand rhso = Putfield.getSrc(stmt);
-		if (rhso instanceof RegisterOperand) {
+		if (Move.getSrc(stmt) instanceof RegisterOperand) {
 			RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
 			RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
 			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
@@ -447,10 +446,7 @@ public class AbstractHeap {
 			boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
 					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
-		} else if (rhso instanceof AConstOperand) {
-			// need xinyu's support for v1=null
-		}
-
+		} 
 	}
 
 	public void handleMultiNewArrayStmt(Quad stmt) {
