@@ -140,7 +140,7 @@ public class AbstractHeap {
 	}
 
 	// print the heapObjectsToP2Set mapping in file
-	public void dumpHeapMappingToFile() {
+	public void dumpHeapMappingToFile(int count) {
 		StringBuilder b = new StringBuilder("");
 		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
 			AbstractMemLoc loc = pair.val0;
@@ -152,7 +152,7 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					"output/heapMapping.dot"));
+					G.dotOutputPath + count + "heapMapping.dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {
@@ -161,7 +161,7 @@ public class AbstractHeap {
 		}
 	}
 
-	public void dumpAllMemLocsToFile() {
+	public void dumpAllMemLocsToFile(int count) {
 		StringBuilder b = new StringBuilder("");
 		for (AbstractMemLoc loc : memLocFactory.keySet()) {
 			b.append(loc + "\n");
@@ -169,7 +169,7 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					"output/createdLocations.dot"));
+					G.dotOutputPath + count + "/createdLocations.dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {
