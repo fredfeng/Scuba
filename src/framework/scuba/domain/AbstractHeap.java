@@ -366,19 +366,19 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
+	// handleAssignStmt implements rule (1) in Figure 8 of the paper
 	// v1 = v2
 	// v1: parameter / local
 	// v2: parameter / local (for SSA, only local is possible)
 	// TODO we loose the constraint to allow LHS to be ParamElem (Not SSA)
-	protected boolean handleAssgnStmt(jq_Class clazz, jq_Method method,
+	protected boolean handleAssignStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register right,
 			VariableType rightVType) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
-				+ "for assgn stmt, LHS must be LocalElem (or ParamElem, we HAVE NOT fully fixed SSA";
+				+ "for Assign stmt, LHS must be LocalElem (or ParamElem, we HAVE NOT fully fixed SSA";
 		assert (rightVType == VariableType.LOCAL_VARIABLE || rightVType == VariableType.PARAMEMTER) : ""
-				+ "for assgn stmt, RHS must be LocalElem or ParamElem!";
+				+ "for Assign stmt, RHS must be LocalElem or ParamElem!";
 
 		// generates StackObject (either ParamElem or LocalVarElem)
 		StackObject v1 = null, v2 = null;
@@ -386,7 +386,7 @@ public class AbstractHeap {
 		// generate the mem loc for LHS
 		if (leftVType == VariableType.PARAMEMTER) {
 			// assert false : "for assign stmt, LHS must be LocalElem";
-			System.err.println("ParamElem appears as LHS in the assgn stmt");
+			System.err.println("ParamElem appears as LHS in the Assign stmt");
 			v1 = getParamElem(clazz, method, left);
 		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
 			v1 = getLocalVarElem(clazz, method, left);
@@ -473,7 +473,7 @@ public class AbstractHeap {
 	// v1: parameter / local (for SSA, only local_
 	// A: jq_Class
 	// f: a static field declared in class A
-	// although this is a load stmt, we regard it as an assgn stmt by following
+	// although this is a load stmt, we regard it as an Assign stmt by following
 	// v1 = (A.f) where A.f is just a stack object
 	protected boolean handleStatLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Class rightBase,
@@ -576,7 +576,7 @@ public class AbstractHeap {
 	// A: jq_Class
 	// f: a static field declared in class A
 	// v2: local / parameter
-	// although this is a store stmt, we regard it as an assgn stmt by following
+	// although this is a store stmt, we regard it as an Assign stmt by
 	// (A.f) = v2 where (A.f) is just a stack object (StaticElem)
 	protected boolean handleStaticStoreStmt(jq_Class clazz, jq_Method method,
 			jq_Class leftBase, jq_Field leftField, Register right,
