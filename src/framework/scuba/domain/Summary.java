@@ -1,8 +1,10 @@
 package framework.scuba.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
@@ -21,6 +23,7 @@ import joeq.Compiler.Quad.Operator.ALoad;
 import joeq.Compiler.Quad.Operator.AStore;
 import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Getstatic;
+import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.MultiNewArray;
 import joeq.Compiler.Quad.Operator.New;
@@ -44,7 +47,13 @@ import framework.scuba.helper.G;
 public class Summary {
 
 	private jq_Method method;
+
 	private AbstractHeap absHeap;
+
+	// this maps store the memory location instantiation result for each invoke
+	// stmt (call site) in the method that this Summary instance belongs to
+	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
+	private Map<Invoke, MemLocInstantiation> virtCallToMemLocInstantiation;
 
 	// finish current summary.
 	private boolean terminated;
@@ -52,6 +61,7 @@ public class Summary {
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();
+		virtCallToMemLocInstantiation = new HashMap<Invoke, MemLocInstantiation>();
 		if (G.debug)
 			this.dumpSummary4Method(meth);
 	}
