@@ -28,6 +28,7 @@ public class AbstractHeap {
 	// THIS IS the main data structure to represent the abstract heap
 	// every time we refer to a heap, it means this heap topology
 	// MAYBE we will not use this? we can use memLocFactory
+	// this heap might be used for instantiating the memory locations
 	final protected Set<AbstractMemLoc> heap;
 
 	// heap is a mapping described in Figure 7 of the paper
@@ -228,10 +229,11 @@ public class AbstractHeap {
 			FieldElem f = pair.val1;
 			P2Set p2Set = heapObjectsToP2Set.get(pair);
 			for (HeapObject hObj : p2Set.getHeapObjects()) {
+				Constraint cst = p2Set.getConstraint(hObj);
 				b.append("  ").append("\"" + loc + "\"");
 				b.append(" -> ").append("\"" + hObj + "\"")
 						.append(" [label=\"");
-				b.append(f);
+				b.append("(" + f + "," + cst + ")");
 				b.append("\"]\n");
 			}
 		}
@@ -297,10 +299,11 @@ public class AbstractHeap {
 				assert (p2Set != null) : "get a null p2 set!";
 
 				for (HeapObject obj : p2Set.getHeapObjects()) {
+					Constraint cst = p2Set.getConstraint(obj);
 					b.append("  ").append("\"" + loc + "\"");
 					b.append(" -> ").append("\"" + obj + "\"")
 							.append(" [label=\"");
-					b.append(f);
+					b.append("(" + f + "," + cst + ")");
 					b.append("\"]\n");
 				}
 			}
@@ -931,6 +934,7 @@ public class AbstractHeap {
 
 		// update the locations in the real heap graph
 		// currently we are not using this feature
+		// maybe we will use this for instantiating the memory locations
 		heap.add(pair.val0);
 		heap.addAll(p2Set.getHeapObjects());
 
