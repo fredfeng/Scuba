@@ -19,7 +19,7 @@ public class P2SetHelper {
 
 			ret.put(obj, newCst);
 		}
-
+		assert (ret != null) : "we get a null P2Set!";
 		return ret;
 	}
 

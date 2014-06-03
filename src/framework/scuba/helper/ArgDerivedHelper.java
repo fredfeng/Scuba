@@ -23,6 +23,7 @@ public class ArgDerivedHelper {
 			loc.resetArgDerived();
 			assert loc.isNotArgDerived();
 		} else if (root instanceof ParamElem || root instanceof StaticElem) {
+			// a.\e.f and (A.f).\e.g are both possible
 			loc.setArgDerived();
 			assert loc.isArgDerived();
 		} else {
