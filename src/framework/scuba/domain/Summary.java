@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import joeq.Class.jq_Field;
+import joeq.Class.jq_InstanceField;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Reference;
 import joeq.Class.jq_Type;
@@ -184,10 +185,12 @@ public class Summary {
 
 		public void visitALoad(Quad stmt) {
 			// TODO
+			absHeap.handleALoadStmt(stmt);
 		}
 
 		public void visitAStore(Quad stmt) {
 			// TODO
+			absHeap.handleAStoreStmt(stmt);
 		}
 
 		public void visitBinary(Quad stmt) {
