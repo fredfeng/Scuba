@@ -95,7 +95,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void analyze(jq_Method m) {
 		System.out.println("analyzing method " + count + " " + m);
-		count++;
 		// do interproc
 		if (G.debug) {
 			count++;
