@@ -1,6 +1,5 @@
 package test.intraproc;
 
-
 /**
  * Test case for long access path.
  * 
@@ -46,7 +45,7 @@ public class TestRule5 {
 // so we cannot handle x.z.g = new G()
 // so x.z.g does not have g field
 // so we cannot test the field selector currently
-// i.e., maybe we should 
+// i.e., maybe we should
 
 // public class Harness {
 // public static void main(String[] args) {
@@ -81,5 +80,6 @@ public class TestRule5 {
 //
 // G g = x1.z.g;
 // G g1 = x1.z.g.g;
+// }
 // }
 // }

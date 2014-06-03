@@ -78,3 +78,4 @@ public class TestRule6 {
 // class X {
 //
 // }
+// }

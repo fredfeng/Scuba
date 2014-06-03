@@ -53,8 +53,5 @@ public class TestRule7 {
 		} else {
 			g = new G();
 		}
-
 	}
 }
-
-// still in testing

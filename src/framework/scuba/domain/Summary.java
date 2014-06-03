@@ -196,7 +196,7 @@ public class Summary {
 
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
 
-		//no-op.
+		// no-op.
 		public void visitALength(Quad stmt) {
 
 		}
@@ -238,19 +238,19 @@ public class Summary {
 			}
 		}
 
-		//no-op.
+		// no-op.
 		public void visitBinary(Quad stmt) {
 		}
 
-		//no-op.
+		// no-op.
 		public void visitBoundsCheck(Quad stmt) {
 		}
 
-		//no-op.
+		// no-op.
 		public void visitBranch(Quad stmt) {
 		}
 
-		//no sure whether we should mark this as no op.
+		// no sure whether we should mark this as no op.
 		public void visitCheckCast(Quad stmt) {
 		}
 
@@ -294,7 +294,7 @@ public class Summary {
 			}
 		}
 
-		//no-op.
+		// no-op.
 		public void visitInstanceOf(Quad stmt) {
 		}
 
@@ -303,19 +303,19 @@ public class Summary {
 
 		}
 
-		//no sure whether we should mark this as no op.
+		// no sure whether we should mark this as no op.
 		public void visitMemLoad(Quad stmt) {
 			System.out.println(stmt);
 			assert false : "MemLoad";
 		}
-		
-		//no sure whether we should mark this as no op.
+
+		// no sure whether we should mark this as no op.
 		public void visitMemStore(Quad stmt) {
 			System.out.println(stmt);
 			assert false : "MemStore";
 		}
-		
-		//no-op.
+
+		// no-op.
 		public void visitMonitor(Quad stmt) {
 		}
 
@@ -383,17 +383,17 @@ public class Summary {
 			absHeap.markChanged(flag);
 		}
 
-		//no-op.
+		// no-op.
 		public void visitNullCheck(Quad stmt) {
 		}
 
-		//we translate phinode into a set of assignments.
-		//PHI node: PHI T5, (T3, T4), { BB3, BB4 }
+		// we translate phinode into a set of assignments.
+		// PHI node: PHI T5, (T3, T4), { BB3, BB4 }
 		public void visitPhi(Quad stmt) {
 			jq_Method meth = stmt.getMethod();
 
 			assert stmt.getOperator() instanceof Phi : "Not Phi";
-			
+
 			if (Phi.getDest(stmt) instanceof RegisterOperand) {
 				boolean sig = false;
 				RegisterOperand lhs = Phi.getDest(stmt);
@@ -401,13 +401,14 @@ public class Summary {
 
 				for (RegisterOperand rhs : stmt.getOperator().getUsedRegisters(
 						stmt)) {
-					//PHI T5, (null, T4), { BB3, BB4 }
-					if(rhs == null) continue;
-					
+					// PHI T5, (null, T4), { BB3, BB4 }
+					if (rhs == null)
+						continue;
+
 					VariableType rvt = getVarType(meth, rhs.getRegister());
 					boolean flag = absHeap.handleAssignStmt(
-							meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
-							rhs.getRegister(), rvt);
+							meth.getDeclaringClass(), meth, lhs.getRegister(),
+							lvt, rhs.getRegister(), rvt);
 					sig = flag | sig;
 
 				}
@@ -469,21 +470,21 @@ public class Summary {
 			// TODO
 		}
 
-		//no sure whether we should mark this as no op.
+		// no sure whether we should mark this as no op.
 		public void visitSpecial(Quad stmt) {
 			System.out.println(stmt);
 			assert false : "special.....";
 		}
 
-		//no-op.
+		// no-op.
 		public void visitStoreCheck(Quad stmt) {
 		}
 
-		//no sure whether we should mark this as no op.
+		// no sure whether we should mark this as no op.
 		public void visitUnary(Quad stmt) {
 		}
 
-		//no-op.
+		// no-op.
 		public void visitZeroCheck(Quad stmt) {
 		}
 
