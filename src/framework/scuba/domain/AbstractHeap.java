@@ -979,7 +979,7 @@ public class AbstractHeap {
 	
 	//mark whether the heap has changed.
 	public void markChanged(boolean flag) {
-		this.isChanged = (flag | this.isChanged);
+		this.isChanged = flag;
 	}
 	
 	public boolean isChanged() {
