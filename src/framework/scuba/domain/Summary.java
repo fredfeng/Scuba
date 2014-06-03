@@ -125,7 +125,7 @@ public class Summary {
 
 				if (op instanceof Getfield) {
 					fieldsBase.add(Getfield.getBase(q));
-					fieldsBaseList.add(Putfield.getBase(q));
+					fieldsBaseList.add(Getfield.getBase(q));
 
 					fieldsAccess.add(Getfield.getField(q).getField());
 					fieldsAccList.add(Getfield.getField(q).getField());
