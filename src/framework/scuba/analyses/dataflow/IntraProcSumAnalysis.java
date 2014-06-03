@@ -112,13 +112,17 @@ public class IntraProcSumAnalysis {
 		while (true) {
 			BasicBlock bb = wl.poll();
 			boolean flag = handleBasicBlock(bb);
+			assert scc.contains(bb) : "You can't analyze the node that is out of current scc.";
 			if (flag)
 				for (BasicBlock b : scc)
 					visit.put(b, false);
 			else
 				visit.put(bb, true);
-			//process all succs.
-			wl.addAll(bb.getSuccessors());
+			//process all succs that belongs to current scc.
+			for(BasicBlock suc : bb.getSuccessors())
+				if(scc.contains(suc))
+					wl.add(suc);
+			
 			boolean allTrue = !visit.values().contains(false);
 
 			if (allTrue)
