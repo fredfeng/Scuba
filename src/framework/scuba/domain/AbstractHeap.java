@@ -11,21 +11,6 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
-import joeq.Compiler.Quad.ControlFlowGraph;
-import joeq.Compiler.Quad.Operand;
-import joeq.Compiler.Quad.Operand.FieldOperand;
-import joeq.Compiler.Quad.Operand.RegisterOperand;
-import joeq.Compiler.Quad.Operand.TypeOperand;
-import joeq.Compiler.Quad.Operator.Getfield;
-import joeq.Compiler.Quad.Operator.Getstatic;
-import joeq.Compiler.Quad.Operator.Move;
-import joeq.Compiler.Quad.Operator.MultiNewArray;
-import joeq.Compiler.Quad.Operator.New;
-import joeq.Compiler.Quad.Operator.NewArray;
-import joeq.Compiler.Quad.Operator.Putfield;
-import joeq.Compiler.Quad.Operator.Putstatic;
-import joeq.Compiler.Quad.Quad;
-import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 import framework.scuba.helper.ArgDerivedHelper;
@@ -597,8 +582,6 @@ public class AbstractHeap {
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
 				+ " variables and parameters as RHS in static store stmt";
 
-		boolean ret = false;
-
 		// generate the mem loc for LHS Base
 		StaticElem v1 = getStaticElem(leftBase, leftField);
 		assert (v1 != null) : "v1 is null!";
@@ -976,12 +959,12 @@ public class AbstractHeap {
 	public boolean isInHeap(AbstractMemLoc loc) {
 		return heap.contains(loc);
 	}
-	
-	//mark whether the heap has changed.
+
+	// mark whether the heap has changed.
 	public void markChanged(boolean flag) {
 		this.isChanged = (flag | this.isChanged);
 	}
-	
+
 	public boolean isChanged() {
 		return isChanged;
 	}
