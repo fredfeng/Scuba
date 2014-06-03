@@ -443,7 +443,6 @@ public class AbstractHeap {
 			boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
 					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
-			
 		}
 	}
 
