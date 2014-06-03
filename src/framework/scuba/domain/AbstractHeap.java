@@ -241,8 +241,7 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					G.dotOutputPath + "abstractHeap"
-							+ count + ".dot"));
+					G.dotOutputPath + "abstractHeap" + count + ".dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {
@@ -312,8 +311,7 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					G.dotOutputPath + "allMemLocs"
-							+ count + ".dot"));
+					G.dotOutputPath + "allMemLocs" + count + ".dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {
@@ -446,7 +444,7 @@ public class AbstractHeap {
 			boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
 					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
-		} 
+		}
 	}
 
 	public void handleMultiNewArrayStmt(Quad stmt) {
@@ -1062,7 +1060,7 @@ public class AbstractHeap {
 
 		assert loc.knownArgDerived() : "we must first set the argument derived marker "
 				+ "before using the mem loc!";
-		assert loc.isArgDerived() : "you can ONLY get the default target for a non-arg derived mem loc!";
+		assert loc.isArgDerived() : "you can ONLY get the default target for an arg derived mem loc!";
 
 		AccessPath ret = null;
 		if (loc.isArgDerived()) {
@@ -1118,10 +1116,18 @@ public class AbstractHeap {
 	}
 
 	protected void cleanup(P2Set p2Set, Pair<AbstractMemLoc, FieldElem> pair) {
-		if (p2Set == null)
+		// if (p2Set == null)
+		// return;
+		assert (p2Set != null) : "p2 set is null when doing the cleanup.";
+		
+		AbstractMemLoc loc = pair.val0;
+		FieldElem f = pair.val1;
+
+		if (!loc.isArgDerived())
 			return;
 
-		HeapObject defaultTarget = getDefaultTarget(pair.val0, pair.val1);
+		HeapObject defaultTarget = getDefaultTarget(loc, f);
+
 		if (p2Set.containsHeapObject(defaultTarget)) {
 			p2Set.remove(defaultTarget);
 		}
