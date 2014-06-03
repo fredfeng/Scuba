@@ -341,7 +341,6 @@ public class AbstractHeap {
 		} else if (loc.isNotArgDerived()) {
 			// TODO maybe we need a clone()?
 			// it is possible to have null pointers
-
 			P2Set ret = heapObjectsToP2Set.get(pair);
 			if (ret != null) {
 				// if the field of this memory does point to something, return
@@ -546,7 +545,6 @@ public class AbstractHeap {
 		return vt;
 	}
 
-	
 	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
 	// v1 = v2
 	// v1: parameter / local
@@ -821,16 +819,6 @@ public class AbstractHeap {
 		return weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()));
 	}
 
-	// check whether some abstract memory location is contained in the factory
-	public boolean hasCreated(AbstractMemLoc loc) {
-		return memLocFactory.containsKey(loc);
-	}
-
-	// check whether some abstract memory location is in the heap
-	public boolean isInHeap(AbstractMemLoc loc) {
-		return heap.contains(loc);
-	}
-
 	// given a base and a field, get the corresponding AccessPath
 	// if it is not in the factory, create, put into factory and return
 	// otherwise, return the one in the factory
@@ -1085,7 +1073,6 @@ public class AbstractHeap {
 	protected boolean weakUpdate(Pair<AbstractMemLoc, FieldElem> pair,
 			P2Set p2Set) {
 		boolean ret = false;
-		P2Set currentHeap = null;
 		// first clean up the default targets in the p2set given the pair
 		cleanup(p2Set, pair);
 
@@ -1098,11 +1085,10 @@ public class AbstractHeap {
 			return ret;
 
 		// then get the current heap given the memory location and the field
-		if (heapObjectsToP2Set.containsKey(pair)) {
-			currentHeap = heapObjectsToP2Set.get(pair);
-		} else {
-			currentHeap = new P2Set();
-			heapObjectsToP2Set.put(pair, currentHeap);
+		P2Set currentP2Set = heapObjectsToP2Set.get(pair);
+		if (currentP2Set == null) {
+			currentP2Set = new P2Set();
+			heapObjectsToP2Set.put(pair, currentP2Set);
 		}
 
 		// update the locations in the real heap graph
@@ -1111,7 +1097,7 @@ public class AbstractHeap {
 		heap.addAll(p2Set.getHeapObjects());
 
 		// the KEY for weak update
-		ret = currentHeap.join(p2Set);
+		ret = currentP2Set.join(p2Set);
 
 		return ret;
 	}
@@ -1143,5 +1129,15 @@ public class AbstractHeap {
 
 	public Set<AbstractMemLoc> getAllMemLocs() {
 		return this.memLocFactory.keySet();
+	}
+
+	// check whether some abstract memory location is contained in the factory
+	public boolean hasCreated(AbstractMemLoc loc) {
+		return memLocFactory.containsKey(loc);
+	}
+
+	// check whether some abstract memory location is in the heap
+	public boolean isInHeap(AbstractMemLoc loc) {
+		return heap.contains(loc);
 	}
 }
