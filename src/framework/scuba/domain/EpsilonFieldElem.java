@@ -2,6 +2,8 @@ package framework.scuba.domain;
 
 public class EpsilonFieldElem extends FieldElem {
 
+	private static EpsilonFieldElem e = new EpsilonFieldElem();
+
 	@Override
 	public boolean equals(Object other) {
 		return (other instanceof EpsilonFieldElem);
@@ -17,4 +19,7 @@ public class EpsilonFieldElem extends FieldElem {
 		return "[F]e";
 	}
 
+	public static EpsilonFieldElem getEpsilonFieldElem() {
+		return e;
+	}
 }

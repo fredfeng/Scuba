@@ -425,13 +425,31 @@ public class AbstractHeap {
 		assert v1.knownArgDerived() : "we should set arg-derived marker for v1!";
 		assert v2.knownArgDerived() : "we should set arg-derived marker for v2!";
 
-		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
 
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
-				v1, new EpsilonFieldElem());
+				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
 		return weakUpdate(pair, p2Setv2);
+	}
+
+	// this method is just a helper method for handling array allocations
+	protected boolean handleLoadStmt(ArrayAllocElem left, IndexFieldElem index,
+			AllocElem right) {
+
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				left, index);
+		P2Set p2Set = new P2Set(right, ConstraintManager.genTrue());
+
+		assert !heapObjectsToP2Set.containsKey(pair) : "we cannot re-put ArrayAllocElem into the map!";
+
+		left.fields.add(index);
+		heap.add(left);
+		heap.add(right);
+		heapObjectsToP2Set.put(pair, p2Set);
+
+		return true;
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
@@ -444,7 +462,8 @@ public class AbstractHeap {
 			jq_Field rightField, VariableType rightBaseVType) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for non-static load stmt, LHS must be LocalElem";
-		assert (rightBaseVType == VariableType.LOCAL_VARIABLE || rightBaseVType == VariableType.PARAMEMTER) : ""
+		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
+				|| (rightBaseVType == VariableType.PARAMEMTER) : ""
 				+ "for non-static stmt, RHS BASE must be LocalElem or ParamElem!";
 
 		// generates StackObject (either ParamElem or LocalVarElem)
@@ -473,7 +492,7 @@ public class AbstractHeap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
-		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
 
 		NormalFieldElem f = new NormalFieldElem(rightField);
@@ -481,7 +500,7 @@ public class AbstractHeap {
 		assert (p2Setv2f != null) : "get a null p2 set!";
 
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
-				v1, new EpsilonFieldElem());
+				v1, EpsilonFieldElem.getEpsilonFieldElem());
 		return weakUpdate(pair, p2Setv2f);
 	}
 
@@ -516,11 +535,11 @@ public class AbstractHeap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
-		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
 
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
-				v1, new EpsilonFieldElem());
+				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
 		return weakUpdate(pair, p2Setv2);
 	}
@@ -567,8 +586,8 @@ public class AbstractHeap {
 
 		boolean ret = false;
 
-		P2Set p2Setv1 = lookup(v1, new EpsilonFieldElem());
-		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		P2Set p2Setv1 = lookup(v1, EpsilonFieldElem.getEpsilonFieldElem());
+		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv1 != null) : "get a null p2 set!";
 		assert (p2Setv2 != null) : "get a null p2 set!";
 
@@ -621,11 +640,11 @@ public class AbstractHeap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
-		P2Set p2Setv2 = lookup(v2, new EpsilonFieldElem());
+		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
 
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
-				v1, new EpsilonFieldElem());
+				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
 		return weakUpdate(pair, p2Setv2);
 	}
@@ -654,9 +673,66 @@ public class AbstractHeap {
 		assert v.knownArgDerived() : "we should set the arg-derived marker when creating v";
 
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
-				v, new EpsilonFieldElem());
+				v, EpsilonFieldElem.getEpsilonFieldElem());
 
 		return weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()));
+	}
+
+	protected boolean handleNewArrayStmt(jq_Class clazz, jq_Method method,
+			Register left, VariableType leftVType, jq_Type right, int line) {
+		return handleMultiNewArrayStmt(clazz, method, left, leftVType, right,
+				1, line);
+	}
+
+	// handle multi-new stmt, e.g. X x1 = new X[1][2][3]
+	// dim is the dimension of this array, dim >= 1, where dim = 1 is the
+	// easiest case like X x1 = new X[10]
+	protected boolean handleMultiNewArrayStmt(jq_Class clazz, jq_Method method,
+			Register left, VariableType leftVType, jq_Type right, int dim,
+			int line) {
+		boolean ret = false;
+
+		assert (leftVType == VariableType.LOCAL_VARIABLE) : "LHS of a new stmt must be a local variable!";
+
+		LocalVarElem v = null;
+		// generate the localVarElem for LHS
+		if (leftVType == VariableType.LOCAL_VARIABLE) {
+			v = getLocalVarElem(clazz, method, left);
+		} else {
+			assert false : "LHS of a new stmt must be a local variable!";
+		}
+		assert (v != null) : "v is null!";
+		// generate the ArrayAllocElem for RHS
+		ArrayAllocElem allocT = getArrayAllocElem(clazz, method, right, dim,
+				line);
+
+		assert allocT.knownArgDerived() : "we should set the arg-derived marker when creating allocT";
+		assert v.knownArgDerived() : "we should set the arg-derived marker when creating v";
+
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				v, EpsilonFieldElem.getEpsilonFieldElem());
+		// update the LHS's P2Set weakly
+		ret = weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()))
+				| ret;
+
+		// handling fields of the ArrayAllocElem for multi-array with dim > 1
+		for (int i = dim; i >= 2; i--) {
+			ArrayAllocElem leftAllocT = getArrayAllocElem(clazz, method, right,
+					i, line);
+			ArrayAllocElem rightAllocT = getArrayAllocElem(clazz, method,
+					right, i - 1, line);
+			handleLoadStmt(leftAllocT, IndexFieldElem.getIndexFieldElem(),
+					rightAllocT);
+		}
+
+		// handling fields of the ArrayAllocElem for array with dim = 1
+		ArrayAllocElem leftAllocT = getArrayAllocElem(clazz, method, right, 1,
+				line);
+		AllocElem rightAllocT = getAllocElem(clazz, method, right, line);
+		ret = handleLoadStmt(leftAllocT, IndexFieldElem.getIndexFieldElem(),
+				rightAllocT) | ret;
+
+		return ret;
 	}
 
 	// given a base and a field, get the corresponding AccessPath
@@ -806,6 +882,23 @@ public class AbstractHeap {
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (AllocElem) memLocFactory.get(ret);
+		}
+		// not found in the factory
+		// every time generating a memory location, do this marking
+		ArgDerivedHelper.markArgDerived(ret);
+		memLocFactory.put(ret, ret);
+
+		return ret;
+	}
+
+	protected ArrayAllocElem getArrayAllocElem(jq_Class clazz,
+			jq_Method method, jq_Type type, int dim, int line) {
+		Context context = new Context(new ProgramPoint(clazz, method, line));
+		// create an AllocElem wrapper
+		ArrayAllocElem ret = new ArrayAllocElem(new Alloc(type), context, dim);
+		// try to look up this wrapper in the memory location factory
+		if (memLocFactory.containsKey(ret)) {
+			return (ArrayAllocElem) memLocFactory.get(ret);
 		}
 		// not found in the factory
 		// every time generating a memory location, do this marking

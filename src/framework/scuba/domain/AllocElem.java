@@ -11,7 +11,6 @@ public class AllocElem extends HeapObject {
 		this.context = context;
 	}
 
-	
 	public AbstractMemLoc findRoot() {
 		return this;
 	}
@@ -25,17 +24,20 @@ public class AllocElem extends HeapObject {
 	}
 
 	public Alloc getAlloc() {
-		return this.alloc;
+		return alloc;
+	}
+
+	public Context getContext() {
+		return context;
 	}
 
 	@Override
 	public String toString() {
-		return alloc + " || " + context;
+		return alloc + "||" + context;
 	}
 
 	@Override
 	public boolean equals(Object other) {
-
 		return (other instanceof AllocElem)
 				&& (alloc.equals(((AllocElem) other).alloc))
 				&& (context.equals(((AllocElem) other).context));
