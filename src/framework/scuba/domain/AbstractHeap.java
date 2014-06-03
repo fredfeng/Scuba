@@ -398,7 +398,7 @@ public class AbstractHeap {
 		// generate the mem loc for RHS
 		if (rightVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, right);
-		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
+		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
 			v2 = getLocalVarElem(clazz, method, right);
 		} else {
 			assert false : "for assign stmt, RHS must be LocalElem or ParamElem!";
