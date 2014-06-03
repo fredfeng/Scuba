@@ -107,7 +107,7 @@ public class Context {
 		StringBuilder sb = new StringBuilder();
 		sb.append("[Ctx]");
 		for (ProgramPoint point : pointsSeq) {
-			sb.append(point + "@");
+			sb.append(point + "##");
 		}
 		return sb.toString();
 	}

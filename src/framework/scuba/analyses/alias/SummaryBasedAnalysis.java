@@ -121,8 +121,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 		intrapro.analyze(cfg);
 		// mark terminated
-		if (G.debug)
+		if (G.debug) {
 			summary.dumpSummaryToFile(count);
+			summary.dumpAllMemLocsHeapToFile(count);
+		}
 	}
 
 	private void analyzeSCC() {
