@@ -125,7 +125,7 @@ public class IntraProcSumAnalysis {
 			System.out.println(bb);
 		}
 
-		summary.getAbstractHeap().isChanged = false;
+		summary.getAbstractHeap().markChanged(false);
 		// handle each quad in the basicblock.
 		for (Quad q : bb.getQuads()) {
 			
@@ -146,7 +146,7 @@ public class IntraProcSumAnalysis {
 			System.out.println("Finish handling the basic block.");
 			System.out.println("=========================");
 		}
-		return summary.getAbstractHeap().isChanged;
+		return summary.getAbstractHeap().isChanged();
 	}
 
 	public void setSummary(Summary sum) {

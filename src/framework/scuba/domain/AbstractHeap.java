@@ -56,7 +56,7 @@ public class AbstractHeap {
 	// some locations are not used in the program
 	final private Map<AbstractMemLoc, AbstractMemLoc> memLocFactory;
 
-	public boolean isChanged = false;
+	private boolean isChanged = false;
 
 	public static enum VariableType {
 		PARAMEMTER, LOCAL_VARIABLE, NULL_POINTER, CONSTANT;
@@ -379,169 +379,6 @@ public class AbstractHeap {
 		}
 
 		return ret;
-	}
-
-	public void handleALoadStmt(Quad stmt) {
-
-	}
-
-	public void handleAStoreStmt(Quad stmt) {
-
-	}
-
-	// v1 = v2.f
-	public void handleGetfieldStmt(Quad stmt) {
-		assert (stmt.getOperator() instanceof Getfield);
-		RegisterOperand lhs = Getfield.getDest(stmt);
-		RegisterOperand rhsBase = (RegisterOperand) Getfield.getBase(stmt);
-		FieldOperand rhsField = Getfield.getField(stmt);
-		jq_Method meth = stmt.getMethod();
-		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-		VariableType rvt = getVarType(stmt.getMethod(), rhsBase.getRegister());
-
-		boolean flag = this.handleLoadStmt(meth.getDeclaringClass(), meth,
-				lhs.getRegister(), lvt, rhsBase.getRegister(),
-				rhsField.getField(), rvt);
-		isChanged = (flag || isChanged);
-
-	}
-
-	// v = A.f.
-	public void handleGetstaticStmt(Quad stmt) {
-		jq_Method meth = stmt.getMethod();
-		RegisterOperand lhs = Getstatic.getDest(stmt);
-		FieldOperand field = Getstatic.getField(stmt);
-		jq_Class encloseClass = field.getField().getDeclaringClass();
-		VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-
-		boolean flag = handleStatLoadStmt(meth.getDeclaringClass(), meth,
-				lhs.getRegister(), lvt, encloseClass, field.getField());
-		isChanged = (flag || isChanged);
-	}
-
-	public void handleInvokeStmt(Quad stmt) {
-
-	}
-
-	public void handleMemLoadStmt(Quad stmt) {
-
-	}
-
-	public void handleMemStoreStmt(Quad stmt) {
-
-	}
-
-	// v1 = v2.
-	public void handleMoveStmt(Quad stmt) {
-		jq_Method meth = stmt.getMethod();
-		if (Move.getSrc(stmt) instanceof RegisterOperand) {
-			RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
-			RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
-			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
-			boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
-					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
-			isChanged = (flag || isChanged);
-		}
-	}
-
-	public void handleMultiNewArrayStmt(Quad stmt) {
-		assert (stmt.getOperator() instanceof MultiNewArray);
-		jq_Method meth = stmt.getMethod();
-		TypeOperand to = MultiNewArray.getType(stmt);
-		RegisterOperand rop = MultiNewArray.getDest(stmt);
-		VariableType vt = getVarType(meth, rop.getRegister());
-
-		boolean flag = handleNewStmt(stmt.getMethod().getDeclaringClass(),
-				meth, rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
-		isChanged = (flag || isChanged);
-	}
-
-	// v1 = new A();
-	public void handleNewStmt(Quad stmt) {
-		assert (stmt.getOperator() instanceof New);
-		jq_Method meth = stmt.getMethod();
-		TypeOperand to = New.getType(stmt);
-		RegisterOperand rop = New.getDest(stmt);
-		VariableType vt = getVarType(meth, rop.getRegister());
-
-		boolean flag = handleNewStmt(stmt.getMethod().getDeclaringClass(),
-				meth, rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
-		isChanged = (flag || isChanged);
-	}
-
-	// v = new Array(); is it ok if we use the same handler as handlerNew for
-	// array?
-	public void handleNewArrayStmt(Quad stmt) {
-		assert (stmt.getOperator() instanceof NewArray);
-		jq_Method meth = stmt.getMethod();
-		TypeOperand to = NewArray.getType(stmt);
-		RegisterOperand rop = NewArray.getDest(stmt);
-		VariableType vt = getVarType(meth, rop.getRegister());
-
-		boolean flag = handleNewStmt(stmt.getMethod().getDeclaringClass(),
-				meth, rop.getRegister(), vt, to.getType(), stmt.getLineNumber());
-		isChanged = (flag || isChanged);
-	}
-
-	// v1.f = v2
-	public void handlePutfieldStmt(Quad stmt) {
-		assert (stmt.getOperator() instanceof Putfield);
-		jq_Method meth = stmt.getMethod();
-		boolean flag;
-		Operand rhso = Putfield.getSrc(stmt);
-		if (rhso instanceof RegisterOperand) {
-			RegisterOperand rhs = (RegisterOperand) rhso;
-			RegisterOperand lhs = (RegisterOperand) Putfield.getBase(stmt);
-			FieldOperand field = Putfield.getField(stmt);
-			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
-			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
-
-			flag = this.handleStoreStmt(meth.getDeclaringClass(), meth,
-					lhs.getRegister(), lvt, field.getField(),
-					rhs.getRegister(), rvt);
-			isChanged = (flag || isChanged);
-		}
-	}
-
-	// A.f = b;
-	public void handlePutstaticStmt(Quad stmt) {
-		jq_Method meth = stmt.getMethod();
-		Operand rhso = Putstatic.getSrc(stmt);
-		FieldOperand field = Putstatic.getField(stmt);
-		jq_Class encloseClass = field.getField().getDeclaringClass();
-		boolean flag;
-
-		if (rhso instanceof RegisterOperand) {
-			RegisterOperand rhs = (RegisterOperand) rhso;
-			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
-
-			flag = handleStaticStoreStmt(meth.getDeclaringClass(), meth,
-					encloseClass, field.getField(), rhs.getRegister(), rvt);
-			isChanged = (flag || isChanged);
-
-		}
-	}
-
-	public void handleReturnStmt(Quad stmt) {
-
-	}
-
-	// is this a param or local. helper function.
-	public VariableType getVarType(jq_Method meth, Register r) {
-		VariableType vt = VariableType.LOCAL_VARIABLE;
-
-		ControlFlowGraph cfg = meth.getCFG();
-		RegisterFactory rf = cfg.getRegisterFactory();
-		int numArgs = meth.getParamTypes().length;
-		for (int zIdx = 0; zIdx < numArgs; zIdx++) {
-			Register v = rf.get(zIdx);
-			if (v.equals(r)) {
-				vt = VariableType.PARAMEMTER;
-				break;
-			}
-		}
-		return vt;
 	}
 
 	// handleAssgnStmt implements rule (1) in Figure 8 of the paper
@@ -1138,5 +975,14 @@ public class AbstractHeap {
 	// check whether some abstract memory location is in the heap
 	public boolean isInHeap(AbstractMemLoc loc) {
 		return heap.contains(loc);
+	}
+	
+	//mark whether the heap has changed.
+	public void markChanged(boolean flag) {
+		this.isChanged = (flag | this.isChanged);
+	}
+	
+	public boolean isChanged() {
+		return isChanged;
 	}
 }
