@@ -439,7 +439,6 @@ public class AbstractHeap {
 			RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
 			VariableType lvt = getVarType(stmt.getMethod(), lhs.getRegister());
 			VariableType rvt = getVarType(stmt.getMethod(), rhs.getRegister());
-
 			boolean flag = handleAssgnStmt(meth.getDeclaringClass(), meth,
 					lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 			isChanged = (flag || isChanged);
