@@ -518,8 +518,9 @@ public class AbstractHeap {
 			VariableType rightBaseVType) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for array load stmt, LHS must be LocalElem";
-		assert (rightBaseVType == VariableType.ARRAY_BASE) : ""
-				+ "for array stmt, RHS BASE must be an array base!";
+		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
+				|| (rightBaseVType == VariableType.PARAMEMTER) : ""
+				+ "for array stmt, RHS BASE must be either LocalVarElem or ParamElem!";
 
 		LocalVarElem v1 = getLocalVarElem(clazz, method, left);
 		assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
@@ -583,6 +584,84 @@ public class AbstractHeap {
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
 		return weakUpdate(pair, p2Setv2);
+	}
+
+	// v1[0] = v2 where v1 = new V[10][10]
+	// treat it just as a store stmt like: v1.\i = v2 where \i is the index
+	// field (all array base shares the same \i)
+	protected boolean handleAStoreStmt(jq_Class clazz, jq_Method method,
+			Register leftBase, VariableType leftBaseVType, Register right,
+			VariableType rightVType) {
+
+		assert (rightVType == VariableType.PARAMEMTER)
+				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
+				+ " variables and parameters as RHS";
+		assert (leftBaseVType == VariableType.PARAMEMTER)
+				|| (leftBaseVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
+				+ " variables and parameters as LHS Base";
+
+		// generates StackObject (either ParamElem or LocalVarElem)
+		StackObject v1 = null, v2 = null;
+
+		// generate the mem loc for LHS
+		if (leftBaseVType == VariableType.PARAMEMTER) {
+			v1 = getParamElem(clazz, method, leftBase);
+		} else if (leftBaseVType == VariableType.LOCAL_VARIABLE) {
+			v1 = getLocalVarElem(clazz, method, leftBase);
+		} else {
+			assert false : "wried thing! For array store stmt,"
+					+ " LHS Base must be LocalElem or ParamElem!";
+		}
+		assert (v1 != null) : "v1 is null!";
+
+		// generate the mem loc for RHS base
+		if (rightVType == VariableType.PARAMEMTER) {
+			v2 = getParamElem(clazz, method, right);
+		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
+			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+					right))) : "LocalVarElem should be created first before used as RHS";
+			v2 = getLocalVarElem(clazz, method, right);
+		} else {
+			assert false : "for array store stmt, RHS must be LocalElem or ParamElem!";
+		}
+		assert (v2 != null) : "v2 is null!";
+
+		// generate the mem loc for RHS base
+		if (rightVType == VariableType.PARAMEMTER) {
+			v2 = getParamElem(clazz, method, right);
+		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
+			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+					right))) : "LocalVarElem should be created first before used as RHS";
+			v2 = getLocalVarElem(clazz, method, right);
+		} else {
+			assert false : "for non-static store stmt, RHS must be LocalElem or ParamElem!";
+		}
+		assert (v2 != null) : "v2 is null!";
+
+		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
+		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
+
+		boolean ret = false;
+
+		P2Set p2Setv1 = lookup(v1, EpsilonFieldElem.getEpsilonFieldElem());
+		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
+		assert (p2Setv1 != null) : "get a null p2 set!";
+		assert (p2Setv2 != null) : "get a null p2 set!";
+
+		IndexFieldElem index = IndexFieldElem.getIndexFieldElem();
+		for (HeapObject obj : p2Setv1.getHeapObjects()) {
+			Constraint cst = p2Setv1.getConstraint(obj);
+			// projP2Set is a new P2Set with copies of the constraints (same
+			// content but different constraint instances)
+			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
+
+			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+					obj, index);
+
+			ret = weakUpdate(pair, projP2Set) | ret;
+		}
+
+		return ret;
 	}
 
 	// handleStoreStmt implements rule (3) in Figure 8 of the paper
