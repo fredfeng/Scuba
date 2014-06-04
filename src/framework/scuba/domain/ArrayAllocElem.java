@@ -35,12 +35,13 @@ public class ArrayAllocElem extends AllocElem {
 	public boolean equals(Object other) {
 		return (other instanceof ArrayAllocElem)
 				&& (alloc.equals(((ArrayAllocElem) other).alloc))
-				&& (context.equals(((ArrayAllocElem) other).context));
+				&& (context.equals(((ArrayAllocElem) other).context))
+				&& (dim == ((ArrayAllocElem) other).dim);
 	}
 
 	@Override
 	public int hashCode() {
-		return 37 * alloc.hashCode() + context.hashCode();
+		return 37 * alloc.hashCode() + context.hashCode() + dim * 7;
 	}
 
 }
