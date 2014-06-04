@@ -448,14 +448,18 @@ public class AbstractHeap {
 				left, index);
 		P2Set p2Set = new P2Set(right, ConstraintManager.genTrue());
 
-		assert !heapObjectsToP2Set.containsKey(pair) : "we cannot re-put ArrayAllocElem into the map!";
+		assert p2Set != null : "p2 set can not be null!";
+		// assert !heapObjectsToP2Set.containsKey(pair) :
+		// "we cannot re-put ArrayAllocElem into the map!";
 
-		left.fields.add(index);
-		heap.add(left);
-		heap.add(right);
-		heapObjectsToP2Set.put(pair, p2Set);
+		return weakUpdate(pair, p2Set);
 
-		return true;
+		// left.fields.add(index);
+		// heap.add(left);
+		// heap.add(right);
+		// heapObjectsToP2Set.put(pair, p2Set);
+
+		// return true;
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
@@ -825,10 +829,6 @@ public class AbstractHeap {
 		// generate the ArrayAllocElem for RHS
 		ArrayAllocElem allocT = getArrayAllocElem(clazz, method, right, dim,
 				line);
-		System.out.println("****** "
-				+ heapObjectsToP2Set.get(new Pair<AbstractMemLoc, FieldElem>(
-						allocT, IndexFieldElem.getIndexFieldElem())));
-		System.err.println("***** " + allocT);
 
 		assert allocT.knownArgDerived() : "we should set the arg-derived marker when creating allocT";
 		assert v.knownArgDerived() : "we should set the arg-derived marker when creating v";
@@ -853,17 +853,10 @@ public class AbstractHeap {
 		// handling fields of the ArrayAllocElem for array with dim = 1
 		ArrayAllocElem leftAllocT = getArrayAllocElem(clazz, method, right, 1,
 				line);
-		System.err.println("****** " + leftAllocT);
 		AllocElem rightAllocT = getAllocElem(clazz, method, right, line);
-		System.out.println("****** "
-				+ heapObjectsToP2Set.get(new Pair<AbstractMemLoc, FieldElem>(
-						leftAllocT, IndexFieldElem.getIndexFieldElem())));
-		this.dumpAllMemLocsHeapToFile(1);
+
 		ret = handleArrayLoad(leftAllocT, IndexFieldElem.getIndexFieldElem(),
 				rightAllocT) | ret;
-		System.out.println("****** "
-				+ heapObjectsToP2Set.get(new Pair<AbstractMemLoc, FieldElem>(
-						leftAllocT, IndexFieldElem.getIndexFieldElem())));
 
 		return ret;
 	}
