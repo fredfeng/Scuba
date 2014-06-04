@@ -16,6 +16,7 @@ import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
+import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
 import joeq.Compiler.Quad.Operator;
@@ -49,6 +50,14 @@ public class Summary {
 	private jq_Method method;
 
 	private AbstractHeap absHeap;
+	
+	public static int aloadCnt = 0;
+	
+	public static int astoreCnt = 0;
+
+	public static int aNewArrayCnt = 0;
+
+	public static int aNewMulArrayCnt = 0;
 
 	// this maps store the memory location instantiation result for each invoke
 	// stmt (call site) in the method that this Summary instance belongs to
@@ -202,8 +211,11 @@ public class Summary {
 		}
 
 		// perform array smashing. Use assign to handle array store/load.
+		//y = x[1];
 		public void visitALoad(Quad stmt) {
 			// TODO
+			Summary.aloadCnt++;
+
 			jq_Method meth = stmt.getMethod();
 			if (ALoad.getDest(stmt) instanceof RegisterOperand) {
 				RegisterOperand rhs = (RegisterOperand) ALoad.getBase(stmt);
@@ -213,15 +225,17 @@ public class Summary {
 				VariableType rvt = getVarType(stmt.getMethod(),
 						rhs.getRegister());
 
-				boolean flag = absHeap.handleAssignStmt(
+				boolean flag = absHeap.handleALoadStmt(
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						rhs.getRegister(), rvt);
 				absHeap.markChanged(flag);
 			}
 		}
 
+		//x[1] = y
 		public void visitAStore(Quad stmt) {
 			// TODO
+			Summary.astoreCnt++;
 			jq_Method meth = stmt.getMethod();
 			if (AStore.getValue(stmt) instanceof RegisterOperand) {
 				RegisterOperand lhs = (RegisterOperand) AStore.getBase(stmt);
@@ -231,7 +245,7 @@ public class Summary {
 				VariableType rvt = getVarType(stmt.getMethod(),
 						rhs.getRegister());
 
-				boolean flag = absHeap.handleAssignStmt(
+				boolean flag = absHeap.handleAStoreStmt(
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						rhs.getRegister(), rvt);
 				absHeap.markChanged(flag);
@@ -337,20 +351,6 @@ public class Summary {
 			}
 		}
 
-		public void visitMultiNewArray(Quad stmt) {
-			// TODO
-			assert (stmt.getOperator() instanceof MultiNewArray);
-			jq_Method meth = stmt.getMethod();
-			TypeOperand to = MultiNewArray.getType(stmt);
-			RegisterOperand rop = MultiNewArray.getDest(stmt);
-			VariableType vt = getVarType(meth, rop.getRegister());
-
-			boolean flag = absHeap.handleNewStmt(stmt.getMethod()
-					.getDeclaringClass(), meth, rop.getRegister(), vt, to
-					.getType(), stmt.getLineNumber());
-			absHeap.markChanged(flag);
-		}
-
 		// v1 = new A();
 		public void visitNew(Quad stmt) {
 			// TODO
@@ -366,20 +366,33 @@ public class Summary {
 			absHeap.markChanged(flag);
 		}
 
-		// v = new Array(); is it ok if we use the same handler as handlerNew
-		// for
-		// array?
+		// v = new Node[10][10]
+		public void visitMultiNewArray(Quad stmt) {
+			Summary.aNewMulArrayCnt++;
+			assert (stmt.getOperator() instanceof MultiNewArray);
+			jq_Method meth = stmt.getMethod();
+			TypeOperand to = MultiNewArray.getType(stmt);
+			RegisterOperand rop = MultiNewArray.getDest(stmt);
+			VariableType vt = getVarType(meth, rop.getRegister());
+			ParamListOperand plo = MultiNewArray.getParamList(stmt);
+			boolean flag = absHeap.handleMultiNewArrayStmt(
+					meth.getDeclaringClass(), meth, rop.getRegister(), vt,
+					to.getType(), plo.length(), stmt.getLineNumber());
+			absHeap.markChanged(flag);
+		}
+
+		// v = new Node[10];
 		public void visitNewArray(Quad stmt) {
-			// TODO
+			Summary.aNewArrayCnt++;
 			assert (stmt.getOperator() instanceof NewArray);
 			jq_Method meth = stmt.getMethod();
 			TypeOperand to = NewArray.getType(stmt);
 			RegisterOperand rop = NewArray.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 
-			boolean flag = absHeap.handleNewStmt(stmt.getMethod()
-					.getDeclaringClass(), meth, rop.getRegister(), vt, to
-					.getType(), stmt.getLineNumber());
+			boolean flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(),
+					meth, rop.getRegister(), vt, to.getType(),
+					stmt.getLineNumber());
 			absHeap.markChanged(flag);
 		}
 

@@ -49,6 +49,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// init \gamma here.
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
+		
+		//dump interesting stats
+		dumpStats();
+	}
+	
+	private void dumpStats() {
+		System.out.println("ALOADS------------" + Summary.aloadCnt);
+		System.out.println("ASTORES------------" + Summary.astoreCnt);
+		System.out.println("Array------------" + Summary.aNewArrayCnt);
+		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
+
 	}
 
 	private void sumAnalyze() {
