@@ -416,8 +416,9 @@ public class AbstractHeap {
 		if (rightVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, right);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
-					right))) : "LocalVarElem should be created first before used as RHS";
+			// assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+			// right))) :
+			// "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, right);
 		} else {
 			assert false : "for assign stmt, RHS must be LocalElem or ParamElem!";
@@ -440,8 +441,9 @@ public class AbstractHeap {
 	private boolean handleArrayLoad(ArrayAllocElem left, IndexFieldElem index,
 			AllocElem right) {
 
-		assert (memLocFactory.containsKey(right)) : "AllocElem (or ArrayAllocElem)"
-				+ " should be created before used as RHS!";
+		// assert (memLocFactory.containsKey(right)) :
+		// "AllocElem (or ArrayAllocElem)"
+		// + " should be created before used as RHS!";
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				left, index);
 		P2Set p2Set = new P2Set(right, ConstraintManager.genTrue());
@@ -488,8 +490,9 @@ public class AbstractHeap {
 		if (rightBaseVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, rightBase);
 		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
-			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
-					rightBase))) : "LocalVarElem should be created first before used as RHS";
+			// assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+			// rightBase))) :
+			// "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, rightBase);
 		} else {
 			assert false : "for non-static load stmt, RHS BASE must be LocalElem or ParamElem!";
@@ -523,8 +526,9 @@ public class AbstractHeap {
 				+ "for array stmt, RHS BASE must be either LocalVarElem or ParamElem!";
 
 		LocalVarElem v1 = getLocalVarElem(clazz, method, left);
-		assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
-				rightBase))) : "LocalVarElem should be created first before used as RHS";
+		// assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+		// rightBase))) :
+		// "LocalVarElem should be created first before used as RHS";
 		LocalVarElem v2 = getLocalVarElem(clazz, method, rightBase);
 
 		assert (v1 != null) : "v1 is null!";
@@ -618,8 +622,9 @@ public class AbstractHeap {
 		if (rightVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, right);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
-					right))) : "LocalVarElem should be created first before used as RHS";
+			// assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+			// right))) :
+			// "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, right);
 		} else {
 			assert false : "for array store stmt, RHS must be LocalElem or ParamElem!";
@@ -630,8 +635,9 @@ public class AbstractHeap {
 		if (rightVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, right);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
-					right))) : "LocalVarElem should be created first before used as RHS";
+			// assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+			// right))) :
+			// "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, right);
 		} else {
 			assert false : "for non-static store stmt, RHS must be LocalElem or ParamElem!";
@@ -695,8 +701,9 @@ public class AbstractHeap {
 		if (rightVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, right);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
-					right))) : "LocalVarElem should be created first before used as RHS";
+			// assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+			// right))) :
+			// "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, right);
 		} else {
 			assert false : "for non-static store stmt, RHS must be LocalElem or ParamElem!";
@@ -753,8 +760,9 @@ public class AbstractHeap {
 		if (rightVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, right);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
-					right))) : "LocalVarElem should be created first before used as RHS";
+			// assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+			// right))) :
+			// "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, right);
 		} else {
 			assert false : "for static store stmt, RHS must be LocalElem or ParamElem!";
@@ -846,8 +854,9 @@ public class AbstractHeap {
 					i, line);
 			ArrayAllocElem rightAllocT = getArrayAllocElem(clazz, method,
 					right, i - 1, line);
-			handleArrayLoad(leftAllocT, IndexFieldElem.getIndexFieldElem(),
-					rightAllocT);
+			ret = handleArrayLoad(leftAllocT,
+					IndexFieldElem.getIndexFieldElem(), rightAllocT)
+					| ret;
 		}
 
 		// handling fields of the ArrayAllocElem for array with dim = 1
