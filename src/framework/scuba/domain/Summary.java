@@ -58,6 +58,9 @@ public class Summary {
 	public static int aNewArrayCnt = 0;
 
 	public static int aNewMulArrayCnt = 0;
+	
+	public static int castCnt = 0;
+
 
 	// this maps store the memory location instantiation result for each invoke
 	// stmt (call site) in the method that this Summary instance belongs to
@@ -266,6 +269,7 @@ public class Summary {
 
 		// no sure whether we should mark this as no op.
 		public void visitCheckCast(Quad stmt) {
+			Summary.castCnt++;
 		}
 
 		// v1 = v2.f

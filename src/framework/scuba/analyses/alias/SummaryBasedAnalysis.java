@@ -59,7 +59,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("ASTORES------------" + Summary.astoreCnt);
 		System.out.println("Array------------" + Summary.aNewArrayCnt);
 		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
-
+		System.out.println("Total downcast------------" + Summary.castCnt);
 	}
 
 	private void sumAnalyze() {
