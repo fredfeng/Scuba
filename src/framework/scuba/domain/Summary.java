@@ -84,8 +84,8 @@ public class Summary {
 		Set<jq_Type> allocs = new HashSet();
 		List<jq_Type> allocList = new ArrayList();
 
-		Set<Operand> fieldsBase = new HashSet();
-		List<Operand> fieldsBaseList = new ArrayList();
+		Set<Register> fieldsBase = new HashSet();
+		List<Register> fieldsBaseList = new ArrayList();
 
 		Set<jq_Field> fieldsAccess = new HashSet();
 		List<jq_Field> fieldsAccList = new ArrayList();
@@ -127,8 +127,8 @@ public class Summary {
 				}
 
 				if (op instanceof Putfield) {
-					fieldsBase.add(Putfield.getBase(q));
-					fieldsBaseList.add(Putfield.getBase(q));
+					fieldsBase.add(((RegisterOperand)Putfield.getBase(q)).getRegister());
+					fieldsBaseList.add(((RegisterOperand)Putfield.getBase(q)).getRegister());
 
 					fieldsAccess.add(Putfield.getField(q).getField());
 					fieldsAccList.add(Putfield.getField(q).getField());
@@ -136,8 +136,9 @@ public class Summary {
 				}
 
 				if (op instanceof Getfield) {
-					fieldsBase.add(Getfield.getBase(q));
-					fieldsBaseList.add(Getfield.getBase(q));
+					fieldsBase.add(((RegisterOperand)Getfield.getBase(q)).getRegister());
+					fieldsBaseList.add(((RegisterOperand)Getfield.getBase(q)).getRegister());
+
 
 					fieldsAccess.add(Getfield.getField(q).getField());
 					fieldsAccList.add(Getfield.getField(q).getField());
@@ -168,7 +169,7 @@ public class Summary {
 
 		System.out.println("Field access List: " + fieldsAccList);
 		System.out.println("Field access Set: " + fieldsAccess);
-
+		
 		System.out.println("**************************************");
 	}
 
