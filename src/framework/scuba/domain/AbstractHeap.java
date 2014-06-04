@@ -850,14 +850,6 @@ public class AbstractHeap {
 					| ret;
 		}
 
-		// handling fields of the ArrayAllocElem for array with dim = 1
-		ArrayAllocElem leftAllocT = getArrayAllocElem(clazz, method, right, 1,
-				line);
-		AllocElem rightAllocT = getAllocElem(clazz, method, right, line);
-
-		ret = handleArrayLoad(leftAllocT, IndexFieldElem.getIndexFieldElem(),
-				rightAllocT) | ret;
-
 		return ret;
 	}
 
