@@ -20,16 +20,18 @@ public class TestRule16 {
 	}
 	
 	//a = v2.
-	void foo(X a, X b) {
+	void foo(Node arg, X b) {
 		Node[] set = new Node[3];
-		Node node1 = new Node();
-		set[0] = node1;
+		Node node1 = arg;
+		set[0] = arg.next;
 		
 		Node node2 = new Node();
 		set[1] = node2;
+		arg.next = set[1];
 
 		Node node3 = new Node();
 		set[2] = node3;
+		arg.next.next = node3;
 
 		node1.next = node2;
 
@@ -38,5 +40,7 @@ public class TestRule16 {
 		Node x = node1.next.next; //x and node 3 alias
         
         Node y = set[2];   //x and y should be alias.
+        
+        Node p = arg.next.next.next;
 	}
 }
