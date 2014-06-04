@@ -136,6 +136,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			summary.dumpSummaryToFile(count);
 			summary.dumpAllMemLocsHeapToFile(count);
 		}
+		summary.validate();
 	}
 
 	private void analyzeSCC() {

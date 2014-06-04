@@ -24,17 +24,18 @@ public class StaticElem extends StackObject {
 	@Override
 	public boolean equals(Object other) {
 		return (other instanceof StaticElem)
-				&& (clazz.equals(((StaticElem) other).clazz));
+				&& (clazz.equals(((StaticElem) other).clazz))
+				&& (field.equals(((StaticElem) other).field));
 	}
 
 	@Override
 	public int hashCode() {
-		return clazz.hashCode();
+		return 37 * clazz.hashCode() + field.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return "[SC]" + clazz.getName();
+		return "[SC]" + clazz.getName() + "_" + field.getName();
 	}
 
 	@Override
