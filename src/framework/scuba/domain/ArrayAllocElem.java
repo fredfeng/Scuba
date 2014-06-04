@@ -1,6 +1,7 @@
 package framework.scuba.domain;
 
 public class ArrayAllocElem extends AllocElem {
+
 	final protected int dim;
 
 	public ArrayAllocElem(Alloc allocSite, Context context) {
@@ -34,13 +35,12 @@ public class ArrayAllocElem extends AllocElem {
 	public boolean equals(Object other) {
 		return (other instanceof ArrayAllocElem)
 				&& (alloc.equals(((ArrayAllocElem) other).alloc))
-				&& (context.equals(((ArrayAllocElem) other).context))
-				&& (dim == ((ArrayAllocElem) other).dim);
+				&& (context.equals(((ArrayAllocElem) other).context));
 	}
 
 	@Override
 	public int hashCode() {
-		return 37 * alloc.hashCode() + context.hashCode() + dim * 7;
+		return 37 * alloc.hashCode() + context.hashCode();
 	}
 
 }

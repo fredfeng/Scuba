@@ -45,8 +45,8 @@ public class AbstractHeap {
 	private boolean isChanged = false;
 
 	public static enum VariableType {
-		PARAMEMTER, LOCAL_VARIABLE, NULL_POINTER, CONSTANT;
-		// currently we are only use the first two
+		PARAMEMTER, LOCAL_VARIABLE, ARRAY_BASE, NULL_POINTER, CONSTANT;
+		// currently we are only use the first three
 	}
 
 	public AbstractHeap() {
@@ -416,6 +416,8 @@ public class AbstractHeap {
 		if (rightVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, right);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
+			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+					right))) : "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, right);
 		} else {
 			assert false : "for assign stmt, RHS must be LocalElem or ParamElem!";
@@ -435,9 +437,11 @@ public class AbstractHeap {
 	}
 
 	// this method is just a helper method for handling array allocations
-	protected boolean handleLoadStmt(ArrayAllocElem left, IndexFieldElem index,
+	private boolean handleArrayLoad(ArrayAllocElem left, IndexFieldElem index,
 			AllocElem right) {
 
+		assert (memLocFactory.containsKey(right)) : "AllocElem (or ArrayAllocElem)"
+				+ " should be created before used as RHS!";
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				left, index);
 		P2Set p2Set = new P2Set(right, ConstraintManager.genTrue());
@@ -467,7 +471,8 @@ public class AbstractHeap {
 				+ "for non-static stmt, RHS BASE must be LocalElem or ParamElem!";
 
 		// generates StackObject (either ParamElem or LocalVarElem)
-		StackObject v1 = null, v2 = null;
+		LocalVarElem v1 = null;
+		StackObject v2 = null;
 
 		// generate the mem loc for LHS
 		if (leftVType == VariableType.PARAMEMTER) {
@@ -483,6 +488,8 @@ public class AbstractHeap {
 		if (rightBaseVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, rightBase);
 		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
+			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+					rightBase))) : "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, rightBase);
 		} else {
 			assert false : "for non-static load stmt, RHS BASE must be LocalElem or ParamElem!";
@@ -502,6 +509,40 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 		return weakUpdate(pair, p2Setv2f);
+	}
+
+	// v1 = v2[0] where v2 is an array, e.g. v2 = new X[10][10]
+	// treat it just like a load stmt: v1 = v2.\i where \i is the index field
+	protected boolean handleALoadStmt(jq_Class clazz, jq_Method method,
+			Register left, VariableType leftVType, Register rightBase,
+			VariableType rightBaseVType) {
+
+		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for array load stmt, LHS must be LocalElem";
+		assert (rightBaseVType == VariableType.ARRAY_BASE) : ""
+				+ "for array stmt, RHS BASE must be an array base!";
+
+		LocalVarElem v1 = getLocalVarElem(clazz, method, left);
+		assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+				rightBase))) : "LocalVarElem should be created first before used as RHS";
+		LocalVarElem v2 = getLocalVarElem(clazz, method, rightBase);
+
+		assert (v1 != null) : "v1 is null!";
+		assert (v2 != null) : "v2 is null!";
+
+		assert (v1.knownArgDerived()) : "we should mark arg-derived marker before using v1!";
+		assert (v2.knownArgDerived()) : "we should mark arg-derived marker before using v2!";
+
+		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
+		assert (p2Setv2 != null) : "get a null p2 set!";
+
+		IndexFieldElem index = IndexFieldElem.getIndexFieldElem();
+		P2Set p2Setv2i = lookup(p2Setv2, index);
+		assert (p2Setv2i != null) : "get a null p2 set!";
+
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				v1, EpsilonFieldElem.getEpsilonFieldElem());
+
+		return weakUpdate(pair, p2Setv2i);
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
@@ -575,6 +616,8 @@ public class AbstractHeap {
 		if (rightVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, right);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
+			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+					right))) : "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, right);
 		} else {
 			assert false : "for non-static store stmt, RHS must be LocalElem or ParamElem!";
@@ -631,6 +674,8 @@ public class AbstractHeap {
 		if (rightVType == VariableType.PARAMEMTER) {
 			v2 = getParamElem(clazz, method, right);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
+			assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
+					right))) : "LocalVarElem should be created first before used as RHS";
 			v2 = getLocalVarElem(clazz, method, right);
 		} else {
 			assert false : "for static store stmt, RHS must be LocalElem or ParamElem!";
@@ -678,6 +723,8 @@ public class AbstractHeap {
 		return weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()));
 	}
 
+	// X x1 = new X[10] by just calling the handleMultiNewArrayStmt method with
+	// dim = 1
 	protected boolean handleNewArrayStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int line) {
 		return handleMultiNewArrayStmt(clazz, method, left, leftVType, right,
@@ -685,8 +732,7 @@ public class AbstractHeap {
 	}
 
 	// handle multi-new stmt, e.g. X x1 = new X[1][2][3]
-	// dim is the dimension of this array, dim >= 1, where dim = 1 is the
-	// easiest case like X x1 = new X[10]
+	// dim is the dimension of this array, dim >= 2
 	protected boolean handleMultiNewArrayStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int dim,
 			int line) {
@@ -721,7 +767,7 @@ public class AbstractHeap {
 					i, line);
 			ArrayAllocElem rightAllocT = getArrayAllocElem(clazz, method,
 					right, i - 1, line);
-			handleLoadStmt(leftAllocT, IndexFieldElem.getIndexFieldElem(),
+			handleArrayLoad(leftAllocT, IndexFieldElem.getIndexFieldElem(),
 					rightAllocT);
 		}
 
@@ -729,7 +775,7 @@ public class AbstractHeap {
 		ArrayAllocElem leftAllocT = getArrayAllocElem(clazz, method, right, 1,
 				line);
 		AllocElem rightAllocT = getAllocElem(clazz, method, right, line);
-		ret = handleLoadStmt(leftAllocT, IndexFieldElem.getIndexFieldElem(),
+		ret = handleArrayLoad(leftAllocT, IndexFieldElem.getIndexFieldElem(),
 				rightAllocT) | ret;
 
 		return ret;
