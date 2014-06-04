@@ -366,7 +366,7 @@ public class Summary {
 
 			boolean flag = absHeap.handleNewStmt(stmt.getMethod()
 					.getDeclaringClass(), meth, rop.getRegister(), vt, to
-					.getType(), stmt.getLineNumber());
+					.getType(), stmt.getID());
 			absHeap.markChanged(flag);
 		}
 
@@ -381,7 +381,7 @@ public class Summary {
 			ParamListOperand plo = MultiNewArray.getParamList(stmt);
 			boolean flag = absHeap.handleMultiNewArrayStmt(
 					meth.getDeclaringClass(), meth, rop.getRegister(), vt,
-					to.getType(), plo.length(), stmt.getLineNumber());
+					to.getType(), plo.length(), stmt.getID());
 			absHeap.markChanged(flag);
 		}
 
@@ -396,7 +396,7 @@ public class Summary {
 
 			boolean flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(),
 					meth, rop.getRegister(), vt, to.getType(),
-					stmt.getLineNumber());
+					stmt.getID());
 			absHeap.markChanged(flag);
 		}
 
