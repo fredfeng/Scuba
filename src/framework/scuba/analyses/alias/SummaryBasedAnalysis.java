@@ -74,16 +74,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// for now, assume there is no SCC.
 		LinkedList<jq_Method> worklist = new LinkedList<jq_Method>();
-		for (jq_Method meth : callGraph.getNodes()) {
-			// isolated node.
-			if (roots.contains(meth) && callGraph.getSuccs(meth).size() == 0)
-				continue;
-
-			if ((callGraph.getSuccs(meth).size() == 0)
-					&& (callGraph.getPreds(meth).size() != 0))
+		
+		System.out.println("total nodes: " + callGraph.getNodes());
+		for (jq_Method meth : callGraph.getNodes()) 
+			if ((callGraph.getSuccs(meth).size() == 0))
 				worklist.add(meth);
 
-		}
 		// foreach leaf in the callgraph. Add them to the worklist.
 		HashSet<jq_Method> visited = new HashSet();
 		while (!worklist.isEmpty()) {
