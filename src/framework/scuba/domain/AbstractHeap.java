@@ -448,7 +448,7 @@ public class AbstractHeap {
 				left, index);
 		P2Set p2Set = new P2Set(right, ConstraintManager.genTrue());
 
-		assert !heapObjectsToP2Set.containsKey(pair) : "we cannot re-put ArrayAllocElem into the map!";
+		assert heapObjectsToP2Set.containsKey(pair) : "we cannot re-put ArrayAllocElem into the map!";
 
 		left.fields.add(index);
 		heap.add(left);
