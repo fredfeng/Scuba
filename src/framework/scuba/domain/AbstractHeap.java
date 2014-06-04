@@ -169,7 +169,7 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					G.dotOutputPath + count + "/createdLocations.dot"));
+					G.dotOutputPath + count + "createdLocations.dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {
@@ -448,7 +448,7 @@ public class AbstractHeap {
 				left, index);
 		P2Set p2Set = new P2Set(right, ConstraintManager.genTrue());
 
-		assert heapObjectsToP2Set.containsKey(pair) : "we cannot re-put ArrayAllocElem into the map!";
+		assert !heapObjectsToP2Set.containsKey(pair) : "we cannot re-put ArrayAllocElem into the map!";
 
 		left.fields.add(index);
 		heap.add(left);
@@ -617,19 +617,6 @@ public class AbstractHeap {
 					+ " LHS Base must be LocalElem or ParamElem!";
 		}
 		assert (v1 != null) : "v1 is null!";
-
-		// generate the mem loc for RHS base
-		if (rightVType == VariableType.PARAMEMTER) {
-			v2 = getParamElem(clazz, method, right);
-		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			// assert (memLocFactory.containsKey(new LocalVarElem(clazz, method,
-			// right))) :
-			// "LocalVarElem should be created first before used as RHS";
-			v2 = getLocalVarElem(clazz, method, right);
-		} else {
-			assert false : "for array store stmt, RHS must be LocalElem or ParamElem!";
-		}
-		assert (v2 != null) : "v2 is null!";
 
 		// generate the mem loc for RHS base
 		if (rightVType == VariableType.PARAMEMTER) {
@@ -838,6 +825,10 @@ public class AbstractHeap {
 		// generate the ArrayAllocElem for RHS
 		ArrayAllocElem allocT = getArrayAllocElem(clazz, method, right, dim,
 				line);
+		System.out.println("****** "
+				+ heapObjectsToP2Set.get(new Pair<AbstractMemLoc, FieldElem>(
+						allocT, IndexFieldElem.getIndexFieldElem())));
+		System.err.println("***** " + allocT);
 
 		assert allocT.knownArgDerived() : "we should set the arg-derived marker when creating allocT";
 		assert v.knownArgDerived() : "we should set the arg-derived marker when creating v";
@@ -862,9 +853,17 @@ public class AbstractHeap {
 		// handling fields of the ArrayAllocElem for array with dim = 1
 		ArrayAllocElem leftAllocT = getArrayAllocElem(clazz, method, right, 1,
 				line);
+		System.err.println("****** " + leftAllocT);
 		AllocElem rightAllocT = getAllocElem(clazz, method, right, line);
+		System.out.println("****** "
+				+ heapObjectsToP2Set.get(new Pair<AbstractMemLoc, FieldElem>(
+						leftAllocT, IndexFieldElem.getIndexFieldElem())));
+		this.dumpAllMemLocsHeapToFile(1);
 		ret = handleArrayLoad(leftAllocT, IndexFieldElem.getIndexFieldElem(),
 				rightAllocT) | ret;
+		System.out.println("****** "
+				+ heapObjectsToP2Set.get(new Pair<AbstractMemLoc, FieldElem>(
+						leftAllocT, IndexFieldElem.getIndexFieldElem())));
 
 		return ret;
 	}

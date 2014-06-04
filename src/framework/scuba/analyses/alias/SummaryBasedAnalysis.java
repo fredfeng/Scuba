@@ -49,11 +49,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// init \gamma here.
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
-		
-		//dump interesting stats
+
+		// dump interesting stats
 		dumpStats();
 	}
-	
+
 	private void dumpStats() {
 		System.out.println("ALOADS------------" + Summary.aloadCnt);
 		System.out.println("ASTORES------------" + Summary.astoreCnt);
@@ -132,7 +132,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 		intrapro.analyze(cfg);
 		// mark terminated
-		if (G.debug) {
+		if (G.dump) {
 			summary.dumpSummaryToFile(count);
 			summary.dumpAllMemLocsHeapToFile(count);
 		}
