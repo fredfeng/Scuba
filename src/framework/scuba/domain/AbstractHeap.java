@@ -416,7 +416,7 @@ public class AbstractHeap {
 	// TODO we loose the constraint to allow LHS to be ParamElem (Not SSA)
 	protected boolean handleAssignStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register right,
-			VariableType rightVType, int numCounter, boolean isInSCC) {
+			VariableType rightVType, int numberCounter, boolean isInSCC) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
 				+ "for Assign stmt, LHS must be LocalElem (or ParamElem, we HAVE NOT fully fixed SSA";
@@ -460,12 +460,12 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		return weakUpdate(pair, p2Setv2, numCounter, isInSCC);
+		return weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
 	}
 
 	// this method is just a helper method for handling array allocations
 	private boolean handleArrayLoad(ArrayAllocElem left, IndexFieldElem index,
-			AllocElem right, int numCounter, boolean isInSCC) {
+			AllocElem right, int numberCounter, boolean isInSCC) {
 
 		// assert (memLocFactory.containsKey(right)) :
 		// "AllocElem (or ArrayAllocElem)"
@@ -478,7 +478,7 @@ public class AbstractHeap {
 		// assert !heapObjectsToP2Set.containsKey(pair) :
 		// "we cannot re-put ArrayAllocElem into the map!";
 
-		return weakUpdate(pair, p2Set, numCounter, isInSCC);
+		return weakUpdate(pair, p2Set, numberCounter, isInSCC);
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
@@ -488,8 +488,8 @@ public class AbstractHeap {
 	// f: non-static field
 	protected boolean handleLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register rightBase,
-			jq_Field rightField, VariableType rightBaseVType, int numCounter,
-			boolean isInSCC) {
+			jq_Field rightField, VariableType rightBaseVType,
+			int numberCounter, boolean isInSCC) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for non-static load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -535,14 +535,14 @@ public class AbstractHeap {
 
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
-		return weakUpdate(pair, p2Setv2f, numCounter, isInSCC);
+		return weakUpdate(pair, p2Setv2f, numberCounter, isInSCC);
 	}
 
 	// v1 = v2[0] where v2 is an array, e.g. v2 = new X[10][10]
 	// treat it just like a load stmt: v1 = v2.\i where \i is the index field
 	protected boolean handleALoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register rightBase,
-			VariableType rightBaseVType, int numCounter, boolean isInSCC) {
+			VariableType rightBaseVType, int numberCounter, boolean isInSCC) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for array load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -571,7 +571,7 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		return weakUpdate(pair, p2Setv2i, numCounter, isInSCC);
+		return weakUpdate(pair, p2Setv2i, numberCounter, isInSCC);
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
@@ -583,7 +583,7 @@ public class AbstractHeap {
 	// v1 = (A.f) where A.f is just a stack object
 	protected boolean handleStatLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Class rightBase,
-			jq_Field rightField, int numCounter, boolean isInSCC) {
+			jq_Field rightField, int numberCounter, boolean isInSCC) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for static load stmt, LHS must be a local!";
 
@@ -614,7 +614,7 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		return weakUpdate(pair, p2Setv2, numCounter, isInSCC);
+		return weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
 	}
 
 	// v1[0] = v2 where v1 = new V[10][10]
@@ -622,7 +622,7 @@ public class AbstractHeap {
 	// field (all array base shares the same \i)
 	protected boolean handleAStoreStmt(jq_Class clazz, jq_Method method,
 			Register leftBase, VariableType leftBaseVType, Register right,
-			VariableType rightVType, int numCounter, boolean isInSCC) {
+			VariableType rightVType, int numberCounter, boolean isInSCC) {
 
 		assert (rightVType == VariableType.PARAMEMTER)
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
@@ -678,7 +678,7 @@ public class AbstractHeap {
 			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 					obj, index);
 
-			ret = weakUpdate(pair, projP2Set, numCounter, isInSCC) | ret;
+			ret = weakUpdate(pair, projP2Set, numberCounter, isInSCC) | ret;
 		}
 
 		return ret;
@@ -688,7 +688,7 @@ public class AbstractHeap {
 	// v1.f = v2
 	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
 			Register leftBase, VariableType leftBaseVType, jq_Field leftField,
-			Register right, VariableType rightVType, int numCounter,
+			Register right, VariableType rightVType, int numberCounter,
 			boolean isInSCC) {
 
 		assert (rightVType == VariableType.PARAMEMTER)
@@ -745,7 +745,7 @@ public class AbstractHeap {
 			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 					obj, f);
 
-			ret = weakUpdate(pair, projP2Set, numCounter, isInSCC) | ret;
+			ret = weakUpdate(pair, projP2Set, numberCounter, isInSCC) | ret;
 		}
 
 		return ret;
@@ -760,7 +760,7 @@ public class AbstractHeap {
 	// (A.f) = v2 where (A.f) is just a stack object (StaticElem)
 	protected boolean handleStaticStoreStmt(jq_Class clazz, jq_Method method,
 			jq_Class leftBase, jq_Field leftField, Register right,
-			VariableType rightVType, int numCounter, boolean isInSCC) {
+			VariableType rightVType, int numberCounter, boolean isInSCC) {
 
 		assert (rightVType == VariableType.PARAMEMTER)
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
@@ -796,14 +796,14 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		return weakUpdate(pair, p2Setv2, numCounter, isInSCC);
+		return weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
 	}
 
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
 	// v = new T
 	protected boolean handleNewStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int line,
-			int numCounter, boolean isInSCC) {
+			int numberCounter, boolean isInSCC) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "LHS of a new stmt must be a local variable!";
 
@@ -827,23 +827,23 @@ public class AbstractHeap {
 				v, EpsilonFieldElem.getEpsilonFieldElem());
 
 		return weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()),
-				numCounter, isInSCC);
+				numberCounter, isInSCC);
 	}
 
 	// X x1 = new X[10] by just calling the handleMultiNewArrayStmt method with
 	// dim = 1
 	protected boolean handleNewArrayStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int line,
-			int numCounter, boolean isInSCC) {
+			int numberCounter, boolean isInSCC) {
 		return handleMultiNewArrayStmt(clazz, method, left, leftVType, right,
-				1, line, numCounter, isInSCC);
+				1, line, numberCounter, isInSCC);
 	}
 
 	// handle multi-new stmt, e.g. X x1 = new X[1][2][3]
 	// dim is the dimension of this array, dim >= 2
 	protected boolean handleMultiNewArrayStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int dim,
-			int line, int numCounter, boolean isInSCC) {
+			int line, int numberCounter, boolean isInSCC) {
 		boolean ret = false;
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "LHS of a new stmt must be a local variable!";
@@ -867,7 +867,7 @@ public class AbstractHeap {
 				v, EpsilonFieldElem.getEpsilonFieldElem());
 		// update the LHS's P2Set weakly
 		ret = weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()),
-				numCounter, isInSCC) | ret;
+				numberCounter, isInSCC) | ret;
 
 		// handling fields of the ArrayAllocElem for multi-array with dim > 1
 		for (int i = dim; i >= 2; i--) {
@@ -877,10 +877,35 @@ public class AbstractHeap {
 					right, i - 1, line);
 			ret = handleArrayLoad(leftAllocT,
 					IndexFieldElem.getIndexFieldElem(), rightAllocT,
-					numCounter, isInSCC) | ret;
+					numberCounter, isInSCC) | ret;
 		}
 
 		return ret;
+	}
+
+	// return v;
+	protected boolean handleRetStmt(jq_Class clazz, jq_Method method,
+			Register retValue, VariableType type, int numberCounter,
+			boolean isInSCC) {
+		// first try to find the corresponding local or param that has been
+		// declared before returning
+		StackObject v = null;
+		if (type == VariableType.LOCAL_VARIABLE) {
+			v = getLocalVarElem(clazz, method, retValue);
+		} else if (type == VariableType.PARAMEMTER) {
+			v = getParamElem(clazz, method, retValue);
+		} else {
+			assert false : "we are only considering return value to be local or parameter!";
+		}
+		assert heapObjectsToP2Set.containsKey(v) : ""
+				+ "the return value should have been declared before returning";
+		// create the return value elem
+		RetElem ret = getRetElem(clazz, method, retValue);
+		// update the p2set of the return value by the p2set of the local/param
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				ret, EpsilonFieldElem.getEpsilonFieldElem());
+		P2Set p2Set = lookup(v, EpsilonFieldElem.getEpsilonFieldElem());
+		return weakUpdate(pair, p2Set, numberCounter, isInSCC);
 	}
 
 	// given a base and a field, get the corresponding AccessPath
@@ -1078,6 +1103,26 @@ public class AbstractHeap {
 		return ret;
 	}
 
+	// get the RetElem in the factory
+	// if not existed, create one and put into the factory
+	// this is only used for instantiation and there might be a LocalVarElem or
+	// ParamElem with the same content
+	protected RetElem getRetElem(jq_Class clazz, jq_Method method,
+			Register retValue) {
+		// create a wrapper
+		RetElem ret = new RetElem(clazz, method, retValue);
+		// try to look up
+		if (memLocFactory.containsKey(ret)) {
+			return (RetElem) memLocFactory.get(ret);
+		}
+		// not found in the factory
+		// every time generating a memory location, do this marking
+		ArgDerivedHelper.markArgDerived(ret);
+		memLocFactory.put(ret, ret);
+
+		return ret;
+	}
+
 	// actually we do not use this method for Scuba project
 	// because we use Chord in SSA form so that it is not necessary to do strong
 	// update for local variables (they will have different names if assigned
@@ -1122,7 +1167,7 @@ public class AbstractHeap {
 	// TODO
 	// still need to check whether this returned boolean value is correct
 	protected boolean weakUpdate(Pair<AbstractMemLoc, FieldElem> pair,
-			P2Set p2Set, int numCounter, boolean isInSCC) {
+			P2Set p2Set, int numberCounter, boolean isInSCC) {
 		boolean ret = false;
 		AbstractMemLoc src = pair.val0;
 		FieldElem f = pair.val1;
@@ -1153,7 +1198,7 @@ public class AbstractHeap {
 		heap.addAll(tgts);
 
 		// do the numbering
-		Numbering wrapper = new Numbering(numCounter, isInSCC);
+		Numbering wrapper = new Numbering(numberCounter, isInSCC);
 		Set<HeapEdge> edges = edgeSeq.get(wrapper);
 		if (edges == null) {
 			edges = new HashSet<HeapEdge>();

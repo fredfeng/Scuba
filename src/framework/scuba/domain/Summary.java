@@ -80,7 +80,8 @@ public class Summary {
 	protected final List<ParamElem> paramList = new ArrayList<ParamElem>();
 
 	// return value list
-	
+	protected RetElem retValue;
+
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();
@@ -505,6 +506,8 @@ public class Summary {
 
 		public void visitReturn(Quad stmt) {
 			// TODO
+			// make sure a return stmt can only contains one operand which is
+			// Register type, and this Register must be used before returning
 		}
 
 		// no sure whether we should mark this as no op.
