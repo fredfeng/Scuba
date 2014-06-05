@@ -22,7 +22,7 @@ public class ParamElem extends StackObject {
 	}
 
 	@Override
-	public AbstractMemLoc findRoot() {
+	public ParamElem findRoot() {
 		return this;
 	}
 

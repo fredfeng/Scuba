@@ -11,7 +11,7 @@ public class AllocElem extends HeapObject {
 		this.context = context;
 	}
 
-	public AbstractMemLoc findRoot() {
+	public AllocElem findRoot() {
 		return this;
 	}
 

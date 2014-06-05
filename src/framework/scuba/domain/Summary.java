@@ -75,6 +75,12 @@ public class Summary {
 	// used for numbering
 	protected boolean isInSCC = false;
 
+	// parameter list used for instantiating
+	// once initialized, never changed
+	protected final List<ParamElem> paramList = new ArrayList<ParamElem>();
+
+	// return value list
+	
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();

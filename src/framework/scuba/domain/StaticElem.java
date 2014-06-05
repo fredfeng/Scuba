@@ -17,7 +17,7 @@ public class StaticElem extends StackObject {
 	}
 
 	@Override
-	public AbstractMemLoc findRoot() {
+	public StaticElem findRoot() {
 		return this;
 	}
 

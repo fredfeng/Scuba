@@ -22,7 +22,7 @@ public class LocalVarElem extends StackObject {
 	}
 
 	@Override
-	public AbstractMemLoc findRoot() {
+	public LocalVarElem findRoot() {
 		return this;
 	}
 
@@ -43,8 +43,9 @@ public class LocalVarElem extends StackObject {
 	@Override
 	public String toString() {
 
-		//return "[C]" + clazz.getName() + "[M]" + method.getName() + "[LocalVar]"
-				//+ local;
+		// return "[C]" + clazz.getName() + "[M]" + method.getName() +
+		// "[LocalVar]"
+		// + local;
 		return "[V]" + local;
 	}
 
