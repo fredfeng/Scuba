@@ -50,17 +50,16 @@ public class Summary {
 	private jq_Method method;
 
 	private AbstractHeap absHeap;
-	
+
 	public static int aloadCnt = 0;
-	
+
 	public static int astoreCnt = 0;
 
 	public static int aNewArrayCnt = 0;
 
 	public static int aNewMulArrayCnt = 0;
-	
-	public static int castCnt = 0;
 
+	public static int castCnt = 0;
 
 	// this maps store the memory location instantiation result for each invoke
 	// stmt (call site) in the method that this Summary instance belongs to
@@ -127,8 +126,10 @@ public class Summary {
 				}
 
 				if (op instanceof Putfield) {
-					fieldsBase.add(((RegisterOperand)Putfield.getBase(q)).getRegister());
-					fieldsBaseList.add(((RegisterOperand)Putfield.getBase(q)).getRegister());
+					fieldsBase.add(((RegisterOperand) Putfield.getBase(q))
+							.getRegister());
+					fieldsBaseList.add(((RegisterOperand) Putfield.getBase(q))
+							.getRegister());
 
 					fieldsAccess.add(Putfield.getField(q).getField());
 					fieldsAccList.add(Putfield.getField(q).getField());
@@ -136,9 +137,10 @@ public class Summary {
 				}
 
 				if (op instanceof Getfield) {
-					fieldsBase.add(((RegisterOperand)Getfield.getBase(q)).getRegister());
-					fieldsBaseList.add(((RegisterOperand)Getfield.getBase(q)).getRegister());
-
+					fieldsBase.add(((RegisterOperand) Getfield.getBase(q))
+							.getRegister());
+					fieldsBaseList.add(((RegisterOperand) Getfield.getBase(q))
+							.getRegister());
 
 					fieldsAccess.add(Getfield.getField(q).getField());
 					fieldsAccList.add(Getfield.getField(q).getField());
@@ -169,7 +171,7 @@ public class Summary {
 
 		System.out.println("Field access List: " + fieldsAccList);
 		System.out.println("Field access Set: " + fieldsAccess);
-		
+
 		System.out.println("**************************************");
 	}
 
@@ -215,7 +217,7 @@ public class Summary {
 		}
 
 		// perform array smashing. Use assign to handle array store/load.
-		//y = x[1];
+		// y = x[1];
 		public void visitALoad(Quad stmt) {
 			// TODO
 			Summary.aloadCnt++;
@@ -236,7 +238,7 @@ public class Summary {
 			}
 		}
 
-		//x[1] = y
+		// x[1] = y
 		public void visitAStore(Quad stmt) {
 			// TODO
 			Summary.astoreCnt++;
@@ -396,8 +398,7 @@ public class Summary {
 			VariableType vt = getVarType(meth, rop.getRegister());
 
 			boolean flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(),
-					meth, rop.getRegister(), vt, to.getType(),
-					stmt.getID());
+					meth, rop.getRegister(), vt, to.getType(), stmt.getID());
 			absHeap.markChanged(flag);
 		}
 

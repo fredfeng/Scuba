@@ -2,10 +2,12 @@ package framework.scuba.domain;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
@@ -43,6 +45,30 @@ public class AbstractHeap {
 	final private Map<AbstractMemLoc, AbstractMemLoc> memLocFactory;
 
 	private boolean isChanged = false;
+
+	// this map records the sequence that the edges are added into the heap
+	// it contains a LOT of information such as:
+	// (1) the sequence the edges are added (edges with the same number are
+	// added at the same time and we do not care about the sequence to
+	// instantiate them, i.e. we can instantiate them in any order)
+	// (2) the edges associated with larger number depends on the heap modified
+	// by (all) the edges that are marked with smaller number, so they should be
+	// instantiated after all edges with smaller numbers are finished
+	// (3) the edges that are in the same SCC will be associated with the same
+	// number and set the inSCC to be true (which means the above two are
+	// false), and they should be instantiated until a fixed point
+	protected Map<Numbering, HeapEdge> edgeSeq = new TreeMap<Numbering, HeapEdge>(
+			new Comparator<Numbering>() {
+				public int compare(Numbering first, Numbering second) {
+					if (first.getNumber() < second.getNumber()) {
+						return -1;
+					} else if (first.getNumber() == second.getNumber()) {
+						return 0;
+					} else {
+						return 1;
+					}
+				}
+			});
 
 	public static enum VariableType {
 		PARAMEMTER, LOCAL_VARIABLE, ARRAY_BASE, NULL_POINTER, CONSTANT;
