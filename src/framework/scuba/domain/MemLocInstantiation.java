@@ -10,10 +10,7 @@ public class MemLocInstantiation {
 
 	// this maps from the abstract memory locations in the heap of the callee to
 	// the abstract memory locations in the heap of the caller
-	protected Map<AbstractMemLoc, InstantiatedMemLocSet> instantiatedMemLocMapping;
-
-	// this maps from the P2Set in the heap of the callee to the P2Set
-	protected Map<P2Set, P2Set> instantiatedP2SetMapping;
+	protected Map<AbstractMemLoc, AbstractMemLoc> instantiatedMemLocMapping;
 
 	// this maps from the Chord variables in the bytecode in the callee to the
 	// Chord variables in the bytecode in the caller
@@ -29,16 +26,18 @@ public class MemLocInstantiation {
 	// jq_Class --> jq_Class map]
 	protected Map<Object, Object> formalsToActuals;
 
-	public MemLocInstantiation(Quad callsite, SummariesEnv env,
-			jq_Method caller, jq_Method callee) {
-		instantiatedMemLocMapping = new HashMap<AbstractMemLoc, InstantiatedMemLocSet>();
-		instantiatedP2SetMapping = new HashMap<P2Set, P2Set>();
+	public MemLocInstantiation(Quad callsite, jq_Method caller, jq_Method callee) {
+		instantiatedMemLocMapping = new HashMap<AbstractMemLoc, AbstractMemLoc>();
 		formalsToActuals = new HashMap<Object, Object>();
 
 		// first fill the formals to actuals map so that we have the base case
 		fillFormalsToActualsMap(callsite, caller, callee);
 		// then fill the memory locations map
 
+	}
+
+	public void init() {
+		
 	}
 
 	public void instantiate() {

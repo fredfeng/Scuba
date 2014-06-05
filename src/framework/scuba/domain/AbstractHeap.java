@@ -1248,7 +1248,7 @@ public class AbstractHeap {
 	}
 
 	// check whether some abstract memory location is in the heap
-	public boolean isInHeap(AbstractMemLoc loc) {
+	public boolean contains(AbstractMemLoc loc) {
 		return heap.contains(loc);
 	}
 

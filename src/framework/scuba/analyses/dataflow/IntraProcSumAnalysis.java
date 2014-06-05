@@ -7,9 +7,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.RegisterFactory;
+import joeq.Compiler.Quad.RegisterFactory.Register;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper;
@@ -30,11 +33,28 @@ public class IntraProcSumAnalysis {
 
 	protected int numberCounter;
 
+	// analyze one method based on the cfg of this method
 	public void analyze(ControlFlowGraph g) {
 		// before analyzing the CFG g of some method
 		// first retrieve the numbering counter of that summary that was
 		// maintained last time
 		numberCounter = summary.getNumberCounter();
+
+		// create the memory locations for the parameters first
+		// this should be done ONLY once! (the first time we analyze this
+		// method, we can get the full list)
+		if (summary.getParamList() == null) {
+			// the first time to fill the paramList, we first initParamList and
+			// the fill it, and later we will NOT fill this list again
+			summary.initParamList();
+			RegisterFactory rf = g.getRegisterFactory();
+			jq_Method meth = g.getMethod();
+			int numArgs = meth.getParamTypes().length;
+			for (int zIdx = 0; zIdx < numArgs; zIdx++) {
+				Register param = rf.get(zIdx);
+				summary.fillParamList(meth.getDeclaringClass(), meth, param);
+			}
+		}
 
 		BasicBlock entry = g.entry();
 		accessBlocksList.clear();

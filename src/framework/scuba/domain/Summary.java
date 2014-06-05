@@ -32,6 +32,8 @@ import joeq.Compiler.Quad.Operator.NewArray;
 import joeq.Compiler.Quad.Operator.Phi;
 import joeq.Compiler.Quad.Operator.Putfield;
 import joeq.Compiler.Quad.Operator.Putstatic;
+import joeq.Compiler.Quad.Operator.Return.RETURN_A;
+import joeq.Compiler.Quad.Operator.Return.RETURN_V;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.QuadVisitor;
 import joeq.Compiler.Quad.RegisterFactory;
@@ -64,7 +66,7 @@ public class Summary {
 	// this maps store the memory location instantiation result for each invoke
 	// stmt (call site) in the method that this Summary instance belongs to
 	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
-	private Map<Invoke, MemLocInstantiation> virtCallToMemLocInstantiation;
+	private Map<Quad, MemLocInstantiation> methCallToMemLocInstantiation;
 
 	// finish current summary.
 	private boolean terminated;
@@ -77,7 +79,7 @@ public class Summary {
 
 	// parameter list used for instantiating
 	// once initialized, never changed
-	protected final List<ParamElem> paramList = new ArrayList<ParamElem>();
+	protected List<ParamElem> paramList;
 
 	// return value list
 	protected RetElem retValue;
@@ -85,9 +87,32 @@ public class Summary {
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();
-		virtCallToMemLocInstantiation = new HashMap<Invoke, MemLocInstantiation>();
+		methCallToMemLocInstantiation = new HashMap<Quad, MemLocInstantiation>();
 		if (G.debug)
 			this.dumpSummary4Method(meth);
+	}
+
+	// initialize the paramList
+	// this will be done ONLY once!
+	public void initParamList() {
+		paramList = new ArrayList<ParamElem>();
+	}
+
+	// fill the paramList from left to right, one by one, by the location in the
+	// heap
+	// MUST keep the proper sequence!
+	// every parameter in the list will only be translated once!
+	public void fillParamList(jq_Class clazz, jq_Method method, Register param) {
+		paramList.add(absHeap.getParamElem(clazz, method, param));
+	}
+
+	// get the paramList, which will used in the instantiation
+	public List<ParamElem> getParamList() {
+		return paramList;
+	}
+
+	public void setRetValue(RetElem retValue) {
+		this.retValue = retValue;
 	}
 
 	public void dumpSummary4Method(jq_Method meth) {
@@ -336,6 +361,15 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 			// TODO
+			MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
+					.get(stmt);
+			if (memLocInstn == null) {
+				assert (stmt.getOperator() instanceof Invoke);
+				memLocInstn = new MemLocInstantiation(stmt, stmt.getMethod(),
+						Invoke.getMethod(stmt).getMethod());
+				methCallToMemLocInstantiation.put(stmt, memLocInstn);
+			}
+			memLocInstn.init();
 
 		}
 
@@ -508,6 +542,28 @@ public class Summary {
 			// TODO
 			// make sure a return stmt can only contains one operand which is
 			// Register type, and this Register must be used before returning
+			boolean flag = false;
+			if (stmt.getOperator() instanceof RETURN_A) {
+				List<RegisterOperand> rets = stmt.getUsedRegisters();
+				assert (rets.size() == 1) : "we can ONLY return one register!";
+				Register ret = rets.get(0).getRegister();
+				jq_Method meth = stmt.getMethod();
+				jq_Class clazz = meth.getDeclaringClass();
+				VariableType type = getVarType(meth, ret);
+				flag = absHeap.handleRetStmt(clazz, meth, ret, type,
+						numberCounter, isInSCC);
+
+				// TODO
+				// just set the retValue of this summary
+				// maybe this is not necessary?
+				if (retValue == null) {
+					assert (absHeap.contains(new RetElem(clazz, meth, ret))) : ""
+							+ "the return value should be contained in the heap!";
+					retValue = absHeap.getRetElem(clazz, meth, ret);
+				}
+			} else if (stmt.getOperator() instanceof RETURN_V) {
+				// not create RetElem for the return value
+			}
 		}
 
 		// no sure whether we should mark this as no op.
