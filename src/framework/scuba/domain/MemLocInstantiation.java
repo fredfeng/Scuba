@@ -1,8 +1,10 @@
 package framework.scuba.domain;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import framework.scuba.helper.ConstraintManager;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 
@@ -10,49 +12,32 @@ public class MemLocInstantiation {
 
 	// this maps from the abstract memory locations in the heap of the callee to
 	// the abstract memory locations in the heap of the caller
-	protected Map<AbstractMemLoc, AbstractMemLoc> instantiatedMemLocMapping;
+	protected Map<AbstractMemLoc, InstantiatedLocSet> instantiatedMemLocMapping;
 
-	// this maps from the Chord variables in the bytecode in the callee to the
-	// Chord variables in the bytecode in the caller
-	// this map is used as the base case for memory location instantiation
-	// it should include the following:
-	// 1. formals in the param list of the callee --> actuals of the callsite in
-	// the caller [real parameters mapping, should be a Register-->Register map]
-	// 2. the returned value of the callee --> the LHS operand in the callsite
-	// if there exists a LHS operand, e.g. x = foo(a,b) where x is the LHS
-	// operand [return value mapping, should be a Register-->Register map]
-	// 3. the static class (related to static field reference, e.g. A.f) in the
-	// callee --> the static class itself [static class mapping, should be a
-	// jq_Class --> jq_Class map]
-	protected Map<Object, Object> formalsToActuals;
-
-	public MemLocInstantiation(Quad callsite, jq_Method caller, jq_Method callee) {
-		instantiatedMemLocMapping = new HashMap<AbstractMemLoc, AbstractMemLoc>();
-		formalsToActuals = new HashMap<Object, Object>();
-
-		// first fill the formals to actuals map so that we have the base case
-		fillFormalsToActualsMap(callsite, caller, callee);
-		// then fill the memory locations map
+	MemLocInstantiation(Quad callsite, jq_Method caller, jq_Method callee) {
+		instantiatedMemLocMapping = new HashMap<AbstractMemLoc, InstantiatedLocSet>();
 
 	}
 
-	public void init() {
-		
+	// initialized the formal-to-actual mapping
+	public void initFormalToActualMapping(List<ParamElem> formals,
+			List<StackObject> actuals) {
+		assert (actuals.size() == formals.size()) : "unmatched formal-to-actual mapping!";
+
+		for (int i = 0; i < actuals.size(); i++) {
+			StackObject actual = actuals.get(i);
+			if (actual instanceof ConstantElem) {
+				continue;
+			} else {
+				StackObject formal = formals.get(i);
+				instantiatedMemLocMapping.put(formal, new InstantiatedLocSet(
+						actual, ConstraintManager.genTrue()));
+			}
+		}
 	}
 
 	public void instantiate() {
 
 	}
 
-	public Map<Object, Object> fillFormalsToActualsMap(Quad callsite,
-			jq_Method caller, jq_Method callee) {
-		// fill the formalsToActuals map by the following:
-		// 1. according to the information contained in the callsite of the
-		// caller and the parameter list of the callee, fill the map
-		// 2. according to the return value of the callee, and the LHS operand
-		// in the callsite fill the map
-		// 3. find all the static field reference like A.f in the callee's
-		// bytecode, and then map to itself
-		return formalsToActuals;
-	}
 }

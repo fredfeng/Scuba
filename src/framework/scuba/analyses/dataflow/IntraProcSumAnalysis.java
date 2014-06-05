@@ -43,18 +43,21 @@ public class IntraProcSumAnalysis {
 		// create the memory locations for the parameters first
 		// this should be done ONLY once! (the first time we analyze this
 		// method, we can get the full list)
-		if (summary.getParamList() == null) {
+		if (summary.getFormals() == null) {
 			// the first time to fill the paramList, we first initParamList and
 			// the fill it, and later we will NOT fill this list again
-			summary.initParamList();
+			summary.initFormals();
 			RegisterFactory rf = g.getRegisterFactory();
 			jq_Method meth = g.getMethod();
 			int numArgs = meth.getParamTypes().length;
 			for (int zIdx = 0; zIdx < numArgs; zIdx++) {
 				Register param = rf.get(zIdx);
-				summary.fillParamList(meth.getDeclaringClass(), meth, param);
+				summary.fillFormals(meth.getDeclaringClass(), meth, param);
 			}
 		}
+		// we also should record the memory location of the return value
+		// this is done by handleReturnStmt method and we do not need to do that
+		// here, but imagine we have done it here
 
 		BasicBlock entry = g.entry();
 		accessBlocksList.clear();

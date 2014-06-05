@@ -38,6 +38,7 @@ import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.QuadVisitor;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.util.tuple.object.Pair;
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.G;
 
@@ -66,7 +67,7 @@ public class Summary {
 	// this maps store the memory location instantiation result for each invoke
 	// stmt (call site) in the method that this Summary instance belongs to
 	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
-	private Map<Quad, MemLocInstantiation> methCallToMemLocInstantiation;
+	private Map<Pair<Quad, jq_Method>, MemLocInstantiation> methCallToMemLocInstantiation;
 
 	// finish current summary.
 	private boolean terminated;
@@ -79,7 +80,7 @@ public class Summary {
 
 	// parameter list used for instantiating
 	// once initialized, never changed
-	protected List<ParamElem> paramList;
+	protected List<ParamElem> formals;
 
 	// return value list
 	protected RetElem retValue;
@@ -87,28 +88,28 @@ public class Summary {
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();
-		methCallToMemLocInstantiation = new HashMap<Quad, MemLocInstantiation>();
+		methCallToMemLocInstantiation = new HashMap<Pair<Quad, jq_Method>, MemLocInstantiation>();
 		if (G.debug)
 			this.dumpSummary4Method(meth);
 	}
 
 	// initialize the paramList
 	// this will be done ONLY once!
-	public void initParamList() {
-		paramList = new ArrayList<ParamElem>();
+	public void initFormals() {
+		formals = new ArrayList<ParamElem>();
 	}
 
 	// fill the paramList from left to right, one by one, by the location in the
 	// heap
 	// MUST keep the proper sequence!
 	// every parameter in the list will only be translated once!
-	public void fillParamList(jq_Class clazz, jq_Method method, Register param) {
-		paramList.add(absHeap.getParamElem(clazz, method, param));
+	public void fillFormals(jq_Class clazz, jq_Method method, Register param) {
+		formals.add(absHeap.getParamElem(clazz, method, param));
 	}
 
 	// get the paramList, which will used in the instantiation
-	public List<ParamElem> getParamList() {
-		return paramList;
+	public List<ParamElem> getFormals() {
+		return formals;
 	}
 
 	public void setRetValue(RetElem retValue) {
@@ -244,6 +245,8 @@ public class Summary {
 	}
 
 	public void handleStmt(Quad quad, int numCounter, boolean isInSCC) {
+		// I think this is the only to pass the counter and isInSCC to the
+		// visitor
 		this.numberCounter = numCounter;
 		this.isInSCC = isInSCC;
 		quad.accept(qv);
@@ -361,15 +364,70 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 			// TODO
-			MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
-					.get(stmt);
-			if (memLocInstn == null) {
-				assert (stmt.getOperator() instanceof Invoke);
-				memLocInstn = new MemLocInstantiation(stmt, stmt.getMethod(),
-						Invoke.getMethod(stmt).getMethod());
-				methCallToMemLocInstantiation.put(stmt, memLocInstn);
+
+			assert (stmt.getOperator() instanceof Invoke);
+
+			// retrieve the summary of the callee
+			// Summary calleeSum = SummariesEnv.v().getSummary(
+			// Invoke.getMethod(stmt).getMethod());
+			List<Pair<Summary, Constraint>> calleeSumCstPairs = getSumCstPairList(stmt);
+
+			// if coming here, it means the callee summary is available
+
+			// the callsite's belonging method
+			jq_Method meth = stmt.getMethod();
+			for (Pair<Summary, Constraint> calleeSumCst : calleeSumCstPairs) {
+				MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
+						.get(calleeSumCst);
+				Summary calleeSum = calleeSumCst.val0;
+				Constraint typeConstraint = calleeSumCst.val1;
+
+				// if we have not summarized the callee's heap, just continue
+				// and we also do not create the mem loc instantiation either
+				// but the instantiation will be created later when the summary
+				// of the callee is available
+				if (calleeSumCstPairs == null) {
+					continue;
+				}
+
+				if (memLocInstn == null) {
+					// the first time to do the memory location instantiation,
+					// we should init the instantiation by creating the
+					// formal-to-actual mapping
+					memLocInstn = new MemLocInstantiation(stmt, meth, Invoke
+							.getMethod(stmt).getMethod());
+					methCallToMemLocInstantiation.put(
+							new Pair<Quad, jq_Method>(stmt, calleeSum
+									.getMethod()), memLocInstn);
+					// fill the formal-to-actual mapping
+					ParamListOperand actuals = Invoke.getParamList(stmt);
+					List<StackObject> actualsMemLoc = new ArrayList<StackObject>();
+					for (int i = 0; i < actuals.length(); i++) {
+						Register v = actuals.get(i).getRegister();
+						if (getVarType(meth, v) == VariableType.PARAMEMTER) {
+							actualsMemLoc.add(absHeap.getLocalVarElem(
+									meth.getDeclaringClass(), meth, v));
+						} else if (getVarType(meth, actuals.get(i)
+								.getRegister()) == VariableType.LOCAL_VARIABLE) {
+							actualsMemLoc.add(absHeap.getParamElem(
+									meth.getDeclaringClass(), meth, v));
+						} else {
+							// actual can be primitives, just create constant
+							// elem
+							// to denote this and they will be ignored later (we
+							// do
+							// not map formals to constants)
+							actualsMemLoc.add(ConstantElem.getConstantElem());
+						}
+					}
+					// fill the formal-to-actual mapping
+					memLocInstn.initFormalToActualMapping(
+							calleeSum.getFormals(), actualsMemLoc);
+				}
+
 			}
-			memLocInstn.init();
+			// by now, we have the formal-to-actual mapping as a trigger for the
+			// whole instantiation of memory locations
 
 		}
 
@@ -613,5 +671,15 @@ public class Summary {
 
 	public int getNumberCounter() {
 		return numberCounter;
+	}
+
+	// given a call site in the caller, return all the possible callee's
+	// summaries and the corresponding constraints as a list of pairs
+	// if no callee available, return ret (size == 0)
+	public List<Pair<Summary, Constraint>> getSumCstPairList(Quad callsite) {
+		// TODO
+		List<Pair<Summary, Constraint>> ret = new ArrayList<Pair<Summary, Constraint>>();
+		// find all qualified callees and the constraints
+		return ret;
 	}
 }

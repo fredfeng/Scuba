@@ -8,7 +8,7 @@ import framework.scuba.helper.ConstraintManager;
 
 public class P2Set {
 
-	Map<HeapObject, Constraint> p2Set = new HashMap<HeapObject, Constraint>();
+	protected Map<HeapObject, Constraint> p2Set = new HashMap<HeapObject, Constraint>();
 
 	// this is an empty p2set which is often used in dealing with null
 	public P2Set() {
