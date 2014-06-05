@@ -28,7 +28,7 @@ public class ArrayAllocElem extends AllocElem {
 
 	@Override
 	public String toString() {
-		return alloc + "||" + context + "||[D]" + dim;
+		return alloc + "||[D]" + dim + "||" + context;
 	}
 
 	@Override

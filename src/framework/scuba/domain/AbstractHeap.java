@@ -578,8 +578,11 @@ public class AbstractHeap {
 		}
 		assert (v1 != null) : "v1 is null!";
 
-		// generate the mem loc for RHS base
-		StaticElem v2 = getStaticElem(rightBase, rightField);
+		// generate the mem loc for RHS base using the global env generator
+		StaticElem v2 = Env.getStaticElem(rightBase, rightField);
+		// we also add this global into the mem loc factory for this method
+		memLocFactory.put(v2, v2);
+
 		assert (v2 != null) : "v2 is null!";
 
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
@@ -742,8 +745,11 @@ public class AbstractHeap {
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
 				+ " variables and parameters as RHS in static store stmt";
 
-		// generate the mem loc for LHS Base
-		StaticElem v1 = getStaticElem(leftBase, leftField);
+		// generate the mem loc for LHS Base using the global env
+		StaticElem v1 = Env.getStaticElem(leftBase, leftField);
+		// we also add this global into the mem loc factory for this method
+		memLocFactory.put(v1, v1);
+
 		assert (v1 != null) : "v1 is null!";
 
 		StackObject v2 = null;
@@ -920,20 +926,6 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	// get the StaticElem in the mem loc factory by an StaticElem with the
-	// same content (we want to use exactly the same instance)
-	protected StaticElem getStaticElem(StaticElem other) {
-
-		if (memLocFactory.containsKey(other)) {
-			return (StaticElem) memLocFactory.get(other);
-		}
-
-		ArgDerivedHelper.markArgDerived(other);
-		memLocFactory.put(other, other);
-
-		return other;
-	}
-
 	// get the ParamElem in the mem loc factory by an ParamElem with the
 	// same content (we want to use exactly the same instance)
 	protected ParamElem getParamElem(ParamElem other) {
@@ -950,7 +942,7 @@ public class AbstractHeap {
 
 	// get the LocalVarElem in the mem loc factory by an LocalVarElem with the
 	// same content (we want to use exactly the same instance)
-	protected LocalVarElem getLocalElem(LocalVarElem other) {
+	protected LocalVarElem getLocalVarElem(LocalVarElem other) {
 
 		if (memLocFactory.containsKey(other)) {
 			return (LocalVarElem) memLocFactory.get(other);
@@ -1053,23 +1045,6 @@ public class AbstractHeap {
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (ParamElem) memLocFactory.get(ret);
-		}
-		// not found in the factory
-		// every time generating a memory location, do this marking
-		ArgDerivedHelper.markArgDerived(ret);
-		memLocFactory.put(ret, ret);
-
-		return ret;
-	}
-
-	// get the StaticElem given the declaring class and the corresponding field
-	// in the IR
-	protected StaticElem getStaticElem(jq_Class clazz, jq_Field field) {
-		// create a wrapper
-		StaticElem ret = new StaticElem(clazz, field);
-		// try to look up this wrapper in the memory location factory
-		if (memLocFactory.containsKey(ret)) {
-			return (StaticElem) memLocFactory.get(ret);
 		}
 		// not found in the factory
 		// every time generating a memory location, do this marking
