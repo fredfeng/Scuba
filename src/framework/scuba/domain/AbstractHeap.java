@@ -908,7 +908,7 @@ public class AbstractHeap {
 		return weakUpdate(pair, p2Set, numberCounter, isInSCC);
 	}
 
-	protected boolean handleInvoke()
+//	protected boolean handleInvoke()
 	
 	// given a base and a field, get the corresponding AccessPath
 	// if it is not in the factory, create, put into factory and return
