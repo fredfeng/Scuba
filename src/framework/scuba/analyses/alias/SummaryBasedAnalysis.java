@@ -74,9 +74,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// for now, assume there is no SCC.
 		LinkedList<jq_Method> worklist = new LinkedList<jq_Method>();
-		
+
 		System.out.println("total nodes: " + callGraph.getNodes());
-		for (jq_Method meth : callGraph.getNodes()) 
+		for (jq_Method meth : callGraph.getNodes())
 			if ((callGraph.getSuccs(meth).size() == 0))
 				worklist.add(meth);
 
@@ -117,6 +117,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		Summary summary = SummariesEnv.v().getSummary(m);
 		intrapro.setSummary(summary);
+		// set intrapro's number counter to be the counter of the last time the
+		// summary is concluded, so that it will continue numbering from the
+		// last time, to keep the numbers increasing
+
 		if (m.getBytecode() == null)
 			return;
 

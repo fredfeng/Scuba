@@ -69,6 +69,12 @@ public class Summary {
 	// finish current summary.
 	private boolean terminated;
 
+	// numbering counter
+	protected int numberCounter = 0;
+
+	// used for numbering
+	protected boolean isInSCC = false;
+
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();
@@ -205,7 +211,9 @@ public class Summary {
 		return method;
 	}
 
-	public void handleStmt(Quad quad) {
+	public void handleStmt(Quad quad, int numCounter, boolean isInSCC) {
+		this.numberCounter = numCounter;
+		this.isInSCC = isInSCC;
 		quad.accept(qv);
 	}
 
@@ -233,7 +241,7 @@ public class Summary {
 
 				boolean flag = absHeap.handleALoadStmt(
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
-						rhs.getRegister(), rvt);
+						rhs.getRegister(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
 			}
 		}
@@ -253,7 +261,7 @@ public class Summary {
 
 				boolean flag = absHeap.handleAStoreStmt(
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
-						rhs.getRegister(), rvt);
+						rhs.getRegister(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
 			}
 		}
@@ -292,7 +300,7 @@ public class Summary {
 
 				boolean flag = absHeap.handleLoadStmt(meth.getDeclaringClass(),
 						meth, lhs.getRegister(), lvt, rhsBase.getRegister(),
-						field.getField(), rvt);
+						field.getField(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
 			}
 		}
@@ -310,7 +318,7 @@ public class Summary {
 
 				boolean flag = absHeap.handleStatLoadStmt(
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
-						encloseClass, field.getField());
+						encloseClass, field.getField(), numberCounter, isInSCC);
 				absHeap.markChanged(flag);
 			}
 		}
@@ -353,7 +361,7 @@ public class Summary {
 						rhs.getRegister());
 				boolean flag = absHeap.handleAssignStmt(
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
-						rhs.getRegister(), rvt);
+						rhs.getRegister(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
 			}
 		}
@@ -369,7 +377,7 @@ public class Summary {
 
 			boolean flag = absHeap.handleNewStmt(stmt.getMethod()
 					.getDeclaringClass(), meth, rop.getRegister(), vt, to
-					.getType(), stmt.getID());
+					.getType(), stmt.getID(), numberCounter, isInSCC);
 			absHeap.markChanged(flag);
 		}
 
@@ -384,7 +392,8 @@ public class Summary {
 			ParamListOperand plo = MultiNewArray.getParamList(stmt);
 			boolean flag = absHeap.handleMultiNewArrayStmt(
 					meth.getDeclaringClass(), meth, rop.getRegister(), vt,
-					to.getType(), plo.length(), stmt.getID());
+					to.getType(), plo.length(), stmt.getID(), numberCounter,
+					isInSCC);
 			absHeap.markChanged(flag);
 		}
 
@@ -398,7 +407,8 @@ public class Summary {
 			VariableType vt = getVarType(meth, rop.getRegister());
 
 			boolean flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(),
-					meth, rop.getRegister(), vt, to.getType(), stmt.getID());
+					meth, rop.getRegister(), vt, to.getType(), stmt.getID(),
+					numberCounter, isInSCC);
 			absHeap.markChanged(flag);
 		}
 
@@ -425,9 +435,10 @@ public class Summary {
 						continue;
 
 					VariableType rvt = getVarType(meth, rhs.getRegister());
-					boolean flag = absHeap.handleAssignStmt(
-							meth.getDeclaringClass(), meth, lhs.getRegister(),
-							lvt, rhs.getRegister(), rvt);
+					boolean flag = absHeap
+							.handleAssignStmt(meth.getDeclaringClass(), meth,
+									lhs.getRegister(), lvt, rhs.getRegister(),
+									rvt, numberCounter, isInSCC);
 					sig = flag | sig;
 
 				}
@@ -455,7 +466,7 @@ public class Summary {
 
 					flag = absHeap.handleStoreStmt(meth.getDeclaringClass(),
 							meth, lhs.getRegister(), lvt, field.getField(),
-							rhs.getRegister(), rvt);
+							rhs.getRegister(), rvt, numberCounter, isInSCC);
 					absHeap.markChanged(flag);
 				}
 			}
@@ -478,7 +489,8 @@ public class Summary {
 
 					flag = absHeap.handleStaticStoreStmt(
 							meth.getDeclaringClass(), meth, encloseClass,
-							field.getField(), rhs.getRegister(), rvt);
+							field.getField(), rhs.getRegister(), rvt,
+							numberCounter, isInSCC);
 					absHeap.markChanged(flag);
 				}
 			}
@@ -525,4 +537,16 @@ public class Summary {
 		}
 
 	};
+
+	public void setNumberCounter(int numberCounter) {
+		this.numberCounter = numberCounter;
+	}
+
+	public void setIsInSCC(boolean isInSCC) {
+		this.isInSCC = isInSCC;
+	}
+
+	public int getNumberCounter() {
+		return numberCounter;
+	}
 }
