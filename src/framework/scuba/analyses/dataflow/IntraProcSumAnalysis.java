@@ -40,10 +40,21 @@ public class IntraProcSumAnalysis {
 		// maintained last time
 		numberCounter = summary.getNumberCounter();
 
+		if (G.debug) {
+			System.out
+					.println(".......retrieving the number counter for method: "
+							+ g.getMethod());
+			System.out.println("number counts to " + numberCounter);
+		}
 		// create the memory locations for the parameters first
 		// this should be done ONLY once! (the first time we analyze this
 		// method, we can get the full list)
+
 		if (summary.getFormals() == null) {
+			if (G.debug) {
+				System.out
+						.println("the first to analyze method, initializing the param list....");
+			}
 			// the first time to fill the paramList, we first initParamList and
 			// the fill it, and later we will NOT fill this list again
 			summary.initFormals();
@@ -54,10 +65,15 @@ public class IntraProcSumAnalysis {
 				Register param = rf.get(zIdx);
 				summary.fillFormals(meth.getDeclaringClass(), meth, param);
 			}
+			if (G.debug) {
+				System.out.println("param list initialization DONE!");
+			}
+		} else {
+			if (G.debug) {
+				System.out
+						.println("the param list for method has been initialized!");
+			}
 		}
-		// we also should record the memory location of the return value
-		// this is done by handleReturnStmt method and we do not need to do that
-		// here, but imagine we have done it here
 
 		BasicBlock entry = g.entry();
 		accessBlocksList.clear();
@@ -111,13 +127,13 @@ public class IntraProcSumAnalysis {
 				// self loop in current block.
 				if (sccB.getSuccessors().contains(sccB)) {
 					handleSCC(scc);
-					numberCounter++;
+					numberCounter = summary.getNumberCounter() + 1;
 				} else {
 					this.handleBasicBlock(sccB, false);
 				}
 			} else {
 				handleSCC(scc);
-				numberCounter++;
+				numberCounter = summary.getNumberCounter() + 1;
 			}
 		}
 
@@ -179,15 +195,17 @@ public class IntraProcSumAnalysis {
 				System.out.println("-------------------------");
 				System.out.println("Handling the statement: ");
 				System.out.println(q);
+				System.out
+						.println("edges that are added will be numbered from "
+								+ numberCounter);
 			}
 
 			// handle the stmt
 			summary.handleStmt(q, numberCounter, isInSCC);
-			// increment the numbering counter if not in SCC
+			// increment the numbering counter properly
 			if (!isInSCC) {
-				numberCounter = summary.getMaxNumber() + 1;
+				numberCounter = summary.getNumberCounter() + 1;
 			}
-
 			if (G.debug) {
 				System.out.println("Finish handling the statement.");
 				System.out.println("-------------------------");

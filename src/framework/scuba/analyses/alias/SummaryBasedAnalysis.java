@@ -130,7 +130,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			System.out.println(cfg.fullDump());
 			System.out.println("*****************************************");
 		}
+
 		intrapro.analyze(cfg);
+
 		// mark terminated
 		if (G.dump) {
 			summary.dumpSummaryToFile(count);

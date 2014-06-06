@@ -87,6 +87,9 @@ public class Summary {
 	// return value list
 	protected RetElem retValue;
 
+	// just for dbg
+	protected boolean analyzed;
+
 	public Summary(jq_Method meth) {
 		method = meth;
 		absHeap = new AbstractHeap();
@@ -253,9 +256,16 @@ public class Summary {
 	public void handleStmt(Quad quad, int numCounter, boolean isInSCC) {
 		// I think this is the only to pass the counter and isInSCC to the
 		// visitor
+		this.analyzed = true;
 		this.numberCounter = numCounter;
 		this.isInSCC = isInSCC;
 		quad.accept(qv);
+		this.numberCounter = absHeap.getMaxNumber();
+		if (G.debug) {
+			System.out
+					.println("finshing handling the instruction, and the new number is "
+							+ numberCounter);
+		}
 	}
 
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
@@ -270,7 +280,10 @@ public class Summary {
 		public void visitALoad(Quad stmt) {
 			// TODO
 			Summary.aloadCnt++;
-
+			if (G.debug) {
+				System.out.println("handling ALoad inst with number "
+						+ numberCounter);
+			}
 			jq_Method meth = stmt.getMethod();
 			if (ALoad.getDest(stmt) instanceof RegisterOperand) {
 				RegisterOperand rhs = (RegisterOperand) ALoad.getBase(stmt);
@@ -284,6 +297,10 @@ public class Summary {
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						rhs.getRegister(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
+			} else {
+				if (G.debug) {
+					System.out.println("Not a processable instruction!");
+				}
 			}
 		}
 
@@ -292,6 +309,10 @@ public class Summary {
 			// TODO
 			Summary.astoreCnt++;
 			jq_Method meth = stmt.getMethod();
+			if (G.debug) {
+				System.out.println("handling AStore inst with number "
+						+ numberCounter);
+			}
 			if (AStore.getValue(stmt) instanceof RegisterOperand) {
 				RegisterOperand lhs = (RegisterOperand) AStore.getBase(stmt);
 				RegisterOperand rhs = (RegisterOperand) AStore.getValue(stmt);
@@ -304,6 +325,10 @@ public class Summary {
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						rhs.getRegister(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
+			} else {
+				if (G.debug) {
+					System.out.println("Not a processable instruction");
+				}
 			}
 		}
 
@@ -328,6 +353,10 @@ public class Summary {
 		public void visitGetfield(Quad stmt) {
 			// TODO
 			FieldOperand field = Getfield.getField(stmt);
+			if (G.debug) {
+				System.out.println("handling GetField inst with number "
+						+ numberCounter);
+			}
 			if (field.getField().getType() instanceof jq_Reference) {
 				assert (stmt.getOperator() instanceof Getfield);
 				RegisterOperand lhs = Getfield.getDest(stmt);
@@ -343,6 +372,10 @@ public class Summary {
 						meth, lhs.getRegister(), lvt, rhsBase.getRegister(),
 						field.getField(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
+			} else {
+				if (G.debug) {
+					System.out.println("Not a processable instruction!");
+				}
 			}
 		}
 
@@ -350,6 +383,10 @@ public class Summary {
 		public void visitGetstatic(Quad stmt) {
 			// TODO
 			FieldOperand field = Getstatic.getField(stmt);
+			if (G.debug) {
+				System.out.println("handling GetStatic inst with number "
+						+ numberCounter);
+			}
 			if (field.getField().getType() instanceof jq_Reference) {
 				jq_Method meth = stmt.getMethod();
 				RegisterOperand lhs = Getstatic.getDest(stmt);
@@ -361,6 +398,10 @@ public class Summary {
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						encloseClass, field.getField(), numberCounter, isInSCC);
 				absHeap.markChanged(flag);
+			} else {
+				if (G.debug) {
+					System.out.println("Not a processable instruction!");
+				}
 			}
 		}
 
@@ -379,17 +420,40 @@ public class Summary {
 
 			// the callsite's belonging method
 			jq_Method meth = stmt.getMethod();
+			if (G.debug) {
+				System.out.println("handling Invoke inst with number "
+						+ numberCounter);
+			}
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, Constraint> calleeSumCst : calleeSumCstPairs) {
 				// the summary of the callee
 				Summary calleeSum = calleeSumCst.val0;
+				// if we have not analyzed the callee yet (the summary of the
+				// callee will be null if it has not been analyzed yet), just
+				// jump to the next callee
+				if (calleeSum == null) {
+					continue;
+				}
+				// if the callee has a summary (might be empty), go ahead and
+				// begin the instantiation
+				// having a summary meaning the callee must have initialized the
+				// paramList
+				assert (calleeSum.getFormals() != null) : ""
+						+ "we should fill the formals list when first analying the method";
+
 				// the constraint for calling that callee
 				Constraint hasTypeCst = calleeSumCst.val1;
+				assert (hasTypeCst != null) : "invalid has type constraint!";
 				// get the memory location instantiation for the callee
 				MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
 						.get(new Pair<Quad, jq_Method>(stmt, calleeSum
 								.getMethod()));
-
+				// if memLocInstn is null for the callee, meaning although we
+				// have analyzed the callee before, we have not come to this
+				// call site, and we should instantiate the memory locations for
+				// this call site, this caller and this callee
+				assert (calleeSum.analyzed) : "the callee should have been analyzed "
+						+ "if we want to come to the instantiation";
 				// we initialize the instantiation by adding the base cases
 				// (param list mapping and return value mapping)
 				if (memLocInstn == null) {
@@ -404,14 +468,16 @@ public class Summary {
 					// fill the formal-to-actual mapping
 					ParamListOperand actuals = Invoke.getParamList(stmt);
 					List<StackObject> actualsMemLoc = new ArrayList<StackObject>();
+					// mapping the actuals in the caller to the locations in the
+					// caller's heap
 					for (int i = 0; i < actuals.length(); i++) {
 						Register v = actuals.get(i).getRegister();
 						if (getVarType(meth, v) == VariableType.PARAMEMTER) {
-							actualsMemLoc.add(absHeap.getLocalVarElem(
+							actualsMemLoc.add(absHeap.getParamElem(
 									meth.getDeclaringClass(), meth, v));
 						} else if (getVarType(meth, actuals.get(i)
 								.getRegister()) == VariableType.LOCAL_VARIABLE) {
-							actualsMemLoc.add(absHeap.getParamElem(
+							actualsMemLoc.add(absHeap.getLocalVarElem(
 									meth.getDeclaringClass(), meth, v));
 						} else {
 							// actuals can be primitives, we use constants to
@@ -420,6 +486,9 @@ public class Summary {
 						}
 					}
 					// fill the formal-to-actual mapping
+					assert (calleeSum.getFormals() != null) : "formals list is null!";
+					assert (calleeSum.getFormals().size() == actualsMemLoc
+							.size()) : "unmatched actuals and formals list!";
 					memLocInstn.initFormalToActualMapping(
 							calleeSum.getFormals(), actualsMemLoc);
 					// fill the return-value mapping
@@ -692,39 +761,40 @@ public class Summary {
 		// find all qualified callees and the constraints
 		return ret;
 	}
-	
-	//constraint instantiation: return a new instantiated expr.
+
+	// constraint instantiation: return a new instantiated expr.
 	public Expr instCst(Expr expr) {
 		return null;
 	}
-	
+
 	/**
-	 * lift operation: Given a heap object, return its term.
-	 * if ho is an allocElem, return its number;
-	 * if ho is an accesspath, return its unique variable v_i
-	 * where i is read from a global counter.
+	 * lift operation: Given a heap object, return its term. if ho is an
+	 * allocElem, return its number; if ho is an accesspath, return its unique
+	 * variable v_i where i is read from a global counter.
+	 * 
 	 * @param ho
 	 * @return
 	 */
 	public Expr lift(HeapObject ho) {
-		if(ho instanceof AllocElem) {
-			//return the number of its class.
+		if (ho instanceof AllocElem) {
+			// return the number of its class.
 		} else if (ho instanceof AccessPath) {
-			//return int_constant v_i where i is the id of ap.
+			// return int_constant v_i where i is the id of ap.
 		} else {
 			assert false : "Unknown heap object.";
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Given a specific method and access path o, return its constraint.
+	 * 
 	 * @return
 	 */
 	public Expr genCst() {
-		//1. Base case: No subtype of T override m: type(o) <= T
-		
-		//2. Inductive case:
+		// 1. Base case: No subtype of T override m: type(o) <= T
+
+		// 2. Inductive case:
 		return null;
 	}
 
@@ -732,7 +802,4 @@ public class Summary {
 		return absHeap;
 	}
 
-	public int getMaxNumber() {
-		return absHeap.getMaxNumber();
-	}
 }

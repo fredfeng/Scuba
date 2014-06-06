@@ -1022,9 +1022,11 @@ public class AbstractHeap {
 			int line, AbstractHeap calleeHeap, MemLocInstantiation memLocInstn,
 			Constraint typeCst, int numberCounter, boolean isInSCC) {
 		boolean ret = false;
-
+		// record the program point in the caller so that we can use this for
+		// allocation site naming (heap naming)
 		ProgramPoint point = Env.getProgramPoint(clazz, method, line);
 		Map<Numbering, Set<HeapEdge>> calleeEdgeSeq = calleeHeap.getEdgeSeq();
+
 		// begin to add the edges
 		for (Numbering n : calleeEdgeSeq.keySet()) {
 			Set<HeapEdge> edges = calleeEdgeSeq.get(n);

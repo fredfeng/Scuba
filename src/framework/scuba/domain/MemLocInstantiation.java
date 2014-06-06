@@ -59,7 +59,7 @@ public class MemLocInstantiation {
 				// we just ignore the primitives
 				continue;
 			} else {
-				StackObject formal = formals.get(i);
+				ParamElem formal = formals.get(i);
 				instnMemLocMapping.put(formal, new InstantiatedLocSet(actual,
 						ConstraintManager.genTrue()));
 			}
