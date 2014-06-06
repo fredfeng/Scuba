@@ -4,18 +4,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.microsoft.z3.BoolExpr;
+
 import framework.scuba.helper.ConstraintManager;
 
 public class P2Set {
 
-	protected Map<HeapObject, Constraint> p2Set = new HashMap<HeapObject, Constraint>();
+	protected Map<HeapObject, BoolExpr> p2Set = new HashMap<HeapObject, BoolExpr>();
 
 	// this is an empty p2set which is often used in dealing with null
 	public P2Set() {
 
 	}
 
-	public P2Set(HeapObject obj, Constraint constraint) {
+	public P2Set(HeapObject obj, BoolExpr constraint) {
 		p2Set.put(obj, constraint);
 	}
 
@@ -30,7 +32,7 @@ public class P2Set {
 		return p2Set.isEmpty();
 	}
 
-	public Constraint remove(HeapObject hObj) {
+	public BoolExpr remove(HeapObject hObj) {
 		return p2Set.remove(hObj);
 	}
 
@@ -44,7 +46,7 @@ public class P2Set {
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets
 				// directly get the other p2set's constraints
-				Constraint otherCst = other.getConstraint(obj);
+				BoolExpr otherCst = other.getConstraint(obj);
 
 				// check whether we need to update the p2set of this heap object
 				if (p2Set.get(obj).equals(otherCst))
@@ -52,7 +54,7 @@ public class P2Set {
 
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)
-				Constraint newCst = ConstraintManager.union(p2Set.get(obj),
+				BoolExpr newCst = ConstraintManager.union(p2Set.get(obj),
 						otherCst);
 
 				p2Set.put(obj, newCst);
@@ -63,7 +65,7 @@ public class P2Set {
 				// p2set!!!! only get the shallow copy of the other constraints
 
 				// for this case, we should add a new edge
-				p2Set.put(obj, other.getConstraint(obj).clone());
+				p2Set.put(obj, ConstraintManager.clone(other.getConstraint(obj)));
 				ret = true;
 			}
 		}
@@ -75,11 +77,11 @@ public class P2Set {
 	// the other constraint
 	// this method will never modify the other constraints, either not get the
 	// pointer to the other constraint
-	public P2Set project(Constraint otherCst) {
+	public P2Set project(BoolExpr otherCst) {
 		for (HeapObject obj : p2Set.keySet()) {
 			// this newCst is a copy with the same content but different
 			// constraint instances
-			Constraint newCst = ConstraintManager.intersect(p2Set.get(obj),
+			BoolExpr newCst = ConstraintManager.intersect(p2Set.get(obj),
 					otherCst);
 			p2Set.put(obj, newCst);
 		}
@@ -90,7 +92,7 @@ public class P2Set {
 	// if previously not in the map, return null
 	// otherwise, return the previous value mapped by key (obj)
 	// interesting!
-	public Constraint put(HeapObject obj, Constraint constraint) {
+	public BoolExpr put(HeapObject obj, BoolExpr constraint) {
 		return p2Set.put(obj, constraint);
 	}
 
@@ -103,7 +105,7 @@ public class P2Set {
 	}
 
 	// return null or return true constraint?
-	public Constraint getConstraint(HeapObject obj) {
+	public BoolExpr getConstraint(HeapObject obj) {
 		// if ptSet contains obj then return that obj, otherwise return null
 		return p2Set.get(obj);
 	}
@@ -135,8 +137,8 @@ public class P2Set {
 
 		for (HeapObject hObj : p2Set.keySet()) {
 			if (otherPT.containsHeapObject(hObj)) {
-				Constraint otherCst = otherPT.getConstraint(hObj);
-				Constraint thisCst = p2Set.get(hObj);
+				BoolExpr otherCst = otherPT.getConstraint(hObj);
+				BoolExpr thisCst = p2Set.get(hObj);
 				if (!thisCst.equals(otherCst))
 					return false;
 			} else {

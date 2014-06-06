@@ -1,80 +1,151 @@
 package framework.scuba.helper;
 
+import joeq.Class.jq_Class;
 import joeq.Class.jq_Type;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Expr;
+import com.microsoft.z3.FuncDecl;
+import com.microsoft.z3.IntExpr;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.Z3Exception;
+
 import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
-import framework.scuba.domain.Constraint;
-import framework.scuba.domain.FalseConstraint;
-import framework.scuba.domain.TrueConstraint;
-import framework.scuba.domain.TypeEqConstraint;
+import framework.scuba.domain.Env;
+import framework.scuba.domain.HeapObject;
 
 /**
  * Class for generating/solving constraints, since right now our system can only
- * have true | false | Type(v) = T. We could always keep the length of
- * constraints to 1. For generality, we should use a constraint solver in the
- * future.
+ * have true | false | Type(v) = T. 
+ * 
+ * Integrate Z3 to perform the constraint solving and simplification.
  * 
  * @author yufeng
  * 
  */
 public class ConstraintManager {
+	
+	private static ConstraintManager instance = new ConstraintManager();
 
+	static Context ctx;
+	
+    static Solver solver;
+    
+	//define the uninterpreted function. type(o)=T
+    static FuncDecl typeFun;
+
+	//constant expr.
+	static BoolExpr trueExpr;
+	
+	static BoolExpr falseExpr;
+	
+	public ConstraintManager() {
+		try {
+			ctx = new Context();
+		    solver = ctx.MkSolver();
+			trueExpr = ctx.MkBool(true);
+			falseExpr = ctx.MkBool(false);
+			typeFun = ctx.MkFuncDecl("type", ctx.IntSort(), ctx.IntSort());
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+	
+	public static ConstraintManager v() {
+		return instance;
+	}
+	
 	//constraint generations.
-	public static Constraint genTrue() {
-		return new TrueConstraint();
+	public static BoolExpr genTrue() {
+		return trueExpr;
 	}
 
-	public static Constraint genFalse() {
-		return new FalseConstraint();
+	public static BoolExpr genFalse() {
+		return falseExpr;
 	}
 	
-	public static Constraint genTypeEq(AccessPath ap, jq_Type t) {
-		return new TypeEqConstraint(ap, t);
-	}
+	/**
+	 * lift operation: Given a heap object, return its term.
+	 * if ho is an allocElem, return its number;
+	 * if ho is an accesspath, return its unique variable v_i
+	 * where i is read from a global counter.
+	 * @param ho
+	 * @return
+	 */
+	public BoolExpr lift(HeapObject ho) {
 
-	//constraints solving.
-	public static Constraint intersect(Constraint first, Constraint second) {
-		if ((first instanceof FalseConstraint)
-				|| (second instanceof FalseConstraint))
-			return new FalseConstraint();
-		
-		if (first instanceof TrueConstraint)
-			return second.clone();
-		
-		if (second instanceof TrueConstraint)
-			return first.clone();
+		try {
+			if (ho instanceof AllocElem) {
+				// return the number of its class.
+				AllocElem ae = (AllocElem) ho;
+				jq_Type jType = ae.getAlloc().getType();
+				assert jType instanceof jq_Class : "alloc object should be a jq_class.";
+				Expr cur = ctx.MkInt(Env.getConstTerm4Class((jq_Class) jType));
+				BoolExpr eq = ctx.MkEq(cur, ctx.MkInt("1"));
+				//perform simplification like 2=2 -> true, 2=3 -> false
+				Expr simEq = eq.Simplify();
+				assert simEq instanceof BoolExpr : "Must return a boolean expr.";
+				return (BoolExpr)simEq;
+			} else if (ho instanceof AccessPath) {
+				AccessPath ap = (AccessPath) ho;
+				String symbol = "v" + ap.getId();
+				Expr o = ctx.MkConst(symbol, ctx.IntSort());
+				// type(o)
+				IntExpr to = (IntExpr) typeFun.Apply(o);
+				// type(o)=1
+				BoolExpr eq = ctx.MkEq(to, ctx.MkInt("1"));
+				// return int_constant vi where i is the id of ap.
+				Expr simEq = eq.Simplify();
+				assert simEq instanceof BoolExpr : "Must return a boolean expr.";
+				return (BoolExpr)simEq;
+			} else {
+				assert false : "Unknown heap object.";
+			}
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-		assert false : "Unknown constraints in intersection!";
 		return null;
 	}
 
-	//Make sure that we get a fresh instance each time.
-	public static Constraint union(Constraint first, Constraint second) {
-		if ((first instanceof TrueConstraint)
-				|| (second instanceof TrueConstraint))
-			return new TrueConstraint();
-		
-		if (first instanceof FalseConstraint)
-			return second.clone();
-		
-		if (second instanceof FalseConstraint)
-			return first.clone();
+	//A and B.
+	public static BoolExpr intersect(BoolExpr first, BoolExpr second) {
+        try {
+			BoolExpr inter = ctx.MkAnd(new BoolExpr[] { first, second });
+			//try to simplify.
+			Expr sim = inter.Simplify();
+			assert sim instanceof BoolExpr : "Unknown constraints in intersection!";
+			return (BoolExpr)sim;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 
-		assert false : "Unknown constraints in union!";
+	//A or B
+	public static BoolExpr union(BoolExpr first, BoolExpr second) {
+        try {
+			BoolExpr union = ctx.MkOr(new BoolExpr[] { first, second });
+			//try to simplify.
+			Expr sim = union.Simplify();
+			assert sim instanceof BoolExpr : "Unknown constraints in union!";
+			return (BoolExpr)sim;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return null;
 	}
 	
-	//instantiating type constraint.
-	public static Constraint instTypeConstaint(Constraint typeConst, AllocElem allocElem) {
-		assert(typeConst instanceof TypeEqConstraint);
-		assert(allocElem.getAlloc() != null);
-
-		TypeEqConstraint cst = (TypeEqConstraint)typeConst;
-		
-		if (allocElem.getAlloc().getType().equals(cst.getElemType()))
-			return new TrueConstraint();
-		else 
-			return new FalseConstraint();
-
+	
+	public static BoolExpr clone(BoolExpr expr) {
+		return null;
 	}
+	
 }
