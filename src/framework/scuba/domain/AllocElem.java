@@ -31,6 +31,10 @@ public class AllocElem extends HeapObject {
 		return context;
 	}
 
+	public boolean contains(ProgramPoint point) {
+		return context.contains(point);
+	}
+
 	@Override
 	public String toString() {
 		return alloc + "||" + context;
@@ -51,6 +55,11 @@ public class AllocElem extends HeapObject {
 	@Override
 	public boolean hasFieldSelector(FieldElem field) {
 		return false;
+	}
+
+	@Override
+	public AllocElem clone() {
+		return new AllocElem(alloc, context.clone());
 	}
 
 }

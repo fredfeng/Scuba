@@ -70,6 +70,8 @@ public class AbstractHeap {
 				}
 			});
 
+	protected int maxNumber = 0;
+
 	public static enum VariableType {
 		PARAMEMTER, LOCAL_VARIABLE, ARRAY_BASE, NULL_POINTER, CONSTANT;
 		// currently we are only use the first three
@@ -113,6 +115,13 @@ public class AbstractHeap {
 				assert (loc.equals(root)) : root + " of " + loc
 						+ " should be the same as " + loc;
 				assert (loc.isArgDerived()) : "ParamElem should be arg-derive";
+			} else if (loc instanceof RetElem) {
+				AbstractMemLoc root = loc.findRoot();
+				assert (loc.equals(root)) : root + " of " + loc
+						+ " should be the same as " + loc;
+				assert (loc.isNotArgDerived()) : "RetElem should NOT be arg-derived";
+			} else {
+				assert false : "wried things happen!";
 			}
 			// all arg-derived instances must be:
 			// AccessPath, ParamElem, or StaticElem
@@ -245,6 +254,11 @@ public class AbstractHeap {
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
+			} else if (loc instanceof RetElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=diamond,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
 			} else {
 				assert false : "wried things! Unknow memory location";
 			}
@@ -307,6 +321,11 @@ public class AbstractHeap {
 			} else if (loc instanceof ParamElem) {
 				b.append("  ").append("\"" + loc + "\"");
 				b.append(" [shape=oval,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof RetElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=diamond,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else {
@@ -392,16 +411,32 @@ public class AbstractHeap {
 		// it is possible to have null pointers that are dereferenced if we
 		// think about reflection or some native methods which we cannot
 		// retrieve the active bodies
-
-		// we just return the empty p2 set if we want to dereference a null
-		// pointer
+		// for that case, we just return the empty p2 set if we want to
+		// dereference a null pointer
 		P2Set ret = new P2Set();
 
 		for (HeapObject obj : p2Set.getHeapObjects()) {
 			Constraint cst = p2Set.getConstraint(obj);
 
 			P2Set tgt = lookup(obj, field);
-			assert (p2Set != null) : "get a null p2 set!";
+			assert (tgt != null) : "get a null p2 set!";
+			P2Set projP2Set = P2SetHelper.project(tgt, cst);
+			ret.join(projP2Set);
+		}
+
+		return ret;
+	}
+
+	// this lookup is used for instantiating memory locations
+	public InstantiatedLocSet instnLookup(InstantiatedLocSet instnLocSet,
+			FieldElem field) {
+		InstantiatedLocSet ret = new InstantiatedLocSet();
+
+		for (AbstractMemLoc loc : instnLocSet.getAbstractMemLocs()) {
+			Constraint cst = instnLocSet.getConstraint(loc);
+
+			P2Set tgt = lookup(loc, field);
+			assert (tgt != null) : "get a null p2 set!";
 			P2Set projP2Set = P2SetHelper.project(tgt, cst);
 			ret.join(projP2Set);
 		}
@@ -417,6 +452,7 @@ public class AbstractHeap {
 	protected boolean handleAssignStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register right,
 			VariableType rightVType, int numberCounter, boolean isInSCC) {
+		boolean ret = false;
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
 				+ "for Assign stmt, LHS must be LocalElem (or ParamElem, we HAVE NOT fully fixed SSA";
@@ -460,12 +496,18 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		return weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
+		ret = weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
+
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+
+		return ret;
 	}
 
 	// this method is just a helper method for handling array allocations
 	private boolean handleArrayLoad(ArrayAllocElem left, IndexFieldElem index,
 			AllocElem right, int numberCounter, boolean isInSCC) {
+
+		boolean ret = false;
 
 		// assert (memLocFactory.containsKey(right)) :
 		// "AllocElem (or ArrayAllocElem)"
@@ -478,7 +520,11 @@ public class AbstractHeap {
 		// assert !heapObjectsToP2Set.containsKey(pair) :
 		// "we cannot re-put ArrayAllocElem into the map!";
 
-		return weakUpdate(pair, p2Set, numberCounter, isInSCC);
+		ret = weakUpdate(pair, p2Set, numberCounter, isInSCC);
+
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+
+		return ret;
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
@@ -490,6 +536,8 @@ public class AbstractHeap {
 			Register left, VariableType leftVType, Register rightBase,
 			jq_Field rightField, VariableType rightBaseVType,
 			int numberCounter, boolean isInSCC) {
+
+		boolean ret = false;
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for non-static load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -535,7 +583,9 @@ public class AbstractHeap {
 
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
-		return weakUpdate(pair, p2Setv2f, numberCounter, isInSCC);
+		ret = weakUpdate(pair, p2Setv2f, numberCounter, isInSCC);
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		return ret;
 	}
 
 	// v1 = v2[0] where v2 is an array, e.g. v2 = new X[10][10]
@@ -543,6 +593,7 @@ public class AbstractHeap {
 	protected boolean handleALoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register rightBase,
 			VariableType rightBaseVType, int numberCounter, boolean isInSCC) {
+		boolean ret = false;
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for array load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -571,7 +622,9 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		return weakUpdate(pair, p2Setv2i, numberCounter, isInSCC);
+		ret = weakUpdate(pair, p2Setv2i, numberCounter, isInSCC);
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		return ret;
 	}
 
 	// handleLoadStmt implements rule (2) in Figure 8 of the paper
@@ -585,6 +638,7 @@ public class AbstractHeap {
 			Register left, VariableType leftVType, jq_Class rightBase,
 			jq_Field rightField, int numberCounter, boolean isInSCC) {
 
+		boolean ret = false;
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for static load stmt, LHS must be a local!";
 
 		StackObject v1 = null;
@@ -614,7 +668,10 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		return weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
+		ret = weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+
+		return ret;
 	}
 
 	// v1[0] = v2 where v1 = new V[10][10]
@@ -680,6 +737,8 @@ public class AbstractHeap {
 
 			ret = weakUpdate(pair, projP2Set, numberCounter, isInSCC) | ret;
 		}
+
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
 
 		return ret;
 	}
@@ -747,6 +806,7 @@ public class AbstractHeap {
 
 			ret = weakUpdate(pair, projP2Set, numberCounter, isInSCC) | ret;
 		}
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
 
 		return ret;
 	}
@@ -762,6 +822,7 @@ public class AbstractHeap {
 			jq_Class leftBase, jq_Field leftField, Register right,
 			VariableType rightVType, int numberCounter, boolean isInSCC) {
 
+		boolean ret = false;
 		assert (rightVType == VariableType.PARAMEMTER)
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
 				+ " variables and parameters as RHS in static store stmt";
@@ -796,7 +857,10 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		return weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
+		ret = weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+
+		return ret;
 	}
 
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
@@ -804,7 +868,7 @@ public class AbstractHeap {
 	protected boolean handleNewStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int line,
 			int numberCounter, boolean isInSCC) {
-
+		boolean ret = false;
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "LHS of a new stmt must be a local variable!";
 
 		// generate the allocElem for RHS
@@ -826,8 +890,11 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v, EpsilonFieldElem.getEpsilonFieldElem());
 
-		return weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()),
+		ret = weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()),
 				numberCounter, isInSCC);
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+
+		return ret;
 	}
 
 	// X x1 = new X[10] by just calling the handleMultiNewArrayStmt method with
@@ -879,6 +946,7 @@ public class AbstractHeap {
 					IndexFieldElem.getIndexFieldElem(), rightAllocT,
 					numberCounter, isInSCC) | ret;
 		}
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
 
 		return ret;
 	}
@@ -887,6 +955,7 @@ public class AbstractHeap {
 	protected boolean handleRetStmt(jq_Class clazz, jq_Method method,
 			Register retValue, VariableType type, int numberCounter,
 			boolean isInSCC) {
+		boolean ret = false;
 		// first try to find the corresponding local or param that has been
 		// declared before returning
 		StackObject v = null;
@@ -897,19 +966,91 @@ public class AbstractHeap {
 		} else {
 			assert false : "we are only considering return value to be local or parameter!";
 		}
-		assert heapObjectsToP2Set.containsKey(v) : ""
-				+ "the return value should have been declared before returning";
+
 		// create the return value elem
-		RetElem ret = getRetElem(clazz, method, retValue);
+		RetElem retElem = getRetElem(clazz, method, retValue);
 		// update the p2set of the return value by the p2set of the local/param
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
-				ret, EpsilonFieldElem.getEpsilonFieldElem());
+				retElem, EpsilonFieldElem.getEpsilonFieldElem());
 		P2Set p2Set = lookup(v, EpsilonFieldElem.getEpsilonFieldElem());
-		return weakUpdate(pair, p2Set, numberCounter, isInSCC);
+		assert (p2Set != null) : "get a null p2set!";
+		ret = weakUpdate(pair, p2Set, numberCounter, isInSCC);
+		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+
+		return ret;
 	}
 
-//	protected boolean handleInvoke()
-	
+	protected boolean instantiateEdges(Set<HeapEdge> edges,
+			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
+			ProgramPoint point, Constraint typeCst, int numberCounter,
+			boolean isInSCC) {
+		boolean ret = false;
+		for (HeapEdge edge : edges) {
+			AbstractMemLoc src = edge.getSrc();
+			HeapObject dst = edge.getDst();
+			FieldElem field = edge.getField();
+			Constraint calleeCst = calleeHeap.lookup(src, field).getConstraint(
+					dst);
+			// instantiate the calleeCst
+			Constraint instnCst = null;
+			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
+					point);
+			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
+					point);
+			for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
+				for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
+					assert (newDst instanceof HeapObject) : ""
+							+ "dst should be instantiated as a heap object!";
+					HeapObject newDst1 = (HeapObject) newDst;
+					Constraint cst1 = instnSrc.getConstraint(newSrc);
+					Constraint cst2 = instnDst.getConstraint(newDst);
+					Constraint cst = ConstraintManager.intersect(
+							ConstraintManager.intersect(cst1, cst2),
+							ConstraintManager.intersect(instnCst, typeCst));
+					Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+							newSrc, field);
+					ret = weakUpdate(pair, new P2Set(newDst1, cst),
+							numberCounter, isInSCC) | ret;
+				}
+			}
+		}
+
+		return ret;
+	}
+
+	protected boolean handleInvokeStmt(jq_Class clazz, jq_Method method,
+			int line, AbstractHeap calleeHeap, MemLocInstantiation memLocInstn,
+			Constraint typeCst, int numberCounter, boolean isInSCC) {
+		boolean ret = false;
+
+		ProgramPoint point = Env.getProgramPoint(clazz, method, line);
+		Map<Numbering, Set<HeapEdge>> calleeEdgeSeq = calleeHeap.getEdgeSeq();
+		// begin to add the edges
+		for (Numbering n : calleeEdgeSeq.keySet()) {
+			Set<HeapEdge> edges = calleeEdgeSeq.get(n);
+			boolean edgesAreInSCC = n.isInSCC();
+			int number = numberCounter + n.getNumber();
+			int assgnNumber = isInSCC ? numberCounter : number;
+			boolean assgnFlag = isInSCC || edgesAreInSCC;
+
+			if (edgesAreInSCC) {
+				// do a fix-point
+				boolean go = true;
+				while (go) {
+					go = instantiateEdges(edges, memLocInstn, calleeHeap,
+							point, typeCst, assgnNumber, assgnFlag);
+					ret = go | ret;
+				}
+			} else {
+				ret = instantiateEdges(edges, memLocInstn, calleeHeap, point,
+						typeCst, assgnNumber, assgnFlag) | ret;
+			}
+			maxNumber = ret ? Math.max(maxNumber, assgnNumber) : maxNumber;
+		}
+
+		return ret;
+	}
+
 	// given a base and a field, get the corresponding AccessPath
 	// if it is not in the factory, create, put into factory and return
 	// otherwise, return the one in the factory
@@ -938,7 +1079,7 @@ public class AbstractHeap {
 	// get the AccessPath whose base is ParamElem
 	private AccessPath getAccessPath(ParamElem base, FieldElem field) {
 
-		AccessPath ret = new AccessPath(base, field);
+		AccessPath ret = new AccessPath(base, field, Env.countAccessPath++);
 		if (memLocFactory.containsKey(ret)) {
 			return (AccessPath) memLocFactory.get(ret);
 		}
@@ -952,7 +1093,7 @@ public class AbstractHeap {
 	// get the AccessPath whose base is StaticElem
 	private AccessPath getAccessPath(StaticElem base, FieldElem field) {
 
-		AccessPath ret = new AccessPath(base, field);
+		AccessPath ret = new AccessPath(base, field, Env.countAccessPath++);
 		if (memLocFactory.containsKey(ret)) {
 			return (AccessPath) memLocFactory.get(ret);
 		}
@@ -966,7 +1107,7 @@ public class AbstractHeap {
 	// get the AccessPath whose base is HeapObject
 	private AccessPath getAccessPath(HeapObject base, FieldElem field) {
 
-		AccessPath ret = new AccessPath(base, field);
+		AccessPath ret = new AccessPath(base, field, Env.countAccessPath++);
 		if (memLocFactory.containsKey(ret)) {
 			return (AccessPath) memLocFactory.get(ret);
 		}
@@ -975,48 +1116,6 @@ public class AbstractHeap {
 		memLocFactory.put(ret, ret);
 
 		return ret;
-	}
-
-	// get the ParamElem in the mem loc factory by an ParamElem with the
-	// same content (we want to use exactly the same instance)
-	protected ParamElem getParamElem(ParamElem other) {
-
-		if (memLocFactory.containsKey(other)) {
-			return (ParamElem) memLocFactory.get(other);
-		}
-
-		ArgDerivedHelper.markArgDerived(other);
-		memLocFactory.put(other, other);
-
-		return other;
-	}
-
-	// get the LocalVarElem in the mem loc factory by an LocalVarElem with the
-	// same content (we want to use exactly the same instance)
-	protected LocalVarElem getLocalVarElem(LocalVarElem other) {
-
-		if (memLocFactory.containsKey(other)) {
-			return (LocalVarElem) memLocFactory.get(other);
-		}
-
-		ArgDerivedHelper.markArgDerived(other);
-		memLocFactory.put(other, other);
-
-		return other;
-	}
-
-	// get the AllocElem in the mem loc factory by an AllocElem with the same
-	// content (we want to use exactly the same instance)
-	protected AllocElem getAllocElem(AllocElem other) {
-
-		if (memLocFactory.containsKey(other)) {
-			return (AllocElem) memLocFactory.get(other);
-		}
-
-		ArgDerivedHelper.markArgDerived(other);
-		memLocFactory.put(other, other);
-
-		return other;
 	}
 
 	// get the AccessPath in the mem loc factory by an AccessPath with the same
@@ -1037,7 +1136,7 @@ public class AbstractHeap {
 	// corresponding type and the line number
 	protected AllocElem getAllocElem(jq_Class clazz, jq_Method method,
 			jq_Type type, int line) {
-		Context context = new Context(new ProgramPoint(clazz, method, line));
+		Context context = new Context(Env.getProgramPoint(clazz, method, line));
 		// create an AllocElem wrapper
 		AllocElem ret = new AllocElem(new Alloc(type), context);
 		// try to look up this wrapper in the memory location factory
@@ -1052,9 +1151,40 @@ public class AbstractHeap {
 		return ret;
 	}
 
+	// get the AllocElem in the mem loc factory by an AllocElem with the same
+	// content (we want to use exactly the same instance)
+	protected AllocElem getAllocElem(AllocElem other) {
+
+		if (memLocFactory.containsKey(other)) {
+			return (AllocElem) memLocFactory.get(other);
+		}
+
+		AllocElem ret = new AllocElem(other.alloc, other.context.clone());
+
+		ArgDerivedHelper.markArgDerived(ret);
+		memLocFactory.put(ret, ret);
+
+		return ret;
+	}
+
+	protected AllocElem getAllocElem(AllocElem other, ProgramPoint point) {
+
+		AllocElem ret = other.clone();
+		other.appendContextFront(point);
+
+		if (memLocFactory.containsKey(ret)) {
+			return (AllocElem) memLocFactory.get(ret);
+		}
+
+		ArgDerivedHelper.markArgDerived(ret);
+		memLocFactory.put(ret, ret);
+
+		return ret;
+	}
+
 	protected ArrayAllocElem getArrayAllocElem(jq_Class clazz,
 			jq_Method method, jq_Type type, int dim, int line) {
-		Context context = new Context(new ProgramPoint(clazz, method, line));
+		Context context = new Context(Env.getProgramPoint(clazz, method, line));
 		// create an AllocElem wrapper
 		ArrayAllocElem ret = new ArrayAllocElem(new Alloc(type), context, dim);
 		// try to look up this wrapper in the memory location factory
@@ -1144,7 +1274,8 @@ public class AbstractHeap {
 	// we can ONLY call this method when ensuring loc is arg-derived
 	protected AccessPath getDefaultTarget(AbstractMemLoc loc, FieldElem field) {
 		assert (loc instanceof AccessPath) || (loc instanceof StaticElem)
-				|| (loc instanceof ParamElem);
+				|| (loc instanceof ParamElem) : ""
+				+ "we can only get default targets for arg-derived elements";
 		assert loc.knownArgDerived() : "we must first set the argument derived marker "
 				+ "before using the mem loc!";
 		assert loc.isArgDerived() : "you can ONLY get the default target for an arg derived mem loc!";
@@ -1261,5 +1392,13 @@ public class AbstractHeap {
 
 	public boolean isChanged() {
 		return isChanged;
+	}
+
+	public Map<Numbering, Set<HeapEdge>> getEdgeSeq() {
+		return edgeSeq;
+	}
+
+	public int getMaxNumber() {
+		return maxNumber;
 	}
 }

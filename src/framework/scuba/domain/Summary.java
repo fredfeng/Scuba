@@ -67,8 +67,7 @@ public class Summary {
 
 	public static int castCnt = 0;
 
-	// this maps store the memory location instantiation result for each invoke
-	// stmt (call site) in the method that this Summary instance belongs to
+	// (call site, callee method) --> memory location instantiation
 	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
 	private Map<Pair<Quad, jq_Method>, MemLocInstantiation> methCallToMemLocInstantiation;
 
@@ -117,6 +116,10 @@ public class Summary {
 
 	public void setRetValue(RetElem retValue) {
 		this.retValue = retValue;
+	}
+
+	public RetElem getRetValue() {
+		return retValue;
 	}
 
 	public void dumpSummary4Method(jq_Method meth) {
@@ -367,37 +370,33 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 			// TODO
-
 			assert (stmt.getOperator() instanceof Invoke);
 
-			// retrieve the summary of the callee
-			// Summary calleeSum = SummariesEnv.v().getSummary(
-			// Invoke.getMethod(stmt).getMethod());
+			// retrieve the summaries of the potential callees
 			List<Pair<Summary, Constraint>> calleeSumCstPairs = getSumCstPairList(stmt);
 
 			// if coming here, it means the callee summary is available
 
 			// the callsite's belonging method
 			jq_Method meth = stmt.getMethod();
+			// iterate all summaries of all the potential callees
 			for (Pair<Summary, Constraint> calleeSumCst : calleeSumCstPairs) {
-				MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
-						.get(calleeSumCst);
+				// the summary of the callee
 				Summary calleeSum = calleeSumCst.val0;
-				Constraint typeConstraint = calleeSumCst.val1;
+				// the constraint for calling that callee
+				Constraint hasTypeCst = calleeSumCst.val1;
+				// get the memory location instantiation for the callee
+				MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
+						.get(new Pair<Quad, jq_Method>(stmt, calleeSum
+								.getMethod()));
 
-				// if we have not summarized the callee's heap, just continue
-				// and we also do not create the mem loc instantiation either
-				// but the instantiation will be created later when the summary
-				// of the callee is available
-				if (calleeSumCstPairs == null) {
-					continue;
-				}
-
+				// we initialize the instantiation by adding the base cases
+				// (param list mapping and return value mapping)
 				if (memLocInstn == null) {
 					// the first time to do the memory location instantiation,
 					// we should init the instantiation by creating the
 					// formal-to-actual mapping
-					memLocInstn = new MemLocInstantiation(stmt, meth, Invoke
+					memLocInstn = new MemLocInstantiation(meth, stmt, Invoke
 							.getMethod(stmt).getMethod());
 					methCallToMemLocInstantiation.put(
 							new Pair<Quad, jq_Method>(stmt, calleeSum
@@ -415,22 +414,30 @@ public class Summary {
 							actualsMemLoc.add(absHeap.getParamElem(
 									meth.getDeclaringClass(), meth, v));
 						} else {
-							// actual can be primitives, just create constant
-							// elem
-							// to denote this and they will be ignored later (we
-							// do
-							// not map formals to constants)
+							// actuals can be primitives, we use constants to
+							// denote those (we do not map formals to constants)
 							actualsMemLoc.add(ConstantElem.getConstantElem());
 						}
 					}
 					// fill the formal-to-actual mapping
 					memLocInstn.initFormalToActualMapping(
 							calleeSum.getFormals(), actualsMemLoc);
+					// fill the return-value mapping
+					// ONLY for x = v.foo(a1, a2)
+					// TODO
+					// memLocInstn.initReturnToLHS(calleeSum.getRetValue(),
+					// lhs);
 				}
-
+				// by now, we have the formal-to-actual mapping as a trigger for
+				// the whole instantiation of memory locations and we can start
+				// the core instantiation
+				// here we go!
+				boolean flag = absHeap.handleInvokeStmt(
+						meth.getDeclaringClass(), meth, stmt.getID(),
+						calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
+						numberCounter, isInSCC);
+				absHeap.markChanged(flag);
 			}
-			// by now, we have the formal-to-actual mapping as a trigger for the
-			// whole instantiation of memory locations
 
 		}
 
@@ -719,5 +726,13 @@ public class Summary {
 		
 		//2. Inductive case:
 		return null;
+	}
+
+	public AbstractHeap getAbsHeap() {
+		return absHeap;
+	}
+
+	public int getMaxNumber() {
+		return absHeap.getMaxNumber();
 	}
 }
