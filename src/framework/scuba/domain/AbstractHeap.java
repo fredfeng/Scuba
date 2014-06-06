@@ -15,6 +15,9 @@ import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
+
+import com.microsoft.z3.BoolExpr;
+
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
@@ -269,7 +272,7 @@ public class AbstractHeap {
 			FieldElem f = pair.val1;
 			P2Set p2Set = heapObjectsToP2Set.get(pair);
 			for (HeapObject hObj : p2Set.getHeapObjects()) {
-				Constraint cst = p2Set.getConstraint(hObj);
+				BoolExpr cst = p2Set.getConstraint(hObj);
 				b.append("  ").append("\"" + loc + "\"");
 				b.append(" -> ").append("\"" + hObj + "\"")
 						.append(" [label=\"");
@@ -344,7 +347,7 @@ public class AbstractHeap {
 				assert (p2Set != null) : "get a null p2 set!";
 
 				for (HeapObject obj : p2Set.getHeapObjects()) {
-					Constraint cst = p2Set.getConstraint(obj);
+					BoolExpr cst = p2Set.getConstraint(obj);
 					b.append("  ").append("\"" + loc + "\"");
 					b.append(" -> ").append("\"" + obj + "\"")
 							.append(" [label=\"");
@@ -416,7 +419,7 @@ public class AbstractHeap {
 		P2Set ret = new P2Set();
 
 		for (HeapObject obj : p2Set.getHeapObjects()) {
-			Constraint cst = p2Set.getConstraint(obj);
+			BoolExpr cst = p2Set.getConstraint(obj);
 
 			P2Set tgt = lookup(obj, field);
 			assert (tgt != null) : "get a null p2 set!";
@@ -433,7 +436,7 @@ public class AbstractHeap {
 		InstantiatedLocSet ret = new InstantiatedLocSet();
 
 		for (AbstractMemLoc loc : instnLocSet.getAbstractMemLocs()) {
-			Constraint cst = instnLocSet.getConstraint(loc);
+			BoolExpr cst = instnLocSet.getConstraint(loc);
 
 			P2Set tgt = lookup(loc, field);
 			assert (tgt != null) : "get a null p2 set!";
@@ -727,7 +730,7 @@ public class AbstractHeap {
 
 		IndexFieldElem index = IndexFieldElem.getIndexFieldElem();
 		for (HeapObject obj : p2Setv1.getHeapObjects()) {
-			Constraint cst = p2Setv1.getConstraint(obj);
+			BoolExpr cst = p2Setv1.getConstraint(obj);
 			// projP2Set is a new P2Set with copies of the constraints (same
 			// content but different constraint instances)
 			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
@@ -796,7 +799,7 @@ public class AbstractHeap {
 
 		NormalFieldElem f = new NormalFieldElem(leftField);
 		for (HeapObject obj : p2Setv1.getHeapObjects()) {
-			Constraint cst = p2Setv1.getConstraint(obj);
+			BoolExpr cst = p2Setv1.getConstraint(obj);
 			// projP2Set is a new P2Set with copies of the constraints (same
 			// content but different constraint instances)
 			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
@@ -982,7 +985,7 @@ public class AbstractHeap {
 
 	protected boolean instantiateEdges(Set<HeapEdge> edges,
 			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
-			ProgramPoint point, Constraint typeCst, int numberCounter,
+			ProgramPoint point, BoolExpr typeCst, int numberCounter,
 			boolean isInSCC) {
 		boolean ret = false;
 
@@ -995,12 +998,13 @@ public class AbstractHeap {
 			assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
 			assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
 					+ "the p2 set should contain the destination of the edge!";
-			Constraint calleeCst = calleeHeap.lookup(src, field).getConstraint(
+
+			BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(
 					dst);
 			assert (calleeCst != null) : "constraint is null!";
 
 			// instantiate the calleeCst
-			Constraint instnCst = null;
+			BoolExpr instnCst = null;
 			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
 					point);
 			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
@@ -1028,9 +1032,9 @@ public class AbstractHeap {
 
 					assert (newDst1 != null) : "null!";
 
-					Constraint cst1 = instnSrc.getConstraint(newSrc);
-					Constraint cst2 = instnDst.getConstraint(newDst);
-					Constraint cst = ConstraintManager.intersect(
+					BoolExpr cst1 = instnSrc.getConstraint(newSrc);
+					BoolExpr cst2 = instnDst.getConstraint(newDst);
+					BoolExpr cst = ConstraintManager.intersect(
 							ConstraintManager.intersect(cst1, cst2),
 							ConstraintManager.intersect(instnCst, typeCst));
 
@@ -1049,7 +1053,7 @@ public class AbstractHeap {
 
 	protected boolean handleInvokeStmt(jq_Class clazz, jq_Method method,
 			int line, AbstractHeap calleeHeap, MemLocInstantiation memLocInstn,
-			Constraint typeCst, int numberCounter, boolean isInSCC) {
+			BoolExpr typeCst, int numberCounter, boolean isInSCC) {
 		boolean ret = false;
 		// record the program point in the caller so that we can use this for
 		// allocation site naming (heap naming)

@@ -40,6 +40,7 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 
+import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 
 import framework.scuba.domain.AbstractHeap.VariableType;
@@ -414,7 +415,7 @@ public class Summary {
 			assert (stmt.getOperator() instanceof Invoke);
 
 			// retrieve the summaries of the potential callees
-			List<Pair<Summary, Constraint>> calleeSumCstPairs = getSumCstPairList(stmt);
+			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
 
 			// if coming here, it means the callee summary is available
 
@@ -425,7 +426,7 @@ public class Summary {
 						+ numberCounter);
 			}
 			// iterate all summaries of all the potential callees
-			for (Pair<Summary, Constraint> calleeSumCst : calleeSumCstPairs) {
+			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
 				// the summary of the callee
 				Summary calleeSum = calleeSumCst.val0;
 				// if we have not analyzed the callee yet (the summary of the
@@ -442,7 +443,7 @@ public class Summary {
 						+ "we should fill the formals list when first analying the method";
 
 				// the constraint for calling that callee
-				Constraint hasTypeCst = calleeSumCst.val1;
+				BoolExpr hasTypeCst = calleeSumCst.val1;
 				assert (hasTypeCst != null) : "invalid has type constraint!";
 				// get the memory location instantiation for the callee
 				MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
@@ -755,34 +756,15 @@ public class Summary {
 	// given a call site in the caller, return all the possible callee's
 	// summaries and the corresponding constraints as a list of pairs
 	// if no callee available, return ret (size == 0)
-	public List<Pair<Summary, Constraint>> getSumCstPairList(Quad callsite) {
+	public List<Pair<Summary, BoolExpr>> getSumCstPairList(Quad callsite) {
 		// TODO
-		List<Pair<Summary, Constraint>> ret = new ArrayList<Pair<Summary, Constraint>>();
+		List<Pair<Summary, BoolExpr>> ret = new ArrayList<Pair<Summary, BoolExpr>>();
 		// find all qualified callees and the constraints
 		return ret;
 	}
 
 	// constraint instantiation: return a new instantiated expr.
 	public Expr instCst(Expr expr) {
-		return null;
-	}
-
-	/**
-	 * lift operation: Given a heap object, return its term. if ho is an
-	 * allocElem, return its number; if ho is an accesspath, return its unique
-	 * variable v_i where i is read from a global counter.
-	 * 
-	 * @param ho
-	 * @return
-	 */
-	public Expr lift(HeapObject ho) {
-		if (ho instanceof AllocElem) {
-			// return the number of its class.
-		} else if (ho instanceof AccessPath) {
-			// return int_constant v_i where i is the id of ap.
-		} else {
-			assert false : "Unknown heap object.";
-		}
 		return null;
 	}
 
