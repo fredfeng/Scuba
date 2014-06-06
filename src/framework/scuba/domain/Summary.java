@@ -39,6 +39,9 @@ import joeq.Compiler.Quad.QuadVisitor;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
+
+import com.microsoft.z3.Expr;
+
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.G;
 
@@ -681,5 +684,40 @@ public class Summary {
 		List<Pair<Summary, Constraint>> ret = new ArrayList<Pair<Summary, Constraint>>();
 		// find all qualified callees and the constraints
 		return ret;
+	}
+	
+	//constraint instantiation: return a new instantiated expr.
+	public Expr instCst(Expr expr) {
+		return null;
+	}
+	
+	/**
+	 * lift operation: Given a heap object, return its term.
+	 * if ho is an allocElem, return its number;
+	 * if ho is an accesspath, return its unique variable v_i
+	 * where i is read from a global counter.
+	 * @param ho
+	 * @return
+	 */
+	public Expr lift(HeapObject ho) {
+		if(ho instanceof AllocElem) {
+			//return the number of its class.
+		} else if (ho instanceof AccessPath) {
+			//return int_constant v_i where i is the id of ap.
+		} else {
+			assert false : "Unknown heap object.";
+		}
+		return null;
+	}
+	
+	/**
+	 * Given a specific method and access path o, return its constraint.
+	 * @return
+	 */
+	public Expr genCst() {
+		//1. Base case: No subtype of T override m: type(o) <= T
+		
+		//2. Inductive case:
+		return null;
 	}
 }
