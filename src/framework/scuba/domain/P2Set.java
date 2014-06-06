@@ -46,14 +46,15 @@ public class P2Set {
 				// directly get the other p2set's constraints
 				Constraint otherCst = other.getConstraint(obj);
 
-				// check whether we need to update the p2set of this heap object
-				if (p2Set.get(obj).equals(otherCst))
-					continue;
-
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)
 				Constraint newCst = ConstraintManager.union(p2Set.get(obj),
 						otherCst);
+
+				// check whether we need to update the p2set of this heap object
+				// TODO check the return value
+				if (p2Set.get(obj).equals(newCst))
+					continue;
 
 				p2Set.put(obj, newCst);
 				ret = true;

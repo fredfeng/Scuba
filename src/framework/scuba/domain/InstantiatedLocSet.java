@@ -34,6 +34,14 @@ public class InstantiatedLocSet {
 		return instnLocSet.get(loc);
 	}
 
+	public boolean isEmpty() {
+		return instnLocSet.isEmpty();
+	}
+
+	public int size() {
+		return instnLocSet.size();
+	}
+
 	public boolean join(P2Set other) {
 		boolean ret = false;
 		for (HeapObject hObj : other.getHeapObjects()) {

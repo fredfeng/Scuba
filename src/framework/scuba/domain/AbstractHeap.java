@@ -985,28 +985,57 @@ public class AbstractHeap {
 			ProgramPoint point, Constraint typeCst, int numberCounter,
 			boolean isInSCC) {
 		boolean ret = false;
+
 		for (HeapEdge edge : edges) {
 			AbstractMemLoc src = edge.getSrc();
 			HeapObject dst = edge.getDst();
 			FieldElem field = edge.getField();
+
+			assert (src != null && dst != null && field != null) : "nulls!";
+			assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
+			assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
+					+ "the p2 set should contain the destination of the edge!";
 			Constraint calleeCst = calleeHeap.lookup(src, field).getConstraint(
 					dst);
+			assert (calleeCst != null) : "constraint is null!";
+
 			// instantiate the calleeCst
 			Constraint instnCst = null;
 			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
 					point);
 			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
 					point);
+			assert (instnDst != null) : "instantiation of dst cannot be null!";
+			if (instnSrc == null) {
+				assert (src instanceof RetElem) : "only return value in the callee"
+						+ " is allowed not having an instantiated location in the callee";
+			}
+			// if meeting a return value in the callee mapped to nothing in the
+			// caller, e.g. v.foo(a,b) with a LHS
+			// just jump to the next edge and do not instantiate this edge
+			if (instnSrc == null || instnDst == null) {
+				continue;
+			}
+
+			assert (!instnSrc.isEmpty()) : "instnSrc cannot be empty!";
+			assert (!instnDst.isEmpty()) : "instnDst cannot be empty!";
+
 			for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
 				for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
 					assert (newDst instanceof HeapObject) : ""
 							+ "dst should be instantiated as a heap object!";
 					HeapObject newDst1 = (HeapObject) newDst;
+
+					assert (newDst1 != null) : "null!";
+
 					Constraint cst1 = instnSrc.getConstraint(newSrc);
 					Constraint cst2 = instnDst.getConstraint(newDst);
 					Constraint cst = ConstraintManager.intersect(
 							ConstraintManager.intersect(cst1, cst2),
 							ConstraintManager.intersect(instnCst, typeCst));
+
+					assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
+
 					Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 							newSrc, field);
 					ret = weakUpdate(pair, new P2Set(newDst1, cst),
@@ -1029,10 +1058,16 @@ public class AbstractHeap {
 
 		// begin to add the edges
 		for (Numbering n : calleeEdgeSeq.keySet()) {
+			// fetch the edges with the same number (added in the same patch)
 			Set<HeapEdge> edges = calleeEdgeSeq.get(n);
+			// whether they are added in an SCC in the CFG
 			boolean edgesAreInSCC = n.isInSCC();
+			// the number used to number the edges if the callee's edges are not
+			// in SCC in the CFG of the callee
 			int number = numberCounter + n.getNumber();
+			// assign assgnNumber to the edges
 			int assgnNumber = isInSCC ? numberCounter : number;
+			// mark whether the edges are in SCC
 			boolean assgnFlag = isInSCC || edgesAreInSCC;
 
 			if (edgesAreInSCC) {
@@ -1048,6 +1083,12 @@ public class AbstractHeap {
 						typeCst, assgnNumber, assgnFlag) | ret;
 			}
 			maxNumber = ret ? Math.max(maxNumber, assgnNumber) : maxNumber;
+			assert (edgeSeq.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
+					+ "error in adding edges and assigning number and flag!";
+			assert (!edgeSeq.containsKey(new Numbering(maxNumber + 1, true))) : ""
+					+ "error in adding edges and assigning number and flag!";
+			assert (!edgeSeq.containsKey(new Numbering(maxNumber + 1, false))) : ""
+					+ "error in adding edges and assigning number and flag!";
 		}
 
 		return ret;

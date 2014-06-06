@@ -28,6 +28,9 @@ public class MemLocInstantiation {
 	// whether use cache for instantiating AccessPath
 	protected boolean useCache = false;
 
+	// hasRet = true: there is a location mapped in the caller's heap
+	protected boolean hasRet = false;
+
 	public MemLocInstantiation(jq_Method caller, Quad callsite, jq_Method callee) {
 		instnMemLocMapping = new HashMap<AbstractMemLoc, InstantiatedLocSet>();
 		this.caller = caller;
@@ -67,17 +70,35 @@ public class MemLocInstantiation {
 	}
 
 	public void initReturnToLHS(RetElem ret, StackObject rhs) {
+		hasRet = true;
 		instnMemLocMapping.put(ret, new InstantiatedLocSet(rhs,
 				ConstraintManager.genTrue()));
 	}
 
+	// this method implements the inference rules in figure 11 of the paper
+	// loc is the location in the callee's heap
 	public InstantiatedLocSet instantiate(AbstractMemLoc loc,
 			AbstractHeap callerHeap, ProgramPoint point) {
 
 		InstantiatedLocSet ret = instnMemLocMapping.get(loc);
 
+		if (loc instanceof ParamElem) {
+			assert (ret != null) : "parameters should have been instantiated"
+					+ " when the first time init the instantiation";
+		}
+
+		if (loc instanceof RetElem) {
+			if (hasRet) {
+				assert (ret != null) : "return value should have been instantiated"
+						+ " when the first time init the instantiation!";
+			} else {
+				assert (ret == null) : "if there is no LHS in the call site, "
+						+ "we cannot instantiate the return value";
+			}
+		}
+
 		if (loc instanceof LocalVarElem || loc instanceof ParamElem
-				|| loc instanceof RetElem || loc instanceof StaticElem) {
+				|| loc instanceof StaticElem) {
 			// this is my little cute cache
 			if (ret != null) {
 				return ret;
@@ -86,6 +107,16 @@ public class MemLocInstantiation {
 			ret = new InstantiatedLocSet(loc, ConstraintManager.genTrue());
 			// put into the map
 			instnMemLocMapping.put(loc, ret);
+		} else if (loc instanceof RetElem) {
+			if (hasRet) {
+				assert (ret != null) : "return value should be mapped"
+						+ " the first time init the instantiation";
+				return ret;
+			} else {
+				assert (ret == null) : "return value should"
+						+ " not be instantiated if there is no LHS!";
+				return null;
+			}
 		} else if (loc instanceof AllocElem) {
 			// we also instantiated allocElem only once!
 			// wow! I guess it will save a LOT of time by doing this
