@@ -1,3 +1,3 @@
 ant clean
 ant jar
-java -cp lib/chord.jar -Dchord.work.dir=/home/yufeng/workspace/CFLexamples/ -Dchord.ssa.kind=phi -Dchord.props.file=chord.properties -Dchord.run.analyses=sum-java chord.project.Boot
+DYLD_LIBRARY_PATH=/Users/yufeng/Documents/workspace/Scuba/lib/  java -cp lib/chord.jar -Dchord.work.dir=/Users/yufeng/Documents/workspace/CFLexamples/ -Dchord.ssa.kind=phi -Dchord.props.file=chord.properties -Dchord.run.analyses=sum-java chord.project.Boot
