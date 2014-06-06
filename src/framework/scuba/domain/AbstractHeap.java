@@ -73,6 +73,14 @@ public class AbstractHeap {
 				}
 			});
 
+	// factory of edges in the heap
+	protected final Map<HeapEdge, HeapEdge> edgesFactory = new HashMap<HeapEdge, HeapEdge>();
+
+	// a reverse mapping used for dumping the numbering with the heap
+	private Map<HeapEdge, Set<Numbering>> reverseEdgeSeq = new HashMap<HeapEdge, Set<Numbering>>();
+	// a numbering factory
+	private Map<Numbering, Numbering> numberingFactory = new HashMap<Numbering, Numbering>();
+
 	protected int maxNumber = 0;
 
 	public static enum VariableType {
@@ -174,6 +182,90 @@ public class AbstractHeap {
 				assert (!p2Set.containsHeapObject(hObj)) : "A default edge exists from "
 						+ loc + " with field " + f + " to heap object " + hObj;
 			}
+		}
+	}
+
+	public void dumpHeapNumberingToFile(int count) {
+		StringBuilder b = new StringBuilder("digraph AbstractHeap {\n");
+		b.append("  rankdir = LR;\n");
+
+		Set<AbstractMemLoc> allLocs = new HashSet<AbstractMemLoc>();
+
+		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
+			allLocs.add(pair.val0);
+			for (HeapObject hObj : heapObjectsToP2Set.get(pair)
+					.getHeapObjects()) {
+				allLocs.add(hObj);
+			}
+		}
+
+		for (AbstractMemLoc loc : allLocs) {
+			if (loc instanceof AccessPath) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=circle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof AllocElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=rectangle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof StaticElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=oval,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof LocalVarElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=triangle,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof ParamElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=oval,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else if (loc instanceof RetElem) {
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" [shape=diamond,label=\"");
+				b.append(loc.toString());
+				b.append("\"];\n");
+			} else {
+				assert false : "wried things! Unknow memory location";
+			}
+		}
+
+		for (Pair<AbstractMemLoc, FieldElem> pair : heapObjectsToP2Set.keySet()) {
+			AbstractMemLoc loc = pair.val0;
+			FieldElem f = pair.val1;
+			P2Set p2Set = heapObjectsToP2Set.get(pair);
+			for (HeapObject hObj : p2Set.getHeapObjects()) {
+				BoolExpr cst = p2Set.getConstraint(hObj);
+				Set<Numbering> nums = reverseEdgeSeq.get(getHeapEdge(loc, hObj,
+						f));
+				b.append("  ").append("\"" + loc + "\"");
+				b.append(" -> ").append("\"" + hObj + "\"")
+						.append(" [label=\"");
+				b.append("(" + f + "," + cst + ")");
+				b.append(" <");
+				for (Numbering n : nums) {
+					b.append("(" + n.getNumber() + "," + n.isInSCC() + ")");
+				}
+				b.append(">");
+				b.append("\"]\n");
+			}
+		}
+
+		b.append("}\n");
+
+		try {
+			BufferedWriter bufw = new BufferedWriter(new FileWriter(
+					G.dotOutputPath + "Numbering" + count + ".dot"));
+			bufw.write(b.toString());
+			bufw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
 		}
 	}
 
@@ -1217,7 +1309,7 @@ public class AbstractHeap {
 	protected AllocElem getAllocElem(AllocElem other, ProgramPoint point) {
 
 		AllocElem ret = other.clone();
-		other.appendContextFront(point);
+		ret.appendContextFront(point);
 
 		if (memLocFactory.containsKey(ret)) {
 			return (AllocElem) memLocFactory.get(ret);
@@ -1378,18 +1470,49 @@ public class AbstractHeap {
 		heap.addAll(tgts);
 
 		// do the numbering
-		Numbering wrapper = new Numbering(numberCounter, isInSCC);
+		// Numbering wrapper = new Numbering(numberCounter, isInSCC);
+		Numbering wrapper = getNumbering(numberCounter, isInSCC);
 		Set<HeapEdge> edges = edgeSeq.get(wrapper);
 		if (edges == null) {
 			edges = new HashSet<HeapEdge>();
+			edgeSeq.put(wrapper, edges);
 		}
 		for (HeapObject tgt : tgts) {
-			edges.add(new HeapEdge(src, tgt, f));
+			HeapEdge added = getHeapEdge(src, tgt, f);
+			edges.add(added);
+		}
+		// filling the reverse mapping
+		for (HeapEdge edge : edges) {
+			Set<Numbering> nums = reverseEdgeSeq.get(edge);
+			if (nums == null) {
+				nums = new HashSet<Numbering>();
+				reverseEdgeSeq.put(edge, nums);
+			}
+			nums.add(getNumbering(numberCounter, isInSCC));
 		}
 
 		// the KEY for weak update
 		ret = currentP2Set.join(p2Set);
 
+		return ret;
+	}
+
+	protected HeapEdge getHeapEdge(AbstractMemLoc src, HeapObject tgt,
+			FieldElem f) {
+		HeapEdge ret = new HeapEdge(src, tgt, f);
+		if (edgesFactory.containsKey(ret)) {
+			return edgesFactory.get(ret);
+		}
+		edgesFactory.put(ret, ret);
+		return ret;
+	}
+
+	protected Numbering getNumbering(int num, boolean isInSCC) {
+		Numbering ret = new Numbering(num, isInSCC);
+		if (numberingFactory.containsKey(ret)) {
+			return numberingFactory.get(ret);
+		}
+		numberingFactory.put(ret, ret);
 		return ret;
 	}
 
