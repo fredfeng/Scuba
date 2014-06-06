@@ -152,7 +152,7 @@ public class ConstraintManager {
 		assert expr != null : "Unknown boolExpr.";
         try {
 			BoolExpr clone = ctx.MkOr(new BoolExpr[] { expr, expr });
-			return clone;
+			return (BoolExpr)clone.Simplify();
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
