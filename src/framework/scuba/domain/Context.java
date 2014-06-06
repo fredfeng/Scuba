@@ -61,7 +61,11 @@ public class Context {
 
 	@Override
 	public Context clone() {
-		Context ret = new Context(pointsSeq, points);
+		LinkedList<ProgramPoint> pointsSeqCopy = new LinkedList<ProgramPoint>();
+		Set<ProgramPoint> pointsCopy = new HashSet<ProgramPoint>();
+		pointsSeqCopy.addAll(pointsSeq);
+		pointsCopy.addAll(points);
+		Context ret = new Context(pointsSeqCopy, pointsCopy);
 		return ret;
 	}
 

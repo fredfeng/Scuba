@@ -185,7 +185,7 @@ public class IntraProcSumAnalysis {
 			summary.handleStmt(q, numberCounter, isInSCC);
 			// increment the numbering counter if not in SCC
 			if (!isInSCC) {
-				numberCounter++;
+				numberCounter = summary.getMaxNumber() + 1;
 			}
 
 			if (G.debug) {

@@ -8,9 +8,12 @@ public class AccessPath extends HeapObject {
 
 	final protected FieldElem field;
 
-	public AccessPath(AbstractMemLoc base, FieldElem field) {
+	protected int Id;
+
+	public AccessPath(AbstractMemLoc base, FieldElem field, int Id) {
 		this.base = base;
 		this.field = field;
+		this.Id = Id;
 		// when creating an AccessPath, add the field into the fields set of the
 		// base because the base has such a field
 		base.addField(field);
@@ -22,6 +25,10 @@ public class AccessPath extends HeapObject {
 
 	public FieldElem getField() {
 		return this.field;
+	}
+
+	public int getId() {
+		return Id;
 	}
 
 	// find the left-most location, which is the root

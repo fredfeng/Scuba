@@ -22,11 +22,11 @@ public class ArgDerivedHelper {
 		AbstractMemLoc root = loc.findRoot();
 
 		// if not, do the arg-derived analysis
-		if (root instanceof LocalVarElem || root instanceof AllocElem) {
+		if (root instanceof LocalVarElem || root instanceof AllocElem
+				|| root instanceof RetElem) {
 			loc.resetArgDerived();
 			assert loc.isNotArgDerived();
-		} else if (root instanceof ParamElem || root instanceof StaticElem
-				|| root instanceof RetElem) {
+		} else if (root instanceof ParamElem || root instanceof StaticElem) {
 			// a.\e.f and (A.f).\e.g are both possible
 			loc.setArgDerived();
 			assert loc.isArgDerived();
@@ -49,7 +49,7 @@ public class ArgDerivedHelper {
 		} else if (loc instanceof LocalVarElem) {
 			assert loc.isNotArgDerived() : "LocalVarElem shold not be arg-derived";
 		} else if (loc instanceof RetElem) {
-			assert loc.isArgDerived() : "RetElem is arg-derived";
+			assert loc.isNotArgDerived() : "RetElem is not arg-derived";
 		} else {
 			assert false : "wried things! Unknown type";
 		}

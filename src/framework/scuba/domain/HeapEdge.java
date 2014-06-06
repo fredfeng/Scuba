@@ -14,6 +14,18 @@ public class HeapEdge {
 		this.field = field;
 	}
 
+	public AbstractMemLoc getSrc() {
+		return src;
+	}
+
+	public HeapObject getDst() {
+		return dst;
+	}
+
+	public FieldElem getField() {
+		return field;
+	}
+
 	@Override
 	public boolean equals(Object other) {
 		return (other instanceof HeapEdge)
