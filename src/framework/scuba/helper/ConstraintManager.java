@@ -143,8 +143,20 @@ public class ConstraintManager {
 		return null;
 	}
 	
-	
+	/**
+	 * Z3 doesn't provide a clone function. Use A' = A or A to generate a new one 
+	 * @param expr
+	 * @return
+	 */
 	public static BoolExpr clone(BoolExpr expr) {
+		assert expr != null : "Unknown boolExpr.";
+        try {
+			BoolExpr clone = ctx.MkOr(new BoolExpr[] { expr, expr });
+			return clone;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return null;
 	}
 	
