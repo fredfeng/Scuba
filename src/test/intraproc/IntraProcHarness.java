@@ -35,7 +35,7 @@ public class IntraProcHarness {
 		// String s = "test.intraproc.TestRule3";
 		// String s = "test.intraproc.TestRule4";
 		// String s = "test.intraproc.TestRule6";
-		String s = "test.intraproc.TestRule5";
+		String s = "test.interproc.TestInter3";
 		jq_Class c = (jq_Class) jq_Type.parseType(s);
 		c.load();
 		set.addAll(Arrays.asList(c.getDeclaredStaticMethods()));
@@ -66,8 +66,8 @@ public class IntraProcHarness {
 
 			p.analyze(cfg);
 
-			// summary.dumpSummaryToFile();
-			// summary.dumpAllMemLocsHeapToFile();
+			 summary.dumpSummaryToFile(1);
+			 summary.dumpAllMemLocsHeapToFile(1);
 			summary.validate();
 
 			if (G.debug) {
