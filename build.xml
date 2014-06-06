@@ -15,6 +15,7 @@
 		srcdir="src" destdir="classes">
 	  <classpath>
 		<pathelement location="lib/chord.jar"/>
+		<pathelement location="lib/com.microsoft.z3.jar"/>
 	  </classpath>
     </javac>
   </target>
