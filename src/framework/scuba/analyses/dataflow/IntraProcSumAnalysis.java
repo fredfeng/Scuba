@@ -143,10 +143,7 @@ public class IntraProcSumAnalysis {
 
 	// compute the fixed-point for this scc.
 	public void handleSCC(Set<BasicBlock> scc) {
-		LinkedList<BasicBlock> wl = new LinkedList();
-		HashMap<BasicBlock, Boolean> visit = new HashMap();
-		for (BasicBlock b : scc)
-			visit.put(b, false);
+		LinkedList<BasicBlock> wl = new LinkedList<BasicBlock>();
 
 		// add all nodes that have preds outside the scc as entry.
 		for (BasicBlock mb : scc)
@@ -156,24 +153,24 @@ public class IntraProcSumAnalysis {
 		// strange case.
 		if (wl.size() == 0)
 			wl.add(scc.iterator().next());
+		
+		int counter = 0;
 
 		while (true) {
 			BasicBlock bb = wl.poll();
 			boolean flag = handleBasicBlock(bb, true);
 			assert scc.contains(bb) : "You can't analyze the node that is out of current scc.";
 			if (flag)
-				for (BasicBlock b : scc)
-					visit.put(b, false);
+				counter = 0;
 			else
-				visit.put(bb, true);
+				counter++;
 			// process all succs that belongs to current scc.
 			for (BasicBlock suc : bb.getSuccessors())
 				if (scc.contains(suc))
 					wl.add(suc);
 
-			boolean allTrue = !visit.values().contains(false);
-
-			if (allTrue)
+			//xinyu's algorithm: use counter to achieve O(1)
+			if (counter == scc.size())
 				break;
 		}
 	}
