@@ -77,6 +77,8 @@ public class TestZ3 {
 	        //eq3 and clone are different instances, but share the same boolValue.
 			System.out.println("After Cloning......" + eq3
 					+ eq3.BoolValue().equals(clone.BoolValue()));
+			
+			System.out.println("Bool:" + eq3.BoolValue().toInt());
 
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
