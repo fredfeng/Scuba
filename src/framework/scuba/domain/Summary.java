@@ -432,6 +432,18 @@ public class Summary {
 
 			// retrieve the summaries of the potential callees
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
+			if (G.debug) {
+				System.out
+						.println("trying to retrieve the summaries of potential"
+								+ " callees and the constrains!");
+				if (calleeSumCstPairs.isEmpty()) {
+					System.out
+							.println("Oh my god! there are no qualified callees!");
+				} else {
+					System.out.println("we have some summaries with size "
+							+ calleeSumCstPairs.size());
+				}
+			}
 
 			// if coming here, it means the callee summary is available
 
@@ -454,6 +466,8 @@ public class Summary {
 				// if we have not analyzed the callee yet (the summary of the
 				// callee will be null if it has not been analyzed yet), just
 				// jump to the next callee
+				assert (calleeSum != null) : "we should only get the summary for callees"
+						+ " which have been analyzed at least once!";
 				if (calleeSum == null) {
 					if (G.debug) {
 						System.out
