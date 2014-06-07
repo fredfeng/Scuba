@@ -1191,6 +1191,7 @@ public class AbstractHeap {
 						typeCst, assgnNumber, assgnFlag) | ret;
 			}
 			maxNumber = ret ? Math.max(maxNumber, assgnNumber) : maxNumber;
+			
 			assert (edgeSeq.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
 					+ "error in adding edges and assigning number and flag!";
 			assert (!edgeSeq.containsKey(new Numbering(maxNumber + 1, true))) : ""

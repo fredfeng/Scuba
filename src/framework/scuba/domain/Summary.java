@@ -644,6 +644,7 @@ public class Summary {
 				System.out.println("is in SCC: " + isInSCC);
 			}
 			assert (stmt.getOperator() instanceof New);
+			
 			jq_Method meth = stmt.getMethod();
 			TypeOperand to = New.getType(stmt);
 			RegisterOperand rop = New.getDest(stmt);
