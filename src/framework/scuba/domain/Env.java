@@ -10,6 +10,7 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Reference;
+import chord.analyses.alias.CICG;
 import chord.program.Program;
 import framework.scuba.helper.ArgDerivedHelper;
 
@@ -21,6 +22,9 @@ public class Env {
 	public static Map<ProgramPoint, ProgramPoint> progPointFactory = new HashMap<ProgramPoint, ProgramPoint>();
 
 	public static int countAccessPath = 0;
+	
+	//Callgraph instance.
+	public static CICG cg;
 	
     /** This map holds all key,value pairs such that 
      * value.getSuperclass() == key. This is one of the three maps that hold
