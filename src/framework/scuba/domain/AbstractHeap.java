@@ -1166,10 +1166,10 @@ public class AbstractHeap {
 		}
 		return ret;
 	}
-	
-	/*Constraint instantiation.*/
+
+	/* Constraint instantiation. */
 	protected BoolExpr instCst(BoolExpr cst) {
-		//TODO still need to handle virtual calls!
+		// TODO still need to handle virtual calls!
 		BoolExpr instC = ConstraintManager.genTrue();
 		assert instC != null : "Invalid instantiated Constrait.";
 		return instC;
@@ -1182,6 +1182,7 @@ public class AbstractHeap {
 		boolean ret = false;
 
 		for (HeapEdge edge : edges) {
+
 			AbstractMemLoc src = edge.getSrc();
 			HeapObject dst = edge.getDst();
 			FieldElem field = edge.getField();
@@ -1201,6 +1202,16 @@ public class AbstractHeap {
 					point);
 			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
 					point);
+			if (G.debug) {
+				System.out.println("instantiate the edge: " + edge);
+				System.out.println("the source of the edge is: " + src);
+				System.out.println("the field is : " + field);
+				System.out.println("the destination is: " + dst);
+				System.out.println("the source is instantiated to: "
+						+ instnSrc.getInstnLocSet());
+				System.out.println("the destination is instantiated to: "
+						+ instnDst.getInstnLocSet());
+			}
 			assert (instnDst != null) : "instantiation of dst cannot be null!";
 			if (instnSrc == null) {
 				assert (src instanceof RetElem) : "only return value in the callee"
@@ -1260,7 +1271,9 @@ public class AbstractHeap {
 			boolean edgesAreInSCC = n.isInSCC();
 			// the number used to number the edges if the callee's edges are not
 			// in SCC in the CFG of the callee
-			int number = numberCounter + n.getNumber();
+			assert (n.getNumber() > 0) : "we cannot assign non-positive numbers!";
+			assert (numberCounter > 0) : "we cannot assign non-positive numbers!";
+			int number = numberCounter - 1 + n.getNumber();
 			// assign assgnNumber to the edges
 			int assgnNumber = isInSCC ? numberCounter : number;
 			// mark whether the edges are in SCC
@@ -1287,7 +1300,7 @@ public class AbstractHeap {
 			if (G.debug) {
 				System.out.println("previous max number: " + maxNumber);
 			}
-			maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+			maxNumber = ret ? Math.max(maxNumber, assgnNumber) : maxNumber;
 			if (G.debug) {
 				System.out.println("new max number: " + maxNumber);
 			}

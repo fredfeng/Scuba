@@ -190,7 +190,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private boolean analyze(jq_Method m) {
 		accessSeq.add(m);
 		if (G.debug) {
-			System.out.println("analyzing method " + G.count + " " + m);
+			System.out.println("\n\n analyzing method " + G.count + " " + m);
 			G.count++;
 		}
 		// do interproc
