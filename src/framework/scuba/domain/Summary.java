@@ -228,13 +228,15 @@ public class Summary {
 	}
 
 	public void dumpSummaryToFile(int count) {
-		if (G.debug)
-			absHeap.dumpHeapToFile(count);
+		absHeap.dumpHeapToFile(count);
 	}
 
 	public void dumpAllMemLocsHeapToFile(int count) {
 		absHeap.dumpAllMemLocsHeapToFile(count);
+	}
 
+	public void dumpNumberingHeap(int count) {
+		absHeap.dumpHeapNumberingToFile(count);
 	}
 
 	public void validate() {
@@ -265,11 +267,6 @@ public class Summary {
 		this.isInSCC = isInSCC;
 		quad.accept(qv);
 		this.numberCounter = absHeap.getMaxNumber();
-		if (G.debug) {
-			System.out
-					.println("finshing handling the instruction, and the new number is "
-							+ numberCounter);
-		}
 	}
 
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
@@ -301,6 +298,9 @@ public class Summary {
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						rhs.getRegister(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
+				if (G.debug) {
+					System.out.println("boolean result: " + flag);
+				}
 			} else {
 				if (G.debug) {
 					System.out.println("Not a processable instruction!");
@@ -329,6 +329,9 @@ public class Summary {
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						rhs.getRegister(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
+				if (G.debug) {
+					System.out.println("boolean result: " + flag);
+				}
 			} else {
 				if (G.debug) {
 					System.out.println("Not a processable instruction");
@@ -376,6 +379,9 @@ public class Summary {
 						meth, lhs.getRegister(), lvt, rhsBase.getRegister(),
 						field.getField(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
+				if (G.debug) {
+					System.out.println("boolean result: " + flag);
+				}
 			} else {
 				if (G.debug) {
 					System.out.println("Not a processable instruction!");
@@ -402,6 +408,9 @@ public class Summary {
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						encloseClass, field.getField(), numberCounter, isInSCC);
 				absHeap.markChanged(flag);
+				if (G.debug) {
+					System.out.println("boolean result: " + flag);
+				}
 			} else {
 				if (G.debug) {
 					System.out.println("Not a processable instruction!");
@@ -430,13 +439,27 @@ public class Summary {
 			}
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
+
 				// the summary of the callee
 				Summary calleeSum = calleeSumCst.val0;
+				if (G.debug) {
+					System.out.println("trying to instantiate method: "
+							+ calleeSum.getMethod());
+				}
 				// if we have not analyzed the callee yet (the summary of the
 				// callee will be null if it has not been analyzed yet), just
 				// jump to the next callee
 				if (calleeSum == null) {
+					if (G.debug) {
+						System.out
+								.println("but the method has never been analyzed!");
+						System.out.println("just come to the next method.");
+					}
 					continue;
+				}
+				if (G.debug) {
+					System.out
+							.println("the callee has a summary! begin to instantiate.");
 				}
 				// if the callee has a summary (might be empty), go ahead and
 				// begin the instantiation
@@ -461,6 +484,12 @@ public class Summary {
 				// we initialize the instantiation by adding the base cases
 				// (param list mapping and return value mapping)
 				if (memLocInstn == null) {
+					if (G.debug) {
+						System.out
+								.println("this is the first time coming to instantiate the callee");
+						System.out
+								.println("let us first instantiate the parameter and return list!");
+					}
 					// the first time to do the memory location instantiation,
 					// we should init the instantiation by creating the
 					// formal-to-actual mapping
@@ -495,6 +524,12 @@ public class Summary {
 							.size()) : "unmatched actuals and formals list!";
 					memLocInstn.initFormalToActualMapping(
 							calleeSum.getFormals(), actualsMemLoc);
+					if (G.debug) {
+						System.out
+								.println("Instantiation for parameter list DONE!");
+						System.out.println("current instantiation result");
+						memLocInstn.print();
+					}
 					// fill the return-value mapping
 					// ONLY for x = v.foo(a1, a2)
 					// TODO
@@ -509,6 +544,15 @@ public class Summary {
 						calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
 						numberCounter, isInSCC);
 				absHeap.markChanged(flag);
+				if (G.debug) {
+					System.out.println("boolean result: " + flag);
+				}
+			}
+
+			if (calleeSumCstPairs.isEmpty()) {
+				if (G.debug) {
+					System.out.println("Not a processable instruction!");
+				}
 			}
 
 		}
@@ -532,6 +576,10 @@ public class Summary {
 		// v1 = v2
 		public void visitMove(Quad stmt) {
 			// TODO
+			if (G.debug) {
+				System.out.println("handling Move inst with number "
+						+ numberCounter);
+			}
 			jq_Method meth = stmt.getMethod();
 			if (Move.getSrc(stmt) instanceof RegisterOperand) {
 				RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
@@ -543,13 +591,24 @@ public class Summary {
 				boolean flag = absHeap.handleAssignStmt(
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						rhs.getRegister(), rvt, numberCounter, isInSCC);
+				if (G.debug) {
+					System.out.println("boolean result: " + flag);
+				}
 				absHeap.markChanged(flag);
+			} else {
+				if (G.debug) {
+					System.out.println("Not a processable instruction!");
+				}
 			}
 		}
 
 		// v1 = new A();
 		public void visitNew(Quad stmt) {
 			// TODO
+			if (G.debug) {
+				System.out.println("handling New inst with number "
+						+ numberCounter);
+			}
 			assert (stmt.getOperator() instanceof New);
 			jq_Method meth = stmt.getMethod();
 			TypeOperand to = New.getType(stmt);
@@ -559,11 +618,18 @@ public class Summary {
 			boolean flag = absHeap.handleNewStmt(stmt.getMethod()
 					.getDeclaringClass(), meth, rop.getRegister(), vt, to
 					.getType(), stmt.getID(), numberCounter, isInSCC);
+			if (G.debug) {
+				System.out.println("boolean result: " + flag);
+			}
 			absHeap.markChanged(flag);
 		}
 
 		// v = new Node[10][10]
 		public void visitMultiNewArray(Quad stmt) {
+			if (G.debug) {
+				System.out.println("handling MultiNew inst with number "
+						+ numberCounter);
+			}
 			Summary.aNewMulArrayCnt++;
 			assert (stmt.getOperator() instanceof MultiNewArray);
 			jq_Method meth = stmt.getMethod();
@@ -575,11 +641,18 @@ public class Summary {
 					meth.getDeclaringClass(), meth, rop.getRegister(), vt,
 					to.getType(), plo.length(), stmt.getID(), numberCounter,
 					isInSCC);
+			if (G.debug) {
+				System.out.println("boolean result: " + flag);
+			}
 			absHeap.markChanged(flag);
 		}
 
 		// v = new Node[10];
 		public void visitNewArray(Quad stmt) {
+			if (G.debug) {
+				System.out.println("handling NewArray inst with number "
+						+ numberCounter);
+			}
 			Summary.aNewArrayCnt++;
 			assert (stmt.getOperator() instanceof NewArray);
 			jq_Method meth = stmt.getMethod();
@@ -590,6 +663,9 @@ public class Summary {
 			boolean flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(),
 					meth, rop.getRegister(), vt, to.getType(), stmt.getID(),
 					numberCounter, isInSCC);
+			if (G.debug) {
+				System.out.println("boolean result: " + flag);
+			}
 			absHeap.markChanged(flag);
 		}
 
@@ -602,6 +678,10 @@ public class Summary {
 		public void visitPhi(Quad stmt) {
 			jq_Method meth = stmt.getMethod();
 
+			if (G.debug) {
+				System.out.println("handling PHI inst with number "
+						+ numberCounter);
+			}
 			assert stmt.getOperator() instanceof Phi : "Not Phi";
 
 			if (Phi.getDest(stmt) instanceof RegisterOperand) {
@@ -623,13 +703,24 @@ public class Summary {
 					sig = flag | sig;
 
 				}
+				if (G.debug) {
+					System.out.println("boolean result: " + sig);
+				}
 				absHeap.markChanged(sig);
+			} else {
+				if (G.debug) {
+					System.out.println("Not a processable instruction!");
+				}
 			}
 		}
 
 		// v1.f = v2
 		public void visitPutfield(Quad stmt) {
 			// TODO
+			if (G.debug) {
+				System.out.println("handling PutField inst with number "
+						+ numberCounter);
+			}
 			FieldOperand field = Putfield.getField(stmt);
 			if (field.getField().getType() instanceof jq_Reference) {
 				assert (stmt.getOperator() instanceof Putfield);
@@ -649,6 +740,13 @@ public class Summary {
 							meth, lhs.getRegister(), lvt, field.getField(),
 							rhs.getRegister(), rvt, numberCounter, isInSCC);
 					absHeap.markChanged(flag);
+					if (G.debug) {
+						System.out.println("boolean result: " + flag);
+					}
+				}
+			} else {
+				if (G.debug) {
+					System.out.println("Not a processable instruction!");
 				}
 			}
 		}
@@ -656,6 +754,10 @@ public class Summary {
 		// A.f = b;
 		public void visitPutstatic(Quad stmt) {
 			// TODO
+			if (G.debug) {
+				System.out.println("handling PutStatic inst with number "
+						+ numberCounter);
+			}
 			FieldOperand field = Putstatic.getField(stmt);
 			if (field.getField().getType() instanceof jq_Reference) {
 				jq_Method meth = stmt.getMethod();
@@ -672,13 +774,24 @@ public class Summary {
 							meth.getDeclaringClass(), meth, encloseClass,
 							field.getField(), rhs.getRegister(), rvt,
 							numberCounter, isInSCC);
+					if (G.debug) {
+						System.out.println("boolean result: " + flag);
+					}
 					absHeap.markChanged(flag);
+				}
+			} else {
+				if (G.debug) {
+					System.out.println("Not a processable instruction!");
 				}
 			}
 
 		}
 
 		public void visitReturn(Quad stmt) {
+			if (G.debug) {
+				System.out.println("handling Return inst with number "
+						+ numberCounter);
+			}
 			// TODO
 			// make sure a return stmt can only contains one operand which is
 			// Register type, and this Register must be used before returning
@@ -692,7 +805,10 @@ public class Summary {
 				VariableType type = getVarType(meth, ret);
 				flag = absHeap.handleRetStmt(clazz, meth, ret, type,
 						numberCounter, isInSCC);
-
+				absHeap.markChanged(flag);
+				if (G.debug) {
+					System.out.println("boolean result: " + flag);
+				}
 				// TODO
 				// just set the retValue of this summary
 				// maybe this is not necessary?
@@ -703,6 +819,9 @@ public class Summary {
 				}
 			} else if (stmt.getOperator() instanceof RETURN_V) {
 				// not create RetElem for the return value
+				if (G.debug) {
+					System.out.println("Not a processable instruction!");
+				}
 			}
 		}
 

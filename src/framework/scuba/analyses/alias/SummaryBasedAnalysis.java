@@ -226,6 +226,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (G.dump) {
 			summary.dumpSummaryToFile(count);
 			summary.dumpAllMemLocsHeapToFile(count);
+			summary.dumpNumberingHeap(count);
 		}
 		summary.validate();
 		return summary.getAbsHeap().isChanged();
