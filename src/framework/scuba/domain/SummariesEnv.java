@@ -28,11 +28,17 @@ public class SummariesEnv {
 	}
 
 	public Summary getSummary(jq_Method meth) {
-		//first time?
-		if(summaries.get(meth) == null)
-			putSummary(meth, new Summary(meth));
-		
 		return summaries.get(meth);
+	}
+	
+	public Summary initSummary(jq_Method meth) {
+		//for scc, it may exist.
+		if(summaries.get(meth) != null)
+			return summaries.get(meth);
+		else {
+			putSummary(meth, new Summary(meth));
+			return summaries.get(meth);
+		}
 	}
 
 	public Summary putSummary(jq_Method meth, Summary sum) {

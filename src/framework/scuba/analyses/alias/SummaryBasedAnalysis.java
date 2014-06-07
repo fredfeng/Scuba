@@ -21,6 +21,7 @@ import chord.project.OutDirUtils;
 import chord.project.analyses.JavaAnalysis;
 import chord.project.analyses.ProgramRel;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
+import framework.scuba.domain.Env;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
@@ -203,8 +204,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			System.out.println(m);
 		}
 
-		Summary summary = SummariesEnv.v().getSummary(m);
-		summary.isTerminated();
+		Summary summary = SummariesEnv.v().initSummary(m);
 		intrapro.setSummary(summary);
 		// set intrapro's number counter to be the counter of the last time the
 		// summary is concluded, so that it will continue numbering from the
@@ -279,6 +279,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (callGraph == null) {
 			callGraph = new CICG(domM, relRootM, relReachableM, relIM, relMM);
 		}
+		Env.cg = callGraph;
 		return callGraph;
 	}
 

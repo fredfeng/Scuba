@@ -16,6 +16,7 @@ import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
+import joeq.Compiler.Quad.Operand.MethodOperand;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
@@ -429,7 +430,14 @@ public class Summary {
 		public void visitInvoke(Quad stmt) {
 			// TODO
 			assert (stmt.getOperator() instanceof Invoke);
-
+			// the callsite's belonging method
+			jq_Method meth = stmt.getMethod();
+			MethodOperand callee = Invoke.getMethod(stmt);
+			//check whether current callee is reachable
+			if(!Env.cg.getNodes().contains(callee.getMethod())) {
+				System.err.println("Unreachable method because of missing model.");
+				return;
+			}
 			// retrieve the summaries of the potential callees
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
 			if (G.debug) {
@@ -447,8 +455,6 @@ public class Summary {
 
 			// if coming here, it means the callee summary is available
 
-			// the callsite's belonging method
-			jq_Method meth = stmt.getMethod();
 			if (G.debug) {
 				System.out.println("handling Invoke inst with number "
 						+ numberCounter);
