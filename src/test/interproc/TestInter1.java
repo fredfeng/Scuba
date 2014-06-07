@@ -5,18 +5,51 @@ public class TestInter1 {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		int a = 1;
+		new TestInter1().run();
 	}
 	
-	class foo {
-		void bar() {
-			X x = new X();
+	void run() {
+		A a = new A();
+		a.a1();
+		a.a2();
+	}
+	
+	class A {
+		X x; X y;
+		void foo(Z a) {
+			x.bar(a);
+			y.bar(a);
+		}
+		
+		void a1() {
+			y = new Y();
+			x = y;
+			Z z = new Z();
+			foo(z);
+		}
+		
+		void a2() {
+			x = new X();
+			y = x;
+			Z z = new Z();
+			foo(z);
 		}
 	}
 	
+	class Z {
+	}
+	
 	class X {
-		void goo(){
-			
+		Z f; Z g;
+		void bar(Z z){
+			this.f = z;
+		}
+	}
+	
+	class Y extends X {
+		
+		void bar(Z z){
+			this.g = z;
 		}
 	}
 
