@@ -1166,6 +1166,14 @@ public class AbstractHeap {
 		}
 		return ret;
 	}
+	
+	/*Constraint instantiation.*/
+	protected BoolExpr instCst(BoolExpr cst) {
+		//TODO still need to handle virtual calls!
+		BoolExpr instC = ConstraintManager.genTrue();
+		assert instC != null : "Invalid instantiated Constrait.";
+		return instC;
+	}
 
 	protected boolean instantiateEdges(Set<HeapEdge> edges,
 			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
@@ -1188,7 +1196,7 @@ public class AbstractHeap {
 			assert (calleeCst != null) : "constraint is null!";
 
 			// instantiate the calleeCst
-			BoolExpr instnCst = null;
+			BoolExpr instnCst = instCst(calleeCst);
 			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
 					point);
 			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
