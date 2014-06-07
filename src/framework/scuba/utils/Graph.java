@@ -9,14 +9,14 @@ public class Graph {
 	List<Node> nodes;
 	
 	//suppose only one entry.
-	Node entry;
+	List<Node> entries;
 	
 	public Graph() {
 		nodes = new ArrayList<Node>();
 	}
 	
 	public void setEntry(Node n) {
-		entry = n;
+		entries.add(n);
 	}
 	
 	public void addNode(Node n) {
@@ -30,7 +30,7 @@ public class Graph {
 	public List<Node> getReversePostOrder() {
 		List<Node> result = new ArrayList<Node>();
 		Set<Node> visited = new HashSet<Node>();
-		reversePostOrderHelper(result, visited, entry);
+		reversePostOrderHelper(result, visited, entries.get(0));
         java.util.Collections.reverse(result);
 
 		return result;

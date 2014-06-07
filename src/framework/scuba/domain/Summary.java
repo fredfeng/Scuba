@@ -25,6 +25,8 @@ import joeq.Compiler.Quad.Operator.AStore;
 import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Getstatic;
 import joeq.Compiler.Quad.Operator.Invoke;
+import joeq.Compiler.Quad.Operator.Invoke.InvokeInterface;
+import joeq.Compiler.Quad.Operator.Invoke.InvokeVirtual;
 import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.MultiNewArray;
 import joeq.Compiler.Quad.Operator.New;
@@ -44,6 +46,7 @@ import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Expr;
 
 import framework.scuba.domain.AbstractHeap.VariableType;
+import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
 
 /**
@@ -535,7 +538,6 @@ public class Summary {
 					// fill the return-value mapping
 					// ONLY for x = v.foo(a1, a2)
 					// TODO
-					// memLocInstn.initReturnToLHS(calleeSum.getRetValue(),
 					// lhs);
 				}
 				// by now, we have the formal-to-actual mapping as a trigger for
@@ -843,7 +845,7 @@ public class Summary {
 		// no sure whether we should mark this as no op.
 		public void visitSpecial(Quad stmt) {
 			System.out.println(stmt);
-			assert false : "special.....";
+			assert false : "Special stmt that we havn't consider. Abort.";
 		}
 
 		// no-op.
@@ -893,9 +895,26 @@ public class Summary {
 	// summaries and the corresponding constraints as a list of pairs
 	// if no callee available, return ret (size == 0)
 	public List<Pair<Summary, BoolExpr>> getSumCstPairList(Quad callsite) {
-		// TODO
+		
 		List<Pair<Summary, BoolExpr>> ret = new ArrayList<Pair<Summary, BoolExpr>>();
 		// find all qualified callees and the constraints
+		
+		System.out.println("handle function calls...." + callsite);
+		jq_Method callee = callsite.getMethod();
+		//trivial cases: final, private, static. We know its exactly target.
+		if(callee.isStatic()) {
+			//always true.
+			BoolExpr cst = ConstraintManager.genTrue();
+			Summary calleeSum = SummariesEnv.v().getSummary(callee);
+			ret.add(new Pair(calleeSum, cst));
+		} else if(callsite.getOperator() instanceof InvokeVirtual){
+			//TODO
+		} else if(callsite.getOperator() instanceof InvokeInterface) {
+			//TODO
+		} else {
+			assert false : "Unhandled invoke!" + callsite;
+		}
+
 		return ret;
 	}
 

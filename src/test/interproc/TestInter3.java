@@ -20,11 +20,23 @@ public class TestInter3 {
 		
 		//for u = v.foo(), get we get it's lhs?
 		X x = y.bar();
+		I i = x;
+		
+		this.dump();
+		i.inter();
+	}
+	
+	private void dump() {
+		
 	}
 	
 	//Z <: Y <: X
-	class X{
+	class X implements I{
 		void foo() {
+			
+		}
+		
+		public void inter() {
 			
 		}
 		
@@ -41,6 +53,10 @@ public class TestInter3 {
 		void foo() {
 			
 		}
+	}
+	
+	interface I {
+		public void inter();
 	}
 
 }
