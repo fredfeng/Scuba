@@ -29,6 +29,7 @@ import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeInterface;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeVirtual;
 import joeq.Compiler.Quad.Operator.Move;
+import joeq.Compiler.Quad.Operator.Move.MOVE_A;
 import joeq.Compiler.Quad.Operator.MultiNewArray;
 import joeq.Compiler.Quad.Operator.New;
 import joeq.Compiler.Quad.Operator.NewArray;
@@ -614,7 +615,11 @@ public class Summary {
 				System.out.println("is in SCC: " + isInSCC);
 			}
 			jq_Method meth = stmt.getMethod();
-			if (Move.getSrc(stmt) instanceof RegisterOperand) {
+			//1. the first clause make sure only if it's ref type.
+			//2. the second clause is to ignore string assignment like x="Hi"
+			//The question is, do we need to handle string operation? TODO
+			if ((stmt.getOperator() instanceof MOVE_A)
+					&& (Move.getSrc(stmt) instanceof RegisterOperand)) {
 				RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
 				RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
 				VariableType lvt = getVarType(stmt.getMethod(),
