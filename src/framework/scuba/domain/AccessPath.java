@@ -75,6 +75,11 @@ public class AccessPath extends HeapObject {
 	}
 
 	@Override
+	public String dump() {
+		return base + "." + field;
+	}
+
+	@Override
 	public int hashCode() {
 		return 37 * base.hashCode() + field.hashCode();
 	}

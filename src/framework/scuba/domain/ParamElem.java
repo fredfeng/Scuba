@@ -48,6 +48,12 @@ public class ParamElem extends StackObject {
 		return "[P]" + parameter;
 	}
 
+	@Override
+	public String dump() {
+		return "[C] " + clazz.getName() + " [M] " + method.getName() + " [P] "
+				+ parameter;
+	}
+
 	// getClass method
 	public jq_Class getBelongingClass() {
 		return this.clazz;

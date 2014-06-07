@@ -168,8 +168,10 @@ public class AbstractHeap {
 			}
 			// validate that all the elements in the key set of the
 			// heapObjectsToP2Set are appeared in the key set of memLocFacotry
-			assert memLocFactory.containsKey(loc) : loc
-					+ " should be contained in the memory location factory!";
+			// because of instantiating, the locations in the caller's heap
+			// might be produced by the callee's mem loc factory
+			// assert memLocFactory.containsKey(loc) : loc
+			// + " should be contained in the memory location factory!";
 			// validate that all the elements in the key set of the p2Set should
 			// appear in the key set of memLocFactory
 			for (HeapObject hobj : p2Set.getHeapObjects()) {
@@ -201,32 +203,32 @@ public class AbstractHeap {
 
 		for (AbstractMemLoc loc : allLocs) {
 			if (loc instanceof AccessPath) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=circle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof AllocElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=rectangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof StaticElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=triangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof ParamElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof RetElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=diamond,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
@@ -243,8 +245,8 @@ public class AbstractHeap {
 				BoolExpr cst = p2Set.getConstraint(hObj);
 				Set<Numbering> nums = reverseEdgeSeq.get(getHeapEdge(loc, hObj,
 						f));
-				b.append("  ").append("\"" + loc + "\"");
-				b.append(" -> ").append("\"" + hObj + "\"")
+				b.append("  ").append("\"" + loc.dump() + "\"");
+				b.append(" -> ").append("\"" + hObj.dump() + "\"")
 						.append(" [label=\"");
 				b.append("(" + f + "," + cst + ")");
 				b.append(" <");
@@ -325,32 +327,32 @@ public class AbstractHeap {
 
 		for (AbstractMemLoc loc : allLocs) {
 			if (loc instanceof AccessPath) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=circle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof AllocElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=rectangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof StaticElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=triangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof ParamElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof RetElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=diamond,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
@@ -365,8 +367,8 @@ public class AbstractHeap {
 			P2Set p2Set = heapObjectsToP2Set.get(pair);
 			for (HeapObject hObj : p2Set.getHeapObjects()) {
 				BoolExpr cst = p2Set.getConstraint(hObj);
-				b.append("  ").append("\"" + loc + "\"");
-				b.append(" -> ").append("\"" + hObj + "\"")
+				b.append("  ").append("\"" + loc.dump() + "\"");
+				b.append(" -> ").append("\"" + hObj.dump() + "\"")
 						.append(" [label=\"");
 				b.append("(" + f + "," + cst + ")");
 				b.append("\"]\n");
@@ -394,32 +396,32 @@ public class AbstractHeap {
 
 		for (AbstractMemLoc loc : memLocFactory.keySet()) {
 			if (loc instanceof AccessPath) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=circle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof AllocElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=rectangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof StaticElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=triangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof ParamElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=oval,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof RetElem) {
-				b.append("  ").append("\"" + loc + "\"");
+				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=diamond,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
@@ -440,8 +442,8 @@ public class AbstractHeap {
 
 				for (HeapObject obj : p2Set.getHeapObjects()) {
 					BoolExpr cst = p2Set.getConstraint(obj);
-					b.append("  ").append("\"" + loc + "\"");
-					b.append(" -> ").append("\"" + obj + "\"")
+					b.append("  ").append("\"" + loc.dump() + "\"");
+					b.append(" -> ").append("\"" + obj.dump() + "\"")
 							.append(" [label=\"");
 					b.append("(" + f + "," + cst + ")");
 					b.append("\"]\n");

@@ -39,6 +39,11 @@ public class StaticElem extends StackObject {
 	}
 
 	@Override
+	public String dump() {
+		return "[SC]" + clazz.getName() + "_" + field.getName();
+	}
+
+	@Override
 	public boolean hasFieldSelector(FieldElem field) {
 		return false;
 	}

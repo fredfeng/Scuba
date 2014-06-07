@@ -49,6 +49,12 @@ public class LocalVarElem extends StackObject {
 		return "[V]" + local;
 	}
 
+	@Override
+	public String dump() {
+		return "[C]" + clazz.getName() + "[M]" + method.getName()
+				+ "[LocalVar]" + local;
+	}
+
 	// getClass method
 	public jq_Class getBelongingClass() {
 		return this.clazz;

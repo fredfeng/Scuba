@@ -41,6 +41,11 @@ public class AllocElem extends HeapObject {
 	}
 
 	@Override
+	public String dump() {
+		return alloc + "||" + context;
+	}
+
+	@Override
 	public boolean equals(Object other) {
 		return (other instanceof AllocElem)
 				&& (alloc.equals(((AllocElem) other).alloc))

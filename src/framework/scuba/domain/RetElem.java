@@ -52,6 +52,12 @@ public class RetElem extends StackObject {
 		return "[R]" + retValue;
 	}
 
+	@Override
+	public String dump() {
+		return "[C] " + clazz.getName() + " [M] " + method.getName() + " [R] "
+				+ retValue;
+	}
+
 	// getClass method
 	public jq_Class getBelongingClass() {
 		return this.clazz;

@@ -31,6 +31,11 @@ public class ConstantElem extends StackObject {
 		return "[Const]";
 	}
 
+	@Override
+	public String dump() {
+		return "[Const]";
+	}
+
 	public static ConstantElem getConstantElem() {
 		return constant;
 	}

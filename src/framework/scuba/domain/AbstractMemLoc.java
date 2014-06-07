@@ -62,4 +62,6 @@ public abstract class AbstractMemLoc {
 
 	@Override
 	abstract public String toString();
+
+	abstract public String dump();
 }
