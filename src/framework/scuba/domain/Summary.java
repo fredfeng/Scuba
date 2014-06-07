@@ -26,7 +26,12 @@ import joeq.Compiler.Quad.Operator.AStore;
 import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Getstatic;
 import joeq.Compiler.Quad.Operator.Invoke;
+import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_A;
+import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_A;
+import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_V;
+import joeq.Compiler.Quad.Operator.Invoke.INVOKEVIRTUAL_A;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeInterface;
+import joeq.Compiler.Quad.Operator.Invoke.InvokeStatic;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeVirtual;
 import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.Move.MOVE_A;
@@ -565,8 +570,19 @@ public class Summary {
 					}
 					// fill the return-value mapping
 					// ONLY for x = v.foo(a1, a2)
-					// TODO
 					// lhs);
+					Operator opr = stmt.getOperator();
+					if (opr instanceof INVOKESTATIC_A) {
+						INVOKESTATIC_A ivkStatOprA = (INVOKESTATIC_A) opr;
+//						ivkStatOprA.getDefinedRegisters(q)
+//				        memLocInstn.initReturnToLHS(calleeSum.getRetValue(), absHeap.get);
+					} else if (opr instanceof INVOKEVIRTUAL_A) {
+						System.out.println("yu invoke:" + stmt);
+						assert(false);
+						INVOKEVIRTUAL_A ivkVirtOprA = (INVOKEVIRTUAL_A) opr;
+					} else if (opr instanceof INVOKEINTERFACE_A) {
+						INVOKEINTERFACE_A ivkInterOprA = (INVOKEINTERFACE_A) opr;
+					}
 				}
 				// by now, we have the formal-to-actual mapping as a trigger for
 				// the whole instantiation of memory locations and we can start
@@ -933,16 +949,31 @@ public class Summary {
 		// find all qualified callees and the constraints
 
 		System.out.println("handle function calls...." + callsite);
-		jq_Method callee = callsite.getMethod();
+		jq_Method callee = Invoke.getMethod(callsite).getMethod();
+		Operator opr = callsite.getOperator();
+		Summary calleeSum = SummariesEnv.v().getSummary(callee);
+		BoolExpr cst = ConstraintManager.genTrue();
+
 		// trivial cases: final, private, static. We know its exactly target.
-		if (callee.isStatic()) {
+		if (opr instanceof InvokeStatic) {
 			// always true.
-			BoolExpr cst = ConstraintManager.genTrue();
-			Summary calleeSum = SummariesEnv.v().getSummary(callee);
+			//invoke_v : v.foo()
+			if(opr instanceof INVOKESTATIC_V) {
+				ret.add(new Pair(calleeSum, cst));
+			//invoke_a : u = v.foo()
+			} else if(opr instanceof INVOKESTATIC_A) {
+				ret.add(new Pair(calleeSum, cst));
+				//handle the return value.
+			} else {
+				//ignore the rest of cases.
+			}
+		} else if (opr instanceof InvokeVirtual) {
+			//assume all csts are true.
 			ret.add(new Pair(calleeSum, cst));
-		} else if (callsite.getOperator() instanceof InvokeVirtual) {
 			// TODO
-		} else if (callsite.getOperator() instanceof InvokeInterface) {
+		} else if (opr instanceof InvokeInterface) {
+			//assume all csts are true.
+			ret.add(new Pair(calleeSum, cst));
 			// TODO
 		} else {
 			assert false : "Unhandled invoke!" + callsite;

@@ -116,6 +116,9 @@ public class ConstraintManager {
 	//A and B.
 	public static BoolExpr intersect(BoolExpr first, BoolExpr second) {
         try {
+        	assert first!= null : "Invalid constrait";
+        	assert second!= null : "Invalid constrait";
+
 			BoolExpr inter = ctx.MkAnd(new BoolExpr[] { first, second });
 			//try to simplify.
 			Expr sim = inter.Simplify();
@@ -131,6 +134,9 @@ public class ConstraintManager {
 	//A or B
 	public static BoolExpr union(BoolExpr first, BoolExpr second) {
         try {
+        	assert first!= null : "Invalid constrait";
+        	assert second!= null : "Invalid constrait";
+        	
 			BoolExpr union = ctx.MkOr(new BoolExpr[] { first, second });
 			//try to simplify.
 			Expr sim = union.Simplify();
