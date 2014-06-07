@@ -582,6 +582,11 @@ public class AbstractHeap {
 		}
 		assert (v2 != null) : "v2 is null!";
 
+		if (G.debug) {
+			System.out.println("v1: " + v1);
+			System.out.println("v2: " + v2);
+		}
+
 		assert v1.knownArgDerived() : "we should set arg-derived marker for v1!";
 		assert v2.knownArgDerived() : "we should set arg-derived marker for v2!";
 
@@ -1154,6 +1159,7 @@ public class AbstractHeap {
 
 		// begin to add the edges
 		for (Numbering n : calleeEdgeSeq.keySet()) {
+
 			// fetch the edges with the same number (added in the same patch)
 			Set<HeapEdge> edges = calleeEdgeSeq.get(n);
 			// whether they are added in an SCC in the CFG
@@ -1165,6 +1171,12 @@ public class AbstractHeap {
 			int assgnNumber = isInSCC ? numberCounter : number;
 			// mark whether the edges are in SCC
 			boolean assgnFlag = isInSCC || edgesAreInSCC;
+
+			if (G.debug) {
+				System.out.println("Instantiating edges: ");
+				System.out.println("numbering: " + n);
+				System.out.println("edges: " + edges);
+			}
 
 			if (edgesAreInSCC) {
 				// do a fix-point
@@ -1440,6 +1452,16 @@ public class AbstractHeap {
 	// still need to check whether this returned boolean value is correct
 	protected boolean weakUpdate(Pair<AbstractMemLoc, FieldElem> pair,
 			P2Set p2Set, int numberCounter, boolean isInSCC) {
+		if (G.debug) {
+			System.out.println("weak updating!");
+			System.out.println("source is: " + pair.val0);
+			System.out.println("Field elem is: " + pair.val1);
+			System.out.println("current p2 set is: "
+					+ heapObjectsToP2Set.get(pair));
+			System.out.println("target is: " + p2Set);
+			System.out.println("use numbering: " + numberCounter);
+			System.out.println("is in scc: " + isInSCC);
+		}
 		boolean ret = false;
 		AbstractMemLoc src = pair.val0;
 		FieldElem f = pair.val1;
@@ -1449,15 +1471,15 @@ public class AbstractHeap {
 		cleanup(p2Set, pair);
 
 		// if the new p2Set is empty then return immediately
-		if (!p2Set.isEmpty())
+		if (!p2Set.isEmpty()) {
 			// fill the fields of the abstract memory location so that we can
 			// conveniently dump the topology of the heap
 			src.addField(f);
-		else
-			return ret;
+		}
 
 		// then get the current heap given the memory location and the field
 		P2Set currentP2Set = heapObjectsToP2Set.get(pair);
+
 		if (currentP2Set == null) {
 			currentP2Set = new P2Set();
 			heapObjectsToP2Set.put(pair, currentP2Set);

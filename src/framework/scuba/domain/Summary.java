@@ -525,6 +525,13 @@ public class Summary {
 					}
 					// fill the formal-to-actual mapping
 					assert (calleeSum.getFormals() != null) : "formals list is null!";
+					assert (actualsMemLoc != null) : "actuals list is null!";
+					if (G.debug) {
+						System.out.println("formals mem loc:\n"
+								+ calleeSum.getFormals());
+						System.out
+								.println("actuals mem loc:\n" + actualsMemLoc);
+					}
 					assert (calleeSum.getFormals().size() == actualsMemLoc
 							.size()) : "unmatched actuals and formals list!";
 					memLocInstn.initFormalToActualMapping(
@@ -895,22 +902,22 @@ public class Summary {
 	// summaries and the corresponding constraints as a list of pairs
 	// if no callee available, return ret (size == 0)
 	public List<Pair<Summary, BoolExpr>> getSumCstPairList(Quad callsite) {
-		
+
 		List<Pair<Summary, BoolExpr>> ret = new ArrayList<Pair<Summary, BoolExpr>>();
 		// find all qualified callees and the constraints
-		
+
 		System.out.println("handle function calls...." + callsite);
 		jq_Method callee = callsite.getMethod();
-		//trivial cases: final, private, static. We know its exactly target.
-		if(callee.isStatic()) {
-			//always true.
+		// trivial cases: final, private, static. We know its exactly target.
+		if (callee.isStatic()) {
+			// always true.
 			BoolExpr cst = ConstraintManager.genTrue();
 			Summary calleeSum = SummariesEnv.v().getSummary(callee);
 			ret.add(new Pair(calleeSum, cst));
-		} else if(callsite.getOperator() instanceof InvokeVirtual){
-			//TODO
-		} else if(callsite.getOperator() instanceof InvokeInterface) {
-			//TODO
+		} else if (callsite.getOperator() instanceof InvokeVirtual) {
+			// TODO
+		} else if (callsite.getOperator() instanceof InvokeInterface) {
+			// TODO
 		} else {
 			assert false : "Unhandled invoke!" + callsite;
 		}
