@@ -281,6 +281,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling ALoad inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			jq_Method meth = stmt.getMethod();
 			if (ALoad.getDest(stmt) instanceof RegisterOperand) {
@@ -313,6 +314,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling AStore inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			if (AStore.getValue(stmt) instanceof RegisterOperand) {
 				RegisterOperand lhs = (RegisterOperand) AStore.getBase(stmt);
@@ -360,6 +362,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling GetField inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			if (field.getField().getType() instanceof jq_Reference) {
 				assert (stmt.getOperator() instanceof Getfield);
@@ -393,6 +396,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling GetStatic inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			if (field.getField().getType() instanceof jq_Reference) {
 				jq_Method meth = stmt.getMethod();
@@ -433,6 +437,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling Invoke inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
@@ -577,6 +582,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling Move inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			jq_Method meth = stmt.getMethod();
 			if (Move.getSrc(stmt) instanceof RegisterOperand) {
@@ -606,6 +612,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling New inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			assert (stmt.getOperator() instanceof New);
 			jq_Method meth = stmt.getMethod();
@@ -627,6 +634,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling MultiNew inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			Summary.aNewMulArrayCnt++;
 			assert (stmt.getOperator() instanceof MultiNewArray);
@@ -679,9 +687,11 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling PHI inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			assert stmt.getOperator() instanceof Phi : "Not Phi";
 
+			boolean tmp = false; // just for dbg
 			if (Phi.getDest(stmt) instanceof RegisterOperand) {
 				boolean sig = false;
 				RegisterOperand lhs = Phi.getDest(stmt);
@@ -693,23 +703,27 @@ public class Summary {
 					if (rhs == null)
 						continue;
 
+					tmp = true;
+					System.out.println("***** " + rhs);
 					VariableType rvt = getVarType(meth, rhs.getRegister());
 					boolean flag = absHeap
 							.handleAssignStmt(meth.getDeclaringClass(), meth,
 									lhs.getRegister(), lvt, rhs.getRegister(),
 									rvt, numberCounter, isInSCC);
 					sig = flag | sig;
-
 				}
 				if (G.debug) {
 					System.out.println("boolean result: " + sig);
 				}
 				absHeap.markChanged(sig);
-			} else {
+			}
+
+			if (!tmp) {
 				if (G.debug) {
 					System.out.println("Not a processable instruction!");
 				}
 			}
+
 		}
 
 		// v1.f = v2
@@ -718,6 +732,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling PutField inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			FieldOperand field = Putfield.getField(stmt);
 			if (field.getField().getType() instanceof jq_Reference) {
@@ -755,6 +770,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling PutStatic inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			FieldOperand field = Putstatic.getField(stmt);
 			if (field.getField().getType() instanceof jq_Reference) {
@@ -789,6 +805,7 @@ public class Summary {
 			if (G.debug) {
 				System.out.println("handling Return inst with number "
 						+ numberCounter);
+				System.out.println("is in SCC: " + isInSCC);
 			}
 			// TODO
 			// make sure a return stmt can only contains one operand which is
