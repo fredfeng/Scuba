@@ -46,10 +46,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
 	HashMap<Set<jq_Method>, Node> sccToNode = new HashMap<Set<jq_Method>, Node>();
 	HashMap<jq_Method, Node> methToNode = new HashMap<jq_Method, Node>();
-	
+
 	List<jq_Method> accessSeq = new LinkedList<jq_Method>();
-	
-	public static int count = 0;
 
 	IntraProcSumAnalysis intrapro = new IntraProcSumAnalysis();
 
@@ -73,7 +71,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
 		System.out.println("Total downcast------------" + Summary.castCnt);
 	}
-	
+
 	private void sumAnalyze() {
 
 		if (G.debug) {
@@ -82,22 +80,22 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			for (Set<jq_Method> scc : callGraph.getTopSortedSCCs())
 				System.out.println("SCC List---" + scc);
 		}
-		
+
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
-		
+
 		LinkedList<Node> worklist = new LinkedList<Node>();
 
 		System.out.println("total nodes: " + callGraph.getNodes());
 		for (Node methNode : repGraph.getNodes())
 			if ((methNode.getSuccessors().size() == 0))
 				worklist.add(methNode);
-		
+
 		// foreach leaf in the callgraph. Add them to the worklist.
 		while (!worklist.isEmpty()) {
 			Node worker = worklist.poll();
-			//now just analyze once.
-			if(allSuccsTerminated(worker.getSuccessors()))
+			// now just analyze once.
+			if (allSuccsTerminated(worker.getSuccessors()))
 				workOn(worker);
 			// append worker to the end of the List.class
 			else
@@ -106,14 +104,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			// add m's pred to worklist
 			worklist.addAll(worker.getPreds());
 		}
-		
-		if(G.debug)
+
+		if (G.debug)
 			System.out.println("Accessing CallGraph in this sequnce-----------"
 					+ accessSeq);
 	}
-	
+
 	/**
 	 * Collapse SCCs and return the representative graph.
+	 * 
 	 * @return
 	 */
 	private Graph collapseSCCs() {
@@ -134,7 +133,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
 			Node cur = sccToNode.get(scc);
 			for (jq_Method nb : scc) {
-				//init successor.
+				// init successor.
 				for (jq_Method sucb : callGraph.getSuccs(nb)) {
 					if (scc.contains(sucb))
 						continue;
@@ -143,7 +142,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						cur.addSuccessor(scNode);
 					}
 				}
-				//init preds.
+				// init preds.
 				for (jq_Method pred : callGraph.getPreds(nb)) {
 					if (scc.contains(pred))
 						continue;
@@ -154,34 +153,34 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				}
 			}
 		}
-		
+
 		return repGraph;
 	}
-	
-	//begin to work on a representative node. single node or scc.
+
+	// begin to work on a representative node. single node or scc.
 	private void workOn(Node node) {
-		//1.get its corresponding scc
+		// 1.get its corresponding scc
 		Set<jq_Method> scc = nodeToScc.get(node);
-		
-		if(scc.size() == 1) {
-			//self loop. perform scc.
-			if(node.getSuccessors().contains(node))
+
+		if (scc.size() == 1) {
+			// self loop. perform scc.
+			if (node.getSuccessors().contains(node))
 				analyzeSCC(node);
 			else
 				analyze(scc.iterator().next());
 		} else {
 			analyzeSCC(node);
 		}
-		
-		//at the end, mark it as terminated.
+
+		// at the end, mark it as terminated.
 		node.setTerminated(true);
 	}
-	
-	//check whether all successors have terminated.
+
+	// check whether all successors have terminated.
 	private boolean allSuccsTerminated(List<Node> succs) {
 		boolean flag = true;
-		for(Node node : succs) 
-			if(!node.isTerminated()) {
+		for (Node node : succs)
+			if (!node.isTerminated()) {
 				flag = false;
 				break;
 			}
@@ -190,13 +189,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private boolean analyze(jq_Method m) {
 		accessSeq.add(m);
-		System.out.println("analyzing method " + count + " " + m);
-		count++;
-
+		if (G.debug) {
+			System.out.println("analyzing method " + G.count + " " + m);
+			G.count++;
+		}
 		// do interproc
 		if (G.debug) {
 
-			System.out.println("+++++++++++++++++   " + count
+			System.out.println("+++++++++++++++++   " + G.count
 					+ "   +++++++++++++++++");
 			System.out
 					.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
@@ -224,9 +224,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// mark terminated
 		if (G.dump) {
-			summary.dumpSummaryToFile(count);
-			summary.dumpAllMemLocsHeapToFile(count);
-			summary.dumpNumberingHeap(count);
+			summary.dumpSummaryToFile(new String(G.count + ""));
+			summary.dumpAllMemLocsHeapToFile(new String(G.count + ""));
+			summary.dumpNumberingHeap(new String(G.count + ""));
 		}
 		summary.validate();
 		return summary.getAbsHeap().isChanged();
@@ -243,19 +243,20 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		 * if(gammaNew == gamma) set else reset add pred(unterminated) }
 		 */
 		int counter = 0;
-		while(true){
+		while (true) {
 			jq_Method worker = wl.poll();
 			boolean isChanged = analyze(worker);
-			if(isChanged) 
+			if (isChanged)
 				counter = 0;
 			else
 				counter++;
-			
+
 			for (jq_Method pred : callGraph.getPreds(worker))
 				if (scc.contains(pred))
 					wl.add(pred);
-			
-			if(counter == scc.size()) break;
+
+			if (counter == scc.size())
+				break;
 		}
 	}
 

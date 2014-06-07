@@ -86,7 +86,7 @@ public class Summary {
 	private boolean terminated;
 
 	// numbering counter
-	protected int numberCounter = 0;
+	protected int numberCounter = 1;
 
 	// used for numbering
 	protected boolean isInSCC = false;
@@ -234,15 +234,15 @@ public class Summary {
 		System.out.println("**************************************");
 	}
 
-	public void dumpSummaryToFile(int count) {
+	public void dumpSummaryToFile(String count) {
 		absHeap.dumpHeapToFile(count);
 	}
 
-	public void dumpAllMemLocsHeapToFile(int count) {
+	public void dumpAllMemLocsHeapToFile(String count) {
 		absHeap.dumpAllMemLocsHeapToFile(count);
 	}
 
-	public void dumpNumberingHeap(int count) {
+	public void dumpNumberingHeap(String count) {
 		absHeap.dumpHeapNumberingToFile(count);
 	}
 
@@ -274,13 +274,18 @@ public class Summary {
 		this.isInSCC = isInSCC;
 		quad.accept(qv);
 		this.numberCounter = absHeap.getMaxNumber();
+		if (G.dump) {
+			absHeap.dumpHeapNumberingToFile(new String(G.count + "$" + G.step++));
+		}
 	}
 
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
 
 		// no-op.
 		public void visitALength(Quad stmt) {
-
+			if (G.debug) {
+				System.out.println("Not a processable instruction!");
+			}
 		}
 
 		// perform array smashing. Use assign to handle array store/load.
@@ -350,14 +355,23 @@ public class Summary {
 
 		// no-op.
 		public void visitBinary(Quad stmt) {
+			if (G.debug) {
+				System.out.println("Not a processable instruction!");
+			}
 		}
 
 		// no-op.
 		public void visitBoundsCheck(Quad stmt) {
+			if (G.debug) {
+				System.out.println("Not a processable instruction!");
+			}
 		}
 
 		// no-op.
 		public void visitBranch(Quad stmt) {
+			if (G.debug) {
+				System.out.println("Not a processable instruction!");
+			}
 		}
 
 		// no sure whether we should mark this as no op.
@@ -431,17 +445,22 @@ public class Summary {
 
 		// no-op.
 		public void visitInstanceOf(Quad stmt) {
+			if (G.debug) {
+				System.out.println("Not a processable instruction!");
+			}
 		}
 
 		public void visitInvoke(Quad stmt) {
 			// TODO
+			// get rhs in the factory (maybe we do not need to)
 			assert (stmt.getOperator() instanceof Invoke);
 			// the callsite's belonging method
 			jq_Method meth = stmt.getMethod();
 			MethodOperand callee = Invoke.getMethod(stmt);
-			//check whether current callee is reachable
-			if(!Env.cg.getNodes().contains(callee.getMethod())) {
-				System.err.println("Unreachable method because of missing model.");
+			// check whether current callee is reachable
+			if (!Env.cg.getNodes().contains(callee.getMethod())) {
+				System.err
+						.println("Unreachable method because of missing model.");
 				return;
 			}
 			// retrieve the summaries of the potential callees
@@ -459,7 +478,7 @@ public class Summary {
 				}
 			}
 
-			// if coming here, it means the callee summary is available
+			// if coming here, it means the callee's summary is available
 
 			if (G.debug) {
 				System.out.println("handling Invoke inst with number "
@@ -468,7 +487,6 @@ public class Summary {
 			}
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
-
 				// the summary of the callee
 				Summary calleeSum = calleeSumCst.val0;
 				if (G.debug) {
@@ -570,6 +588,9 @@ public class Summary {
 					}
 					// fill the return-value mapping
 					// ONLY for x = v.foo(a1, a2)
+					// TODO
+					// memLocInstn.initReturnToLHS(calleeSum.getRetValue(),
+					// absHeap.get())
 					// lhs);
 					Operator opr = stmt.getOperator();
 					if (opr instanceof INVOKESTATIC_A) {
@@ -620,6 +641,9 @@ public class Summary {
 
 		// no-op.
 		public void visitMonitor(Quad stmt) {
+			if (G.debug) {
+				System.out.println("Not a processable instruction!");
+			}
 		}
 
 		// v1 = v2
@@ -631,9 +655,9 @@ public class Summary {
 				System.out.println("is in SCC: " + isInSCC);
 			}
 			jq_Method meth = stmt.getMethod();
-			//1. the first clause make sure only if it's ref type.
-			//2. the second clause is to ignore string assignment like x="Hi"
-			//The question is, do we need to handle string operation? TODO
+			// 1. the first clause make sure only if it's ref type.
+			// 2. the second clause is to ignore string assignment like x="Hi"
+			// The question is, do we need to handle string operation? TODO
 			if ((stmt.getOperator() instanceof MOVE_A)
 					&& (Move.getSrc(stmt) instanceof RegisterOperand)) {
 				RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
@@ -665,7 +689,7 @@ public class Summary {
 				System.out.println("is in SCC: " + isInSCC);
 			}
 			assert (stmt.getOperator() instanceof New);
-			
+
 			jq_Method meth = stmt.getMethod();
 			TypeOperand to = New.getType(stmt);
 			RegisterOperand rop = New.getDest(stmt);
@@ -899,6 +923,9 @@ public class Summary {
 
 		// no-op.
 		public void visitStoreCheck(Quad stmt) {
+			if (G.debug) {
+				System.out.println("Not a processable instruction!");
+			}
 		}
 
 		// no sure whether we should mark this as no op.
@@ -907,6 +934,9 @@ public class Summary {
 
 		// no-op.
 		public void visitZeroCheck(Quad stmt) {
+			if (G.debug) {
+				System.out.println("Not a processable instruction!");
+			}
 		}
 
 		// is this a param or local. helper function.
