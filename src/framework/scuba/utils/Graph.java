@@ -2,6 +2,7 @@ package framework.scuba.utils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -12,7 +13,8 @@ public class Graph {
 	List<Node> entries;
 	
 	public Graph() {
-		nodes = new ArrayList<Node>();
+		nodes = new LinkedList<Node>();
+		entries = new LinkedList<Node>();
 	}
 	
 	public void setEntry(Node n) {
