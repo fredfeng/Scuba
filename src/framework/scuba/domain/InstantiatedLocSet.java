@@ -36,6 +36,10 @@ public class InstantiatedLocSet {
 		return instnLocSet.get(loc);
 	}
 
+	public Map<AbstractMemLoc, BoolExpr> getInstnLocSet() {
+		return instnLocSet;
+	}
+
 	public boolean isEmpty() {
 		return instnLocSet.isEmpty();
 	}
@@ -70,7 +74,8 @@ public class InstantiatedLocSet {
 				// set!!!! only get the shallow copy of the other constraints
 
 				// for this case, we should add a new edge
-				instnLocSet.put(hObj, ConstraintManager.clone(other.getConstraint(hObj)));
+				instnLocSet.put(hObj,
+						ConstraintManager.clone(other.getConstraint(hObj)));
 				ret = true;
 			}
 		}

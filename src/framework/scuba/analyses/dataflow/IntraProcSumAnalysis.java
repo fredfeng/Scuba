@@ -67,6 +67,7 @@ public class IntraProcSumAnalysis {
 			}
 			if (G.debug) {
 				System.out.println("param list initialization DONE!");
+				System.out.println(summary.getFormals());
 			}
 		} else {
 			if (G.debug) {
@@ -205,6 +206,10 @@ public class IntraProcSumAnalysis {
 			// increment the numbering counter properly
 			if (!isInSCC) {
 				numberCounter = summary.getNumberCounter() + 1;
+				if (G.debug) {
+					System.out.println("the new number will be "
+							+ numberCounter);
+				}
 			}
 			if (G.debug) {
 				System.out.println("Finish handling the statement.");

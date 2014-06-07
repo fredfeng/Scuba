@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.microsoft.z3.BoolExpr;
+
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 import chord.util.tuple.object.Pair;
@@ -36,6 +38,27 @@ public class MemLocInstantiation {
 		this.caller = caller;
 		this.callsite = callsite;
 		this.callee = callee;
+	}
+
+	public void print() {
+		System.out
+				.println("\n----------------Mem Loc Instantion-----------------");
+		System.out.println("Caller: " + caller);
+		System.out.println("Callee: " + callee);
+		System.out.println("Call site: " + callsite);
+		for (AbstractMemLoc loc : instnMemLocMapping.keySet()) {
+			System.out.println("*****************************");
+			System.out.println("Location: " + loc + " is instantiated to:");
+			Map<AbstractMemLoc, BoolExpr> ret = instnMemLocMapping.get(loc)
+					.getInstnLocSet();
+			for (AbstractMemLoc loc1 : ret.keySet()) {
+				System.out.println("Location: " + loc1);
+				System.out.println("Constraint: " + ret.get(loc1));
+			}
+		}
+		System.out.println("*****************************");
+		System.out.println("\n-----------------------------------------");
+
 	}
 
 	public void enableCache() {
