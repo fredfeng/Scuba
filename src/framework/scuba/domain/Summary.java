@@ -451,7 +451,6 @@ public class Summary {
 		}
 
 		public void visitInvoke(Quad stmt) {
-			// TODO
 			// get rhs in the factory (maybe we do not need to)
 			assert (stmt.getOperator() instanceof Invoke);
 			// the callsite's belonging method
@@ -588,21 +587,29 @@ public class Summary {
 					}
 					// fill the return-value mapping
 					// ONLY for x = v.foo(a1, a2)
-					// TODO
-					// memLocInstn.initReturnToLHS(calleeSum.getRetValue(),
-					// absHeap.get())
-					// lhs);
 					Operator opr = stmt.getOperator();
-					if (opr instanceof INVOKESTATIC_A) {
-						INVOKESTATIC_A ivkStatOprA = (INVOKESTATIC_A) opr;
-//						ivkStatOprA.getDefinedRegisters(q)
-//				        memLocInstn.initReturnToLHS(calleeSum.getRetValue(), absHeap.get);
-					} else if (opr instanceof INVOKEVIRTUAL_A) {
-						System.out.println("yu invoke:" + stmt);
-						assert(false);
-						INVOKEVIRTUAL_A ivkVirtOprA = (INVOKEVIRTUAL_A) opr;
-					} else if (opr instanceof INVOKEINTERFACE_A) {
-						INVOKEINTERFACE_A ivkInterOprA = (INVOKEINTERFACE_A) opr;
+					if (opr instanceof INVOKESTATIC_A
+							|| opr instanceof INVOKEVIRTUAL_A
+							|| opr instanceof INVOKEINTERFACE_A) {
+						RegisterOperand ro = ((Invoke) opr).getDest(stmt);
+						VariableType vt = getVarType(stmt.getMethod(),
+								ro.getRegister());
+						StackObject sObj = null;
+						if (vt == VariableType.LOCAL_VARIABLE) {
+							sObj = absHeap.getLocalVarElem(
+									meth.getDeclaringClass(), meth,
+									ro.getRegister());
+						} else if (vt == VariableType.PARAMEMTER) {
+							sObj = absHeap.getParamElem(
+									meth.getDeclaringClass(), meth,
+									ro.getRegister());
+						} else {
+							assert false : "Unhandled invoke assignment!"
+									+ stmt;
+						}
+						assert sObj != null : "Fails to locate the right heap obj.";
+						memLocInstn.initReturnToLHS(calleeSum.getRetValue(),
+								sObj);
 					}
 				}
 				// by now, we have the formal-to-actual mapping as a trigger for
