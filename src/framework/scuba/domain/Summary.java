@@ -992,9 +992,14 @@ public class Summary {
 			// assume all csts are true.
 			ret.add(new Pair(calleeSum, cst));
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
-			StackObject so = getMemLocation(clz, caller, ro.getRegister());
+			Register recv = ro.getRegister();
+			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
+			//receiver's static type.
+			jq_Class recvStatType = (jq_Class)recv.getType();
+			StackObject so = getMemLocation(clz, caller, recv);
 			P2Set p2Set = absHeap.lookup(so,
 					EpsilonFieldElem.getEpsilonFieldElem());
+			Register r;
 		} else if (opr instanceof InvokeInterface) {
 			// assume all csts are true.
 			ret.add(new Pair(calleeSum, cst));
