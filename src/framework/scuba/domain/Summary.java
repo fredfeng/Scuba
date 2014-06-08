@@ -277,6 +277,7 @@ public class Summary {
 		this.numberCounter = absHeap.getMaxNumber();
 		if (G.dump) {
 			absHeap.dumpHeapNumberingToFile(new String(G.count + "$" + G.step++));
+			absHeap.dumpHeapNumberingMap(new String(G.count + "$" + G.step));
 		}
 	}
 
@@ -489,15 +490,19 @@ public class Summary {
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
 				// the summary of the callee
 				Summary calleeSum = calleeSumCst.val0;
-				if (G.debug) {
-					System.out.println("trying to instantiate method: "
-							+ calleeSum.getMethod());
-				}
+
 				// if we have not analyzed the callee yet (the summary of the
 				// callee will be null if it has not been analyzed yet), just
 				// jump to the next callee
 				assert (calleeSum != null) : "we should only get the summary for callees"
 						+ " which have been analyzed at least once!";
+				if (G.debug) {
+					System.out.println(calleeSum);
+				}
+				if (G.debug) {
+					System.out.println("trying to instantiate method: "
+							+ calleeSum.getMethod());
+				}
 				if (calleeSum == null) {
 					if (G.debug) {
 						System.out
@@ -968,24 +973,25 @@ public class Summary {
 		// trivial cases: final, private, static. We know its exactly target.
 		if (opr instanceof InvokeStatic) {
 			// always true.
-			//invoke_v : v.foo()
-			if(opr instanceof INVOKESTATIC_V) {
+			// invoke_v : v.foo()
+			if (opr instanceof INVOKESTATIC_V) {
 				ret.add(new Pair(calleeSum, cst));
-			//invoke_a : u = v.foo()
-			} else if(opr instanceof INVOKESTATIC_A) {
+				// invoke_a : u = v.foo()
+			} else if (opr instanceof INVOKESTATIC_A) {
 				ret.add(new Pair(calleeSum, cst));
-				//handle the return value.
+				// handle the return value.
 			} else {
-				//ignore the rest of cases.
+				// ignore the rest of cases.
 			}
 		} else if (opr instanceof InvokeVirtual) {
-			//assume all csts are true.
+			// assume all csts are true.
 			ret.add(new Pair(calleeSum, cst));
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
 			StackObject so = getMemLocation(clz, caller, ro.getRegister());
-			P2Set p2Set = absHeap.lookup(so, EpsilonFieldElem.getEpsilonFieldElem());
+			P2Set p2Set = absHeap.lookup(so,
+					EpsilonFieldElem.getEpsilonFieldElem());
 		} else if (opr instanceof InvokeInterface) {
-			//assume all csts are true.
+			// assume all csts are true.
 			ret.add(new Pair(calleeSum, cst));
 			// TODO
 		} else {
@@ -994,7 +1000,7 @@ public class Summary {
 
 		return ret;
 	}
-	
+
 	// is this a param or local. helper function.
 	public VariableType getVarType(jq_Method meth, Register r) {
 		VariableType vt = VariableType.LOCAL_VARIABLE;
@@ -1016,12 +1022,12 @@ public class Summary {
 	public Expr instCst(Expr expr) {
 		return null;
 	}
-	
+
 	public StackObject getMemLocation(jq_Class clz, jq_Method meth, Register r) {
 		VariableType vt = getVarType(meth, r);
-		if(vt == VariableType.LOCAL_VARIABLE) {
+		if (vt == VariableType.LOCAL_VARIABLE) {
 			return absHeap.getLocalVarElem(clz, meth, r);
-		} else if(vt == VariableType.PARAMEMTER) {
+		} else if (vt == VariableType.PARAMEMTER) {
 			return absHeap.getParamElem(clz, meth, r);
 		}
 		return null;
@@ -1029,6 +1035,7 @@ public class Summary {
 
 	/**
 	 * Given a specific method and access path o, return its constraint.
+	 * 
 	 * @return
 	 */
 	public Expr genCst() {

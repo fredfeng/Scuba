@@ -187,6 +187,25 @@ public class AbstractHeap {
 		}
 	}
 
+	public void dumpHeapNumberingMap(String count) {
+		StringBuilder b = new StringBuilder("");
+		for (Numbering n : edgeSeq.keySet()) {
+			b.append("-------------------------------------------------\n");
+			b.append(n + "\n");
+			b.append(edgeSeq.get(n) + "\n");
+			b.append("-------------------------------------------------\n");
+		}
+		try {
+			BufferedWriter bufw = new BufferedWriter(new FileWriter(
+					G.dotOutputPath + "NumberingMapping" + count));
+			bufw.write(b.toString());
+			bufw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+	}
+
 	public void dumpHeapNumberingToFile(String count) {
 		StringBuilder b = new StringBuilder("digraph AbstractHeap {\n");
 		b.append("  rankdir = LR;\n");
@@ -606,7 +625,11 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		if (G.debug) {
+			System.out.println(numberCounter);
+			System.out.println(maxNumber);
+		}
+		assert (numberCounter >= maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -1317,6 +1340,7 @@ public class AbstractHeap {
 				System.out.println("assigning the flag: " + assgnFlag);
 			}
 			assert (assgnNumber > maxNumber) : "we should increment the counter every time!";
+			assert (!edges.isEmpty()) : "a number should not be assigned to no-edge!";
 			maxNumber = Math.max(maxNumber, assgnNumber);
 			if (G.debug) {
 				System.out.println("new max number: " + maxNumber);
@@ -1637,25 +1661,26 @@ public class AbstractHeap {
 		heap.addAll(tgts);
 
 		// do the numbering
-		// Numbering wrapper = new Numbering(numberCounter, isInSCC);
-		Numbering wrapper = getNumbering(numberCounter, isInSCC);
-		Set<HeapEdge> edges = edgeSeq.get(wrapper);
-		if (edges == null) {
-			edges = new HashSet<HeapEdge>();
-			edgeSeq.put(wrapper, edges);
-		}
-		for (HeapObject tgt : tgts) {
-			HeapEdge added = getHeapEdge(src, tgt, f);
-			edges.add(added);
-		}
-		// filling the reverse mapping, just for dbg and dumping
-		for (HeapEdge edge : edges) {
-			Set<Numbering> nums = reverseEdgeSeq.get(edge);
-			if (nums == null) {
-				nums = new HashSet<Numbering>();
-				reverseEdgeSeq.put(edge, nums);
+		if (!tgts.isEmpty()) {
+			Numbering wrapper = getNumbering(numberCounter, isInSCC);
+			Set<HeapEdge> edges = edgeSeq.get(wrapper);
+			if (edges == null) {
+				edges = new HashSet<HeapEdge>();
+				edgeSeq.put(wrapper, edges);
 			}
-			nums.add(getNumbering(numberCounter, isInSCC));
+			for (HeapObject tgt : tgts) {
+				HeapEdge added = getHeapEdge(src, tgt, f);
+				edges.add(added);
+			}
+			// filling the reverse mapping, just for dbg and dumping
+			for (HeapEdge edge : edges) {
+				Set<Numbering> nums = reverseEdgeSeq.get(edge);
+				if (nums == null) {
+					nums = new HashSet<Numbering>();
+					reverseEdgeSeq.put(edge, nums);
+				}
+				nums.add(getNumbering(numberCounter, isInSCC));
+			}
 		}
 
 		// the KEY for weak update

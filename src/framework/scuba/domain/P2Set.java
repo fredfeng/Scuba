@@ -56,7 +56,7 @@ public class P2Set {
 				// check whether we need to update the p2set of this heap object
 				// TODO check the return value
 				// we should use the equivalence checking
-				if (p2Set.get(obj).equals(newCst))
+				if (ConstraintManager.isEqual(p2Set.get(obj), newCst))
 					continue;
 
 				p2Set.put(obj, newCst);
