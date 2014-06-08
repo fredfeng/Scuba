@@ -1264,9 +1264,12 @@ public class AbstractHeap {
 			if (instnSrc == null || instnDst == null) {
 				continue;
 			}
-
+			calleeHeap.dumpHeapNumberingToFile("$callee");
+			this.dumpHeapNumberingToFile("$caller");
 			assert (!instnSrc.isEmpty()) : "instnSrc cannot be empty!";
-			assert (!instnDst.isEmpty()) : "instnDst cannot be empty!";
+			// it is possible the dst has no location in the caller to
+			// instantiate to, just think about the native call in the caller
+			// assert (!instnDst.isEmpty()) : "instnDst cannot be empty!";
 
 			for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
 				for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
@@ -1351,7 +1354,7 @@ public class AbstractHeap {
 				System.out.println("new max number: " + maxNumber);
 			}
 			System.out.println(edgeSeq);
-			assert (edgeSeq.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
+			assert (!ret || edgeSeq.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
 					+ "error in adding edges and assigning number and flag!";
 			assert (!edgeSeq.containsKey(new Numbering(maxNumber + 1, true))) : ""
 					+ "error in adding edges and assigning number and flag!";

@@ -96,8 +96,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		Set<Node> visited = new HashSet<Node>();
 		while (!worklist.isEmpty()) {
 			Node worker = worklist.poll();
-			//each node will be visited exactly once.
-			if(visited.contains(worker)) 
+			// each node will be visited exactly once.
+			if (visited.contains(worker))
 				continue;
 			// now just analyze once.
 			if (allSuccsTerminated(worker.getSuccessors())) {
@@ -211,14 +211,19 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			System.out.println(m);
 		}
 
+		if (m.getBytecode() == null) {
+			if (G.debug) {
+				System.err.println("ERROR: the method: " + m
+						+ " is lacking models");
+			}
+			return false;
+		}
+
 		Summary summary = SummariesEnv.v().initSummary(m);
 		intrapro.setSummary(summary);
 		// set intrapro's number counter to be the counter of the last time the
 		// summary is concluded, so that it will continue numbering from the
 		// last time, to keep the numbers increasing
-
-		if (m.getBytecode() == null)
-			return false;
 
 		ControlFlowGraph cfg = CodeCache.getCode(m);
 		if (G.debug) {
