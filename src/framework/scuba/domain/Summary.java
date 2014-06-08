@@ -41,6 +41,7 @@ import joeq.Compiler.Quad.Operator.NewArray;
 import joeq.Compiler.Quad.Operator.Phi;
 import joeq.Compiler.Quad.Operator.Putfield;
 import joeq.Compiler.Quad.Operator.Putstatic;
+import joeq.Compiler.Quad.Operator.Return;
 import joeq.Compiler.Quad.Operator.Return.RETURN_A;
 import joeq.Compiler.Quad.Operator.Return.RETURN_V;
 import joeq.Compiler.Quad.Quad;
@@ -888,9 +889,10 @@ public class Summary {
 			// Register type, and this Register must be used before returning
 			boolean flag = false;
 			if (stmt.getOperator() instanceof RETURN_A) {
-				List<RegisterOperand> rets = stmt.getUsedRegisters();
-				assert (rets.size() == 1) : "we can ONLY return one register!";
-				Register ret = rets.get(0).getRegister();
+				Operand operand = Return.getSrc(stmt);
+				if(!(operand instanceof RegisterOperand)) 
+					return;
+				Register ret = ((RegisterOperand)operand).getRegister();
 				jq_Method meth = stmt.getMethod();
 				jq_Class clazz = meth.getDeclaringClass();
 				VariableType type = getVarType(meth, ret);
