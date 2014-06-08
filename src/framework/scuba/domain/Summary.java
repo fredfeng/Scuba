@@ -45,6 +45,7 @@ import joeq.Compiler.Quad.Operator.Return.RETURN_A;
 import joeq.Compiler.Quad.Operator.Return.RETURN_V;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.QuadVisitor;
+import joeq.Compiler.Quad.QuadVisitor.EmptyVisitor;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
@@ -592,21 +593,9 @@ public class Summary {
 							|| opr instanceof INVOKEVIRTUAL_A
 							|| opr instanceof INVOKEINTERFACE_A) {
 						RegisterOperand ro = ((Invoke) opr).getDest(stmt);
-						VariableType vt = getVarType(stmt.getMethod(),
+						StackObject sObj = getMemLocation(
+								meth.getDeclaringClass(), meth,
 								ro.getRegister());
-						StackObject sObj = null;
-						if (vt == VariableType.LOCAL_VARIABLE) {
-							sObj = absHeap.getLocalVarElem(
-									meth.getDeclaringClass(), meth,
-									ro.getRegister());
-						} else if (vt == VariableType.PARAMEMTER) {
-							sObj = absHeap.getParamElem(
-									meth.getDeclaringClass(), meth,
-									ro.getRegister());
-						} else {
-							assert false : "Unhandled invoke assignment!"
-									+ stmt;
-						}
 						assert sObj != null : "Fails to locate the right heap obj.";
 						memLocInstn.initReturnToLHS(calleeSum.getRetValue(),
 								sObj);
@@ -946,23 +935,6 @@ public class Summary {
 			}
 		}
 
-		// is this a param or local. helper function.
-		public VariableType getVarType(jq_Method meth, Register r) {
-			VariableType vt = VariableType.LOCAL_VARIABLE;
-
-			ControlFlowGraph cfg = meth.getCFG();
-			RegisterFactory rf = cfg.getRegisterFactory();
-			int numArgs = meth.getParamTypes().length;
-			for (int zIdx = 0; zIdx < numArgs; zIdx++) {
-				Register v = rf.get(zIdx);
-				if (v.equals(r)) {
-					vt = VariableType.PARAMEMTER;
-					break;
-				}
-			}
-			return vt;
-		}
-
 	};
 
 	public void setNumberCounter(int numberCounter) {
@@ -981,6 +953,8 @@ public class Summary {
 	// summaries and the corresponding constraints as a list of pairs
 	// if no callee available, return ret (size == 0)
 	public List<Pair<Summary, BoolExpr>> getSumCstPairList(Quad callsite) {
+		jq_Method caller = callsite.getMethod();
+		jq_Class clz = caller.getDeclaringClass();
 
 		List<Pair<Summary, BoolExpr>> ret = new ArrayList<Pair<Summary, BoolExpr>>();
 		// find all qualified callees and the constraints
@@ -1007,6 +981,9 @@ public class Summary {
 		} else if (opr instanceof InvokeVirtual) {
 			//assume all csts are true.
 			ret.add(new Pair(calleeSum, cst));
+			RegisterOperand ro = Invoke.getParam(callsite, 0);
+			StackObject so = getMemLocation(clz, caller, ro.getRegister());
+			absHeap.lookup(so, EpsilonFieldElem.getEpsilonFieldElem());
 			// TODO
 		} else if (opr instanceof InvokeInterface) {
 			//assume all csts are true.
@@ -1018,9 +995,36 @@ public class Summary {
 
 		return ret;
 	}
+	
+	// is this a param or local. helper function.
+	public VariableType getVarType(jq_Method meth, Register r) {
+		VariableType vt = VariableType.LOCAL_VARIABLE;
+
+		ControlFlowGraph cfg = meth.getCFG();
+		RegisterFactory rf = cfg.getRegisterFactory();
+		int numArgs = meth.getParamTypes().length;
+		for (int zIdx = 0; zIdx < numArgs; zIdx++) {
+			Register v = rf.get(zIdx);
+			if (v.equals(r)) {
+				vt = VariableType.PARAMEMTER;
+				break;
+			}
+		}
+		return vt;
+	}
 
 	// constraint instantiation: return a new instantiated expr.
 	public Expr instCst(Expr expr) {
+		return null;
+	}
+	
+	public StackObject getMemLocation(jq_Class clz, jq_Method meth, Register r) {
+		VariableType vt = getVarType(meth, r);
+		if(vt == VariableType.LOCAL_VARIABLE) {
+			return absHeap.getLocalVarElem(clz, meth, r);
+		} else if(vt == VariableType.PARAMEMTER) {
+			return absHeap.getParamElem(clz, meth, r);
+		}
 		return null;
 	}
 
