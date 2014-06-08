@@ -963,6 +963,9 @@ public class Summary {
 		jq_Method callee = Invoke.getMethod(callsite).getMethod();
 		Operator opr = callsite.getOperator();
 		Summary calleeSum = SummariesEnv.v().getSummary(callee);
+		//FIXME: if the summary is null, return nothing.
+		if(calleeSum == null)
+			return ret;
 		BoolExpr cst = ConstraintManager.genTrue();
 
 		// trivial cases: final, private, static. We know its exactly target.
