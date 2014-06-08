@@ -75,13 +75,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void sumAnalyze() {
 
-		if (G.debug) {
+		if (G.debug) 
 			dumpCallGraph();
-			System.out.println("Root nodes: ---" + callGraph.getRoots());
-			for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
-				System.out.println("SCC List---" + scc);
-			}
-		}
 		
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
@@ -102,7 +97,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			if (visited.contains(worker))
 				continue;
 			// now just analyze once.
-			System.out.println(worker);
 			assert worker != null : "Worker can not be null";
 			if (allSuccsTerminated(worker.getSuccessors())) {
 				workOn(worker);
@@ -114,7 +108,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 			// add m's pred to worklist
 			worklist.addAll(worker.getPreds());
-			System.out.println(worker.getPreds().size());
 			for(Node pred : worker.getPreds()) {
 				assert pred != null : "Pred can not be null";
 				worklist.add(pred);
@@ -184,11 +177,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						continue;
 					else {
 						Node pdNode = methToNode.get(pred);
-						assert callGraph.getNodes().contains(pred) : "pred is not reachable";
-						System.out.println("Pred:" +callGraph.getPreds(pred));
-						System.out.println("succ:" + callGraph.getSuccs(pred));
-
-						assert pdNode != null : "Fuck" + pred;
 						cur.addPred(pdNode);
 					}
 				}
