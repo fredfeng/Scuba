@@ -9,6 +9,7 @@ import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.Solver;
+import com.microsoft.z3.Status;
 import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.domain.AccessPath;
@@ -166,4 +167,27 @@ public class ConstraintManager {
 		return null;
 	}
 	
+	/**
+	 * Check whether expr1 and expr2 are equivalent.
+	 * @param expr1
+	 * @param expr2
+	 * @return
+	 */
+	public static boolean isEqual(BoolExpr expr1, BoolExpr expr2) {
+		assert expr1 != null : "Constraint can not be null!";
+		assert expr2 != null : "Constraint can not be null!";
+
+		try {
+			BoolExpr e1;
+			e1 = ctx.MkEq(expr1, expr2);
+			BoolExpr e2 = ctx.MkNot(e1);
+			solver.Assert(e2);
+			if(solver.Check() == Status.UNSATISFIABLE)
+				return true;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
 }
