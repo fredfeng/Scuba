@@ -983,8 +983,7 @@ public class Summary {
 			ret.add(new Pair(calleeSum, cst));
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
 			StackObject so = getMemLocation(clz, caller, ro.getRegister());
-			absHeap.lookup(so, EpsilonFieldElem.getEpsilonFieldElem());
-			// TODO
+			P2Set p2Set = absHeap.lookup(so, EpsilonFieldElem.getEpsilonFieldElem());
 		} else if (opr instanceof InvokeInterface) {
 			//assume all csts are true.
 			ret.add(new Pair(calleeSum, cst));
@@ -1030,7 +1029,6 @@ public class Summary {
 
 	/**
 	 * Given a specific method and access path o, return its constraint.
-	 * 
 	 * @return
 	 */
 	public Expr genCst() {
