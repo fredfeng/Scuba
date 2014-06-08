@@ -9,13 +9,15 @@ public class Node {
 	
 	private boolean terminated;
 	
-	List<Node> successors = new ArrayList<Node>();
+	List<Node> successors;
 	
-	List<Node> preds = new ArrayList<Node>();
+	List<Node> preds;
 
 	
 	public Node(String nodeId) {
 		id = nodeId;
+		preds = new ArrayList<Node>();
+		successors = new ArrayList<Node>();
 	}
 
 	public List<Node> getSuccessors() {

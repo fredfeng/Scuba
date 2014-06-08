@@ -78,19 +78,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (G.debug) {
 			dumpCallGraph();
 			System.out.println("Root nodes: ---" + callGraph.getRoots());
-			for (Set<jq_Method> scc : callGraph.getTopSortedSCCs())
+			for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
 				System.out.println("SCC List---" + scc);
+			}
 		}
-
+		
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
 
 		LinkedList<Node> worklist = new LinkedList<Node>();
 
-		System.out.println("total nodes: " + callGraph.getNodes());
 		for (Node methNode : repGraph.getNodes())
-			if ((methNode.getSuccessors().size() == 0))
+			if ((methNode.getSuccessors().size() == 0)){
+				assert methNode != null : "Entry can not be null";
 				worklist.add(methNode);
+			}
 
 		// foreach leaf in the callgraph. Add them to the worklist.
 		Set<Node> visited = new HashSet<Node>();
@@ -100,6 +102,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			if (visited.contains(worker))
 				continue;
 			// now just analyze once.
+			System.out.println(worker);
+			assert worker != null : "Worker can not be null";
 			if (allSuccsTerminated(worker.getSuccessors())) {
 				workOn(worker);
 				visited.add(worker);
@@ -110,6 +114,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 			// add m's pred to worklist
 			worklist.addAll(worker.getPreds());
+			System.out.println(worker.getPreds().size());
+			for(Node pred : worker.getPreds()) {
+				assert pred != null : "Pred can not be null";
+				worklist.add(pred);
+			}
 		}
 
 		if (G.debug)
@@ -125,6 +134,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private Graph collapseSCCs() {
 		Graph repGraph = new Graph();
 		int idx = 0;
+		
+		Set<jq_Method> sccs = new HashSet<jq_Method>();
+		Set<jq_Method> cgs = new HashSet<jq_Method>();
+
+		cgs.addAll(callGraph.getNodes());
+		
 		for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
 			// create a representation node for each scc.
 			idx++;
@@ -135,6 +150,20 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				methToNode.put(mb, node);
 
 			repGraph.addNode(node);
+			sccs.addAll(scc);
+		}
+		
+		//FIXME: This is a bug in chord. The total number of SCCs is not equal to
+		//the total number of reachable methods. Adding the missing methods to scc list.
+		cgs.removeAll(sccs);
+		for(jq_Method miss : cgs) {
+			idx++;
+			Node node = new Node("scc" + idx);
+			Set<jq_Method> newScc = new HashSet<jq_Method>();
+			newScc.add(miss);
+			nodeToScc.put(node, newScc);
+			sccToNode.put(newScc, node);
+			methToNode.put(miss, node);
 		}
 
 		for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
@@ -155,6 +184,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						continue;
 					else {
 						Node pdNode = methToNode.get(pred);
+						assert callGraph.getNodes().contains(pred) : "pred is not reachable";
+						System.out.println("Pred:" +callGraph.getPreds(pred));
+						System.out.println("succ:" + callGraph.getSuccs(pred));
+
+						assert pdNode != null : "Fuck" + pred;
 						cur.addPred(pdNode);
 					}
 				}
