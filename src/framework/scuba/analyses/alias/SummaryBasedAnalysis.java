@@ -2,6 +2,7 @@ package framework.scuba.analyses.alias;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -92,11 +93,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				worklist.add(methNode);
 
 		// foreach leaf in the callgraph. Add them to the worklist.
+		Set<Node> visited = new HashSet<Node>();
 		while (!worklist.isEmpty()) {
 			Node worker = worklist.poll();
+			//each node will be visited exactly once.
+			if(visited.contains(worker)) 
+				continue;
 			// now just analyze once.
-			if (allSuccsTerminated(worker.getSuccessors()))
+			if (allSuccsTerminated(worker.getSuccessors())) {
 				workOn(worker);
+				visited.add(worker);
+			}
 			// append worker to the end of the List.class
 			else
 				worklist.add(worker);
