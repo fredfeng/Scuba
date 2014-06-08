@@ -890,9 +890,9 @@ public class Summary {
 			boolean flag = false;
 			if (stmt.getOperator() instanceof RETURN_A) {
 				Operand operand = Return.getSrc(stmt);
-				if(!(operand instanceof RegisterOperand)) 
+				if (!(operand instanceof RegisterOperand))
 					return;
-				Register ret = ((RegisterOperand)operand).getRegister();
+				Register ret = ((RegisterOperand) operand).getRegister();
 				jq_Method meth = stmt.getMethod();
 				jq_Class clazz = meth.getDeclaringClass();
 				VariableType type = getVarType(meth, ret);
@@ -910,7 +910,7 @@ public class Summary {
 							+ "the return value should be contained in the heap!";
 					retValue = absHeap.getRetElem(clazz, meth, ret);
 				}
-			} else if (stmt.getOperator() instanceof RETURN_V) {
+			} else {
 				// not create RetElem for the return value
 				if (G.debug) {
 					System.out.println("Not a processable instruction!");
@@ -970,8 +970,8 @@ public class Summary {
 		jq_Method callee = Invoke.getMethod(callsite).getMethod();
 		Operator opr = callsite.getOperator();
 		Summary calleeSum = SummariesEnv.v().getSummary(callee);
-		//FIXME: if the summary is null, return nothing.
-		if(calleeSum == null)
+		// FIXME: if the summary is null, return nothing.
+		if (calleeSum == null)
 			return ret;
 		BoolExpr cst = ConstraintManager.genTrue();
 
