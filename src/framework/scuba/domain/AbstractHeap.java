@@ -606,7 +606,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -637,7 +638,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -705,7 +707,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -753,7 +756,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -808,7 +812,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -885,7 +890,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -962,7 +968,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1021,7 +1028,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1063,7 +1071,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1125,7 +1134,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1162,7 +1172,8 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		maxNumber = ret ? Math.max(maxNumber, numberCounter) : maxNumber;
+		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1256,6 +1267,7 @@ public class AbstractHeap {
 		return ret;
 	}
 
+	// TODO
 	protected boolean handleInvokeStmt(jq_Class clazz, jq_Method method,
 			int line, AbstractHeap calleeHeap, MemLocInstantiation memLocInstn,
 			BoolExpr typeCst, int numberCounter, boolean isInSCC) {
@@ -1301,11 +1313,15 @@ public class AbstractHeap {
 			}
 			if (G.debug) {
 				System.out.println("previous max number: " + maxNumber);
+				System.out.println("assigning the number: " + assgnNumber);
+				System.out.println("assigning the flag: " + assgnFlag);
 			}
-			maxNumber = ret ? Math.max(maxNumber, assgnNumber) : maxNumber;
+			assert (assgnNumber > maxNumber) : "we should increment the counter every time!";
+			maxNumber = Math.max(maxNumber, assgnNumber);
 			if (G.debug) {
 				System.out.println("new max number: " + maxNumber);
 			}
+			System.out.println(edgeSeq);
 			assert (edgeSeq.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
 					+ "error in adding edges and assigning number and flag!";
 			assert (!edgeSeq.containsKey(new Numbering(maxNumber + 1, true))) : ""
