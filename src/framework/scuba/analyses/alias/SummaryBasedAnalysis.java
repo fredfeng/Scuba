@@ -55,9 +55,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private void init() {
 		getCallGraph();
 
-		System.out.println("Total nodes in CG---------"
-				+ callGraph.getNodes().size());
-		// init \gamma here.
+		if (G.debug)
+			System.out.println("Total nodes in CG---------"
+					+ callGraph.getNodes().size());
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
 
