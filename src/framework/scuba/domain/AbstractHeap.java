@@ -1354,7 +1354,7 @@ public class AbstractHeap {
 				System.out.println("new max number: " + maxNumber);
 			}
 			System.out.println(edgeSeq);
-			assert (edgeSeq.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
+			assert (!ret || edgeSeq.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
 					+ "error in adding edges and assigning number and flag!";
 			assert (!edgeSeq.containsKey(new Numbering(maxNumber + 1, true))) : ""
 					+ "error in adding edges and assigning number and flag!";
