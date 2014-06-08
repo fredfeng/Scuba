@@ -629,6 +629,7 @@ public class AbstractHeap {
 			System.out.println(numberCounter);
 			System.out.println(maxNumber);
 		}
+		// think about Phi node, we should do assignment more than once
 		assert (numberCounter >= maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
@@ -661,7 +662,7 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -730,7 +731,7 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -779,7 +780,7 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -835,7 +836,11 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		if (G.debug) {
+			System.out.println(numberCounter);
+			System.out.println(maxNumber);
+		}
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -913,7 +918,7 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -991,7 +996,7 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -1051,7 +1056,7 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -1094,7 +1099,7 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -1157,7 +1162,7 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
@@ -1195,7 +1200,7 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
-		assert (numberCounter > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
 		maxNumber = Math.max(maxNumber, numberCounter);
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
