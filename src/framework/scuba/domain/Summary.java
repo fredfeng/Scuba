@@ -87,7 +87,7 @@ public class Summary {
 	private boolean terminated;
 
 	// numbering counter
-	protected int numberCounter = 1;
+	protected int numberCounter = 0;
 
 	// used for numbering
 	protected boolean isInSCC = false;

@@ -38,14 +38,15 @@ public class IntraProcSumAnalysis {
 		// before analyzing the CFG g of some method
 		// first retrieve the numbering counter of that summary that was
 		// maintained last time
-		numberCounter = summary.getNumberCounter();
-
 		if (G.debug) {
 			System.out
 					.println(".......retrieving the number counter for method: "
 							+ g.getMethod());
-			System.out.println("number counts to " + numberCounter);
+			System.out
+					.println("number counts to " + summary.getNumberCounter());
 		}
+		numberCounter = summary.getNumberCounter() + 1;
+
 		// create the memory locations for the parameters first
 		// this should be done ONLY once! (the first time we analyze this
 		// method, we can get the full list)
@@ -154,7 +155,7 @@ public class IntraProcSumAnalysis {
 		// strange case.
 		if (wl.size() == 0)
 			wl.add(scc.iterator().next());
-		
+
 		int counter = 0;
 
 		while (true) {
@@ -170,7 +171,7 @@ public class IntraProcSumAnalysis {
 				if (scc.contains(suc))
 					wl.add(suc);
 
-			//xinyu's algorithm: use counter to achieve O(1)
+			// xinyu's algorithm: use counter to achieve O(1)
 			if (counter == scc.size())
 				break;
 		}
