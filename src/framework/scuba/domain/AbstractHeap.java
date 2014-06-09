@@ -17,6 +17,7 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
@@ -1210,7 +1211,11 @@ public class AbstractHeap {
 
 	/* Constraint instantiation. */
 	protected BoolExpr instCst(BoolExpr cst) {
-		// TODO still need to handle virtual calls!
+		assert cst != null : "Invalid Constrait before instantiation.";
+		//return directly.
+		if(ConstraintManager.isScala(cst))
+			return cst;
+
 		BoolExpr instC = ConstraintManager.genTrue();
 		assert instC != null : "Invalid instantiated Constrait.";
 		return instC;

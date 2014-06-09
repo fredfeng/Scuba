@@ -43,10 +43,8 @@ import joeq.Compiler.Quad.Operator.Putfield;
 import joeq.Compiler.Quad.Operator.Putstatic;
 import joeq.Compiler.Quad.Operator.Return;
 import joeq.Compiler.Quad.Operator.Return.RETURN_A;
-import joeq.Compiler.Quad.Operator.Return.RETURN_V;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.QuadVisitor;
-import joeq.Compiler.Quad.QuadVisitor.EmptyVisitor;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
@@ -990,16 +988,30 @@ public class Summary {
 			}
 		} else if (opr instanceof InvokeVirtual) {
 			// assume all csts are true.
-			ret.add(new Pair(calleeSum, cst));
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
 			Register recv = ro.getRegister();
 			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
 			//receiver's static type.
 			jq_Class recvStatType = (jq_Class)recv.getType();
+			
+			//generate pt-set for the receiver.
 			StackObject so = getMemLocation(clz, caller, recv);
 			P2Set p2Set = absHeap.lookup(so,
 					EpsilonFieldElem.getEpsilonFieldElem());
-			Register r;
+			
+			assert !p2Set.isEmpty() : "Receiver's p2Set can't be empty.";
+			
+			//all dynamic targets.
+			Set<Pair<jq_Class, jq_Method>> tgtSet = SummariesEnv.v()
+					.loadInheritMeths(callee, null);
+			
+			for(Pair<jq_Class, jq_Method> pair : tgtSet) {
+				//generate constraint for each potential target.
+				cst = genCst(p2Set, pair.val1, recvStatType);
+				assert cst != null : "Invalid constaint!";
+				ret.add(new Pair(calleeSum, cst));
+			}
+
 		} else if (opr instanceof InvokeInterface) {
 			// assume all csts are true.
 			ret.add(new Pair(calleeSum, cst));
@@ -1028,11 +1040,6 @@ public class Summary {
 		return vt;
 	}
 
-	// constraint instantiation: return a new instantiated expr.
-	public Expr instCst(Expr expr) {
-		return null;
-	}
-
 	public StackObject getMemLocation(jq_Class clz, jq_Method meth, Register r) {
 		VariableType vt = getVarType(meth, r);
 		if (vt == VariableType.LOCAL_VARIABLE) {
@@ -1048,11 +1055,35 @@ public class Summary {
 	 * 
 	 * @return
 	 */
-	public Expr genCst() {
+	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT) {
 		// 1. Base case: No subtype of T override m: type(o) <= T
-
-		// 2. Inductive case:
-		return null;
+		if (!hasInherit(callee, statT)) {
+			return ConstraintManager.genSubTyping(p2Set, statT);
+		} else {
+			// 2. Inductive case: for each its *direct* subclasses,
+			// call genCst recursively.
+			BoolExpr t = ConstraintManager.genFalse();
+			for (jq_Class sub : Env.getSuccessors(statT)) {
+				BoolExpr phi = genCst(p2Set, callee, sub);
+				t = ConstraintManager.union(t, phi);
+			}
+			// do the union.
+			return ConstraintManager.union(t,
+					ConstraintManager.genEqTyping(p2Set, statT));
+		}
+	}
+	
+	/**
+	 * Check whether given method is override by any of its subclasses.
+	 * @param callee
+	 * @param statT
+	 * @param tgt
+	 * @return
+	 */
+	protected boolean hasInherit(jq_Method callee, jq_Class statT) {
+		Set<Pair<jq_Class, jq_Method>> inheritTgtSet = SummariesEnv.v()
+				.loadInheritMeths(callee, statT);
+		return inheritTgtSet.size() > 0;
 	}
 
 	public AbstractHeap getAbsHeap() {
