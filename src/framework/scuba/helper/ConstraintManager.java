@@ -145,10 +145,12 @@ public class ConstraintManager {
 			ProgramPoint point, MemLocInstantiation memLocInstn) {
 		try {
 			Set<BoolExpr> set = new HashSet<BoolExpr>();
-			if(expr.IsAdd() || expr.IsOr())
+			if(expr.IsAnd() || expr.IsOr())
 				extractTerm(expr, set);
-			else
+			else {
+				assert expr.IsEq() || expr.IsLE() : "invalid expr" + expr;
 				set.add(expr);
+			}
 			System.out.println("InstSet: " + set);
 			for (BoolExpr sub : set) {
 				if (sub.IsEq() || sub.IsLE()) {
@@ -267,7 +269,7 @@ public class ConstraintManager {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.getConstraint(ho);
 				BoolExpr newCst = intersect(orgCst,
-						lift((HeapObject) ho, typeInt, true));
+						lift((HeapObject) ho, typeInt, false));
 				b = union(b, newCst);
 			} else {
 				assert false : "Invalid abstract MemLoc." + ho;
