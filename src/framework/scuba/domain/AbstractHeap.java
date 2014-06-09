@@ -1245,8 +1245,8 @@ public class AbstractHeap {
 	/* Constraint instantiation. */
 	protected BoolExpr instCst(BoolExpr cst) {
 		assert cst != null : "Invalid Constrait before instantiation.";
-		//return directly.
-		if(ConstraintManager.isScala(cst))
+		// return directly.
+		if (ConstraintManager.isScala(cst))
 			return cst;
 
 		BoolExpr instC = ConstraintManager.genTrue();
@@ -1563,8 +1563,10 @@ public class AbstractHeap {
 					System.out.println("assigning the number: " + assgnNumber);
 					System.out.println("assigning the flag: " + assgnFlag);
 				}
-
-				assert (isInSCC || assgnNumber > maxNumber) : "we should increment the counter every time!";
+				// consider multiple callees, we cannot do the following
+				// assertion
+				// assert (isInSCC || assgnNumber > maxNumber) :
+				// "we should increment the counter every time!";
 				assert (!edges.isEmpty()) : "a number should not be assigned to no-edge!";
 				if (G.debug) {
 					System.out.println("ret2 : " + ret2);
@@ -1576,12 +1578,14 @@ public class AbstractHeap {
 				}
 				assert (maxNumber == 0 || edgeSeq.containsKey(new Numbering(
 						maxNumber, assgnFlag))) : "error in adding edges and assigning number and flag!";
-				assert (!edgeSeq
-						.containsKey(new Numbering(maxNumber + 1, true))) : ""
-						+ "error in adding edges and assigning number and flag!";
-				assert (!edgeSeq
-						.containsKey(new Numbering(maxNumber + 1, false))) : ""
-						+ "error in adding edges and assigning number and flag!";
+				// consider multiple callees, we cannot do the following
+				// assertion
+				// assert (!edgeSeq
+				// .containsKey(new Numbering(maxNumber + 1, true))) : ""
+				// + "error in adding edges and assigning number and flag!";
+				// assert (!edgeSeq
+				// .containsKey(new Numbering(maxNumber + 1, false))) : ""
+				// + "error in adding edges and assigning number and flag!";
 
 			} else {
 				assert (toAdd != null);
@@ -1611,20 +1615,25 @@ public class AbstractHeap {
 					System.out.println("new max number: " + maxNumber);
 					System.out.println(edgeSeq);
 				}
-				assert (maxNumber == 0
-						|| toAdd.containsKey(new Numbering(maxNumber, assgnFlag)) || edgeSeq
-							.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
-						+ "error in adding edges and assigning number and flag!";
-				assert (!edgeSeq
-						.containsKey(new Numbering(maxNumber + 1, true))) : ""
-						+ "error in adding edges and assigning number and flag!";
-				assert (!edgeSeq
-						.containsKey(new Numbering(maxNumber + 1, false))) : ""
-						+ "error in adding edges and assigning number and flag!";
-				assert (!toAdd.containsKey(new Numbering(maxNumber + 1, true))) : ""
-						+ "error in adding edges and assigning number and flag!";
-				assert (!toAdd.containsKey(new Numbering(maxNumber + 1, false))) : ""
-						+ "error in adding edges and assigning number and flag!";
+				// considering multiple potential callees, we cannot do this
+				// assertion
+				// assert (maxNumber == 0
+				// || toAdd.containsKey(new Numbering(maxNumber, assgnFlag)) ||
+				// edgeSeq
+				// .containsKey(new Numbering(maxNumber, assgnFlag))) : ""
+				// + "error in adding edges and assigning number and flag!";
+				// assert (!edgeSeq
+				// .containsKey(new Numbering(maxNumber + 1, true))) : ""
+				// + "error in adding edges and assigning number and flag!";
+				// assert (!edgeSeq
+				// .containsKey(new Numbering(maxNumber + 1, false))) : ""
+				// + "error in adding edges and assigning number and flag!";
+				// assert (!toAdd.containsKey(new Numbering(maxNumber + 1,
+				// true))) : ""
+				// + "error in adding edges and assigning number and flag!";
+				// assert (!toAdd.containsKey(new Numbering(maxNumber + 1,
+				// false))) : ""
+				// + "error in adding edges and assigning number and flag!";
 			}
 		}
 
