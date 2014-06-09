@@ -50,7 +50,6 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Expr;
 
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.ConstraintManager;
@@ -460,12 +459,6 @@ public class Summary {
 			// the callsite's belonging method
 			jq_Method meth = stmt.getMethod();
 			MethodOperand callee = Invoke.getMethod(stmt);
-			// check whether current callee is reachable
-			if (!Env.cg.getNodes().contains(callee.getMethod())) {
-				System.err
-						.println("Unreachable method because of missing model.");
-				return;
-			}
 			// retrieve the summaries of the potential callees
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
 			if (G.debug) {
@@ -961,7 +954,6 @@ public class Summary {
 	// summaries and the corresponding constraints as a list of pairs
 	// if no callee available, return ret (size == 0)
 	public List<Pair<Summary, BoolExpr>> getSumCstPairList(Quad callsite) {
-		System.out.println("fuck:" + Env.class2Term);
 		jq_Method caller = callsite.getMethod();
 		jq_Class clz = caller.getDeclaringClass();
 
@@ -973,7 +965,8 @@ public class Summary {
 		Operator opr = callsite.getOperator();
 		Summary calleeSum = SummariesEnv.v().getSummary(callee);
 		// FIXME: if the summary is null, return nothing.
-		if (calleeSum == null)
+		// But for interface, we need to continue.
+		if (calleeSum == null && !(opr instanceof InvokeInterface))
 			return ret;
 		BoolExpr cst = ConstraintManager.genTrue();
 
@@ -1013,23 +1006,52 @@ public class Summary {
 				// generate constraint for each potential target.
 				cst = genCst(p2Set, pair.val1, recvStatType);
 				assert cst != null : "Invalid constaint!";
-				System.out.println("Gen pt set cst1: " + callsite);
-				System.out.println("Gen pt set cst2: " + cst);
-				System.out.println("Gen pt set cst3: " + tgtSet);
-
-				ret.add(new Pair(calleeSum, cst));
+				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
+				if (dySum == null) {
+					System.err
+							.println("Unreachable method because of missing model."
+									+ pair.val1);
+					continue;
+				}
+				ret.add(new Pair(dySum, cst));
 			}
 
 		} else if (opr instanceof InvokeInterface) {
 			// assume all csts are true.
-			System.out.println(callsite);
-			assert false : "interface invoke." ;
-			ret.add(new Pair(calleeSum, cst));
+			RegisterOperand ro = Invoke.getParam(callsite, 0);
+			Register recv = ro.getRegister();
+			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
+			// receiver's static type.
+			jq_Class recvStatType = (jq_Class) ro.getType();
+
+			// generate pt-set for the receiver.
+			StackObject so = getMemLocation(clz, caller, recv);
+			P2Set p2Set = absHeap.lookup(so,
+					EpsilonFieldElem.getEpsilonFieldElem());
+
+			assert !p2Set.isEmpty() : "Receiver's p2Set can't be empty.";
+			
+			// all dynamic targets.
+			Set<Pair<jq_Class, jq_Method>> tgtSet = SummariesEnv.v()
+					.loadInheritMeths(callee, null);
+			
+			for (Pair<jq_Class, jq_Method> pair : tgtSet) {
+				// generate constraint for each potential target.
+				cst = genCst(p2Set, pair.val1, pair.val0);
+				assert cst != null : "Invalid constaint!";
+				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
+				if (dySum == null) {
+					System.err
+							.println("Unreachable method because of missing model."
+									+ pair.val1);
+					continue;
+				}
+				ret.add(new Pair(dySum, cst));
+			}
 			// TODO
 		} else {
 			assert false : "Unhandled invoke!" + callsite;
 		}
-
 		return ret;
 	}
 
@@ -1073,8 +1095,6 @@ public class Summary {
 			// 2. Inductive case: for each its *direct* subclasses,
 			// call genCst recursively.
 			BoolExpr t = ConstraintManager.genFalse();
-			System.out.println(statT + " --succ---->"
-					+ Env.getSuccessors(statT));
 			for (jq_Class sub : Env.getSuccessors(statT)) {
 				BoolExpr phi = genCst(p2Set, callee, sub);
 				t = ConstraintManager.union(t, phi);

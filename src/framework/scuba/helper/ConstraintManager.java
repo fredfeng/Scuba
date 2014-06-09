@@ -1,5 +1,10 @@
 package framework.scuba.helper;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Type;
 
@@ -8,17 +13,22 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.IntExpr;
+import com.microsoft.z3.IntNum;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Z3Exception;
 import com.microsoft.z3.enumerations.Z3_lbool;
 
+import framework.scuba.domain.AbstractHeap;
+import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.HeapObject;
+import framework.scuba.domain.InstantiatedLocSet;
+import framework.scuba.domain.MemLocInstantiation;
 import framework.scuba.domain.P2Set;
-import framework.scuba.domain.SummariesEnv;
+import framework.scuba.domain.ProgramPoint;
 
 /**
  * Class for generating/solving constraints, since right now our system can only
@@ -44,6 +54,9 @@ public class ConstraintManager {
 	static BoolExpr trueExpr;
 	
 	static BoolExpr falseExpr;
+	
+	//map from term to heapObject. for unlifting.
+	static Map<String, AccessPath> term2Ap = new HashMap<String, AccessPath>();
 	
 	public ConstraintManager() {
 		try {
@@ -93,6 +106,8 @@ public class ConstraintManager {
 			} else if (ho instanceof AccessPath) {
 				AccessPath ap = (AccessPath) ho;
 				String symbol = "v" + ap.getId();
+				//put to map for unlifting later.
+				term2Ap.put(symbol, ap);
 				Expr o = ctx.MkConst(symbol, ctx.IntSort());
 				// type(o)
 				cur = typeFun.Apply(o);
@@ -123,6 +138,63 @@ public class ConstraintManager {
 		}
 
 		return null;
+	}
+	
+	//perform unlifting and instantiation. Rule 2 in figure 10.
+	public static BoolExpr instConstaint(BoolExpr expr, AbstractHeap callerHeap,
+			ProgramPoint point, MemLocInstantiation memLocInstn) {
+		try {
+			Set<BoolExpr> set = new HashSet<BoolExpr>();
+			if(expr.IsAdd() || expr.IsOr())
+				extractTerm(expr, set);
+			else
+				set.add(expr);
+			System.out.println("InstSet: " + set);
+			for (BoolExpr sub : set) {
+				if (sub.IsEq() || sub.IsLE()) {
+					Expr term = sub.Args()[0].Args()[0];
+					//Using toString is ugly, but that's the only way i can get from Z3...
+					AccessPath ap = term2Ap.get(term.toString());
+					assert ap != null : "Fails to load access path for " + term
+							+ " in " + term2Ap;
+					assert sub.Args()[1] instanceof IntNum : "arg must be IntNum!";
+					IntNum typeInt = (IntNum) sub.Args()[1];
+					// get points-to set for term
+					InstantiatedLocSet p2Set = memLocInstn.instantiate(ap, callerHeap, point);
+					BoolExpr instSub;
+					if (sub.IsEq())
+						instSub = instEqTyping(p2Set, typeInt.Int());
+					else
+						instSub = instSubTyping(p2Set, typeInt.Int());
+
+					expr.Substitute(sub, instSub);
+				}
+			}
+			return expr;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	//given an expr, extract all its sub terms for instantiating.
+	public static void extractTerm(Expr expr, Set<BoolExpr> set) {
+        try {
+        	System.out.println("Expr: " + expr);
+			for(int i = 0; i < expr.NumArgs(); i++) {
+				assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:" + expr.Args()[i];
+				BoolExpr sub = (BoolExpr)expr.Args()[i];
+				if(sub.IsAnd() || sub.IsOr())
+					extractTerm(sub, set);
+				else {
+					set.add(sub);
+				}
+			}
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	//A and B.
@@ -183,6 +255,40 @@ public class ConstraintManager {
 			BoolExpr orgCst = p2Set.getConstraint(ho);
 			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, true));
 			b = union(b, newCst);
+		}
+		return b;
+	}
+	
+	// instantiate subtyping constraint by term.
+	public static BoolExpr instSubTyping(InstantiatedLocSet p2Set, int typeInt) {
+		BoolExpr b = genFalse();
+		assert typeInt > 0 : "Invalid type int.";
+		for (AbstractMemLoc ho : p2Set.getAbstractMemLocs()) {
+			if (ho instanceof HeapObject) {
+				BoolExpr orgCst = p2Set.getConstraint(ho);
+				BoolExpr newCst = intersect(orgCst,
+						lift((HeapObject) ho, typeInt, true));
+				b = union(b, newCst);
+			} else {
+				assert false : "Invalid abstract MemLoc." + ho;
+			}
+		}
+		return b;
+	}
+
+	// instantiate equality typing constraint by term.
+	public static BoolExpr instEqTyping(InstantiatedLocSet p2Set, int typeInt) {
+		BoolExpr b = genFalse();
+		assert typeInt > 0 : "Invalid type int.";
+		for (AbstractMemLoc ho : p2Set.getAbstractMemLocs()) {
+			if (ho instanceof HeapObject) {
+				BoolExpr orgCst = p2Set.getConstraint(ho);
+				BoolExpr newCst = intersect(orgCst,
+						lift((HeapObject) ho, typeInt, true));
+				b = union(b, newCst);
+			} else {
+				assert false : "Invalid abstract MemLoc." + ho;
+			}
 		}
 		return b;
 	}

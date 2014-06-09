@@ -1,12 +1,18 @@
 package test.interproc;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.IntExpr;
+import com.microsoft.z3.IntNum;
 import com.microsoft.z3.Solver;
+import com.microsoft.z3.StringSymbol;
 import com.microsoft.z3.Z3Exception;
+import com.microsoft.z3.enumerations.Z3_lbool;
 
 public class TestZ3 {
 
@@ -57,6 +63,9 @@ public class TestZ3 {
 	        BoolExpr lt = ctx.MkLe(to, ctx.MkInt("5"));
 	        
 	        BoolExpr sim2 = ctx.MkOr(new BoolExpr[] { eq3, lt });
+	        
+	        BoolExpr sim3 = ctx.MkAnd(new BoolExpr[] { eq3, sim2 });
+
 
 			System.out.println(sim2);
 			System.out.println(sim2.Simplify());
@@ -79,11 +88,66 @@ public class TestZ3 {
 					+ eq3.BoolValue().equals(clone.BoolValue()));
 			
 			System.out.println("Bool:" + eq3.BoolValue().toInt());
+			
+
+			System.out.println("Check equivalent-------------");
+	        BoolExpr a = (BoolExpr)ctx.MkConst("A", ctx.BoolSort());
+	        BoolExpr b = (BoolExpr)ctx.MkConst("B", ctx.BoolSort());
+	        BoolExpr e1 = ctx.MkOr(new BoolExpr[]{a,b});
+	        BoolExpr e2 = ctx.MkAnd(new BoolExpr[] {e1, a});
+	        
+	        BoolExpr e3 = ctx.MkEq(a, e2);
+	        BoolExpr e4 = ctx.MkNot(e3);
+	        solver.Assert(e4);
+	        System.out.println(solver.Check());
+	        
+	        System.out.println(trueExpr.BoolValue() == Z3_lbool.Z3_L_TRUE);
+	        System.out.println(falseExpr.BoolValue() == Z3_lbool.Z3_L_FALSE);
+	        
+	        //test substitute.
+	        System.out.println("Test substitution..." + sim3);
+	        for(int i = 0; i < sim3.NumArgs(); i++) 
+	        	System.out.println(sim3.Args()[i]);
+	        
+	        System.out.println("Sub:" + sim3.Substitute(lt, trueExpr));
+	        
+	        System.out.println("Extracting..." + sim3);
+	        Set<Expr> set = new HashSet<Expr>();
+	        extractTerm(sim3, set);
+	        System.out.println("Set: " + set);
+
 
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	void extractTerm(Expr expr, Set<Expr> set) {
+        try {
+			for(int i = 0; i < expr.NumArgs(); i++) {
+				Expr sub = expr.Args()[i];
+				if(sub.IsAnd() || sub.IsOr())
+					extractTerm(sub, set);
+				else {
+					Expr o = sub.Args()[0].Args()[0];
+					System.out.println("Term: " + sub);
+					System.out.println("Term: " + o.toString()
+							+ ":::" + sub.Args()[0] + "||" + sub.Args()[1]
+							+ "-->" + ((IntNum) sub.Args()[1]).Int());
+
+					set.add(sub);
+				}
+
+			}
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	//prove (A or B) and A  = A
+	boolean checkEq(Expr expr1, Expr expr2) {
+		return expr1.equals(expr2);
 	}
 
 }

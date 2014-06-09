@@ -1249,9 +1249,10 @@ public class AbstractHeap {
 		// return directly.
 		if (ConstraintManager.isScala(cst))
 			return cst;
-		
+
 		System.out.println("Inst CST:" + cst);
-		BoolExpr instC = ConstraintManager.instConstaint(cst, this);
+		BoolExpr instC = ConstraintManager.instConstaint(cst, callerHeap,
+				point, memLocInstn);
 		assert instC != null : "Invalid instantiated Constrait.";
 		return instC;
 	}

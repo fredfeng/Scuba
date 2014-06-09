@@ -1,6 +1,6 @@
 package test.interproc;
 
-//Example to demo subtyping.
+//Example to demo interface invoke.
 public class TestInter4 {
 
 	public static void main(String[] args) {
@@ -9,6 +9,9 @@ public class TestInter4 {
 
 	public void run() {
 		X y = this.foo();
+		
+		I1 i = new Y();
+		i.boo();
 	}
 
 	public  X foo() {
@@ -19,5 +22,18 @@ public class TestInter4 {
 	class X {
 
 	}
+	
+	class Y implements I1, I2{
+		public void boo() {
+			
+		}
+	}
+	
+	interface I1 {
+		public void boo();
+	}
 
+	interface I2 extends I1 {
+		public void boo();
+	}
 }
