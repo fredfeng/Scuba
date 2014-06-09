@@ -64,6 +64,8 @@ import framework.scuba.helper.G;
  */
 public class Summary {
 
+	public int times = 0;
+
 	private jq_Method method;
 
 	private AbstractHeap absHeap;
@@ -294,7 +296,7 @@ public class Summary {
 		public void visitALoad(Quad stmt) {
 			// TODO
 			Summary.aloadCnt++;
-			if (G.debug) {
+			if (G.debug1) {
 				System.out.println("handling ALoad inst with number "
 						+ numberCounter);
 				System.out.println("is in SCC: " + isInSCC);
@@ -312,9 +314,10 @@ public class Summary {
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						rhs.getRegister(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
-				if (G.debug) {
+				if (G.debug1) {
 					System.out.println("boolean result: " + flag);
 				}
+
 			} else {
 				if (G.debug) {
 					System.out.println("Not a processable instruction!");
@@ -327,7 +330,7 @@ public class Summary {
 			// TODO
 			Summary.astoreCnt++;
 			jq_Method meth = stmt.getMethod();
-			if (G.debug) {
+			if (G.debug1) {
 				System.out.println("handling AStore inst with number "
 						+ numberCounter);
 				System.out.println("is in SCC: " + isInSCC);
@@ -344,7 +347,7 @@ public class Summary {
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						rhs.getRegister(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
-				if (G.debug) {
+				if (G.debug1) {
 					System.out.println("boolean result: " + flag);
 				}
 			} else {
@@ -384,7 +387,7 @@ public class Summary {
 		public void visitGetfield(Quad stmt) {
 			// TODO
 			FieldOperand field = Getfield.getField(stmt);
-			if (G.debug) {
+			if (G.debug1) {
 				System.out.println("handling GetField inst with number "
 						+ numberCounter);
 				System.out.println("is in SCC: " + isInSCC);
@@ -404,7 +407,7 @@ public class Summary {
 						meth, lhs.getRegister(), lvt, rhsBase.getRegister(),
 						field.getField(), rvt, numberCounter, isInSCC);
 				absHeap.markChanged(flag);
-				if (G.debug) {
+				if (G.debug1) {
 					System.out.println("boolean result: " + flag);
 				}
 			} else {
@@ -418,7 +421,7 @@ public class Summary {
 		public void visitGetstatic(Quad stmt) {
 			// TODO
 			FieldOperand field = Getstatic.getField(stmt);
-			if (G.debug) {
+			if (G.debug1) {
 				System.out.println("handling GetStatic inst with number "
 						+ numberCounter);
 				System.out.println("is in SCC: " + isInSCC);
@@ -434,7 +437,7 @@ public class Summary {
 						meth.getDeclaringClass(), meth, lhs.getRegister(), lvt,
 						encloseClass, field.getField(), numberCounter, isInSCC);
 				absHeap.markChanged(flag);
-				if (G.debug) {
+				if (G.debug1) {
 					System.out.println("boolean result: " + flag);
 				}
 			} else {
@@ -495,22 +498,22 @@ public class Summary {
 				// jump to the next callee
 				assert (calleeSum != null) : "we should only get the summary for callees"
 						+ " which have been analyzed at least once!";
-				if (G.debug) {
+				if (G.debug1) {
 					System.out.println(calleeSum);
 				}
-				if (G.debug) {
+				if (G.debug1) {
 					System.out.println("trying to instantiate method: "
 							+ calleeSum.getMethod());
 				}
 				if (calleeSum == null) {
-					if (G.debug) {
+					if (G.debug1) {
 						System.out
 								.println("but the method has never been analyzed!");
 						System.out.println("just come to the next method.");
 					}
 					continue;
 				}
-				if (G.debug) {
+				if (G.debug1) {
 					System.out
 							.println("the callee has a summary! begin to instantiate.");
 				}
@@ -992,22 +995,22 @@ public class Summary {
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
 			Register recv = ro.getRegister();
 			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
-			//receiver's static type.
-			jq_Class recvStatType = (jq_Class)ro.getType();
-			
-			//generate pt-set for the receiver.
+			// receiver's static type.
+			jq_Class recvStatType = (jq_Class) ro.getType();
+
+			// generate pt-set for the receiver.
 			StackObject so = getMemLocation(clz, caller, recv);
 			P2Set p2Set = absHeap.lookup(so,
 					EpsilonFieldElem.getEpsilonFieldElem());
-			
+
 			assert !p2Set.isEmpty() : "Receiver's p2Set can't be empty.";
-			
-			//all dynamic targets.
+
+			// all dynamic targets.
 			Set<Pair<jq_Class, jq_Method>> tgtSet = SummariesEnv.v()
 					.loadInheritMeths(callee, null);
-			
-			for(Pair<jq_Class, jq_Method> pair : tgtSet) {
-				//generate constraint for each potential target.
+
+			for (Pair<jq_Class, jq_Method> pair : tgtSet) {
+				// generate constraint for each potential target.
 				cst = genCst(p2Set, pair.val1, recvStatType);
 				assert cst != null : "Invalid constaint!";
 				System.out.println("Gen pt set cst1: " + callsite);
@@ -1070,7 +1073,8 @@ public class Summary {
 			// 2. Inductive case: for each its *direct* subclasses,
 			// call genCst recursively.
 			BoolExpr t = ConstraintManager.genFalse();
-			System.out.println(statT + " --succ---->" + Env.getSuccessors(statT));
+			System.out.println(statT + " --succ---->"
+					+ Env.getSuccessors(statT));
 			for (jq_Class sub : Env.getSuccessors(statT)) {
 				BoolExpr phi = genCst(p2Set, callee, sub);
 				t = ConstraintManager.union(t, phi);
@@ -1080,9 +1084,10 @@ public class Summary {
 					ConstraintManager.genEqTyping(p2Set, statT));
 		}
 	}
-	
+
 	/**
 	 * Check whether given method is override by any of its subclasses.
+	 * 
 	 * @param callee
 	 * @param statT
 	 * @param tgt

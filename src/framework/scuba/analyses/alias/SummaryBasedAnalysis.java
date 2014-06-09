@@ -227,17 +227,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private boolean analyze(jq_Method m) {
 		accessSeq.add(m);
 		if (G.debug) {
-			System.out.println("\n\n analyzing method " + G.count + " " + m);
+			System.out.println("=======================" + G.count
+					+ "=======================");
+			System.out.println("\n\n analyzing method " + m);
+
 		}
 		G.count++;
-		if (G.count > 2000) {
+		if (G.count > G.number) {
 			G.debug = true;
 		}
 		// do interproc
-		if (G.debug) {
-
-			System.out.println("+++++++++++++++++   " + G.count
-					+ "   +++++++++++++++++");
+		if (G.debug1) {
 			System.out
 					.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 			System.out.println("Handling the method: ");
@@ -304,7 +304,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				break;
 		}
 	}
-	
+
 	/* This method will be invoked by Chord automatically. */
 	public void run() {
 		domM = (DomM) ClassicProject.g().getTrgt("M");
@@ -313,7 +313,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relIM = (ProgramRel) ClassicProject.g().getTrgt("IM");
 		relMM = (ProgramRel) ClassicProject.g().getTrgt("MM");
 		relCHA = (ProgramRel) ClassicProject.g().getTrgt("cha");
-		//pass relCha ref to SummariesEnv
+		// pass relCha ref to SummariesEnv
 		SummariesEnv.v().setCHA(relCHA);
 		Env.buildClassHierarchy();
 

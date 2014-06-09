@@ -8,7 +8,12 @@ package framework.scuba.helper;
  */
 public class G {
 
-	public static boolean debug = true;
+	public static boolean debug = false;
+	
+	public static int number = 2400;
+	
+	// more dbg info
+	public static boolean debug1 = false;
 
 	public static boolean dump = false;
 
