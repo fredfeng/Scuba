@@ -31,6 +31,6 @@ public class NormalFieldElem extends FieldElem {
 
 	@Override
 	public String toString() {
-		return "[F]" + field.getName();
+		return "[F]" + field;
 	}
 }

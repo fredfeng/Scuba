@@ -105,7 +105,7 @@ public class Summary {
 
 	public Summary(jq_Method meth) {
 		method = meth;
-		absHeap = new AbstractHeap();
+		absHeap = new AbstractHeap(meth);
 		methCallToMemLocInstantiation = new HashMap<Pair<Quad, jq_Method>, MemLocInstantiation>();
 		if (G.debug)
 			this.dumpSummary4Method(meth);
@@ -906,9 +906,9 @@ public class Summary {
 				// just set the retValue of this summary
 				// maybe this is not necessary?
 				if (retValue == null) {
-					assert (absHeap.contains(new RetElem(clazz, meth, ret))) : ""
+					assert (absHeap.contains(new RetElem(clazz, meth))) : ""
 							+ "the return value should be contained in the heap!";
-					retValue = absHeap.getRetElem(clazz, meth, ret);
+					retValue = absHeap.getRetElem(clazz, meth);
 				}
 			} else {
 				// not create RetElem for the return value
@@ -994,8 +994,8 @@ public class Summary {
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
 			Register recv = ro.getRegister();
 			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
-			//receiver's static type.
-			jq_Class recvStatType = (jq_Class)recv.getType();
+			// receiver's static type.
+			jq_Class recvStatType = (jq_Class) recv.getType();
 			StackObject so = getMemLocation(clz, caller, recv);
 			P2Set p2Set = absHeap.lookup(so,
 					EpsilonFieldElem.getEpsilonFieldElem());

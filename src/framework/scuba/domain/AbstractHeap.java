@@ -26,7 +26,7 @@ import framework.scuba.helper.P2SetHelper;
 public class AbstractHeap {
 
 	// the method whose heap is represented by this AbstractHeap
-	// final protected jq_Method method;
+	final protected jq_Method method;
 
 	// heap is a translation from heap, which is used to dump the
 	// topology of the abstract heap
@@ -88,11 +88,16 @@ public class AbstractHeap {
 		// currently we are only use the first three
 	}
 
-	public AbstractHeap() {
+	public AbstractHeap(jq_Method method) {
 		// this.method = method;
 		heap = new HashSet<AbstractMemLoc>();
 		heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
+		this.method = method;
+	}
+
+	public jq_Method getMethod() {
+		return this.method;
 	}
 
 	public void validate() {
@@ -571,7 +576,6 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("we are really hanlding!");
 		}
-		boolean ret = false;
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
 				+ "for Assign stmt, LHS must be LocalElem (or ParamElem, we HAVE NOT fully fixed SSA";
@@ -620,7 +624,10 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		ret = weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
+		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, p2Setv2, numberCounter,
+				isInSCC);
+		boolean ret = ret1.val0;
+		boolean ret2 = ret1.val1;
 
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
@@ -631,7 +638,7 @@ public class AbstractHeap {
 		}
 		// think about Phi node, we should do assignment more than once
 		assert (numberCounter >= maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -644,7 +651,6 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("we are really hanlding!");
 		}
-		boolean ret = false;
 
 		// assert (memLocFactory.containsKey(right)) :
 		// "AllocElem (or ArrayAllocElem)"
@@ -657,13 +663,16 @@ public class AbstractHeap {
 		// assert !heapObjectsToP2Set.containsKey(pair) :
 		// "we cannot re-put ArrayAllocElem into the map!";
 
-		ret = weakUpdate(pair, p2Set, numberCounter, isInSCC);
+		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, p2Set, numberCounter,
+				isInSCC);
+		boolean ret = ret1.val0;
+		boolean ret2 = ret1.val1;
 
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -679,8 +688,6 @@ public class AbstractHeap {
 			Register left, VariableType leftVType, Register rightBase,
 			jq_Field rightField, VariableType rightBaseVType,
 			int numberCounter, boolean isInSCC) {
-
-		boolean ret = false;
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for non-static load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -726,13 +733,16 @@ public class AbstractHeap {
 
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
-		ret = weakUpdate(pair, p2Setv2f, numberCounter, isInSCC);
+		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, p2Setv2f, numberCounter,
+				isInSCC);
+		boolean ret = ret1.val0;
+		boolean ret2 = ret1.val1;
 
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -747,7 +757,6 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("we are really hanlding!");
 		}
-		boolean ret = false;
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for array load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -776,12 +785,16 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		ret = weakUpdate(pair, p2Setv2i, numberCounter, isInSCC);
+		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, p2Setv2i, numberCounter,
+				isInSCC);
+		boolean ret = ret1.val0;
+		boolean ret2 = ret1.val1;
+
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -832,7 +845,10 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		ret = weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
+		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, p2Setv2, numberCounter,
+				isInSCC);
+		ret = ret1.val0;
+		boolean ret2 = ret1.val1;
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
@@ -841,7 +857,7 @@ public class AbstractHeap {
 			System.out.println(maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -902,6 +918,7 @@ public class AbstractHeap {
 		assert (p2Setv1 != null) : "get a null p2 set!";
 		assert (p2Setv2 != null) : "get a null p2 set!";
 
+		boolean ret2 = false;
 		IndexFieldElem index = IndexFieldElem.getIndexFieldElem();
 		for (HeapObject obj : p2Setv1.getHeapObjects()) {
 			BoolExpr cst = p2Setv1.getConstraint(obj);
@@ -911,15 +928,17 @@ public class AbstractHeap {
 
 			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 					obj, index);
-
-			ret = weakUpdate(pair, projP2Set, numberCounter, isInSCC) | ret;
+			Pair<Boolean, Boolean> ret1 = weakUpdate(pair, projP2Set,
+					numberCounter, isInSCC);
+			ret = ret | ret1.val0;
+			ret2 = ret2 | ret1.val1;
 		}
 
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -975,6 +994,7 @@ public class AbstractHeap {
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
 		boolean ret = false;
+		boolean ret2 = false;
 
 		P2Set p2Setv1 = lookup(v1, EpsilonFieldElem.getEpsilonFieldElem());
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
@@ -991,13 +1011,16 @@ public class AbstractHeap {
 			Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 					obj, f);
 
-			ret = weakUpdate(pair, projP2Set, numberCounter, isInSCC) | ret;
+			Pair<Boolean, Boolean> ret1 = weakUpdate(pair, projP2Set,
+					numberCounter, isInSCC);
+			ret = ret | ret1.val0;
+			ret2 = ret2 | ret1.val1;
 		}
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1052,12 +1075,15 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		ret = weakUpdate(pair, p2Setv2, numberCounter, isInSCC);
+		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, p2Setv2, numberCounter,
+				isInSCC);
+		ret = ret1.val0;
+		boolean ret2 = ret1.val1;
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1094,13 +1120,15 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v, EpsilonFieldElem.getEpsilonFieldElem());
 
-		ret = weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()),
-				numberCounter, isInSCC);
+		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, new P2Set(allocT,
+				ConstraintManager.genTrue()), numberCounter, isInSCC);
+		boolean ret2 = ret1.val1;
+		ret = ret1.val0;
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1146,8 +1174,10 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v, EpsilonFieldElem.getEpsilonFieldElem());
 		// update the LHS's P2Set weakly
-		ret = weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()),
-				numberCounter, isInSCC) | ret;
+		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, new P2Set(allocT,
+				ConstraintManager.genTrue()), numberCounter, isInSCC);
+		boolean ret2 = ret1.val1;
+		ret = ret1.val0;
 
 		// handling fields of the ArrayAllocElem for multi-array with dim > 1
 		for (int i = dim; i >= 2; i--) {
@@ -1163,7 +1193,7 @@ public class AbstractHeap {
 			System.out.println("previous max number: " + maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1190,18 +1220,21 @@ public class AbstractHeap {
 		}
 
 		// create the return value elem
-		RetElem retElem = getRetElem(clazz, method, retValue);
+		RetElem retElem = getRetElem(clazz, method);
 		// update the p2set of the return value by the p2set of the local/param
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				retElem, EpsilonFieldElem.getEpsilonFieldElem());
 		P2Set p2Set = lookup(v, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Set != null) : "get a null p2set!";
-		ret = weakUpdate(pair, p2Set, numberCounter, isInSCC);
+		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, p2Set, numberCounter,
+				isInSCC);
+		ret = ret1.val0;
+		boolean ret2 = ret1.val1;
 		if (G.debug) {
 			System.out.println("previous max number: " + maxNumber);
 		}
 		assert (isInSCC || numberCounter > maxNumber) : "we should increment the counter every time!";
-		maxNumber = Math.max(maxNumber, numberCounter);
+		maxNumber = ret2 ? Math.max(maxNumber, numberCounter) : maxNumber;
 		if (G.debug) {
 			System.out.println("new max number: " + maxNumber);
 		}
@@ -1216,11 +1249,18 @@ public class AbstractHeap {
 		return instC;
 	}
 
-	protected boolean instantiateEdges(Set<HeapEdge> edges,
-			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
-			ProgramPoint point, BoolExpr typeCst, int numberCounter,
-			boolean isInSCC) {
+	protected Pair<Boolean, Boolean> instantiateEdgesForRecursiveCall(
+			Set<HeapEdge> edges, MemLocInstantiation memLocInstn,
+			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst,
+			int numberCounter, boolean isInSCC,
+			Map<Numbering, Set<HeapEdge>> toAdd) {
+
+		if (G.debug) {
+			System.out.println("I am in a self-recursive call!");
+		}
+
 		boolean ret = false;
+		boolean ret2 = false;
 
 		for (HeapEdge edge : edges) {
 
@@ -1239,6 +1279,10 @@ public class AbstractHeap {
 
 			// instantiate the calleeCst
 			BoolExpr instnCst = instCst(calleeCst);
+
+			if (G.debug) {
+				System.out.println(calleeHeap.getMethod());
+			}
 			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
 					point);
 			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
@@ -1264,9 +1308,9 @@ public class AbstractHeap {
 			if (instnSrc == null || instnDst == null) {
 				continue;
 			}
-			calleeHeap.dumpHeapNumberingToFile("$callee");
-			this.dumpHeapNumberingToFile("$caller");
-			assert (!instnSrc.isEmpty()) : "instnSrc cannot be empty!";
+
+			// it is possible to be empty
+			// assert (!instnSrc.isEmpty()) : "instnSrc cannot be empty!";
 			// it is possible the dst has no location in the caller to
 			// instantiate to, just think about the native call in the caller
 			// assert (!instnDst.isEmpty()) : "instnDst cannot be empty!";
@@ -1289,13 +1333,117 @@ public class AbstractHeap {
 
 					Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 							newSrc, field);
-					ret = weakUpdate(pair, new P2Set(newDst1, cst),
-							numberCounter, isInSCC) | ret;
+					Pair<Boolean, Boolean> ret1 = weakUpdateForRecursiveCall(
+							pair, new P2Set(newDst1, cst), numberCounter,
+							isInSCC, toAdd);
+					ret = ret | ret1.val0;
+					ret2 = ret2 | ret1.val1;
 				}
 			}
 		}
 
-		return ret;
+		return new Pair<Boolean, Boolean>(ret, ret2);
+	}
+
+	protected Pair<Boolean, Boolean> instantiateEdges(Set<HeapEdge> edges,
+			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
+			ProgramPoint point, BoolExpr typeCst, int numberCounter,
+			boolean isInSCC) {
+		boolean ret = false;
+		boolean ret2 = false;
+
+		for (HeapEdge edge : edges) {
+
+			AbstractMemLoc src = edge.getSrc();
+			HeapObject dst = edge.getDst();
+			FieldElem field = edge.getField();
+
+			assert (src != null && dst != null && field != null) : "nulls!";
+			assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
+			assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
+					+ "the p2 set should contain the destination of the edge!";
+
+			BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(
+					dst);
+			assert (calleeCst != null) : "constraint is null!";
+
+			// instantiate the calleeCst
+			BoolExpr instnCst = instCst(calleeCst);
+
+			if (G.debug) {
+				System.out.println(calleeHeap.getMethod());
+			}
+			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
+					point);
+			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
+					point);
+			if (G.debug) {
+				System.out.println("instantiate the edge: " + edge);
+				System.out.println("the source of the edge is: " + src);
+				System.out.println("the field is : " + field);
+				System.out.println("the destination is: " + dst);
+				System.out.println("the source is instantiated to: "
+						+ instnSrc.getInstnLocSet());
+				System.out.println("the destination is instantiated to: "
+						+ instnDst.getInstnLocSet());
+			}
+			assert (instnDst != null) : "instantiation of dst cannot be null!";
+			if (instnSrc == null) {
+				assert (src instanceof RetElem) : "only return value in the callee"
+						+ " is allowed not having an instantiated location in the callee";
+			}
+			// if meeting a return value in the callee mapped to nothing in the
+			// caller, e.g. v.foo(a,b) with a LHS
+			// just jump to the next edge and do not instantiate this edge
+			if (instnSrc == null || instnDst == null) {
+				continue;
+			}
+
+			if (G.debug) {
+				calleeHeap.dumpHeapNumberingToFile("$callee");
+				this.dumpHeapNumberingToFile("$caller");
+			}
+			// it is possible that the src has no location in the caller's heap
+			// to instantiate
+			// assert (!instnSrc.isEmpty()) : "instnSrc cannot be empty!";
+			// it is possible the dst has no location in the caller to
+			// instantiate to, just think about the native call in the caller
+			// assert (!instnDst.isEmpty()) : "instnDst cannot be empty!";
+
+			for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
+				// following is just for creating the node in the heapMapping
+				// because it is possible that the dst is instantiated to
+				// nothing, which leads to the src not created in the heap
+				// Pair<AbstractMemLoc, FieldElem> pair = new
+				// Pair<AbstractMemLoc, FieldElem>(
+				// newSrc, field);
+				// weakUpdate(pair, new P2Set(), numberCounter, isInSCC);
+
+				for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
+					assert (newDst instanceof HeapObject) : ""
+							+ "dst should be instantiated as a heap object!";
+					HeapObject newDst1 = (HeapObject) newDst;
+
+					assert (newDst1 != null) : "null!";
+
+					BoolExpr cst1 = instnSrc.getConstraint(newSrc);
+					BoolExpr cst2 = instnDst.getConstraint(newDst);
+					BoolExpr cst = ConstraintManager.intersect(
+							ConstraintManager.intersect(cst1, cst2),
+							ConstraintManager.intersect(instnCst, typeCst));
+
+					assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
+					Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+							newSrc, field);
+					Pair<Boolean, Boolean> ret1 = weakUpdate(pair, new P2Set(
+							newDst1, cst), numberCounter, isInSCC);
+					ret = ret | ret1.val0;
+					ret2 = ret2 | ret1.val1;
+				}
+			}
+		}
+
+		return new Pair<Boolean, Boolean>(ret, ret2);
 	}
 
 	// TODO
@@ -1303,10 +1451,50 @@ public class AbstractHeap {
 			int line, AbstractHeap calleeHeap, MemLocInstantiation memLocInstn,
 			BoolExpr typeCst, int numberCounter, boolean isInSCC) {
 		boolean ret = false;
+		boolean ret2 = false;
 		// record the program point in the caller so that we can use this for
 		// allocation site naming (heap naming)
 		ProgramPoint point = Env.getProgramPoint(clazz, method, line);
 		Map<Numbering, Set<HeapEdge>> calleeEdgeSeq = calleeHeap.getEdgeSeq();
+
+		// this is used for recursive call
+		Map<Numbering, Set<HeapEdge>> toAdd = null;
+		boolean isRecursive = false;
+		if (this.equals(calleeHeap)) {
+			toAdd = new TreeMap<Numbering, Set<HeapEdge>>(
+					new Comparator<Numbering>() {
+						public int compare(Numbering first, Numbering second) {
+							if (first.getNumber() < second.getNumber()) {
+								return -1;
+							} else if (first.getNumber() == second.getNumber()) {
+								return 0;
+							} else {
+								return 1;
+							}
+						}
+					});
+			isRecursive = true;
+		}
+		// before instantiating all the edges in the heap
+		// because it is possible there are some isolated nodes in the callee's
+		// heap, we should first make sure that all the nodes will be
+		// instantiated as a location in the caller's heap
+		for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
+				.keySet()) {
+			AbstractMemLoc loc = pair.val0;
+			FieldElem field = pair.val1;
+			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
+					this, point);
+			if (G.debug) {
+				System.out.println("I am pre-instantiate the location: " + loc);
+
+			}
+			assert (instnMemLocSet != null);
+			for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
+				weakUpdate(new Pair<AbstractMemLoc, FieldElem>(loc1, field),
+						new P2Set(), -1, false);
+			}
+		}
 
 		// begin to add the edges
 		for (Numbering n : calleeEdgeSeq.keySet()) {
@@ -1330,36 +1518,102 @@ public class AbstractHeap {
 				System.out.println("edges: " + edges);
 			}
 
-			if (edgesAreInSCC) {
-				// do a fix-point
-				boolean go = true;
-				while (go) {
-					go = instantiateEdges(edges, memLocInstn, calleeHeap,
-							point, typeCst, assgnNumber, assgnFlag);
-					ret = go | ret;
+			if (!isRecursive) {
+				if (edgesAreInSCC) {
+					// do a fix-point
+					boolean go = true;
+					while (go) {
+						Pair<Boolean, Boolean> ret1 = instantiateEdges(edges,
+								memLocInstn, calleeHeap, point, typeCst,
+								assgnNumber, assgnFlag);
+						go = ret1.val0;
+						ret = ret | go;
+						ret2 = ret2 | ret1.val1;
+					}
+				} else {
+					Pair<Boolean, Boolean> ret1 = instantiateEdges(edges,
+							memLocInstn, calleeHeap, point, typeCst,
+							assgnNumber, assgnFlag);
+					ret = ret1.val0;
+					ret2 = ret1.val1;
 				}
+
+				if (G.debug) {
+					System.out.println("previous max number: " + maxNumber);
+					System.out.println("assigning the number: " + assgnNumber);
+					System.out.println("assigning the flag: " + assgnFlag);
+				}
+				
+				assert (isInSCC || assgnNumber > maxNumber) : "we should increment the counter every time!";
+				assert (!edges.isEmpty()) : "a number should not be assigned to no-edge!";
+				maxNumber = ret2 ? Math.max(maxNumber, assgnNumber) : maxNumber;
+				if (G.debug) {
+					System.out.println("new max number: " + maxNumber);
+					System.out.println(edgeSeq);
+				}
+				assert (maxNumber == 0 || edgeSeq.containsKey(new Numbering(
+						maxNumber, assgnFlag))) : "error in adding edges and assigning number and flag!";
+				assert (!edgeSeq
+						.containsKey(new Numbering(maxNumber + 1, true))) : ""
+						+ "error in adding edges and assigning number and flag!";
+				assert (!edgeSeq
+						.containsKey(new Numbering(maxNumber + 1, false))) : ""
+						+ "error in adding edges and assigning number and flag!";
+
 			} else {
-				ret = instantiateEdges(edges, memLocInstn, calleeHeap, point,
-						typeCst, assgnNumber, assgnFlag) | ret;
+				assert (toAdd != null);
+				if (edgesAreInSCC) {
+					// do a fix-point
+					boolean go = true;
+					while (go) {
+						Pair<Boolean, Boolean> ret1 = instantiateEdgesForRecursiveCall(
+								edges, memLocInstn, calleeHeap, point, typeCst,
+								assgnNumber, assgnFlag, toAdd);
+						go = ret1.val0;
+						ret = ret | go;
+						ret2 = ret2 | ret1.val1;
+					}
+
+				} else {
+					Pair<Boolean, Boolean> ret1 = instantiateEdgesForRecursiveCall(
+							edges, memLocInstn, calleeHeap, point, typeCst,
+							assgnNumber, assgnFlag, toAdd);
+					ret = ret1.val0;
+					ret2 = ret1.val1;
+				}
+				assert (isInSCC || assgnNumber > maxNumber) : "we should increment the counter every time!";
+				assert (!edges.isEmpty()) : "a number should not be assigned to no-edge!";
+				maxNumber = ret2 ? Math.max(maxNumber, assgnNumber) : maxNumber;
+				if (G.debug) {
+					System.out.println("new max number: " + maxNumber);
+					System.out.println(edgeSeq);
+				}
+				assert (maxNumber == 0
+						|| toAdd.containsKey(new Numbering(maxNumber, assgnFlag)) || edgeSeq
+							.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
+						+ "error in adding edges and assigning number and flag!";
+				assert (!edgeSeq
+						.containsKey(new Numbering(maxNumber + 1, true))) : ""
+						+ "error in adding edges and assigning number and flag!";
+				assert (!edgeSeq
+						.containsKey(new Numbering(maxNumber + 1, false))) : ""
+						+ "error in adding edges and assigning number and flag!";
+				assert (!toAdd.containsKey(new Numbering(maxNumber + 1, true))) : ""
+						+ "error in adding edges and assigning number and flag!";
+				assert (!toAdd.containsKey(new Numbering(maxNumber + 1, false))) : ""
+						+ "error in adding edges and assigning number and flag!";
 			}
-			if (G.debug) {
-				System.out.println("previous max number: " + maxNumber);
-				System.out.println("assigning the number: " + assgnNumber);
-				System.out.println("assigning the flag: " + assgnFlag);
+		}
+
+		if (isRecursive) {
+			for (Numbering n : toAdd.keySet()) {
+				Set<HeapEdge> edges = edgeSeq.get(n);
+				if (edges == null) {
+					edges = new HashSet<HeapEdge>();
+					edgeSeq.put(n, edges);
+				}
+				edges.addAll(toAdd.get(n));
 			}
-			assert (assgnNumber > maxNumber) : "we should increment the counter every time!";
-			assert (!edges.isEmpty()) : "a number should not be assigned to no-edge!";
-			maxNumber = Math.max(maxNumber, assgnNumber);
-			if (G.debug) {
-				System.out.println("new max number: " + maxNumber);
-			}
-			System.out.println(edgeSeq);
-			assert (!ret || edgeSeq.containsKey(new Numbering(maxNumber, assgnFlag))) : ""
-					+ "error in adding edges and assigning number and flag!";
-			assert (!edgeSeq.containsKey(new Numbering(maxNumber + 1, true))) : ""
-					+ "error in adding edges and assigning number and flag!";
-			assert (!edgeSeq.containsKey(new Numbering(maxNumber + 1, false))) : ""
-					+ "error in adding edges and assigning number and flag!";
 		}
 
 		return ret;
@@ -1553,10 +1807,9 @@ public class AbstractHeap {
 	// if not existed, create one and put into the factory
 	// this is only used for instantiation and there might be a LocalVarElem or
 	// ParamElem with the same content
-	protected RetElem getRetElem(jq_Class clazz, jq_Method method,
-			Register retValue) {
+	protected RetElem getRetElem(jq_Class clazz, jq_Method method) {
 		// create a wrapper
-		RetElem ret = new RetElem(clazz, method, retValue);
+		RetElem ret = new RetElem(clazz, method);
 		// try to look up
 		if (memLocFactory.containsKey(ret)) {
 			return (RetElem) memLocFactory.get(ret);
@@ -1611,11 +1864,12 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	// TODO
-	// still need to check whether this returned boolean value is correct
-	protected boolean weakUpdate(Pair<AbstractMemLoc, FieldElem> pair,
-			P2Set p2Set, int numberCounter, boolean isInSCC) {
+	protected Pair<Boolean, Boolean> weakUpdateForRecursiveCall(
+			Pair<AbstractMemLoc, FieldElem> pair, P2Set p2Set,
+			int numberCounter, boolean isInSCC,
+			Map<Numbering, Set<HeapEdge>> toAdd) {
 		if (G.debug) {
+			System.out.println("I am in the weak update for recursive method!");
 			System.out.println("weak updating!");
 			System.out.println("source is: " + pair.val0);
 			System.out.println("Field elem is: " + pair.val1);
@@ -1633,21 +1887,6 @@ public class AbstractHeap {
 		// first clean up the default targets in the p2set given the pair
 		cleanup(p2Set, pair);
 
-		// // if the new p2Set is empty then return immediately
-		// if (!p2Set.isEmpty()) {
-		// // fill the fields of the abstract memory location so that we can
-		// // conveniently dump the topology of the heap
-		// if (G.debug) {
-		// System.out
-		// .println("we will add some new edge, so add the field: "
-		// + f);
-		// }
-		// src.addField(f);
-		// } else {
-		// // we should not return immediately because the heap will include
-		// // less locations in the heap
-		// return ret;
-		// }
 		src.addField(f);
 		if (G.debug) {
 			System.out.println("Adding the field " + f + " in the p2 set of "
@@ -1668,17 +1907,26 @@ public class AbstractHeap {
 		heap.add(src);
 		heap.addAll(tgts);
 
+		boolean ret1 = false;
 		// do the numbering
+		// we should add the edges even though there might be a lot of edges
+		// that are added many times, because this reflects the dependence
+		// relation of the edges
+		// for recursive call, we should use another map to temporarily store
+		// the information to avoid concurrent modification exception
 		if (!tgts.isEmpty()) {
 			Numbering wrapper = getNumbering(numberCounter, isInSCC);
-			Set<HeapEdge> edges = edgeSeq.get(wrapper);
+			Set<HeapEdge> edges = toAdd.get(wrapper);
+			// we should do this check considering the invoke and also regular
+			// operations
 			if (edges == null) {
 				edges = new HashSet<HeapEdge>();
-				edgeSeq.put(wrapper, edges);
+				toAdd.put(wrapper, edges);
 			}
 			for (HeapObject tgt : tgts) {
 				HeapEdge added = getHeapEdge(src, tgt, f);
 				edges.add(added);
+				ret1 = true;
 			}
 			// filling the reverse mapping, just for dbg and dumping
 			for (HeapEdge edge : edges) {
@@ -1694,7 +1942,91 @@ public class AbstractHeap {
 		// the KEY for weak update
 		ret = currentP2Set.join(p2Set);
 
-		return ret;
+		return new Pair<Boolean, Boolean>(ret, ret1);
+	}
+
+	// TODO
+	// still need to check whether this returned boolean value is correct
+	protected Pair<Boolean, Boolean> weakUpdate(
+			Pair<AbstractMemLoc, FieldElem> pair, P2Set p2Set,
+			int numberCounter, boolean isInSCC) {
+		if (G.debug) {
+			System.out.println("weak updating!");
+			System.out.println("source is: " + pair.val0);
+			System.out.println("Field elem is: " + pair.val1);
+			System.out.println("current p2 set is: "
+					+ heapObjectsToP2Set.get(pair));
+			System.out.println("target p2 set is: " + p2Set);
+			System.out.println("use numbering: " + numberCounter);
+			System.out.println("is in scc: " + isInSCC);
+		}
+		boolean ret = false;
+		AbstractMemLoc src = pair.val0;
+		FieldElem f = pair.val1;
+		Set<HeapObject> tgts = p2Set.getHeapObjects();
+
+		// first clean up the default targets in the p2set given the pair
+		cleanup(p2Set, pair);
+
+		src.addField(f);
+		if (G.debug) {
+			System.out.println("Adding the field " + f + " in the p2 set of "
+					+ src);
+		}
+
+		// then get the current heap given the memory location and the field
+		P2Set currentP2Set = heapObjectsToP2Set.get(pair);
+
+		if (currentP2Set == null) {
+			currentP2Set = new P2Set();
+			if (G.debug) {
+				System.out.println("I am creating the p2 set!");
+				System.out.println("src: " + src);
+				System.out.println("Field: " + f);
+			}
+			heapObjectsToP2Set.put(pair, currentP2Set);
+		}
+
+		// update the locations in the real heap graph
+		// currently we are not using this feature
+		// maybe we will use this for instantiating the memory locations
+		heap.add(src);
+		heap.addAll(tgts);
+
+		boolean ret1 = false;
+		// do the numbering
+		// we should add the edges even though there might be a lot of edges
+		// that are added many times, because this reflects the dependence
+		// relation of the edges
+		if (!tgts.isEmpty()) {
+			Numbering wrapper = getNumbering(numberCounter, isInSCC);
+			Set<HeapEdge> edges = edgeSeq.get(wrapper);
+			// we should do this check considering the invoke and also regular
+			// operations
+			if (edges == null) {
+				edges = new HashSet<HeapEdge>();
+				edgeSeq.put(wrapper, edges);
+			}
+			for (HeapObject tgt : tgts) {
+				HeapEdge added = getHeapEdge(src, tgt, f);
+				edges.add(added);
+				ret1 = true;
+			}
+			// filling the reverse mapping, just for dbg and dumping
+			for (HeapEdge edge : edges) {
+				Set<Numbering> nums = reverseEdgeSeq.get(edge);
+				if (nums == null) {
+					nums = new HashSet<Numbering>();
+					reverseEdgeSeq.put(edge, nums);
+				}
+				nums.add(getNumbering(numberCounter, isInSCC));
+			}
+		}
+
+		// the KEY for weak update
+		ret = currentP2Set.join(p2Set);
+
+		return new Pair<Boolean, Boolean>(ret, ret1);
 	}
 
 	protected HeapEdge getHeapEdge(AbstractMemLoc src, HeapObject tgt,
