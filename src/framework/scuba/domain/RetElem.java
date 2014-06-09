@@ -14,12 +14,14 @@ public class RetElem extends StackObject {
 	protected jq_Method method;
 
 	// the variable of this return value
-	protected Register retValue;
+	// we might have multiple returns so that we cannot bind one register to the
+	// return value
+	// protected Register retValue;
 
-	public RetElem(jq_Class clazz, jq_Method method, Register retValue) {
+	public RetElem(jq_Class clazz, jq_Method method) {
 		this.clazz = clazz;
 		this.method = method;
-		this.retValue = retValue;
+		// this.retValue = retValue;
 	}
 
 	@Override
@@ -37,25 +39,23 @@ public class RetElem extends StackObject {
 	public boolean equals(Object other) {
 		return (other instanceof RetElem)
 				&& (clazz.equals(((RetElem) other).clazz))
-				&& (method.equals(((RetElem) other).method))
-				&& (retValue.equals(((RetElem) other).retValue));
+				&& (method.equals(((RetElem) other).method));
 	}
 
 	@Override
 	public int hashCode() {
-		return 37 * 37 * clazz.hashCode() + 37 * method.hashCode()
-				+ retValue.hashCode();
+		return 37 * clazz.hashCode() + method.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return "[R]" + retValue;
+		return "[Ret]";
 	}
 
 	@Override
 	public String dump() {
-		return "[C] " + clazz.getName() + " [M] " + method.getName() + " [R] "
-				+ retValue;
+		return "[Return]" + "[C] " + clazz.getName() + "[M] "
+				+ method.getName();
 	}
 
 	// getClass method
@@ -66,11 +66,6 @@ public class RetElem extends StackObject {
 	// getMethod method
 	public jq_Method getBelongingMethod() {
 		return this.method;
-	}
-
-	// getRetValue method
-	public Register getRetValue() {
-		return this.retValue;
 	}
 
 }

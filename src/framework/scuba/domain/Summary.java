@@ -103,7 +103,7 @@ public class Summary {
 
 	public Summary(jq_Method meth) {
 		method = meth;
-		absHeap = new AbstractHeap();
+		absHeap = new AbstractHeap(meth);
 		methCallToMemLocInstantiation = new HashMap<Pair<Quad, jq_Method>, MemLocInstantiation>();
 		if (G.debug)
 			this.dumpSummary4Method(meth);
@@ -904,9 +904,9 @@ public class Summary {
 				// just set the retValue of this summary
 				// maybe this is not necessary?
 				if (retValue == null) {
-					assert (absHeap.contains(new RetElem(clazz, meth, ret))) : ""
+					assert (absHeap.contains(new RetElem(clazz, meth))) : ""
 							+ "the return value should be contained in the heap!";
-					retValue = absHeap.getRetElem(clazz, meth, ret);
+					retValue = absHeap.getRetElem(clazz, meth);
 				}
 			} else {
 				// not create RetElem for the return value

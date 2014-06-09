@@ -10,6 +10,7 @@ import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 import chord.util.tuple.object.Pair;
 import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.G;
 
 public class MemLocInstantiation {
 
@@ -92,9 +93,9 @@ public class MemLocInstantiation {
 		}
 	}
 
-	public void initReturnToLHS(RetElem ret, StackObject rhs) {
+	public void initReturnToLHS(RetElem ret, StackObject lhs) {
 		hasRet = true;
-		instnMemLocMapping.put(ret, new InstantiatedLocSet(rhs,
+		instnMemLocMapping.put(ret, new InstantiatedLocSet(lhs,
 				ConstraintManager.genTrue()));
 	}
 
@@ -112,6 +113,10 @@ public class MemLocInstantiation {
 
 		if (loc instanceof RetElem) {
 			if (hasRet) {
+				if (G.debug) {
+					System.out.println("RetElem: " + loc);
+					System.out.println(instnMemLocMapping);
+				}
 				assert (ret != null) : "return value should have been instantiated"
 						+ " when the first time init the instantiation!";
 			} else {
