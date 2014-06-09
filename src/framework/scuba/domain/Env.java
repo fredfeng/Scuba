@@ -108,7 +108,6 @@ public class Env {
         /* Now do a post order traversal to get the numbers. */
         jq_Reference rootObj = Program.g().getClass("java.lang.Object");
         assert rootObj != null : "Fails to load java.lang.Object";
-    	System.out.println("yufeng:" + classToSubclasses);
 		pfsVisit(1, (jq_Class) rootObj);
     }
     
