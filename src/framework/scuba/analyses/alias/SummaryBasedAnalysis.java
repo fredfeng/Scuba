@@ -5,13 +5,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Reference;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
+import joeq.Main.jq;
 import chord.analyses.alias.CICG;
 import chord.analyses.alias.ICICG;
 import chord.analyses.method.DomM;
@@ -34,7 +38,7 @@ import framework.scuba.utils.Node;
  * SCC 3. Run the worklist algorithm author: Yu Feng email: yufeng@cs.utexas.edu
  */
 
-@Chord(name = "sum-java", consumes = { "rootM", "reachableM", "IM", "MM" })
+@Chord(name = "sum-java", consumes = { "rootM", "reachableM", "IM", "MM", "cha" })
 public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	protected DomM domM;
@@ -42,6 +46,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relReachableM;
 	protected ProgramRel relIM;
 	protected ProgramRel relMM;
+	protected ProgramRel relCHA;
+
 	protected CICG callGraph;
 
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
@@ -293,7 +299,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				break;
 		}
 	}
-
+	
 	/* This method will be invoked by Chord automatically. */
 	public void run() {
 		domM = (DomM) ClassicProject.g().getTrgt("M");
@@ -301,6 +307,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relReachableM = (ProgramRel) ClassicProject.g().getTrgt("reachableM");
 		relIM = (ProgramRel) ClassicProject.g().getTrgt("IM");
 		relMM = (ProgramRel) ClassicProject.g().getTrgt("MM");
+		relCHA = (ProgramRel) ClassicProject.g().getTrgt("cha");
+		//pass relCha ref to SummariesEnv
+		SummariesEnv.v().setCHA(relCHA);
+		Env.buildClassHierarchy();
+
 		// init scuba.
 		init();
 	}
