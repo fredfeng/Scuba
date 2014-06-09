@@ -1019,6 +1019,8 @@ public class Summary {
 
 		} else if (opr instanceof InvokeInterface) {
 			// assume all csts are true.
+			System.out.println(callsite);
+			assert false : "interface invoke." ;
 			ret.add(new Pair(calleeSum, cst));
 			// TODO
 		} else {
