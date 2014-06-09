@@ -11,11 +11,14 @@ import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Z3Exception;
+import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.HeapObject;
+import framework.scuba.domain.P2Set;
+import framework.scuba.domain.SummariesEnv;
 
 /**
  * Class for generating/solving constraints, since right now our system can only
@@ -77,35 +80,43 @@ public class ConstraintManager {
 	 * @param ho
 	 * @return
 	 */
-	public BoolExpr lift(HeapObject ho) {
-
+	public static BoolExpr lift(HeapObject ho, int typeInt, boolean isEqual) {
+		Expr cur = genTrue();
 		try {
 			if (ho instanceof AllocElem) {
 				// return the number of its class.
 				AllocElem ae = (AllocElem) ho;
 				jq_Type jType = ae.getAlloc().getType();
 				assert jType instanceof jq_Class : "alloc object should be a jq_class.";
-				Expr cur = ctx.MkInt(Env.getConstTerm4Class((jq_Class) jType));
-				BoolExpr eq = ctx.MkEq(cur, ctx.MkInt("1"));
-				//perform simplification like 2=2 -> true, 2=3 -> false
-				Expr simEq = eq.Simplify();
-				assert simEq instanceof BoolExpr : "Must return a boolean expr.";
-				return (BoolExpr)simEq;
+				cur = ctx.MkInt(Env.getConstTerm4Class((jq_Class) jType));
+
 			} else if (ho instanceof AccessPath) {
 				AccessPath ap = (AccessPath) ho;
 				String symbol = "v" + ap.getId();
 				Expr o = ctx.MkConst(symbol, ctx.IntSort());
 				// type(o)
-				IntExpr to = (IntExpr) typeFun.Apply(o);
-				// type(o)=1
-				BoolExpr eq = ctx.MkEq(to, ctx.MkInt("1"));
-				// return int_constant vi where i is the id of ap.
-				Expr simEq = eq.Simplify();
-				assert simEq instanceof BoolExpr : "Must return a boolean expr.";
-				return (BoolExpr)simEq;
+				cur = typeFun.Apply(o);
 			} else {
 				assert false : "Unknown heap object.";
 			}
+			
+			//lift type(o)=T
+			if(isEqual) {
+				BoolExpr eq = ctx.MkEq(cur, ctx.MkInt(typeInt));
+				//perform simplification like 2=2 -> true, 2=3 -> false
+				Expr simEq = eq.Simplify();
+				assert simEq instanceof BoolExpr : "Must return a boolean expr.";
+				return (BoolExpr)simEq;
+
+			//lift type(o)<=T
+			} else {
+				BoolExpr le = ctx.MkLe((IntExpr)cur, ctx.MkInt(typeInt));
+				//perform simplification like 2=2 -> true, 2=3 -> false
+				Expr simLe = le.Simplify();
+				assert simLe instanceof BoolExpr : "Must return a boolean expr.";
+				return (BoolExpr)simLe;
+			}
+
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -150,6 +161,32 @@ public class ConstraintManager {
 		return null;
 	}
 	
+	//generate subtyping constraint.
+	public static BoolExpr genSubTyping(P2Set p2Set, jq_Class t) {
+		int typeInt = Env.getConstTerm4Class(t);
+		BoolExpr b = genFalse();
+		assert typeInt > 0 : "Invalid type int.";
+		for(HeapObject ho : p2Set.getHeapObjects()) {
+			BoolExpr orgCst = p2Set.getConstraint(ho);
+			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, false));
+			b = union(b, newCst);
+		}
+		return b;
+	}
+	
+	//generate equality typing constraint.
+	public static BoolExpr genEqTyping(P2Set p2Set, jq_Class t) {
+		int typeInt = Env.getConstTerm4Class(t);
+		BoolExpr b = genFalse();
+		assert typeInt > 0 : "Invalid type int.";
+		for(HeapObject ho : p2Set.getHeapObjects()) {
+			BoolExpr orgCst = p2Set.getConstraint(ho);
+			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, true));
+			b = union(b, newCst);
+		}
+		return b;
+	}
+	
 	/**
 	 * Z3 doesn't provide a clone function. Use A' = A or A to generate a new one 
 	 * @param expr
@@ -183,6 +220,19 @@ public class ConstraintManager {
 			BoolExpr e2 = ctx.MkNot(e1);
 			solver.Assert(e2);
 			if(solver.Check() == Status.UNSATISFIABLE)
+				return true;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	//check if cst is a scala constraint, e.g, true, false 
+	public static boolean isScala(BoolExpr cst) {
+		try {
+			if ((cst.BoolValue() == Z3_lbool.Z3_L_FALSE)
+					|| (cst.BoolValue() == Z3_lbool.Z3_L_TRUE))
 				return true;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block

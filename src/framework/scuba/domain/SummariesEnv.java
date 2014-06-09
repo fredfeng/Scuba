@@ -2,8 +2,14 @@ package framework.scuba.domain;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
+import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import chord.bddbddb.Rel.RelView;
+import chord.project.analyses.ProgramRel;
+import chord.util.SetUtils;
+import chord.util.tuple.object.Pair;
 
 
 /**
@@ -16,7 +22,9 @@ import joeq.Class.jq_Method;
 public class SummariesEnv {
 	   
 	private static SummariesEnv instance = new SummariesEnv();
-
+	
+	protected ProgramRel relCHA;
+	
 	Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
 
 	public static SummariesEnv v() {
@@ -43,5 +51,32 @@ public class SummariesEnv {
 
 	public Summary putSummary(jq_Method meth, Summary sum) {
 		return summaries.put(meth, sum);
+	}
+	
+	public void setCHA(ProgramRel cha){
+		relCHA = cha;
+	}
+	
+	public Set<Pair<jq_Class, jq_Method>> loadInheritMeths(jq_Method m,
+			jq_Class statType) {
+		if (!relCHA.isOpen())
+			relCHA.load();
+		RelView view = relCHA.getView();
+		view.selectAndDelete(0, m);
+		Iterable<Pair<jq_Class, jq_Method>> res = view.getAry2ValTuples();
+		Set<Pair<jq_Class, jq_Method>> pts = SetUtils.newSet(view.size());
+		// no filter, add all
+		if (statType == null) {
+			for (Pair<jq_Class, jq_Method> inst : res)
+				pts.add(inst);
+		} else {
+			for (Pair<jq_Class, jq_Method> inst : res) {
+				jq_Class clz = inst.val0;
+				// add the one that extents statType, no include itself.
+				if (clz.extendsClass(statType) && !clz.equals(statType))
+					pts.add(inst);
+			}
+		}
+		return pts;
 	}
 }

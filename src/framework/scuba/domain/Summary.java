@@ -958,6 +958,7 @@ public class Summary {
 	// summaries and the corresponding constraints as a list of pairs
 	// if no callee available, return ret (size == 0)
 	public List<Pair<Summary, BoolExpr>> getSumCstPairList(Quad callsite) {
+		System.out.println("fuck:" + Env.class2Term);
 		jq_Method caller = callsite.getMethod();
 		jq_Class clz = caller.getDeclaringClass();
 
@@ -992,7 +993,7 @@ public class Summary {
 			Register recv = ro.getRegister();
 			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
 			//receiver's static type.
-			jq_Class recvStatType = (jq_Class)recv.getType();
+			jq_Class recvStatType = (jq_Class)ro.getType();
 			
 			//generate pt-set for the receiver.
 			StackObject so = getMemLocation(clz, caller, recv);
@@ -1009,6 +1010,10 @@ public class Summary {
 				//generate constraint for each potential target.
 				cst = genCst(p2Set, pair.val1, recvStatType);
 				assert cst != null : "Invalid constaint!";
+				System.out.println("Gen pt set cst1: " + callsite);
+				System.out.println("Gen pt set cst2: " + cst);
+				System.out.println("Gen pt set cst3: " + tgtSet);
+
 				ret.add(new Pair(calleeSum, cst));
 			}
 
@@ -1063,6 +1068,7 @@ public class Summary {
 			// 2. Inductive case: for each its *direct* subclasses,
 			// call genCst recursively.
 			BoolExpr t = ConstraintManager.genFalse();
+			System.out.println(statT + " --succ---->" + Env.getSuccessors(statT));
 			for (jq_Class sub : Env.getSuccessors(statT)) {
 				BoolExpr phi = genCst(p2Set, callee, sub);
 				t = ConstraintManager.union(t, phi);

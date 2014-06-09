@@ -100,7 +100,7 @@ public class Env {
         for(jq_Reference r : Program.g().getClasses() ) {
         	if(r instanceof jq_Array) continue;
             final jq_Class cl = (jq_Class) r;
-            if( !cl.isInterface() && cl.getSuperclass() == null ) {
+            if( !cl.isInterface() && (cl.getSuperclass() != null) ) {
                 put( classToSubclasses, cl.getSuperclass(), cl );
             }
         }
@@ -108,6 +108,7 @@ public class Env {
         /* Now do a post order traversal to get the numbers. */
         jq_Reference rootObj = Program.g().getClass("java.lang.Object");
         assert rootObj != null : "Fails to load java.lang.Object";
+    	System.out.println("yufeng:" + classToSubclasses);
 		pfsVisit(1, (jq_Class) rootObj);
     }
     
@@ -126,14 +127,18 @@ public class Env {
      * @return
      */
     protected static int pfsVisit( int start, jq_Class c ) {
-        for(jq_Class subCls : classToSubclasses.get(c)) {
-            if( subCls.isInterface() ) continue;
-            start = pfsVisit( start, subCls );
-        }
+		if (classToSubclasses.get(c) != null) {
+			for (jq_Class subCls : classToSubclasses.get(c)) {
+				if (subCls.isInterface())
+					continue;
+				start = pfsVisit(start, subCls);
+			}
+		}
         if( c.isInterface() ) {
             throw new RuntimeException( "Attempt to pfs visit interface "+c );
         }
         class2Term.put(c, start);
+
         start++;
         return start;
     }
