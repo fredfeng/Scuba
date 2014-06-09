@@ -75,16 +75,16 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void sumAnalyze() {
 
-		if (G.debug) 
+		if (G.debug)
 			dumpCallGraph();
-		
+
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
 
 		LinkedList<Node> worklist = new LinkedList<Node>();
 
 		for (Node methNode : repGraph.getNodes())
-			if ((methNode.getSuccessors().size() == 0)){
+			if ((methNode.getSuccessors().size() == 0)) {
 				assert methNode != null : "Entry can not be null";
 				worklist.add(methNode);
 			}
@@ -108,7 +108,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 			// add m's pred to worklist
 			worklist.addAll(worker.getPreds());
-			for(Node pred : worker.getPreds()) {
+			for (Node pred : worker.getPreds()) {
 				assert pred != null : "Pred can not be null";
 				worklist.add(pred);
 			}
@@ -127,12 +127,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private Graph collapseSCCs() {
 		Graph repGraph = new Graph();
 		int idx = 0;
-		
+
 		Set<jq_Method> sccs = new HashSet<jq_Method>();
 		Set<jq_Method> cgs = new HashSet<jq_Method>();
 
 		cgs.addAll(callGraph.getNodes());
-		
+
 		for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
 			// create a representation node for each scc.
 			idx++;
@@ -145,11 +145,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			repGraph.addNode(node);
 			sccs.addAll(scc);
 		}
-		
-		//FIXME: This is a bug in chord. The total number of SCCs is not equal to
-		//the total number of reachable methods. Adding the missing methods to scc list.
+
+		// FIXME: This is a bug in chord. The total number of SCCs is not equal
+		// to
+		// the total number of reachable methods. Adding the missing methods to
+		// scc list.
 		cgs.removeAll(sccs);
-		for(jq_Method miss : cgs) {
+		for (jq_Method miss : cgs) {
 			idx++;
 			Node node = new Node("scc" + idx);
 			Set<jq_Method> newScc = new HashSet<jq_Method>();
@@ -220,7 +222,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		accessSeq.add(m);
 		if (G.debug) {
 			System.out.println("\n\n analyzing method " + G.count + " " + m);
-			G.count++;
+		}
+		G.count++;
+		if (G.count > 2000) {
+			G.debug = true;
 		}
 		// do interproc
 		if (G.debug) {

@@ -1352,6 +1352,9 @@ public class AbstractHeap {
 		boolean ret = false;
 		boolean ret2 = false;
 
+		if (G.debug) {
+			System.out.println("instantiate edgeS: " + edges);
+		}
 		for (HeapEdge edge : edges) {
 
 			AbstractMemLoc src = edge.getSrc();
@@ -1435,14 +1438,23 @@ public class AbstractHeap {
 					assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 					Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 							newSrc, field);
+					if (G.debug) {
+						this.dumpHeapNumberingToFile("$caller");
+						calleeHeap.dumpHeapNumberingToFile("$callee");
+						System.out.println("****** " + newDst1);
+					}
 					Pair<Boolean, Boolean> ret1 = weakUpdate(pair, new P2Set(
 							newDst1, cst), numberCounter, isInSCC);
+
 					ret = ret | ret1.val0;
 					ret2 = ret2 | ret1.val1;
 				}
 			}
 		}
 
+		if (G.debug) {
+			System.out.println("the return boolean is: " + ret2);
+		}
 		return new Pair<Boolean, Boolean>(ret, ret2);
 	}
 
@@ -1451,7 +1463,6 @@ public class AbstractHeap {
 			int line, AbstractHeap calleeHeap, MemLocInstantiation memLocInstn,
 			BoolExpr typeCst, int numberCounter, boolean isInSCC) {
 		boolean ret = false;
-		boolean ret2 = false;
 		// record the program point in the caller so that we can use this for
 		// allocation site naming (heap naming)
 		ProgramPoint point = Env.getProgramPoint(clazz, method, line);
@@ -1498,6 +1509,8 @@ public class AbstractHeap {
 
 		// begin to add the edges
 		for (Numbering n : calleeEdgeSeq.keySet()) {
+			boolean ret2 = false;
+
 			// fetch the edges with the same number (added in the same patch)
 			Set<HeapEdge> edges = calleeEdgeSeq.get(n);
 			// whether they are added in an SCC in the CFG
@@ -1539,13 +1552,18 @@ public class AbstractHeap {
 				}
 
 				if (G.debug) {
+					System.out.println("return boolean is : " + ret2);
+					System.out.println("edges are in SCC: " + edgesAreInSCC);
 					System.out.println("previous max number: " + maxNumber);
 					System.out.println("assigning the number: " + assgnNumber);
 					System.out.println("assigning the flag: " + assgnFlag);
 				}
-				
+
 				assert (isInSCC || assgnNumber > maxNumber) : "we should increment the counter every time!";
 				assert (!edges.isEmpty()) : "a number should not be assigned to no-edge!";
+				if (G.debug) {
+					System.out.println("ret2 : " + ret2);
+				}
 				maxNumber = ret2 ? Math.max(maxNumber, assgnNumber) : maxNumber;
 				if (G.debug) {
 					System.out.println("new max number: " + maxNumber);
