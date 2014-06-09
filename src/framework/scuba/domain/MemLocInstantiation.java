@@ -93,6 +93,7 @@ public class MemLocInstantiation {
 		}
 	}
 
+	// initialize the return value and lhs mapping
 	public void initReturnToLHS(RetElem ret, StackObject lhs) {
 		hasRet = true;
 		instnMemLocMapping.put(ret, new InstantiatedLocSet(lhs,

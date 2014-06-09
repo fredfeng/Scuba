@@ -42,17 +42,24 @@ public class IntraProcSumAnalysis {
 			System.out
 					.println(".......retrieving the number counter for method: "
 							+ g.getMethod());
-			System.out
-					.println("number counts to " + summary.getNumberCounter());
+			System.out.println("last time the number counts to "
+					+ summary.getNumberCounter());
 		}
-		numberCounter = summary.getNumberCounter() + 1;
+		// getNumberCounter gets the number counter that is used last time
+		this.numberCounter = summary.getNumberCounter() + 1;
+		// for dbg
+		summary.times++;
+		if (G.debug) {
+			System.out.println("This is the " + summary.times
+					+ "-th time analyzing the method: " + summary.getMethod());
+		}
 
 		// create the memory locations for the parameters first
 		// this should be done ONLY once! (the first time we analyze this
 		// method, we can get the full list)
 
 		if (summary.getFormals() == null) {
-			if (G.debug) {
+			if (G.debug1) {
 				System.out
 						.println("the first to analyze method, initializing the param list....");
 			}
@@ -66,12 +73,12 @@ public class IntraProcSumAnalysis {
 				Register param = rf.get(zIdx);
 				summary.fillFormals(meth.getDeclaringClass(), meth, param);
 			}
-			if (G.debug) {
+			if (G.debug1) {
 				System.out.println("param list initialization DONE!");
 				System.out.println(summary.getFormals());
 			}
 		} else {
-			if (G.debug) {
+			if (G.debug1) {
 				System.out
 						.println("the param list for method has been initialized!");
 			}
@@ -87,9 +94,10 @@ public class IntraProcSumAnalysis {
 		roots.add(entry);
 		Graph repGraph = new Graph();
 		SCCHelper sccManager = new SCCHelper(g, roots);
-		if (G.debug)
+		if (G.debug) {
 			System.out.println("SCC List in BBs:-----"
 					+ sccManager.getComponents());
+		}
 		int idx = 0;
 		// compute SCC in current CFG.
 		// step 1: collapse scc into one node.
@@ -139,8 +147,9 @@ public class IntraProcSumAnalysis {
 			}
 		}
 
-		if (G.debug)
+		if (G.debug) {
 			System.out.println("Sequence of Blocks....." + accessBlocksList);
+		}
 	}
 
 	// compute the fixed-point for this scc.
@@ -180,8 +189,8 @@ public class IntraProcSumAnalysis {
 	public boolean handleBasicBlock(BasicBlock bb, boolean isInSCC) {
 		accessBlocksList.add(bb);
 
-		if (G.debug) {
-			System.out.println("=========================");
+		if (G.debug1) {
+			System.out.println("-----------------------------");
 			System.out.println("Handling the basic block: ");
 			System.out.println(bb);
 		}
@@ -194,9 +203,10 @@ public class IntraProcSumAnalysis {
 				System.out.println("-------------------------");
 				System.out.println("Handling the statement: ");
 				System.out.println(q);
-				System.out
-						.println("edges that are added will be numbered from "
-								+ numberCounter);
+				System.out.println("edges that are added will be numbered by "
+						+ numberCounter);
+				System.out.println("edges that are added is in the SCC: "
+						+ isInSCC);
 			}
 
 			// handle the stmt
@@ -208,6 +218,11 @@ public class IntraProcSumAnalysis {
 					System.out.println("the new number will be "
 							+ numberCounter);
 				}
+			} else {
+				if (G.debug) {
+					System.out.println("the new number will still be "
+							+ numberCounter + " because it is in an SCC");
+				}
 			}
 			if (G.debug) {
 				System.out.println("Finish handling the statement.");
@@ -215,9 +230,9 @@ public class IntraProcSumAnalysis {
 			}
 		}
 
-		if (G.debug) {
+		if (G.debug1) {
 			System.out.println("Finish handling the basic block.");
-			System.out.println("=========================");
+			System.out.println("-------------------------");
 		}
 		return summary.getAbstractHeap().isChanged();
 	}
