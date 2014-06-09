@@ -1243,7 +1243,8 @@ public class AbstractHeap {
 	}
 
 	/* Constraint instantiation. */
-	protected BoolExpr instCst(BoolExpr cst) {
+	protected BoolExpr instCst(BoolExpr cst, AbstractHeap callerHeap,
+			ProgramPoint point, MemLocInstantiation memLocInstn) {
 		assert cst != null : "Invalid Constrait before instantiation.";
 		// return directly.
 		if (ConstraintManager.isScala(cst))
@@ -1283,7 +1284,7 @@ public class AbstractHeap {
 			assert (calleeCst != null) : "constraint is null!";
 
 			// instantiate the calleeCst
-			BoolExpr instnCst = instCst(calleeCst);
+			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
 			if (G.debug) {
 				System.out.println(calleeHeap.getMethod());
@@ -1376,7 +1377,7 @@ public class AbstractHeap {
 			assert (calleeCst != null) : "constraint is null!";
 
 			// instantiate the calleeCst
-			BoolExpr instnCst = instCst(calleeCst);
+			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
 			if (G.debug) {
 				System.out.println(calleeHeap.getMethod());
