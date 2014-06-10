@@ -61,7 +61,8 @@ public class TestZ3 {
 	        
 	        BoolExpr eq3 = ctx.MkEq(to, ctx.MkInt("6"));
 	        BoolExpr lt = ctx.MkLe(to, ctx.MkInt("5"));
-	        
+	        BoolExpr lt2 = ctx.MkLe(to, ctx.MkInt("54"));
+
 	        BoolExpr sim2 = ctx.MkOr(new BoolExpr[] { eq3, lt });
 	        
 	        BoolExpr sim3 = ctx.MkAnd(new BoolExpr[] { eq3, sim2 });
@@ -109,8 +110,9 @@ public class TestZ3 {
 	        for(int i = 0; i < sim3.NumArgs(); i++) 
 	        	System.out.println(sim3.Args()[i]);
 	        
-	        System.out.println("Sub:" + sim3.Substitute(lt, trueExpr));
-	        
+	        System.out.println("Sub:" + sim3.Substitute(lt, lt2));
+	        System.out.println("Sub2:" + sim3);
+
 	        System.out.println("Extracting..." + sim3);
 	        Set<Expr> set = new HashSet<Expr>();
 	        extractTerm(sim3, set);

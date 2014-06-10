@@ -151,7 +151,6 @@ public class ConstraintManager {
 				assert expr.IsEq() || expr.IsLE() : "invalid expr" + expr;
 				set.add(expr);
 			}
-			System.out.println("InstSet: " + set);
 			for (BoolExpr sub : set) {
 				if (sub.IsEq() || sub.IsLE()) {
 					Expr term = sub.Args()[0].Args()[0];
@@ -162,6 +161,7 @@ public class ConstraintManager {
 					assert sub.Args()[1] instanceof IntNum : "arg must be IntNum!";
 					IntNum typeInt = (IntNum) sub.Args()[1];
 					// get points-to set for term
+					assert(ap instanceof AccessPath);
 					InstantiatedLocSet p2Set = memLocInstn.instantiate(ap, callerHeap, point);
 					BoolExpr instSub;
 					if (sub.IsEq())
@@ -169,7 +169,7 @@ public class ConstraintManager {
 					else
 						instSub = instSubTyping(p2Set, typeInt.Int());
 
-					expr.Substitute(sub, instSub);
+					expr = (BoolExpr)expr.Substitute(sub, instSub);
 				}
 			}
 			return expr;
@@ -183,7 +183,6 @@ public class ConstraintManager {
 	//given an expr, extract all its sub terms for instantiating.
 	public static void extractTerm(Expr expr, Set<BoolExpr> set) {
         try {
-        	System.out.println("Expr: " + expr);
 			for(int i = 0; i < expr.NumArgs(); i++) {
 				assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:" + expr.Args()[i];
 				BoolExpr sub = (BoolExpr)expr.Args()[i];
