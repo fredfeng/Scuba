@@ -605,16 +605,17 @@ public class AbstractHeap {
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				v1, EpsilonFieldElem.getEpsilonFieldElem());
 
-		Pair<Boolean, Boolean> ret1 = weakUpdate(pair, p2Setv2, numToAssign,
+		Pair<Boolean, Boolean> changed = weakUpdate(pair, p2Setv2, numToAssign,
 				isInSCC);
-		boolean ret = ret1.val0;
-		boolean ret2 = ret1.val1;
+		boolean heapChanged = changed.val0;
+		boolean numberingChanged = changed.val1;
 
 		// think about Phi node, we should do assignment more than once
 		assert (numToAssign >= maxNumber) : "we should increment the counter every time!";
-		maxNumber = ret2 ? Math.max(maxNumber, numToAssign) : maxNumber;
+		maxNumber = numberingChanged ? Math.max(maxNumber, numToAssign)
+				: maxNumber;
 
-		return ret;
+		return heapChanged;
 	}
 
 	// this method is just a helper method for handling array allocations
@@ -1372,14 +1373,16 @@ public class AbstractHeap {
 					});
 			isRecursive = true;
 		}
+
 		if (G.tuning) {
-			StringUtil.reportInfo("Call site is a recursive call: "
-					+ isRecursive);
+			StringUtil.reportInfo("Recursive call: " + isRecursive);
 		}
+
 		// before instantiating all the edges in the heap
 		// because it is possible there are some isolated nodes in the callee's
 		// heap, we should first make sure that all the nodes will be
 		// instantiated as a location in the caller's heap
+		Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
 		for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
 				.keySet()) {
 			AbstractMemLoc loc = pair.val0;
@@ -1390,10 +1393,19 @@ public class AbstractHeap {
 			assert (instnMemLocSet != null);
 
 			for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
-				weakUpdate(new Pair<AbstractMemLoc, FieldElem>(loc1, field),
-						new P2Set(), -1, false);
+				// weakUpdate(new Pair<AbstractMemLoc, FieldElem>(loc1, field),
+				// new P2Set(), -1, false);
+				// to avoid ConcurrentModification exception, we temporally
+				// store the (loc, field) pairs in a set
+				toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1, field));
 			}
 		}
+		// now we weakly update the heap of the caller so that it will include
+		// all the locations in the callee's heap
+		for (Pair<AbstractMemLoc, FieldElem> pair : toUpdate) {
+			weakUpdate(pair, new P2Set(), -1, false);
+		}
+
 		// begin to add the edges
 		for (Numbering n : calleeEdgeSeq.keySet()) {
 			boolean ret2 = false;
