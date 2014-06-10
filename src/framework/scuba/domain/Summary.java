@@ -1009,7 +1009,10 @@ public class Summary {
 
 			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				// generate constraint for each potential target.
-				cst = genCst(p2Set, pair.val1, recvStatType);
+				if (pair.val0 instanceof jq_Array)
+					continue;
+				jq_Class tgtType = (jq_Class) pair.val0;
+				cst = genCst(p2Set, pair.val1, tgtType);
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
 				if (dySum == null) {
@@ -1101,10 +1104,13 @@ public class Summary {
 		if (!hasInherit(callee, statT)) {
 			return ConstraintManager.genSubTyping(p2Set, statT);
 		} else {
-			// 2. Inductive case: for each its *direct* subclasses,
-			// call genCst recursively.
+			// 2. Inductive case: for each its *direct* subclasses that 
+			//do not override current method, call genCst recursively.
 			BoolExpr t = ConstraintManager.genFalse();
 			for (jq_Class sub : Env.getSuccessors(statT)) {
+				if (sub.getVirtualMethod(callee.getNameAndDesc()) != null
+						|| hasInherit(callee, sub))
+					continue;
 				BoolExpr phi = genCst(p2Set, callee, sub);
 				t = ConstraintManager.union(t, phi);
 			}
