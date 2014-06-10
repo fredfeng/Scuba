@@ -32,6 +32,7 @@ import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
 import framework.scuba.utils.Graph;
 import framework.scuba.utils.Node;
+import framework.scuba.utils.StringUtil;
 
 /**
  * Summary-based analysis. 1. Build and get a CHA-based CallGraph. 2. Compute
@@ -84,6 +85,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
+
+		if (G.tuning)
+			StringUtil.reportInfo("Total # of SCCs: "
+					+ repGraph.getNodes().size());
 
 		LinkedList<Node> worklist = new LinkedList<Node>();
 
@@ -193,6 +198,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	// begin to work on a representative node. single node or scc.
 	private void workOn(Node node) {
+		if (G.tuning) {
+			G.countScc++;
+			StringUtil.reportInfo("Working on SCC: " + G.countScc
+					+ nodeToScc.get(node));
+			StringUtil.reportInfo("Size of SCC: " + nodeToScc.get(node).size());
+		}
+		long startSCC = System.nanoTime();
+
 		// 1.get its corresponding scc
 		Set<jq_Method> scc = nodeToScc.get(node);
 
@@ -208,6 +221,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// at the end, mark it as terminated.
 		node.setTerminated(true);
+		if (G.tuning) {
+			long endSCC = System.nanoTime();
+			StringUtil.reportSec("Analyzing SCC in ", startSCC, endSCC);
+		}
 	}
 
 	// check whether all successors have terminated.
@@ -247,6 +264,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		intrapro.analyze(cfg);
 
+		if (G.tuning) {
+			StringUtil.reportTotalTime("Total Time to generate Constaint: ",
+					G.genCstTime);
+			StringUtil.reportTotalTime("Total Time to instantiate Constaint: ",
+					G.instCstTime);
+			StringUtil.reportTotalTime("Total Time to instantiate Edges: ",
+					G.instEdgeTime);
+		}
 		summary.validate();
 		return summary.getAbsHeap().isChanged();
 	}

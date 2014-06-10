@@ -22,6 +22,7 @@ import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
 import framework.scuba.helper.P2SetHelper;
+import framework.scuba.utils.StringUtil;
 
 public class AbstractHeap {
 
@@ -1143,6 +1144,8 @@ public class AbstractHeap {
 	/* Constraint instantiation. */
 	protected BoolExpr instCst(BoolExpr cst, AbstractHeap callerHeap,
 			ProgramPoint point, MemLocInstantiation memLocInstn) {
+		long startInstCst = System.nanoTime();
+
 		assert cst != null : "Invalid Constrait before instantiation.";
 		// return directly.
 		if (ConstraintManager.isScala(cst))
@@ -1151,6 +1154,9 @@ public class AbstractHeap {
 				point, memLocInstn);
 
 		assert instC != null : "Invalid instantiated Constrait.";
+		long endInstCst = System.nanoTime();
+		G.instCstTime += (endInstCst - startInstCst);
+
 		return instC;
 	}
 
@@ -1238,6 +1244,8 @@ public class AbstractHeap {
 			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
 			ProgramPoint point, BoolExpr typeCst, int numToAssign,
 			boolean isInSCC) {
+		long startInstEdge = System.nanoTime();
+
 		boolean ret = false;
 		boolean ret2 = false;
 
@@ -1316,6 +1324,12 @@ public class AbstractHeap {
 					ret2 = ret2 | ret1.val1;
 				}
 			}
+		}
+
+		if (G.tuning) {
+			long endtInstEdge = System.nanoTime();
+			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
+			G.instEdgeTime += (endtInstEdge - startInstEdge);
 		}
 
 		return new Pair<Boolean, Boolean>(ret, ret2);
