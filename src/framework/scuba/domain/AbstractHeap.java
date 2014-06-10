@@ -1260,6 +1260,7 @@ public class AbstractHeap {
 		}
 
 		G.instLocTimePerEdges = 0;
+		G.instToEdges = 0;
 		for (HeapEdge edge : edges) {
 
 			AbstractMemLoc src = edge.getSrc();
@@ -1283,6 +1284,7 @@ public class AbstractHeap {
 					point);
 			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
 					point);
+
 			long endInstLoc = System.nanoTime();
 			G.instLocTimePerEdges += (endInstLoc - startInstLoc);
 
@@ -1296,8 +1298,9 @@ public class AbstractHeap {
 				continue;
 			}
 
-			for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
+			G.instToEdges += (instnSrc.size() * instnDst.size());
 
+			for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
 				for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
 					assert (newDst instanceof HeapObject) : ""
 							+ "dst should be instantiated as a heap object!";
@@ -1307,6 +1310,7 @@ public class AbstractHeap {
 
 					BoolExpr cst1 = instnSrc.getConstraint(newSrc);
 					BoolExpr cst2 = instnDst.getConstraint(newDst);
+
 					BoolExpr cst = ConstraintManager.intersect(
 							ConstraintManager.intersect(cst1, cst2),
 							ConstraintManager.intersect(instnCst, typeCst));
@@ -1329,6 +1333,8 @@ public class AbstractHeap {
 			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
 			G.instEdgeTime += (endtInstEdge - startInstEdge);
 			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
+			StringUtil.reportInfo("Number of edges in the caller: "
+					+ G.instToEdges);
 		}
 
 		return new Pair<Boolean, Boolean>(ret, ret2);
@@ -1413,7 +1419,7 @@ public class AbstractHeap {
 			boolean assgnFlag = isInSCC || edgesAreInSCC;
 
 			if (G.tuning) {
-				StringUtil.reportInfo("Callee Edges are in SCC:"
+				StringUtil.reportInfo("Callee Edges are in SCC: "
 						+ edgesAreInSCC);
 			}
 

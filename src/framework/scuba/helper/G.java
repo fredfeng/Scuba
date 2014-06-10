@@ -43,9 +43,12 @@ public class G {
 
 	// total time spending on inst locations
 	public static long instLocTime = 0;
-	
+
 	// time spending on inst locations per inst edges
 	public static long instLocTimePerEdges = 0;
+
+	// number of edges that are instantiated into in the caller
+	public static int instToEdges = 0;
 
 	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
 }
