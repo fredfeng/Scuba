@@ -61,9 +61,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private void init() {
 		getCallGraph();
 
-		if (G.debug)
-			System.out.println("Total nodes in CG---------"
-					+ callGraph.getNodes().size());
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
 
@@ -81,8 +78,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void sumAnalyze() {
 
-		if (G.debug)
+		if (G.dump) {
 			dumpCallGraph();
+		}
 
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
@@ -120,8 +118,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			}
 		}
 
-		if (G.debug)
-			System.out.println("Accessing CallGraph in this sequnce-----------"
+		if (G.info)
+			System.out.println("[Info] Accessing CallGraph in this sequnce:\n"
 					+ accessSeq);
 	}
 
@@ -153,9 +151,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		// FIXME: This is a bug in chord. The total number of SCCs is not equal
-		// to
-		// the total number of reachable methods. Adding the missing methods to
-		// scc list.
+		// to the total number of reachable methods. Adding the missing methods
+		// to scc list.
 		cgs.removeAll(sccs);
 		for (jq_Method miss : cgs) {
 			idx++;
@@ -226,26 +223,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private boolean analyze(jq_Method m) {
 		accessSeq.add(m);
-		if (G.debug) {
-			System.out.println("=======================" + G.count
-					+ "=======================");
-			System.out.println("\n\n analyzing method " + m);
-
-		}
-		G.count++;
-		if (G.count > G.number) {
-			G.debug = true;
-		}
-		// do interproc
-		if (G.debug1) {
-			System.out
-					.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-			System.out.println("Handling the method: ");
-			System.out.println(m);
-		}
 
 		if (m.getBytecode() == null) {
-			if (G.debug) {
+			if (G.info) {
 				System.err.println("ERROR: the method: " + m
 						+ " is lacking models");
 			}
@@ -259,7 +239,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// last time, to keep the numbers increasing
 
 		ControlFlowGraph cfg = CodeCache.getCode(m);
-		if (G.debug) {
+		if (G.dump) {
 			System.out.println("*****************************************");
 			System.out.println(cfg.fullDump());
 			System.out.println("*****************************************");
@@ -267,12 +247,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		intrapro.analyze(cfg);
 
-		// mark terminated
-		if (G.dump) {
-			summary.dumpSummaryToFile(new String(G.count + ""));
-			summary.dumpAllMemLocsHeapToFile(new String(G.count + ""));
-			summary.dumpNumberingHeap(new String(G.count + ""));
-		}
 		summary.validate();
 		return summary.getAbsHeap().isChanged();
 	}

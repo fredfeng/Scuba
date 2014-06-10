@@ -8,18 +8,18 @@ package framework.scuba.helper;
  */
 public class G {
 
-	public static boolean debug = false;
+	// public static boolean debug = false;
+	public static boolean info = false;
 
-	public static int number = 2400;
+	public static boolean debug4Sum = false;
 
-	// more dbg info
-	public static boolean debug1 = false;
+	public static boolean debug4Invoke = false;
+
+	public static boolean debug4AbsHeap = false;
 
 	public static boolean dump = false;
 
-	public static int count = 0;
+	public static boolean dumpNumbering = false;
 
-	public static int step = 1;
-
-	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
+	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
 }

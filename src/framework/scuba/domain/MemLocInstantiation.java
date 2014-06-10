@@ -4,13 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.microsoft.z3.BoolExpr;
-
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
-import chord.util.tuple.object.Pair;
+
+import com.microsoft.z3.BoolExpr;
+
 import framework.scuba.helper.ConstraintManager;
-import framework.scuba.helper.G;
 
 public class MemLocInstantiation {
 
@@ -82,7 +81,7 @@ public class MemLocInstantiation {
 
 		for (int i = 0; i < actuals.size(); i++) {
 			StackObject actual = actuals.get(i);
-			if (actual instanceof ConstantElem) {
+			if (actual instanceof PrimitiveElem) {
 				// we just ignore the primitives
 				continue;
 			} else {
@@ -114,10 +113,6 @@ public class MemLocInstantiation {
 
 		if (loc instanceof RetElem) {
 			if (hasRet) {
-				if (G.debug) {
-					System.out.println("RetElem: " + loc);
-					System.out.println(instnMemLocMapping);
-				}
 				assert (ret != null) : "return value should have been instantiated"
 						+ " when the first time init the instantiation!";
 			} else {

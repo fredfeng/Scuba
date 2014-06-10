@@ -29,42 +29,23 @@ public class IntraProcSumAnalysis {
 
 	protected Summary summary;
 
-	protected List<BasicBlock> accessBlocksList = new ArrayList();
+	protected List<BasicBlock> accessBlocksList = new ArrayList<BasicBlock>();
 
-	protected int numberCounter;
+	protected int numToAssign;
 
 	// analyze one method based on the cfg of this method
 	public void analyze(ControlFlowGraph g) {
 		// before analyzing the CFG g of some method
 		// first retrieve the numbering counter of that summary that was
 		// maintained last time
-		if (G.debug) {
-			System.out
-					.println(".......retrieving the number counter for method: "
-							+ g.getMethod());
-			System.out.println("last time the number counts to "
-					+ summary.getNumberCounter());
-		}
 		// getNumberCounter gets the number counter that is used last time
-		this.numberCounter = summary.getNumberCounter() + 1;
+		this.numToAssign = summary.getCurrNumCounter() + 1;
 		// for dbg
-		summary.times++;
-		if (G.debug) {
-			System.out.println("This is the " + summary.times
-					+ "-th time analyzing the method: " + summary.getMethod());
-		}
 
-		// create the memory locations for the parameters first
+		// create the memory locations for the parameters first if has not
 		// this should be done ONLY once! (the first time we analyze this
 		// method, we can get the full list)
-
 		if (summary.getFormals() == null) {
-			if (G.debug1) {
-				System.out
-						.println("the first to analyze method, initializing the param list....");
-			}
-			// the first time to fill the paramList, we first initParamList and
-			// the fill it, and later we will NOT fill this list again
 			summary.initFormals();
 			RegisterFactory rf = g.getRegisterFactory();
 			jq_Method meth = g.getMethod();
@@ -73,31 +54,19 @@ public class IntraProcSumAnalysis {
 				Register param = rf.get(zIdx);
 				summary.fillFormals(meth.getDeclaringClass(), meth, param);
 			}
-			if (G.debug1) {
-				System.out.println("param list initialization DONE!");
-				System.out.println(summary.getFormals());
-			}
-		} else {
-			if (G.debug1) {
-				System.out
-						.println("the param list for method has been initialized!");
-			}
 		}
 
 		BasicBlock entry = g.entry();
 		accessBlocksList.clear();
-		HashSet<BasicBlock> roots = new HashSet();
-		HashMap<Node, Set<BasicBlock>> nodeToScc = new HashMap();
-		HashMap<Set<BasicBlock>, Node> sccToNode = new HashMap();
-		HashMap<BasicBlock, Node> bbToNode = new HashMap();
+		HashSet<BasicBlock> roots = new HashSet<BasicBlock>();
+		HashMap<Node, Set<BasicBlock>> nodeToScc = new HashMap<Node, Set<BasicBlock>>();
+		HashMap<Set<BasicBlock>, Node> sccToNode = new HashMap<Set<BasicBlock>, Node>();
+		HashMap<BasicBlock, Node> bbToNode = new HashMap<BasicBlock, Node>();
 
 		roots.add(entry);
 		Graph repGraph = new Graph();
 		SCCHelper sccManager = new SCCHelper(g, roots);
-		if (G.debug) {
-			System.out.println("SCC List in BBs:-----"
-					+ sccManager.getComponents());
-		}
+
 		int idx = 0;
 		// compute SCC in current CFG.
 		// step 1: collapse scc into one node.
@@ -137,18 +106,19 @@ public class IntraProcSumAnalysis {
 				// self loop in current block.
 				if (sccB.getSuccessors().contains(sccB)) {
 					handleSCC(scc);
-					numberCounter = summary.getNumberCounter() + 1;
+					numToAssign = summary.getCurrNumCounter() + 1;
 				} else {
 					this.handleBasicBlock(sccB, false);
 				}
 			} else {
 				handleSCC(scc);
-				numberCounter = summary.getNumberCounter() + 1;
+				numToAssign = summary.getCurrNumCounter() + 1;
 			}
 		}
 
-		if (G.debug) {
-			System.out.println("Sequence of Blocks....." + accessBlocksList);
+		if (G.info) {
+			System.out.println("[Info] Sequence of visiting basic blocks:\n"
+					+ accessBlocksList);
 		}
 	}
 
@@ -189,51 +159,20 @@ public class IntraProcSumAnalysis {
 	public boolean handleBasicBlock(BasicBlock bb, boolean isInSCC) {
 		accessBlocksList.add(bb);
 
-		if (G.debug1) {
-			System.out.println("-----------------------------");
-			System.out.println("Handling the basic block: ");
-			System.out.println(bb);
-		}
-
 		summary.getAbstractHeap().markChanged(false);
 		// handle each quad in the basicblock.
 		for (Quad q : bb.getQuads()) {
 
-			if (G.debug) {
-				System.out.println("-------------------------");
-				System.out.println("Handling the statement: ");
-				System.out.println(q);
-				System.out.println("edges that are added will be numbered by "
-						+ numberCounter);
-				System.out.println("edges that are added is in the SCC: "
-						+ isInSCC);
-			}
-
 			// handle the stmt
-			summary.handleStmt(q, numberCounter, isInSCC);
-			// increment the numbering counter properly
+			summary.handleStmt(q, numToAssign, isInSCC);
+			// increment the numbering counter properly:
+			// we only increment the counter here for basic blocks that are not
+			// in some SCC, for basic blocks in an SCC we increment outside
 			if (!isInSCC) {
-				numberCounter = summary.getNumberCounter() + 1;
-				if (G.debug) {
-					System.out.println("the new number will be "
-							+ numberCounter);
-				}
-			} else {
-				if (G.debug) {
-					System.out.println("the new number will still be "
-							+ numberCounter + " because it is in an SCC");
-				}
-			}
-			if (G.debug) {
-				System.out.println("Finish handling the statement.");
-				System.out.println("-------------------------");
+				numToAssign = summary.getCurrNumCounter() + 1;
 			}
 		}
 
-		if (G.debug1) {
-			System.out.println("Finish handling the basic block.");
-			System.out.println("-------------------------");
-		}
 		return summary.getAbstractHeap().isChanged();
 	}
 

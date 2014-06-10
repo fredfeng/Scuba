@@ -1,12 +1,12 @@
 package framework.scuba.domain;
 
-public class ConstantElem extends StackObject {
+public class PrimitiveElem extends StackObject {
 
-	private static ConstantElem constant = new ConstantElem();
+	private static PrimitiveElem primitive = new PrimitiveElem();
 
 	@Override
 	public AbstractMemLoc findRoot() {
-		assert false : "we cannot do find root for constant element!";
+		assert false : "we cannot do find root for primitive elements!";
 		return null;
 	}
 
@@ -18,7 +18,7 @@ public class ConstantElem extends StackObject {
 
 	@Override
 	public boolean equals(Object other) {
-		return (other instanceof ConstantElem);
+		return (other instanceof PrimitiveElem);
 	}
 
 	@Override
@@ -28,16 +28,16 @@ public class ConstantElem extends StackObject {
 
 	@Override
 	public String toString() {
-		return "[Const]";
+		return "[Primitive]";
 	}
 
 	@Override
 	public String dump() {
-		return "[Const]";
+		return "[Primitive]";
 	}
 
-	public static ConstantElem getConstantElem() {
-		return constant;
+	public static PrimitiveElem getPrimitiveElem() {
+		return primitive;
 	}
 
 }
