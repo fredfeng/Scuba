@@ -1610,7 +1610,8 @@ public class AbstractHeap {
 					ret = ret1.val0;
 					ret2 = ret1.val1;
 				}
-				assert (isInSCC || assgnNumber > maxNumber) : "we should increment the counter every time!";
+				// assert (isInSCC || assgnNumber > maxNumber) :
+				// "we should increment the counter every time!";
 				assert (!edges.isEmpty()) : "a number should not be assigned to no-edge!";
 				maxNumber = ret2 ? Math.max(maxNumber, assgnNumber) : maxNumber;
 				if (G.debug) {
