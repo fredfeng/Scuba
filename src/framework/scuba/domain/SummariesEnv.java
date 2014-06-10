@@ -4,8 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Reference;
 import chord.bddbddb.Rel.RelView;
 import chord.project.analyses.ProgramRel;
 import chord.util.SetUtils;
@@ -57,21 +59,23 @@ public class SummariesEnv {
 		relCHA = cha;
 	}
 	
-	public Set<Pair<jq_Class, jq_Method>> loadInheritMeths(jq_Method m,
+	public Set<Pair<jq_Reference, jq_Method>> loadInheritMeths(jq_Method m,
 			jq_Class statType) {
 		if (!relCHA.isOpen())
 			relCHA.load();
 		RelView view = relCHA.getView();
 		view.selectAndDelete(0, m);
-		Iterable<Pair<jq_Class, jq_Method>> res = view.getAry2ValTuples();
-		Set<Pair<jq_Class, jq_Method>> pts = SetUtils.newSet(view.size());
+		Iterable<Pair<jq_Reference, jq_Method>> res = view.getAry2ValTuples();
+		Set<Pair<jq_Reference, jq_Method>> pts = SetUtils.newSet(view.size());
 		// no filter, add all
 		if (statType == null) {
-			for (Pair<jq_Class, jq_Method> inst : res)
+			for (Pair<jq_Reference, jq_Method> inst : res)
 				pts.add(inst);
 		} else {
-			for (Pair<jq_Class, jq_Method> inst : res) {
-				jq_Class clz = inst.val0;
+			for (Pair<jq_Reference, jq_Method> inst : res) {
+				if (inst.val0 instanceof jq_Array)
+					continue;
+				jq_Class clz = (jq_Class)inst.val0;
 				// add the one that extents statType, no include itself.
 				if (clz.extendsClass(statType) && !clz.equals(statType))
 					pts.add(inst);

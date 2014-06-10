@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
@@ -775,7 +776,6 @@ public class Summary {
 						continue;
 
 					tmp = true;
-					System.out.println("***** " + rhs);
 					VariableType rvt = getVarType(meth, rhs.getRegister());
 					boolean flag = absHeap
 							.handleAssignStmt(meth.getDeclaringClass(), meth,
@@ -960,7 +960,6 @@ public class Summary {
 		List<Pair<Summary, BoolExpr>> ret = new ArrayList<Pair<Summary, BoolExpr>>();
 		// find all qualified callees and the constraints
 
-		System.out.println("handle function calls...." + callsite);
 		jq_Method callee = Invoke.getMethod(callsite).getMethod();
 		Operator opr = callsite.getOperator();
 		Summary calleeSum = SummariesEnv.v().getSummary(callee);
@@ -996,20 +995,26 @@ public class Summary {
 			P2Set p2Set = absHeap.lookup(so,
 					EpsilonFieldElem.getEpsilonFieldElem());
 
-			assert !p2Set.isEmpty() : "Receiver's p2Set can't be empty.";
+//			assert !p2Set.isEmpty() : "Receiver's p2Set can't be empty.";
+			//FIXME: We should assume that v can point to any object.
+			if (p2Set.isEmpty()) {
+				System.err
+						.println("[WARNING:]Receiver's p2Set can't be empty. Missing models?");
+				return ret;
+			}
 
 			// all dynamic targets.
-			Set<Pair<jq_Class, jq_Method>> tgtSet = SummariesEnv.v()
+			Set<Pair<jq_Reference, jq_Method>> tgtSet = SummariesEnv.v()
 					.loadInheritMeths(callee, null);
 
-			for (Pair<jq_Class, jq_Method> pair : tgtSet) {
+			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				// generate constraint for each potential target.
 				cst = genCst(p2Set, pair.val1, recvStatType);
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
 				if (dySum == null) {
 					System.err
-							.println("Unreachable method because of missing model."
+							.println("[WARNING:]Unreachable method because of missing model."
 									+ pair.val1);
 					continue;
 				}
@@ -1021,23 +1026,27 @@ public class Summary {
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
 			Register recv = ro.getRegister();
 			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
-			// receiver's static type.
-			jq_Class recvStatType = (jq_Class) ro.getType();
-
 			// generate pt-set for the receiver.
 			StackObject so = getMemLocation(clz, caller, recv);
 			P2Set p2Set = absHeap.lookup(so,
 					EpsilonFieldElem.getEpsilonFieldElem());
 
-			assert !p2Set.isEmpty() : "Receiver's p2Set can't be empty.";
+//			assert !p2Set.isEmpty() : "Receiver's p2Set can't be empty." ;
+			if (p2Set.isEmpty()) {
+				System.err
+						.println("[WARNING:]Receiver's p2Set can't be empty. Missing models?");
+				return ret;
+			}
 			
 			// all dynamic targets.
-			Set<Pair<jq_Class, jq_Method>> tgtSet = SummariesEnv.v()
+			Set<Pair<jq_Reference, jq_Method>> tgtSet = SummariesEnv.v()
 					.loadInheritMeths(callee, null);
 			
-			for (Pair<jq_Class, jq_Method> pair : tgtSet) {
+			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
+				if (pair.val0 instanceof jq_Array)
+					continue;
 				// generate constraint for each potential target.
-				cst = genCst(p2Set, pair.val1, pair.val0);
+				cst = genCst(p2Set, pair.val1, (jq_Class)pair.val0);
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
 				if (dySum == null) {
@@ -1114,9 +1123,7 @@ public class Summary {
 	 * @return
 	 */
 	protected boolean hasInherit(jq_Method callee, jq_Class statT) {
-		Set<Pair<jq_Class, jq_Method>> inheritTgtSet = SummariesEnv.v()
-				.loadInheritMeths(callee, statT);
-		return inheritTgtSet.size() > 0;
+		return SummariesEnv.v().loadInheritMeths(callee, statT).size() > 0;
 	}
 
 	public AbstractHeap getAbsHeap() {
