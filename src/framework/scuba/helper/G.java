@@ -8,7 +8,6 @@ package framework.scuba.helper;
  */
 public class G {
 
-	// public static boolean debug = false;
 	public static boolean info = false;
 
 	public static boolean debug4Sum = false;
@@ -20,6 +19,8 @@ public class G {
 	public static boolean dump = false;
 
 	public static boolean dumpNumbering = false;
+
+	public static boolean validate = false;
 
 	// flag to tune performance.
 	public static boolean tuning = true;

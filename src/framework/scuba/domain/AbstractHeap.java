@@ -1169,6 +1169,11 @@ public class AbstractHeap {
 		boolean ret = false;
 		boolean ret2 = false;
 
+		if (G.tuning) {
+			StringUtil.reportInfo("Edges size for recursive call: "
+					+ edges.size());
+		}
+
 		for (HeapEdge edge : edges) {
 
 			AbstractMemLoc src = edge.getSrc();
@@ -1248,6 +1253,10 @@ public class AbstractHeap {
 
 		boolean ret = false;
 		boolean ret2 = false;
+
+		if (G.tuning) {
+			StringUtil.reportInfo("Edges size: " + edges.size());
+		}
 
 		for (HeapEdge edge : edges) {
 
@@ -1363,6 +1372,10 @@ public class AbstractHeap {
 					});
 			isRecursive = true;
 		}
+		if (G.tuning) {
+			StringUtil.reportInfo("Call site is a recursive call: "
+					+ isRecursive);
+		}
 		// before instantiating all the edges in the heap
 		// because it is possible there are some isolated nodes in the callee's
 		// heap, we should first make sure that all the nodes will be
@@ -1375,16 +1388,15 @@ public class AbstractHeap {
 					this, point);
 
 			assert (instnMemLocSet != null);
+
 			for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
 				weakUpdate(new Pair<AbstractMemLoc, FieldElem>(loc1, field),
 						new P2Set(), -1, false);
 			}
 		}
-
 		// begin to add the edges
 		for (Numbering n : calleeEdgeSeq.keySet()) {
 			boolean ret2 = false;
-
 			// fetch the edges with the same number (added in the same patch)
 			Set<HeapEdge> edges = calleeEdgeSeq.get(n);
 			// whether they are added in an SCC in the CFG
@@ -1398,6 +1410,11 @@ public class AbstractHeap {
 			int assgnNumber = isInSCC ? numToAssign : number;
 			// mark whether the edges are in SCC
 			boolean assgnFlag = isInSCC || edgesAreInSCC;
+
+			if (G.tuning) {
+				StringUtil.reportInfo("Callee Edges are in SCC:"
+						+ edgesAreInSCC);
+			}
 
 			if (!isRecursive) {
 				if (edgesAreInSCC) {

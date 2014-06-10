@@ -2,7 +2,6 @@ package framework.scuba.domain;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
-import joeq.Compiler.Quad.RegisterFactory.Register;
 
 // TODO
 // RetElem is either the parameter or the local variable in the IR

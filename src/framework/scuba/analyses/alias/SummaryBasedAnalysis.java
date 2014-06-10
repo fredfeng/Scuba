@@ -268,7 +268,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportTotalTime("Total Time to instantiate Edges: ",
 					G.instEdgeTime);
 		}
-		summary.validate();
+		if (G.validate) {
+			summary.validate();
+		}
 		return summary.getAbsHeap().isChanged();
 	}
 
