@@ -104,6 +104,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			// now just analyze once.
 			assert worker != null : "Worker can not be null";
 			if (allSuccsTerminated(worker.getSuccessors())) {
+				if(G.tuning) 
+					StringUtil.reportInfo("Before work on " + worker);
 				workOn(worker);
 				visited.add(worker);
 			}
@@ -113,10 +115,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 			// add m's pred to worklist
 			worklist.addAll(worker.getPreds());
-			for (Node pred : worker.getPreds()) {
-				assert pred != null : "Pred can not be null";
-				worklist.add(pred);
-			}
 		}
 
 		if (G.info)
