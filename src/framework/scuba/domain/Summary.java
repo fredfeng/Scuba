@@ -55,6 +55,7 @@ import com.microsoft.z3.BoolExpr;
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
+import framework.scuba.utils.StringUtil;
 
 /**
  * Representing the summary for a method. Now it only contains abstractHeap.
@@ -455,6 +456,8 @@ public class Summary {
 		}
 
 		public void visitInvoke(Quad stmt) {
+			long startInstCallsite = System.nanoTime();
+
 			// get rhs in the factory (maybe we do not need to)
 			assert (stmt.getOperator() instanceof Invoke);
 			// the callsite's belonging method
@@ -621,6 +624,11 @@ public class Summary {
 					System.out.println("Not a processable instruction!");
 				}
 			}
+			
+			long endInstCallsite = System.nanoTime();
+			if(G.tuning)
+				StringUtil.reportSec("Time to instantiate callsite: " + stmt,
+						startInstCallsite, endInstCallsite);
 
 		}
 
@@ -1012,7 +1020,14 @@ public class Summary {
 				if (pair.val0 instanceof jq_Array)
 					continue;
 				jq_Class tgtType = (jq_Class) pair.val0;
+				
+				long startGenCst = System.nanoTime();
+
 				cst = genCst(p2Set, pair.val1, tgtType);
+				if (G.tuning) {
+					long endGenCst = System.nanoTime();
+					G.genCstTime += (endGenCst - startGenCst);
+				}
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
 				if (dySum == null) {

@@ -1245,6 +1245,8 @@ public class AbstractHeap {
 	/* Constraint instantiation. */
 	protected BoolExpr instCst(BoolExpr cst, AbstractHeap callerHeap,
 			ProgramPoint point, MemLocInstantiation memLocInstn) {
+		long startInstCst = System.nanoTime();
+
 		assert cst != null : "Invalid Constrait before instantiation.";
 		// return directly.
 		if (ConstraintManager.isScala(cst))
@@ -1253,6 +1255,9 @@ public class AbstractHeap {
 				point, memLocInstn);
 
 		assert instC != null : "Invalid instantiated Constrait.";
+		long endInstCst = System.nanoTime();
+		G.instCstTime += (endInstCst - startInstCst);
+
 		return instC;
 	}
 
