@@ -5,17 +5,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
-import joeq.Class.jq_Reference;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
-import joeq.Main.jq;
 import chord.analyses.alias.CICG;
 import chord.analyses.alias.ICICG;
 import chord.analyses.method.DomM;
