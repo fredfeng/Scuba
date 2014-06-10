@@ -1811,7 +1811,8 @@ public class AbstractHeap {
 		// for recursive call, we should use another map to temporarily store
 		// the information to avoid concurrent modification exception
 		if (!tgts.isEmpty()) {
-			Numbering wrapper = getNumbering(numberCounter, isInSCC);
+			// use the numbering factory in Env
+			Numbering wrapper = Env.getNumbering(numberCounter, isInSCC);
 			Set<HeapEdge> edges = toAdd.get(wrapper);
 			// we should do this check considering the invoke and also regular
 			// operations
@@ -1825,13 +1826,15 @@ public class AbstractHeap {
 				ret1 = true;
 			}
 			// filling the reverse mapping, just for dbg and dumping
-			for (HeapEdge edge : edges) {
-				Set<Numbering> nums = reverseEdgeSeq.get(edge);
-				if (nums == null) {
-					nums = new HashSet<Numbering>();
-					reverseEdgeSeq.put(edge, nums);
+			if (G.dumpNumbering) {
+				for (HeapEdge edge : edges) {
+					Set<Numbering> nums = reverseEdgeSeq.get(edge);
+					if (nums == null) {
+						nums = new HashSet<Numbering>();
+						reverseEdgeSeq.put(edge, nums);
+					}
+					nums.add(Env.getNumbering(numberCounter, isInSCC));
 				}
-				nums.add(getNumbering(numberCounter, isInSCC));
 			}
 		}
 
@@ -1868,7 +1871,8 @@ public class AbstractHeap {
 		// that are added many times, because this reflects the dependence
 		// relation of the edges
 		if (!tgts.isEmpty()) {
-			Numbering wrapper = getNumbering(numToAssign, isInSCC);
+			// using the numbering factory in Env
+			Numbering wrapper = Env.getNumbering(numToAssign, isInSCC);
 			Set<HeapEdge> edges = edgeSeq.get(wrapper);
 			if (edges == null) {
 				edges = new HashSet<HeapEdge>();
@@ -1887,7 +1891,7 @@ public class AbstractHeap {
 						nums = new HashSet<Numbering>();
 						reverseEdgeSeq.put(edge, nums);
 					}
-					nums.add(getNumbering(numToAssign, isInSCC));
+					nums.add(Env.getNumbering(numToAssign, isInSCC));
 				}
 			}
 		}
