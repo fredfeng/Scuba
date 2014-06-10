@@ -32,6 +32,9 @@ public class G {
 	
 	//total time spending on gen Cst
 	public static long genCstTime = 0;
+	
+	//total time spending on inst edges
+	public static long instEdgeTime = 0;
 
 	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 }

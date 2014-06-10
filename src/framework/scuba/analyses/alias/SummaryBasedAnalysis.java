@@ -203,7 +203,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private void workOn(Node node) {
 		if (G.tuning) {
 			G.countScc++;
-			StringUtil.reportInfo("Working on SCC: " + G.countScc);
+			StringUtil.reportInfo("Working on SCC: " + G.countScc
+					+ nodeToScc.get(node));
 			StringUtil.reportInfo("Size of SCC: " + nodeToScc.get(node).size());
 		}
 		long startSCC = System.nanoTime();
@@ -291,8 +292,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 		
 		if(G.tuning) {
-			StringUtil.reportTotalTime("Total Time to generate Constaint: ", G.genCstTime);
-			StringUtil.reportTotalTime("Total Time to instantiate Constaint: ", G.instCstTime);
+			StringUtil.reportTotalTime("Total Time to generate Constaint: ",
+					G.genCstTime);
+			StringUtil.reportTotalTime("Total Time to instantiate Constaint: ",
+					G.instCstTime);
+			StringUtil.reportTotalTime("Total Time to instantiate Edges: ",
+					G.instEdgeTime);
 		}
 		summary.validate();
 		return summary.getAbsHeap().isChanged();

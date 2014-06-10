@@ -23,6 +23,7 @@ import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
 import framework.scuba.helper.P2SetHelper;
+import framework.scuba.utils.StringUtil;
 
 public class AbstractHeap {
 
@@ -1361,6 +1362,8 @@ public class AbstractHeap {
 			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
 			ProgramPoint point, BoolExpr typeCst, int numberCounter,
 			boolean isInSCC) {
+		long startInstEdge = System.nanoTime();
+
 		boolean ret = false;
 		boolean ret2 = false;
 
@@ -1467,6 +1470,12 @@ public class AbstractHeap {
 		if (G.debug) {
 			System.out.println("the return boolean is: " + ret2);
 		}
+		if (G.tuning) {
+			long endtInstEdge = System.nanoTime();
+			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
+			G.instEdgeTime += (endtInstEdge - startInstEdge);
+		}
+
 		return new Pair<Boolean, Boolean>(ret, ret2);
 	}
 

@@ -457,6 +457,8 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 			long startInstCallsite = System.nanoTime();
+			if(G.tuning)
+				StringUtil.reportInfo("handle callsite: " + stmt);
 
 			// get rhs in the factory (maybe we do not need to)
 			assert (stmt.getOperator() instanceof Invoke);
