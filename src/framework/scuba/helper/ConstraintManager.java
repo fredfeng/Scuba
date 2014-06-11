@@ -152,6 +152,7 @@ public class ConstraintManager {
 				assert expr.IsEq() || expr.IsLE() : "invalid expr" + expr;
 				set.add(expr);
 			}
+			
 			for (BoolExpr sub : set) {
 				if (sub.IsEq() || sub.IsLE()) {
 					Expr term = sub.Args()[0].Args()[0];
@@ -266,6 +267,7 @@ public class ConstraintManager {
 	
 	//generate equality typing constraint.
 	public static BoolExpr genEqTyping(P2Set p2Set, jq_Class t) {
+
 		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
@@ -279,6 +281,8 @@ public class ConstraintManager {
 	
 	// instantiate subtyping constraint by term.
 	public static BoolExpr instSubTyping(InstantiatedLocSet p2Set, int typeInt) {
+		long startICst = System.nanoTime();
+
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
 		for (AbstractMemLoc ho : p2Set.getAbstractMemLocs()) {
@@ -291,11 +295,17 @@ public class ConstraintManager {
 				assert false : "Invalid abstract MemLoc." + ho;
 			}
 		}
+		if (G.tuning) {
+			long endICst = System.nanoTime();
+			G.instCstSubTime += (endICst - startICst);
+		}
 		return b;
 	}
 
 	// instantiate equality typing constraint by term.
 	public static BoolExpr instEqTyping(InstantiatedLocSet p2Set, int typeInt) {
+		long startICst = System.nanoTime();
+
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
 		for (AbstractMemLoc ho : p2Set.getAbstractMemLocs()) {
@@ -307,6 +317,10 @@ public class ConstraintManager {
 			} else {
 				assert false : "Invalid abstract MemLoc." + ho;
 			}
+		}
+		if (G.tuning) {
+			long endICst = System.nanoTime();
+			G.instCstSubTime += (endICst - startICst);
 		}
 		return b;
 	}
@@ -330,6 +344,7 @@ public class ConstraintManager {
 	
 	/**
 	 * Check whether expr1 and expr2 are equivalent.
+	 * iff \neg(expr1 iff expr2) is unsatisfiable.
 	 * @param expr1
 	 * @param expr2
 	 * @return
@@ -340,7 +355,7 @@ public class ConstraintManager {
 
 		try {
 			BoolExpr e1;
-			e1 = ctx.MkEq(expr1, expr2);
+			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
 			solver.Assert(e2);
 			if(solver.Check() == Status.UNSATISFIABLE)
