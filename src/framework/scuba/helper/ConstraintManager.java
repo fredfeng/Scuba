@@ -209,16 +209,15 @@ public class ConstraintManager {
 
 			BoolExpr inter = ctx.MkAnd(new BoolExpr[] { first, second });
 			//try to simplify.
-			Expr sim = inter.Simplify();
-			assert sim instanceof BoolExpr : "Unknown constraints in intersection!";
+			long startSimplify = System.nanoTime();
+//			Expr sim = inter.Simplify();
 			if (G.tuning) {
-				long endCst = System.nanoTime();
-				if(G.maxCst < sim.toString().length())
-					G.maxCst = sim.toString().length();
-//				StringUtil.reportSec("Intersect: ", startCst, endCst);
-				G.cstOpTime += (endCst - startCst);
+				long endSimplify = System.nanoTime();
+				G.cstSim += (endSimplify - startSimplify);
 			}
-			return (BoolExpr)sim;
+
+			assert inter instanceof BoolExpr : "Unknown constraints in intersection!";
+			return inter;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -235,16 +234,14 @@ public class ConstraintManager {
 
 			BoolExpr union = ctx.MkOr(new BoolExpr[] { first, second });
 			//try to simplify.
-			Expr sim = union.Simplify();
-			assert sim instanceof BoolExpr : "Unknown constraints in union!";
+			long startSimplify = System.nanoTime();
+//			Expr sim = union.Simplify();
 			if (G.tuning) {
-				long endCst = System.nanoTime();
-				if(G.maxCst < sim.toString().length())
-					G.maxCst = sim.toString().length();
-//				StringUtil.reportSec("Union:", startCst, endCst);
-				G.cstOpTime += (endCst - startCst);
+				long endSimplify = System.nanoTime();
+				G.cstSim += (endSimplify - startSimplify);
 			}
-			return (BoolExpr)sim;
+			assert union instanceof BoolExpr : "Unknown constraints in union!";
+			return union;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
