@@ -1161,6 +1161,165 @@ public class AbstractHeap {
 		return instC;
 	}
 
+	protected boolean instantiateEdgeNoNumberingForRecursiveCall(
+			AbstractMemLoc src, HeapObject dst, FieldElem field,
+			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
+			ProgramPoint point, BoolExpr typeCst,
+			Set<Pair<AbstractMemLoc, P2Set>> toAdd) {
+
+		long startInstEdge = System.nanoTime();
+
+		boolean ret = false;
+
+		assert (src != null && dst != null && field != null) : "nulls!";
+		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
+		assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
+				+ "the p2 set should contain the destination of the edge!";
+
+		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
+		assert (calleeCst != null) : "constraint is null!";
+
+		// instantiate the calleeCst
+		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
+
+		long startInstLoc = System.nanoTime();
+		InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this, point);
+		InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this, point);
+
+		long endInstLoc = System.nanoTime();
+		G.instLocTimePerEdges += (endInstLoc - startInstLoc);
+
+		assert (instnDst != null) : "instantiation of dst cannot be null!";
+		if (instnSrc == null) {
+			assert (src instanceof RetElem) : "only return value in the callee"
+					+ " is allowed not having an instantiated location in the callee";
+		}
+
+		if (instnSrc == null) {
+			return ret;
+		}
+		G.instToEdges = 0;
+		G.instToEdges += (instnSrc.size() * instnDst.size());
+
+		for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
+			for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
+				assert (newDst instanceof HeapObject) : ""
+						+ "dst should be instantiated as a heap object!";
+				HeapObject newDst1 = (HeapObject) newDst;
+
+				assert (newDst1 != null) : "null!";
+
+				BoolExpr cst1 = instnSrc.getConstraint(newSrc);
+				BoolExpr cst2 = instnDst.getConstraint(newDst);
+
+				BoolExpr cst = ConstraintManager.intersect(
+						ConstraintManager.intersect(cst1, cst2),
+						ConstraintManager.intersect(instnCst, typeCst));
+
+				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
+
+				Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+						newSrc, field);
+
+				toAdd.add(new Pair<AbstractMemLoc, P2Set>(newSrc, new P2Set(
+						newDst1, cst)));
+
+				// Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
+				// new P2Set(newDst1, cst));
+
+				// ret = ret | ret1.val0;
+			}
+		}
+
+		if (G.tuning) {
+			long endtInstEdge = System.nanoTime();
+			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
+			G.instEdgeTime += (endtInstEdge - startInstEdge);
+			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
+			StringUtil.reportInfo("Number of edges in the caller: "
+					+ G.instToEdges);
+		}
+
+		return ret;
+	}
+
+	protected boolean instantiateEdgeNoNumbering(AbstractMemLoc src,
+			HeapObject dst, FieldElem field, MemLocInstantiation memLocInstn,
+			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
+
+		boolean ret = false;
+
+		assert (src != null && dst != null && field != null) : "nulls!";
+		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
+		assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
+				+ "the p2 set should contain the destination of the edge!";
+
+		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
+		assert (calleeCst != null) : "constraint is null!";
+
+		// instantiate the calleeCst
+		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
+
+		long startInstLoc = System.nanoTime();
+		InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this, point);
+		InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this, point);
+
+		long endInstLoc = System.nanoTime();
+		G.instLocTimePerEdges += (endInstLoc - startInstLoc);
+
+		assert (instnDst != null) : "instantiation of dst cannot be null!";
+		if (instnSrc == null) {
+			assert (src instanceof RetElem) : "only return value in the callee"
+					+ " is allowed not having an instantiated location in the callee";
+		}
+
+		if (instnSrc == null) {
+			return ret;
+		}
+
+		G.instToEdges += (instnSrc.size() * instnDst.size());
+
+		long startInstEdge = System.nanoTime();
+		for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
+			for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
+				assert (newDst instanceof HeapObject) : ""
+						+ "dst should be instantiated as a heap object!";
+				HeapObject newDst1 = (HeapObject) newDst;
+
+				assert (newDst1 != null) : "null!";
+
+				BoolExpr cst1 = instnSrc.getConstraint(newSrc);
+				BoolExpr cst2 = instnDst.getConstraint(newDst);
+
+				BoolExpr cst = ConstraintManager.intersect(
+						ConstraintManager.intersect(cst1, cst2),
+						ConstraintManager.intersect(instnCst, typeCst));
+
+				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
+				Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+						newSrc, field);
+
+				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
+						new P2Set(newDst1, cst));
+
+				ret = ret | ret1.val0;
+			}
+		}
+		long endInstEdge = System.nanoTime();
+		inst_time += (endInstEdge - startInstEdge);
+
+		if (G.tuning) {
+			long endtInstEdge = System.nanoTime();
+			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
+			G.instEdgeTime += (endtInstEdge - startInstEdge);
+			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
+			StringUtil.reportInfo("Number of edges in the caller: "
+					+ G.instToEdges);
+		}
+
+		return ret;
+	}
+
 	protected Pair<Boolean, Boolean> instantiateEdgesForRecursiveCall(
 			Set<HeapEdge> edges, MemLocInstantiation memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst,
@@ -1175,7 +1334,7 @@ public class AbstractHeap {
 			StringUtil.reportInfo("Edges size for recursive call: "
 					+ edges.size());
 		}
-		
+
 		G.instLocTimePerEdges = 0;
 		G.instToEdges = 0;
 
@@ -1196,7 +1355,7 @@ public class AbstractHeap {
 
 			// instantiate the calleeCst
 			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
-			
+
 			long startInstLoc = System.nanoTime();
 			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
 					point);
@@ -1257,8 +1416,8 @@ public class AbstractHeap {
 			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
 			StringUtil.reportInfo("Number of edges in the caller: "
 					+ G.instToEdges);
-			StringUtil.reportTotalTime("Total Time to instantiate Constraint: ",
-					G.instCstTime);
+			StringUtil.reportTotalTime(
+					"Total Time to instantiate Constraint: ", G.instCstTime);
 			StringUtil.reportTotalTime("Total Time to instantiate Edges: ",
 					G.instEdgeTime);
 
@@ -1360,10 +1519,150 @@ public class AbstractHeap {
 		return new Pair<Boolean, Boolean>(ret, ret2);
 	}
 
+	public static int no = 0;
+	public static int no1 = 0;
+	public static long inst_time = 0;
+
+	protected boolean handleInvokeStmtNoNumbering(jq_Class clazz,
+			jq_Method method, int line, AbstractHeap calleeHeap,
+			MemLocInstantiation memLocInstn, BoolExpr typeCst, int numToAssign,
+			boolean isInSCC) {
+		no++;
+		boolean ret = false;
+
+		ProgramPoint point = Env.getProgramPoint(clazz, method, line);
+
+		// this is used for recursive call
+		boolean isRecursive = false;
+		if (this.equals(calleeHeap)) {
+			isRecursive = true;
+		}
+
+		// pre update location
+		Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
+		for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
+				.keySet()) {
+			AbstractMemLoc loc = pair.val0;
+			FieldElem field = pair.val1;
+			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
+					this, point);
+
+			assert (instnMemLocSet != null);
+
+			for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
+				// weakUpdate(new Pair<AbstractMemLoc, FieldElem>(loc1, field),
+				// new P2Set(), -1, false);
+				// to avoid ConcurrentModification exception, we temporally
+				// store the (loc, field) pairs in a set
+				toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1, field));
+			}
+		}
+		// now we weakly update the heap of the caller so that it will include
+		// all the locations in the callee's heap
+		for (Pair<AbstractMemLoc, FieldElem> pair : toUpdate) {
+			weakUpdateNoNumbering(pair, new P2Set());
+		}
+
+		if (G.dbgSCC) {
+			StringUtil.reportInfo("Recursive: " + isRecursive + " of " + no);
+			int s = 0;
+			for (Pair<AbstractMemLoc, FieldElem> a : calleeHeap.heapObjectsToP2Set
+					.keySet()) {
+				s += calleeHeap.heapObjectsToP2Set.get(a).size();
+			}
+			StringUtil.reportInfo("Recursive: " + "callee size: " + s);
+		}
+		if (G.dbgSCC) {
+			int i = 0;
+			for (Pair<AbstractMemLoc, FieldElem> a : heapObjectsToP2Set
+					.keySet()) {
+				i += heapObjectsToP2Set.get(a).size();
+			}
+			StringUtil.reportInfo("Recursive: " + "current heap size: " + i);
+		}
+		long start = System.nanoTime();
+		// this is the real updating
+		if (!isRecursive) {
+			inst_time = 0;
+			while (true) {
+				boolean go = false;
+				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
+						.keySet()) {
+					AbstractMemLoc src = pair.val0;
+					FieldElem f = pair.val1;
+					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
+					for (HeapObject tgt : tgts.getHeapObjects()) {
+						go = this.instantiateEdgeNoNumbering(src, tgt, f,
+								memLocInstn, calleeHeap, point, typeCst) | go;
+						ret = ret | go;
+					}
+				}
+				if (!go) {
+					break;
+				}
+			}
+		} else {
+			int times = 0;
+			while (true) {
+				times++;
+				if (G.dbgSCC) {
+					StringUtil.reportInfo("Recursive: " + times);
+				}
+				boolean go = false;
+				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
+						.keySet()) {
+					Set<Pair<AbstractMemLoc, P2Set>> toAdd = new HashSet<Pair<AbstractMemLoc, P2Set>>();
+					AbstractMemLoc src = pair.val0;
+					FieldElem f = pair.val1;
+					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
+					for (HeapObject tgt : tgts.getHeapObjects()) {
+						this.instantiateEdgeNoNumberingForRecursiveCall(src,
+								tgt, f, memLocInstn, calleeHeap, point,
+								typeCst, toAdd);
+					}
+					for (Pair<AbstractMemLoc, P2Set> pair1 : toAdd) {
+						AbstractMemLoc newSrc = pair1.val0;
+						P2Set newP2Set = pair1.val1;
+						Pair<AbstractMemLoc, FieldElem> pair2 = new Pair<AbstractMemLoc, FieldElem>(
+								newSrc, f);
+						go = weakUpdateNoNumbering(pair2, newP2Set).val0 | go;
+						ret = ret | go;
+					}
+				}
+				if (!go) {
+					break;
+				}
+			}
+
+		}
+		long end = System.nanoTime();
+		if (G.dbgSCC) {
+			int s = 0;
+			for (Pair<AbstractMemLoc, FieldElem> a : heapObjectsToP2Set
+					.keySet()) {
+				s += heapObjectsToP2Set.get(a).size();
+			}
+			StringUtil.reportInfo("Recursive: " + "caller new size: " + s);
+			StringUtil.reportInfo("Recursive: " + "Ret: " + ret);
+			StringUtil.reportSec("Recursive: time: ", start, end);
+			StringUtil.reportSec("Recursive: time in inst ", inst_time);
+		}
+
+		return ret;
+	}
+
+	public static int tmp = 0;
+	public static int tmp1 = 0;
+	public static int tmp2 = 0;
+
 	// TODO
 	protected boolean handleInvokeStmt(jq_Class clazz, jq_Method method,
 			int line, AbstractHeap calleeHeap, MemLocInstantiation memLocInstn,
 			BoolExpr typeCst, int numToAssign, boolean isInSCC) {
+		tmp++;
+		if (G.dbgSCC) {
+			StringUtil.reportInfo("in handling invoke: " + tmp);
+		}
 		boolean ret = false;
 		// record the program point in the caller so that we can use this for
 		// allocation site naming (heap naming)
@@ -1421,10 +1720,42 @@ public class AbstractHeap {
 			weakUpdate(pair, new P2Set(), -1, false);
 		}
 
-		if(G.tuning)
-			StringUtil.reportInfo("calleeEdgeSeq: " + calleeEdgeSeq.keySet().size());
+		if (G.dbgSCC) {
+			int number = 0;
+			int edges = 0;
+			for (Numbering n : edgeSeq.keySet()) {
+				number += edgeSeq.get(n).size();
+			}
+			for (Pair<AbstractMemLoc, FieldElem> p : heapObjectsToP2Set
+					.keySet()) {
+				edges += heapObjectsToP2Set.get(p).size();
+			}
+			StringUtil.reportInfo("[after pre] weak update size: " + number
+					+ " heap size: " + edges);
+		}
+
+		if (G.tuning) {
+			StringUtil.reportInfo("calleeEdgeSeq: "
+					+ calleeEdgeSeq.keySet().size());
+		}
+		if (G.dbgSCC) {
+			int number = 0;
+			int edges = 0;
+			for (Numbering n : calleeEdgeSeq.keySet()) {
+				number += calleeEdgeSeq.get(n).size();
+			}
+			for (Pair<AbstractMemLoc, FieldElem> p : calleeHeap.heapObjectsToP2Set
+					.keySet()) {
+				edges += calleeHeap.heapObjectsToP2Set.get(p).size();
+			}
+			StringUtil.reportInfo("numbering size: " + number + " heap size: "
+					+ edges);
+		}
+
 		// begin to add the edges
+		int count = 0;
 		for (Numbering n : calleeEdgeSeq.keySet()) {
+			count++;
 			boolean ret2 = false;
 			// fetch the edges with the same number (added in the same patch)
 			Set<HeapEdge> edges = calleeEdgeSeq.get(n);
@@ -1449,6 +1780,11 @@ public class AbstractHeap {
 				if (edgesAreInSCC) {
 					// do a fix-point
 					boolean go = true;
+					if (G.dbgSCC) {
+						StringUtil.reportInfo("I am here 1 " + tmp + " "
+								+ count + " out of " + calleeEdgeSeq.size()
+								+ " edges: " + edges.size());
+					}
 					while (go) {
 						Pair<Boolean, Boolean> ret1 = instantiateEdges(edges,
 								memLocInstn, calleeHeap, point, typeCst,
@@ -1458,6 +1794,11 @@ public class AbstractHeap {
 						ret2 = ret2 | ret1.val1;
 					}
 				} else {
+					if (G.dbgSCC) {
+						StringUtil.reportInfo("I am here 2 " + tmp + " "
+								+ count + " out of " + calleeEdgeSeq.size()
+								+ " edges: " + edges.size());
+					}
 					Pair<Boolean, Boolean> ret1 = instantiateEdges(edges,
 							memLocInstn, calleeHeap, point, typeCst,
 							assgnNumber, assgnFlag);
@@ -1475,18 +1816,15 @@ public class AbstractHeap {
 
 				assert (maxNumber == 0 || edgeSeq.containsKey(new Numbering(
 						maxNumber, assgnFlag))) : "error in adding edges and assigning number and flag!";
-				// consider multiple callees, we cannot do the following
-				// assertion
-				// assert (!edgeSeq
-				// .containsKey(new Numbering(maxNumber + 1, true))) : ""
-				// + "error in adding edges and assigning number and flag!";
-				// assert (!edgeSeq
-				// .containsKey(new Numbering(maxNumber + 1, false))) : ""
-				// + "error in adding edges and assigning number and flag!";
 
 			} else {
 				assert (toAdd != null);
 				if (edgesAreInSCC) {
+					if (G.dbgSCC) {
+						StringUtil.reportInfo("I am here 3 " + tmp + " "
+								+ count + " out of " + calleeEdgeSeq.size()
+								+ " edges: " + edges.size());
+					}
 					// do a fix-point
 					boolean go = true;
 					while (go) {
@@ -1499,6 +1837,11 @@ public class AbstractHeap {
 					}
 
 				} else {
+					if (G.dbgSCC) {
+						StringUtil.reportInfo("I am here 4 " + tmp + " "
+								+ count + " out of " + calleeEdgeSeq.size()
+								+ " edges: " + edges.size());
+					}
 					Pair<Boolean, Boolean> ret1 = instantiateEdgesForRecursiveCall(
 							edges, memLocInstn, calleeHeap, point, typeCst,
 							assgnNumber, assgnFlag, toAdd);
@@ -1510,25 +1853,6 @@ public class AbstractHeap {
 				assert (!edges.isEmpty()) : "a number should not be assigned to no-edge!";
 				maxNumber = ret2 ? Math.max(maxNumber, assgnNumber) : maxNumber;
 
-				// considering multiple potential callees, we cannot do this
-				// assertion
-				// assert (maxNumber == 0
-				// || toAdd.containsKey(new Numbering(maxNumber, assgnFlag)) ||
-				// edgeSeq
-				// .containsKey(new Numbering(maxNumber, assgnFlag))) : ""
-				// + "error in adding edges and assigning number and flag!";
-				// assert (!edgeSeq
-				// .containsKey(new Numbering(maxNumber + 1, true))) : ""
-				// + "error in adding edges and assigning number and flag!";
-				// assert (!edgeSeq
-				// .containsKey(new Numbering(maxNumber + 1, false))) : ""
-				// + "error in adding edges and assigning number and flag!";
-				// assert (!toAdd.containsKey(new Numbering(maxNumber + 1,
-				// true))) : ""
-				// + "error in adding edges and assigning number and flag!";
-				// assert (!toAdd.containsKey(new Numbering(maxNumber + 1,
-				// false))) : ""
-				// + "error in adding edges and assigning number and flag!";
 			}
 		}
 
@@ -1913,6 +2237,34 @@ public class AbstractHeap {
 			}
 		}
 		ret.val0 = currentP2Set.join(p2Set);
+
+		return ret;
+	}
+
+	protected Pair<Boolean, Boolean> weakUpdateNoNumbering(
+			Pair<AbstractMemLoc, FieldElem> pair, P2Set p2Set) {
+		// ret.val0: boolean flag reflecting updates of the heap
+		// ret.val1: boolean flag reflecting updates of the numbering
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
+		AbstractMemLoc src = pair.val0;
+		FieldElem f = pair.val1;
+		Set<HeapObject> tgts = p2Set.getHeapObjects();
+		// first clean up the default targets in the p2set given the pair
+		cleanup(p2Set, pair);
+		// src has field f even if the p2set might be empty
+		src.addField(f);
+		// update the locations in the real heap graph
+		heap.add(src);
+		heap.addAll(tgts);
+		// then get the current heap given the memory location and the field
+		P2Set currentP2Set = heapObjectsToP2Set.get(pair);
+		if (currentP2Set == null) {
+			currentP2Set = new P2Set();
+			heapObjectsToP2Set.put(pair, currentP2Set);
+		}
+
+		ret.val0 = currentP2Set.join(p2Set);
+
 		return ret;
 	}
 
