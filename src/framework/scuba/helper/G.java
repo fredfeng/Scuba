@@ -47,5 +47,14 @@ public class G {
 	//max constraint length.
 	public static int maxCst = 0;
 
+	// total time spending on inst locations
+	public static long instLocTime = 0;
+
+	// time spending on inst locations per inst edges
+	public static long instLocTimePerEdges = 0;
+
+	// number of edges that are instantiated into in the caller
+	public static int instToEdges = 0;
+
 	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 }

@@ -1259,6 +1259,8 @@ public class AbstractHeap {
 			StringUtil.reportInfo("Edges size: " + edges.size());
 		}
 
+		G.instLocTimePerEdges = 0;
+		G.instToEdges = 0;
 		for (HeapEdge edge : edges) {
 
 			AbstractMemLoc src = edge.getSrc();
@@ -1277,39 +1279,28 @@ public class AbstractHeap {
 			// instantiate the calleeCst
 			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
+			long startInstLoc = System.nanoTime();
 			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
 					point);
 			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
 					point);
+
+			long endInstLoc = System.nanoTime();
+			G.instLocTimePerEdges += (endInstLoc - startInstLoc);
 
 			assert (instnDst != null) : "instantiation of dst cannot be null!";
 			if (instnSrc == null) {
 				assert (src instanceof RetElem) : "only return value in the callee"
 						+ " is allowed not having an instantiated location in the callee";
 			}
-			// if meeting a return value in the callee mapped to nothing in the
-			// caller, e.g. v.foo(a,b) with a LHS
-			// just jump to the next edge and do not instantiate this edge
-			if (instnSrc == null || instnDst == null) {
+
+			if (instnSrc == null) {
 				continue;
 			}
 
-			// it is possible that the src has no location in the caller's heap
-			// to instantiate
-			// assert (!instnSrc.isEmpty()) : "instnSrc cannot be empty!";
-			// it is possible the dst has no location in the caller to
-			// instantiate to, just think about the native call in the caller
-			// assert (!instnDst.isEmpty()) : "instnDst cannot be empty!";
+			G.instToEdges += (instnSrc.size() * instnDst.size());
 
 			for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
-				// following is just for creating the node in the heapMapping
-				// because it is possible that the dst is instantiated to
-				// nothing, which leads to the src not created in the heap
-				// Pair<AbstractMemLoc, FieldElem> pair = new
-				// Pair<AbstractMemLoc, FieldElem>(
-				// newSrc, field);
-				// weakUpdate(pair, new P2Set(), numberCounter, isInSCC);
-
 				for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
 					assert (newDst instanceof HeapObject) : ""
 							+ "dst should be instantiated as a heap object!";
@@ -1319,6 +1310,7 @@ public class AbstractHeap {
 
 					BoolExpr cst1 = instnSrc.getConstraint(newSrc);
 					BoolExpr cst2 = instnDst.getConstraint(newDst);
+
 					BoolExpr cst = ConstraintManager.intersect(
 							ConstraintManager.intersect(cst1, cst2),
 							ConstraintManager.intersect(instnCst, typeCst));
@@ -1340,6 +1332,9 @@ public class AbstractHeap {
 			long endtInstEdge = System.nanoTime();
 			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
 			G.instEdgeTime += (endtInstEdge - startInstEdge);
+			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
+			StringUtil.reportInfo("Number of edges in the caller: "
+					+ G.instToEdges);
 		}
 
 		return new Pair<Boolean, Boolean>(ret, ret2);
@@ -1424,7 +1419,7 @@ public class AbstractHeap {
 			boolean assgnFlag = isInSCC || edgesAreInSCC;
 
 			if (G.tuning) {
-				StringUtil.reportInfo("Callee Edges are in SCC:"
+				StringUtil.reportInfo("Callee Edges are in SCC: "
 						+ edgesAreInSCC);
 			}
 
@@ -1811,7 +1806,8 @@ public class AbstractHeap {
 		// for recursive call, we should use another map to temporarily store
 		// the information to avoid concurrent modification exception
 		if (!tgts.isEmpty()) {
-			Numbering wrapper = getNumbering(numberCounter, isInSCC);
+			// use the numbering factory in Env
+			Numbering wrapper = Env.getNumbering(numberCounter, isInSCC);
 			Set<HeapEdge> edges = toAdd.get(wrapper);
 			// we should do this check considering the invoke and also regular
 			// operations
@@ -1825,13 +1821,15 @@ public class AbstractHeap {
 				ret1 = true;
 			}
 			// filling the reverse mapping, just for dbg and dumping
-			for (HeapEdge edge : edges) {
-				Set<Numbering> nums = reverseEdgeSeq.get(edge);
-				if (nums == null) {
-					nums = new HashSet<Numbering>();
-					reverseEdgeSeq.put(edge, nums);
+			if (G.dumpNumbering) {
+				for (HeapEdge edge : edges) {
+					Set<Numbering> nums = reverseEdgeSeq.get(edge);
+					if (nums == null) {
+						nums = new HashSet<Numbering>();
+						reverseEdgeSeq.put(edge, nums);
+					}
+					nums.add(Env.getNumbering(numberCounter, isInSCC));
 				}
-				nums.add(getNumbering(numberCounter, isInSCC));
 			}
 		}
 
@@ -1868,7 +1866,8 @@ public class AbstractHeap {
 		// that are added many times, because this reflects the dependence
 		// relation of the edges
 		if (!tgts.isEmpty()) {
-			Numbering wrapper = getNumbering(numToAssign, isInSCC);
+			// using the numbering factory in Env
+			Numbering wrapper = Env.getNumbering(numToAssign, isInSCC);
 			Set<HeapEdge> edges = edgeSeq.get(wrapper);
 			if (edges == null) {
 				edges = new HashSet<HeapEdge>();
@@ -1887,7 +1886,7 @@ public class AbstractHeap {
 						nums = new HashSet<Numbering>();
 						reverseEdgeSeq.put(edge, nums);
 					}
-					nums.add(getNumbering(numToAssign, isInSCC));
+					nums.add(Env.getNumbering(numToAssign, isInSCC));
 				}
 			}
 		}
