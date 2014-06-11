@@ -15,20 +15,19 @@ import chord.util.tuple.object.Pair;
 import framework.scuba.helper.G;
 import framework.scuba.utils.StringUtil;
 
-
 /**
- * Global env to store all summaries of their methods. 
- * Singleton pattern.
- * Corresponding to 'Upsilon' in Figure 7.
+ * Global env to store all summaries of their methods. Singleton pattern.
+ * Corresponding to 'Epsilon' in Figure 7.
+ * 
  * @author yufeng
- *
+ * 
  */
 public class SummariesEnv {
-	   
+
 	private static SummariesEnv instance = new SummariesEnv();
-	
+
 	protected ProgramRel relCHA;
-	
+
 	Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
 
 	public static SummariesEnv v() {
@@ -42,10 +41,10 @@ public class SummariesEnv {
 	public Summary getSummary(jq_Method meth) {
 		return summaries.get(meth);
 	}
-	
+
 	public Summary initSummary(jq_Method meth) {
-		//for scc, it may exist.
-		if(summaries.get(meth) != null)
+		// for scc, it may exist.
+		if (summaries.get(meth) != null)
 			return summaries.get(meth);
 		else {
 			putSummary(meth, new Summary(meth));
@@ -56,11 +55,11 @@ public class SummariesEnv {
 	public Summary putSummary(jq_Method meth, Summary sum) {
 		return summaries.put(meth, sum);
 	}
-	
-	public void setCHA(ProgramRel cha){
+
+	public void setCHA(ProgramRel cha) {
 		relCHA = cha;
 	}
-	
+
 	public Set<Pair<jq_Reference, jq_Method>> loadInheritMeths(jq_Method m,
 			jq_Class statType) {
 		if (!relCHA.isOpen())
@@ -77,13 +76,13 @@ public class SummariesEnv {
 			for (Pair<jq_Reference, jq_Method> inst : res) {
 				if (inst.val0 instanceof jq_Array)
 					continue;
-				jq_Class clz = (jq_Class)inst.val0;
+				jq_Class clz = (jq_Class) inst.val0;
 				// add the one that extents statType, no include itself.
 				if (clz.extendsClass(statType) && !clz.equals(statType))
 					pts.add(inst);
 			}
 		}
-		if(G.tuning)
+		if (G.tuning)
 			StringUtil.reportInfo("resolve callee: 11111111" + pts);
 		return pts;
 	}

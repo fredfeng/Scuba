@@ -144,7 +144,7 @@ public class IntraProcSumAnalysis {
 			BasicBlock bb = wl.poll();
 			if (set.contains(bb))
 				continue;
-			
+
 			boolean flag = handleBasicBlock(bb, true);
 			flagScc = flagScc || flag;
 			assert scc.contains(bb) : "You can't analyze the node that is out of current scc.";
@@ -152,11 +152,11 @@ public class IntraProcSumAnalysis {
 				set.clear();
 			else
 				set.add(bb);
-			
+
 			// xinyu's algorithm: use counter to achieve O(1)
 			if (set.size() == scc.size())
 				break;
-			
+
 			// process all succs that belongs to current scc.
 			for (BasicBlock suc : bb.getSuccessors())
 				if (scc.contains(suc))
@@ -175,7 +175,7 @@ public class IntraProcSumAnalysis {
 			// handle the stmt
 			boolean flagStmt = summary.handleStmt(q, numToAssign, isInSCC);
 			flag = flag || flagStmt;
-			
+
 			// increment the numbering counter properly:
 			// we only increment the counter here for basic blocks that are not
 			// in some SCC, for basic blocks in an SCC we increment outside
