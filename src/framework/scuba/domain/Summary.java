@@ -1025,5 +1025,10 @@ public class Summary {
 	public AbstractHeap getAbsHeap() {
 		return absHeap;
 	}
+	
+	//perform GC on abstractHeap.
+	public void gcAbsHeap() {
+		absHeap = null;
+	}
 
 }

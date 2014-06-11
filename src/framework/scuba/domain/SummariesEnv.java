@@ -41,6 +41,10 @@ public class SummariesEnv {
 	public Summary getSummary(jq_Method meth) {
 		return summaries.get(meth);
 	}
+	
+	public Summary removeSummary(jq_Method meth) {
+		return summaries.remove(meth);
+	}
 
 	public Summary initSummary(jq_Method meth) {
 		// for scc, it may exist.
@@ -83,7 +87,7 @@ public class SummariesEnv {
 			}
 		}
 		if (G.tuning)
-			StringUtil.reportInfo("resolve callee: 11111111" + pts);
+			StringUtil.reportInfo("resolve callee: size: " + pts.size() + ":" + pts);
 		return pts;
 	}
 }
