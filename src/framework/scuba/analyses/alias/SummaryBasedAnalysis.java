@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
@@ -95,6 +96,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				worklist.add(methNode);
 			}
 
+		Map<Node, Integer> map = new HashMap<Node, Integer>();
 		// foreach leaf in the callgraph. Add them to the worklist.
 		Set<Node> visited = new HashSet<Node>();
 		while (!worklist.isEmpty()) {
@@ -105,9 +107,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			// now just analyze once.
 			assert worker != null : "Worker can not be null";
 			if (allSuccsTerminated(worker.getSuccessors())) {
-				if(G.tuning) 
+				assert (!map.containsKey(worker) || map.get(worker) <= 1);
+				if (G.tuning)
 					StringUtil.reportInfo("Before work on " + worker);
 				workOn(worker);
+				Integer times = map.get(worker);
+				if (times == null) {
+					map.put(worker, 0);
+				}
+				map.put(worker, map.get(worker) + 1);
 				visited.add(worker);
 			}
 			// append worker to the end of the List.class
@@ -136,14 +144,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		Set<jq_Method> cgs = new HashSet<jq_Method>();
 
 		cgs.addAll(callGraph.getNodes());
-		
+
 		SCCHelper4CG s4g = new SCCHelper4CG(callGraph, callGraph.getRoots());
 
 		int maxSize = 0;
 		for (Set<jq_Method> scc : s4g.getComponents()) {
 			// create a representation node for each scc.
 			idx++;
-			if(scc.size() > maxSize) maxSize = scc.size();
+			if (scc.size() > maxSize)
+				maxSize = scc.size();
 			Node node = new Node("scc" + idx);
 			nodeToScc.put(node, scc);
 			sccToNode.put(scc, node);
@@ -153,7 +162,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			repGraph.addNode(node);
 			sccs.addAll(scc);
 		}
-		
 
 		// FIXME: This is a bug in chord. The total number of SCCs is not equal
 		// to the total number of reachable methods. Adding the missing methods
@@ -211,10 +219,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		if (scc.size() == 1) {
 			// self loop. perform scc.
-			if (node.getSuccessors().contains(node))
+			if (node.getSuccessors().contains(node)) {
 				analyzeSCC(node);
-			else
+			} else {
 				analyze(scc.iterator().next());
+			}
 		} else {
 			analyzeSCC(node);
 		}
@@ -289,23 +298,31 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		 * if(gammaNew == gamma) set else reset add pred(unterminated) }
 		 */
 		Set<jq_Method> set = new HashSet<jq_Method>();
+		int tmp = 0;
 		while (true) {
+			tmp++;
 			jq_Method worker = wl.poll();
-			if(set.contains(worker))
+			if (set.contains(worker))
 				continue;
-			
+
 			boolean changed = analyze(worker);
 			if (changed)
 				set.clear();
 			else
 				set.add(worker);
-			
-			if(G.tuning)
-				StringUtil.reportInfo("SCC counter: " + set.size() + ":" + worker);
-			
+
+			if (G.dbgSCC) {
+				StringUtil.reportInfo("Analyzing SCC times: " + tmp);
+				StringUtil.reportInfo("Analyzing SCC times: " + wl);
+			}
+
+			if (G.tuning)
+				StringUtil.reportInfo("SCC counter: " + set.size() + ":"
+						+ worker);
+
 			if (set.size() == scc.size())
 				break;
-			
+
 			for (jq_Method pred : callGraph.getPreds(worker))
 				if (scc.contains(pred))
 					wl.add(pred);

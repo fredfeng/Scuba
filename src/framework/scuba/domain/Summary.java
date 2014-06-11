@@ -101,8 +101,8 @@ public class Summary {
 
 	// return value list
 	protected RetElem retValue;
-	
-	//heap for the whole summary has changed?
+
+	// heap for the whole summary has changed?
 	protected boolean changed = false;
 
 	public boolean isChanged() {
@@ -282,10 +282,17 @@ public class Summary {
 		absHeap.markChanged(false);
 		this.numToAssign = numToAssign;
 		this.isInSCC = isInSCC;
+		if (G.dbgSCC) {
+			StringUtil.reportInfo("weak update size: " + quad);
+		}
 		quad.accept(qv);
 		this.currNumCounter = absHeap.getMaxNumber();
 		return absHeap.isChanged();
 	}
+
+	public static int tmp = 0;
+	public static int tmp1 = 0;
+	public static int tmp2 = 0;
 
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
 
@@ -444,6 +451,8 @@ public class Summary {
 		}
 
 		public void visitInvoke(Quad stmt) {
+			tmp++;
+
 			long startInstCallsite = System.nanoTime();
 
 			// get rhs in the factory (maybe we do not need to)
@@ -454,12 +463,19 @@ public class Summary {
 			// getSumCstPairList returns only the summaries for methods that
 			// have been analyzed
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
-			
+
+			if (G.dbgSCC) {
+				StringUtil.reportInfo("in the invoke: " + tmp + " " + stmt
+						+ " " + calleeSumCstPairs.size());
+				if (tmp == 1281) {
+					absHeap.dumpHeapNumberingToFile("$caller");
+				}
+			}
 			if (G.tuning)
 				StringUtil.reportInfo("handle callsite: " + stmt + " In "
 						+ stmt.getMethod() + " Size: "
 						+ calleeSumCstPairs.size());
-			
+
 			if (G.debug4Invoke) {
 				System.out
 						.println("[Debug4Invoke] Retrieving summaries for callees...");
@@ -467,8 +483,16 @@ public class Summary {
 						+ calleeSumCstPairs.size());
 			}
 
+			int count = 0;
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
+				count++;
+				tmp1++;
+				if (G.dbgSCC) {
+					StringUtil.reportInfo("tmp1: " + tmp1
+							+ "in the callee sum: " + count + " out of "
+							+ calleeSumCstPairs.size());
+				}
 				// the summary of the callee
 				Summary calleeSum = calleeSumCst.val0;
 				// the constraint for calling that callee
@@ -532,14 +556,29 @@ public class Summary {
 								sObj);
 					}
 				}
-				if(G.tuning)
-					StringUtil.reportInfo("calleeSum Info: " + calleeSum.getMethod());
+				if (G.tuning)
+					StringUtil.reportInfo("calleeSum Info: "
+							+ calleeSum.getMethod());
 				// instantiation the edges in the callee's heap
-				boolean flag = absHeap.handleInvokeStmt(
+				if (G.dbgSCC) {
+					StringUtil
+							.reportInfo("[before handling invoke] weak update size: ");
+					if (tmp == 1281) {
+						calleeSum.absHeap.dumpHeapNumberingToFile("" + count);
+					}
+				}
+				// boolean flag = absHeap.handleInvokeStmt(
+				// meth.getDeclaringClass(), meth, stmt.getID(),
+				// calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
+				// numToAssign, isInSCC);
+				boolean flag = absHeap.handleInvokeStmtNoNumbering(
 						meth.getDeclaringClass(), meth, stmt.getID(),
 						calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
 						numToAssign, isInSCC);
 				absHeap.markChanged(flag);
+				if (tmp == 1281) {
+					absHeap.dumpHeapNumberingToFile("$caller" + count);
+				}
 			}
 			if (G.debug4Sum) {
 				if (calleeSumCstPairs.isEmpty()) {
@@ -821,15 +860,14 @@ public class Summary {
 		jq_Method caller = callsite.getMethod();
 		jq_Class clz = caller.getDeclaringClass();
 
-
 		List<Pair<Summary, BoolExpr>> ret = new ArrayList<Pair<Summary, BoolExpr>>();
 		// find all qualified callees and the constraints
 
 		jq_Method callee = Invoke.getMethod(callsite).getMethod();
-		
-		if(G.tuning) 
+
+		if (G.tuning)
 			StringUtil.reportInfo("static callee: " + callee);
-		
+
 		Operator opr = callsite.getOperator();
 		Summary calleeSum = SummariesEnv.v().getSummary(callee);
 		// FIXME: if the summary is null, return nothing.
@@ -875,9 +913,10 @@ public class Summary {
 			// all dynamic targets.
 			Set<Pair<jq_Reference, jq_Method>> tgtSet = SummariesEnv.v()
 					.loadInheritMeths(callee, null);
-			
-			if(G.tuning)
-				StringUtil.reportInfo("resolve callee: 222222222 " + "---" + tgtSet);
+
+			if (G.tuning)
+				StringUtil.reportInfo("resolve callee: 222222222 " + "---"
+						+ tgtSet);
 
 			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				// generate constraint for each potential target.

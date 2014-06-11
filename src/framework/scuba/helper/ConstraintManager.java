@@ -29,7 +29,6 @@ import framework.scuba.domain.InstantiatedLocSet;
 import framework.scuba.domain.MemLocInstantiation;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.ProgramPoint;
-import framework.scuba.utils.StringUtil;
 
 /**
  * Class for generating/solving constraints, since right now our system can only

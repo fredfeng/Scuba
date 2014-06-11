@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
@@ -18,6 +19,7 @@ import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper;
 import framework.scuba.utils.Graph;
 import framework.scuba.utils.Node;
+import framework.scuba.utils.StringUtil;
 
 /**
  * Intra-proc summary-based analysis Check the rules in Figure 8 of our paper.
@@ -99,21 +101,35 @@ public class IntraProcSumAnalysis {
 		}
 
 		// step2: analyzing through normal post reverse order.
+		int tmp = 0;
 		for (Node rep : repGraph.getReversePostOrder()) {
+			tmp++;
+			if (G.dbgSCC) {
+				StringUtil.reportInfo("Analyzing BB SCC times: " + tmp);
+			}
 			Set<BasicBlock> scc = nodeToScc.get(rep);
 			if (scc.size() == 1) {
 				BasicBlock sccB = scc.iterator().next();
 				// self loop in current block.
 				if (sccB.getSuccessors().contains(sccB)) {
+					if (G.dbgSCC) {
+						StringUtil.reportInfo("I am here: 1");
+					}
 					boolean flag = handleSCC(scc);
 					summary.setChanged(flag || summary.isChanged());
 
 					numToAssign = summary.getCurrNumCounter() + 1;
 				} else {
+					if (G.dbgSCC) {
+						StringUtil.reportInfo("I am here: 2");
+					}
 					boolean flag = handleBasicBlock(sccB, false);
 					summary.setChanged(flag || summary.isChanged());
 				}
 			} else {
+				if (G.dbgSCC) {
+					StringUtil.reportInfo("I am here: 3");
+				}
 				boolean flag = handleSCC(scc);
 				summary.setChanged(flag || summary.isChanged());
 				numToAssign = summary.getCurrNumCounter() + 1;
@@ -139,6 +155,7 @@ public class IntraProcSumAnalysis {
 		if (wl.size() == 0)
 			wl.add(scc.iterator().next());
 
+		Map<BasicBlock, Integer> map = new HashMap<BasicBlock, Integer>();
 		Set<BasicBlock> set = new HashSet<BasicBlock>();
 		while (true) {
 			BasicBlock bb = wl.poll();
@@ -146,6 +163,14 @@ public class IntraProcSumAnalysis {
 				continue;
 
 			boolean flag = handleBasicBlock(bb, true);
+			Integer times = map.get(bb);
+			if (times == null) {
+				map.put(bb, 0);
+			}
+			map.put(bb, map.get(bb) + 1);
+			if (G.dbgSCC) {
+				StringUtil.reportInfo("times for adding: " + map.get(bb));
+			}
 			flagScc = flagScc || flag;
 			assert scc.contains(bb) : "You can't analyze the node that is out of current scc.";
 			if (flag)
@@ -165,14 +190,23 @@ public class IntraProcSumAnalysis {
 		return flagScc;
 	}
 
+	public static int tmp = 0;
+	public static int tmp1 = 0;
+
 	public boolean handleBasicBlock(BasicBlock bb, boolean isInSCC) {
 		accessBlocksList.add(bb);
-
+		tmp++;
+		if (G.dbgSCC) {
+			StringUtil.reportInfo("In the bb: " + tmp + bb);
+		}
 		boolean flag = false;
 		// handle each quad in the basicblock.
 		for (Quad q : bb.getQuads()) {
-
 			// handle the stmt
+			tmp++;
+			if (G.dbgSCC) {
+				StringUtil.reportInfo("In the stmt: " + tmp1 + " " + q);
+			}
 			boolean flagStmt = summary.handleStmt(q, numToAssign, isInSCC);
 			flag = flag || flagStmt;
 
