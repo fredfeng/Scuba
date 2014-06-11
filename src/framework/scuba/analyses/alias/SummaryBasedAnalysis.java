@@ -268,13 +268,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (G.tuning) {
 			StringUtil.reportTotalTime("Total Time to generate Constraint: ",
 					G.genCstTime);
-			StringUtil.reportTotalTime("Total Time to instantiate Constraint: ",
-					G.instCstTime);
 			StringUtil.reportTotalTime("Total Time to Constraint Operation: ",
 					G.cstOpTime);
 			StringUtil.reportInfo("Max Constraint: " + G.maxCst);
-			StringUtil.reportTotalTime("Total Time to instantiate Edges: ",
-					G.instEdgeTime);
 		}
 		if (G.validate) {
 			summary.validate();

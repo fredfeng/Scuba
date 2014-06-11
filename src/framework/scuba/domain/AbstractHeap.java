@@ -1257,6 +1257,11 @@ public class AbstractHeap {
 			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
 			StringUtil.reportInfo("Number of edges in the caller: "
 					+ G.instToEdges);
+			StringUtil.reportTotalTime("Total Time to instantiate Constraint: ",
+					G.instCstTime);
+			StringUtil.reportTotalTime("Total Time to instantiate Edges: ",
+					G.instEdgeTime);
+
 		}
 		return new Pair<Boolean, Boolean>(ret, ret2);
 	}
