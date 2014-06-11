@@ -17,7 +17,6 @@ import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
-import joeq.Compiler.Quad.Operand.MethodOperand;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
@@ -141,16 +140,16 @@ public class Summary {
 	public void dumpSummary4Method(jq_Method meth) {
 		System.out.println("Summary for method: " + meth.getName());
 		System.out.println("**************************************");
-		Set<jq_Type> allocs = new HashSet();
-		List<jq_Type> allocList = new ArrayList();
+		Set<jq_Type> allocs = new HashSet<jq_Type>();
+		List<jq_Type> allocList = new ArrayList<jq_Type>();
 
-		Set<Register> fieldsBase = new HashSet();
-		List<Register> fieldsBaseList = new ArrayList();
+		Set<Register> fieldsBase = new HashSet<Register>();
+		List<Register> fieldsBaseList = new ArrayList<Register>();
 
-		Set<jq_Field> fieldsAccess = new HashSet();
-		List<jq_Field> fieldsAccList = new ArrayList();
+		Set<jq_Field> fieldsAccess = new HashSet<jq_Field>();
+		List<jq_Field> fieldsAccList = new ArrayList<jq_Field>();
 
-		Set<Register> locals = new HashSet();
+		Set<Register> locals = new HashSet<Register>();
 
 		ControlFlowGraph cfg = meth.getCFG();
 		String params = "";
@@ -835,7 +834,7 @@ public class Summary {
 			Register recv = ro.getRegister();
 			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
 			// receiver's static type.
-			jq_Class recvStatType = (jq_Class) ro.getType();
+			// jq_Class recvStatType = (jq_Class) ro.getType();
 
 			// generate pt-set for the receiver.
 			StackObject so = getMemLocation(clz, caller, recv);
