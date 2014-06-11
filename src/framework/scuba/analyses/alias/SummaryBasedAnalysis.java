@@ -47,6 +47,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relMM;
 	protected ProgramRel relCHA;
 
+	// force to invoke garbage collector for abstract heap.
+	protected static boolean forceGc = true;
+
 	protected CICG callGraph;
 
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
@@ -96,7 +99,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				worklist.add(methNode);
 			}
 
-		Map<Node, Integer> map = new HashMap<Node, Integer>();
 		// foreach leaf in the callgraph. Add them to the worklist.
 		Set<Node> visited = new HashSet<Node>();
 		while (!worklist.isEmpty()) {
@@ -106,16 +108,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				continue;
 			// now just analyze once.
 			assert worker != null : "Worker can not be null";
-			if (allSuccsTerminated(worker.getSuccessors())) {
-				assert (!map.containsKey(worker) || map.get(worker) <= 1);
+			if (allTerminated(worker.getSuccessors())) {
 				if (G.tuning)
 					StringUtil.reportInfo("Before work on " + worker);
 				workOn(worker);
-				Integer times = map.get(worker);
-				if (times == null) {
-					map.put(worker, 0);
-				}
-				map.put(worker, map.get(worker) + 1);
+
 				visited.add(worker);
 			}
 			// append worker to the end of the List.class
@@ -214,6 +211,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 		long startSCC = System.nanoTime();
 
+		assert !node.isTerminated() : "Should not analyze a node twice.";
+
 		// 1.get its corresponding scc
 		Set<jq_Method> scc = nodeToScc.get(node);
 
@@ -229,15 +228,41 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		// at the end, mark it as terminated.
-		node.setTerminated(true);
+		terminateAndDoGC(node);
 		if (G.tuning) {
 			long endSCC = System.nanoTime();
 			StringUtil.reportSec("Analyzing SCC in ", startSCC, endSCC);
 		}
 	}
 
-	// check whether all successors have terminated.
-	private boolean allSuccsTerminated(List<Node> succs) {
+	// mark current node as terminated and perform GC on its successor, if
+	// possible.
+	private void terminateAndDoGC(Node node) {
+		node.setTerminated(true);
+		if (!forceGc)
+			return;
+		for (Node succ : node.getSuccessors()) {
+			// for each successor, if all its preds are terminated, we can gc
+			// this successor.
+			if (allTerminated(succ.getPreds())) {
+				StringUtil.reportInfo("GC node: " + succ);
+				for (jq_Method meth : nodeToScc.get(succ)) {
+					Summary sumGC = SummariesEnv.v().removeSummary(meth);
+					if (sumGC != null) {
+						assert sumGC != null : "Summary to be GC can not be null";
+						sumGC.gcAbsHeap();
+						sumGC = null;
+						System.gc();
+						StringUtil.reportInfo("GC abstract heap for: " + meth);
+					}
+				}
+			}
+
+		}
+	}
+
+	// check whether all nodes have terminated.
+	private boolean allTerminated(List<Node> succs) {
 		boolean flag = true;
 		for (Node node : succs)
 			if (!node.isTerminated()) {
@@ -280,6 +305,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportTotalTime("Total Time to Constraint Operation: ",
 					G.cstOpTime);
 			StringUtil.reportInfo("Max Constraint: " + G.maxCst);
+
+			StringUtil.reportInfo("Free memory (MB): "
+					+ Runtime.getRuntime().freeMemory() / (1024 * 1024));
 		}
 		if (G.validate) {
 			summary.validate();
