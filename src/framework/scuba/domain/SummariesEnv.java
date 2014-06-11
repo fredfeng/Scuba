@@ -12,6 +12,8 @@ import chord.bddbddb.Rel.RelView;
 import chord.project.analyses.ProgramRel;
 import chord.util.SetUtils;
 import chord.util.tuple.object.Pair;
+import framework.scuba.helper.G;
+import framework.scuba.utils.StringUtil;
 
 
 /**
@@ -81,6 +83,8 @@ public class SummariesEnv {
 					pts.add(inst);
 			}
 		}
+		if(G.tuning)
+			StringUtil.reportInfo("resolve callee: 11111111" + pts);
 		return pts;
 	}
 }

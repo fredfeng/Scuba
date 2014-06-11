@@ -101,6 +101,17 @@ public class Summary {
 
 	// return value list
 	protected RetElem retValue;
+	
+	//heap for the whole summary has changed?
+	protected boolean changed = false;
+
+	public boolean isChanged() {
+		return changed;
+	}
+
+	public void setChanged(boolean isChanged) {
+		this.changed = isChanged;
+	}
 
 	public Summary(jq_Method meth) {
 		method = meth;
@@ -267,11 +278,13 @@ public class Summary {
 		return method;
 	}
 
-	public void handleStmt(Quad quad, int numToAssign, boolean isInSCC) {
+	public boolean handleStmt(Quad quad, int numToAssign, boolean isInSCC) {
+		absHeap.markChanged(false);
 		this.numToAssign = numToAssign;
 		this.isInSCC = isInSCC;
 		quad.accept(qv);
 		this.currNumCounter = absHeap.getMaxNumber();
+		return absHeap.isChanged();
 	}
 
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
@@ -432,8 +445,6 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 			long startInstCallsite = System.nanoTime();
-			if (G.tuning)
-				StringUtil.reportInfo("handle callsite: " + stmt);
 
 			// get rhs in the factory (maybe we do not need to)
 			assert (stmt.getOperator() instanceof Invoke);
@@ -443,7 +454,12 @@ public class Summary {
 			// getSumCstPairList returns only the summaries for methods that
 			// have been analyzed
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
-
+			
+			if (G.tuning)
+				StringUtil.reportInfo("handle callsite: " + stmt + " In "
+						+ stmt.getMethod() + " Size: "
+						+ calleeSumCstPairs.size());
+			
 			if (G.debug4Invoke) {
 				System.out
 						.println("[Debug4Invoke] Retrieving summaries for callees...");
@@ -516,6 +532,8 @@ public class Summary {
 								sObj);
 					}
 				}
+				if(G.tuning)
+					StringUtil.reportInfo("calleeSum Info: " + calleeSum.getMethod());
 				// instantiation the edges in the callee's heap
 				boolean flag = absHeap.handleInvokeStmt(
 						meth.getDeclaringClass(), meth, stmt.getID(),
@@ -803,10 +821,15 @@ public class Summary {
 		jq_Method caller = callsite.getMethod();
 		jq_Class clz = caller.getDeclaringClass();
 
+
 		List<Pair<Summary, BoolExpr>> ret = new ArrayList<Pair<Summary, BoolExpr>>();
 		// find all qualified callees and the constraints
 
 		jq_Method callee = Invoke.getMethod(callsite).getMethod();
+		
+		if(G.tuning) 
+			StringUtil.reportInfo("static callee: " + callee);
+		
 		Operator opr = callsite.getOperator();
 		Summary calleeSum = SummariesEnv.v().getSummary(callee);
 		// FIXME: if the summary is null, return nothing.
@@ -852,6 +875,9 @@ public class Summary {
 			// all dynamic targets.
 			Set<Pair<jq_Reference, jq_Method>> tgtSet = SummariesEnv.v()
 					.loadInheritMeths(callee, null);
+			
+			if(G.tuning)
+				StringUtil.reportInfo("resolve callee: 222222222 " + "---" + tgtSet);
 
 			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				// generate constraint for each potential target.
@@ -868,12 +894,19 @@ public class Summary {
 				}
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
+				if (G.tuning && (dySum != null)) {
+					StringUtil.reportInfo("Same methods: " + dySum.getMethod()
+							+ "::" + pair.val1);
+					assert dySum.getMethod().equals(pair.val1) : "Must be the same methods!";
+				}
 				if (dySum == null) {
 					System.err
 							.println("[WARNING:]Unreachable method because of missing model."
 									+ pair.val1);
 					continue;
 				}
+				if (G.tuning)
+					StringUtil.reportInfo("Generate Constraint: " + cst);
 				ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
 			}
 

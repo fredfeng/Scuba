@@ -1166,6 +1166,7 @@ public class AbstractHeap {
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst,
 			int numToAssign, boolean isInSCC,
 			Map<Numbering, Set<HeapEdge>> toAdd) {
+		long startInstEdge = System.nanoTime();
 
 		boolean ret = false;
 		boolean ret2 = false;
@@ -1174,6 +1175,9 @@ public class AbstractHeap {
 			StringUtil.reportInfo("Edges size for recursive call: "
 					+ edges.size());
 		}
+		
+		G.instLocTimePerEdges = 0;
+		G.instToEdges = 0;
 
 		for (HeapEdge edge : edges) {
 
@@ -1192,11 +1196,14 @@ public class AbstractHeap {
 
 			// instantiate the calleeCst
 			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
-
+			
+			long startInstLoc = System.nanoTime();
 			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
 					point);
 			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
 					point);
+			long endInstLoc = System.nanoTime();
+			G.instLocTimePerEdges += (endInstLoc - startInstLoc);
 
 			assert (instnDst != null) : "instantiation of dst cannot be null!";
 			if (instnSrc == null) {
@@ -1209,7 +1216,7 @@ public class AbstractHeap {
 			if (instnSrc == null || instnDst == null) {
 				continue;
 			}
-
+			G.instToEdges += (instnSrc.size() * instnDst.size());
 			// it is possible to be empty
 			// assert (!instnSrc.isEmpty()) : "instnSrc cannot be empty!";
 			// it is possible the dst has no location in the caller to
@@ -1243,6 +1250,14 @@ public class AbstractHeap {
 			}
 		}
 
+		if (G.tuning) {
+			long endtInstEdge = System.nanoTime();
+			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
+			G.instEdgeTime += (endtInstEdge - startInstEdge);
+			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
+			StringUtil.reportInfo("Number of edges in the caller: "
+					+ G.instToEdges);
+		}
 		return new Pair<Boolean, Boolean>(ret, ret2);
 	}
 
@@ -1401,6 +1416,8 @@ public class AbstractHeap {
 			weakUpdate(pair, new P2Set(), -1, false);
 		}
 
+		if(G.tuning)
+			StringUtil.reportInfo("calleeEdgeSeq: " + calleeEdgeSeq.keySet().size());
 		// begin to add the edges
 		for (Numbering n : calleeEdgeSeq.keySet()) {
 			boolean ret2 = false;

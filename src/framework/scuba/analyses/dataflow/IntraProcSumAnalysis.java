@@ -105,13 +105,17 @@ public class IntraProcSumAnalysis {
 				BasicBlock sccB = scc.iterator().next();
 				// self loop in current block.
 				if (sccB.getSuccessors().contains(sccB)) {
-					handleSCC(scc);
+					boolean flag = handleSCC(scc);
+					summary.setChanged(flag || summary.isChanged());
+
 					numToAssign = summary.getCurrNumCounter() + 1;
 				} else {
-					this.handleBasicBlock(sccB, false);
+					boolean flag = handleBasicBlock(sccB, false);
+					summary.setChanged(flag || summary.isChanged());
 				}
 			} else {
-				handleSCC(scc);
+				boolean flag = handleSCC(scc);
+				summary.setChanged(flag || summary.isChanged());
 				numToAssign = summary.getCurrNumCounter() + 1;
 			}
 		}
@@ -123,9 +127,9 @@ public class IntraProcSumAnalysis {
 	}
 
 	// compute the fixed-point for this scc.
-	public void handleSCC(Set<BasicBlock> scc) {
+	public boolean handleSCC(Set<BasicBlock> scc) {
 		LinkedList<BasicBlock> wl = new LinkedList<BasicBlock>();
-
+		boolean flagScc = false;
 		// add all nodes that have preds outside the scc as entry.
 		for (BasicBlock mb : scc)
 			if (!scc.containsAll(mb.getPredecessors()))
@@ -135,36 +139,43 @@ public class IntraProcSumAnalysis {
 		if (wl.size() == 0)
 			wl.add(scc.iterator().next());
 
-		int counter = 0;
-
+		Set<BasicBlock> set = new HashSet<BasicBlock>();
 		while (true) {
 			BasicBlock bb = wl.poll();
+			if (set.contains(bb))
+				continue;
+			
 			boolean flag = handleBasicBlock(bb, true);
+			flagScc = flagScc || flag;
 			assert scc.contains(bb) : "You can't analyze the node that is out of current scc.";
 			if (flag)
-				counter = 0;
+				set.clear();
 			else
-				counter++;
+				set.add(bb);
+			
+			// xinyu's algorithm: use counter to achieve O(1)
+			if (set.size() == scc.size())
+				break;
+			
 			// process all succs that belongs to current scc.
 			for (BasicBlock suc : bb.getSuccessors())
 				if (scc.contains(suc))
 					wl.add(suc);
-
-			// xinyu's algorithm: use counter to achieve O(1)
-			if (counter == scc.size())
-				break;
 		}
+		return flagScc;
 	}
 
 	public boolean handleBasicBlock(BasicBlock bb, boolean isInSCC) {
 		accessBlocksList.add(bb);
 
-		summary.getAbstractHeap().markChanged(false);
+		boolean flag = false;
 		// handle each quad in the basicblock.
 		for (Quad q : bb.getQuads()) {
 
 			// handle the stmt
-			summary.handleStmt(q, numToAssign, isInSCC);
+			boolean flagStmt = summary.handleStmt(q, numToAssign, isInSCC);
+			flag = flag || flagStmt;
+			
 			// increment the numbering counter properly:
 			// we only increment the counter here for basic blocks that are not
 			// in some SCC, for basic blocks in an SCC we increment outside
@@ -172,8 +183,7 @@ public class IntraProcSumAnalysis {
 				numToAssign = summary.getCurrNumCounter() + 1;
 			}
 		}
-
-		return summary.getAbstractHeap().isChanged();
+		return flag;
 	}
 
 	public void setSummary(Summary sum) {

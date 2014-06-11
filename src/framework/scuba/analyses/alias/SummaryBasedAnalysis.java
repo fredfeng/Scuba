@@ -250,6 +250,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		Summary summary = SummariesEnv.v().initSummary(m);
+		summary.setChanged(false);
 		intrapro.setSummary(summary);
 		// set intrapro's number counter to be the counter of the last time the
 		// summary is concluded, so that it will continue numbering from the
@@ -271,15 +272,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 					G.instCstTime);
 			StringUtil.reportTotalTime("Total Time to Constraint Operation: ",
 					G.cstOpTime);
-			StringUtil.reportTotalTime("Max Constraint: ",
-					G.maxCst);
+			StringUtil.reportInfo("Max Constraint: " + G.maxCst);
 			StringUtil.reportTotalTime("Total Time to instantiate Edges: ",
 					G.instEdgeTime);
 		}
 		if (G.validate) {
 			summary.validate();
 		}
-		return summary.getAbsHeap().isChanged();
+		return summary.isChanged();
 	}
 
 	private void analyzeSCC(Node node) {
@@ -292,21 +292,27 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		 * worklist.poll(); analyze(m); reset gammaNew = m.getSummary();
 		 * if(gammaNew == gamma) set else reset add pred(unterminated) }
 		 */
-		int counter = 0;
+		Set<jq_Method> set = new HashSet<jq_Method>();
 		while (true) {
 			jq_Method worker = wl.poll();
-			boolean isChanged = analyze(worker);
-			if (isChanged)
-				counter = 0;
+			if(set.contains(worker))
+				continue;
+			
+			boolean changed = analyze(worker);
+			if (changed)
+				set.clear();
 			else
-				counter++;
-
+				set.add(worker);
+			
+			if(G.tuning)
+				StringUtil.reportInfo("SCC counter: " + set.size() + ":" + worker);
+			
+			if (set.size() == scc.size())
+				break;
+			
 			for (jq_Method pred : callGraph.getPreds(worker))
 				if (scc.contains(pred))
 					wl.add(pred);
-
-			if (counter == scc.size())
-				break;
 		}
 	}
 

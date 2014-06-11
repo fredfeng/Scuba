@@ -214,7 +214,7 @@ public class ConstraintManager {
 				long endCst = System.nanoTime();
 				if(G.maxCst < sim.toString().length())
 					G.maxCst = sim.toString().length();
-				StringUtil.reportSec("Inst Edge:", startCst, endCst);
+//				StringUtil.reportSec("Intersect: ", startCst, endCst);
 				G.cstOpTime += (endCst - startCst);
 			}
 			return (BoolExpr)sim;
@@ -240,7 +240,7 @@ public class ConstraintManager {
 				long endCst = System.nanoTime();
 				if(G.maxCst < sim.toString().length())
 					G.maxCst = sim.toString().length();
-				StringUtil.reportSec("Inst Edge:", startCst, endCst);
+//				StringUtil.reportSec("Union:", startCst, endCst);
 				G.cstOpTime += (endCst - startCst);
 			}
 			return (BoolExpr)sim;
