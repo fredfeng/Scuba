@@ -22,6 +22,8 @@ public class G {
 
 	public static boolean validate = false;
 
+	public static boolean dbgSCC = true;
+
 	// flag to tune performance.
 	public static boolean tuning = true;
 
@@ -40,11 +42,11 @@ public class G {
 
 	// total time spending on inst edges
 	public static long instEdgeTime = 0;
-	
+
 	// total time spending on constaint operations
 	public static long cstOpTime = 0;
-	
-	//max constraint length.
+
+	// max constraint length.
 	public static int maxCst = 0;
 
 	// total time spending on inst locations
@@ -56,5 +58,7 @@ public class G {
 	// number of edges that are instantiated into in the caller
 	public static int instToEdges = 0;
 
-	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
+	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
+
+	public static long instCstSubTime;
 }
