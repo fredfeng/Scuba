@@ -855,9 +855,10 @@ public class Summary {
 			// assume all csts are true.
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
 			Register recv = ro.getRegister();
+
 			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
 			// receiver's static type.
-			// jq_Class recvStatType = (jq_Class) ro.getType();
+			jq_Class recvStatType = (jq_Class) ro.getType();
 
 			// generate pt-set for the receiver.
 			StackObject so = getMemLocation(clz, caller, recv);
@@ -876,14 +877,15 @@ public class Summary {
 			Set<Pair<jq_Reference, jq_Method>> tgtSet = SummariesEnv.v()
 					.loadInheritMeths(callee, null);
 			
-			if(G.tuning)
-				StringUtil.reportInfo("resolve callee: 222222222 " + "---" + tgtSet);
-
 			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				// generate constraint for each potential target.
 				if (pair.val0 instanceof jq_Array)
 					continue;
 				jq_Class tgtType = (jq_Class) pair.val0;
+				if(!tgtType.extendsClass(recvStatType))
+					continue;
+				
+				assert tgtType.extendsClass(recvStatType) : "Dynamic type must be a subclass for static type!";
 
 				long startGenCst = System.nanoTime();
 
@@ -909,6 +911,8 @@ public class Summary {
 					StringUtil.reportInfo("Generate Constraint: " + cst);
 				ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
 			}
+			if(G.tuning)
+				StringUtil.reportInfo("filter callee: " + tgtSet.size() + " -- " + ret.size());
 
 		} else if (opr instanceof InvokeInterface) {
 			// assume all csts are true.
