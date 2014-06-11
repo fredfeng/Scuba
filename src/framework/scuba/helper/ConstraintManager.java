@@ -210,11 +210,6 @@ public class ConstraintManager {
 			//try to simplify.
 			long startSimplify = System.nanoTime();
 //			Expr sim = inter.Simplify();
-			if (G.tuning) {
-				long endSimplify = System.nanoTime();
-				G.cstSim += (endSimplify - startSimplify);
-			}
-
 			assert inter instanceof BoolExpr : "Unknown constraints in intersection!";
 			return inter;
 		} catch (Z3Exception e) {
@@ -235,10 +230,6 @@ public class ConstraintManager {
 			//try to simplify.
 			long startSimplify = System.nanoTime();
 //			Expr sim = union.Simplify();
-			if (G.tuning) {
-				long endSimplify = System.nanoTime();
-				G.cstSim += (endSimplify - startSimplify);
-			}
 			assert union instanceof BoolExpr : "Unknown constraints in union!";
 			return union;
 		} catch (Z3Exception e) {
