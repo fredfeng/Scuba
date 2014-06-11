@@ -29,6 +29,7 @@ import framework.scuba.domain.InstantiatedLocSet;
 import framework.scuba.domain.MemLocInstantiation;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.ProgramPoint;
+import framework.scuba.utils.StringUtil;
 
 /**
  * Class for generating/solving constraints, since right now our system can only
@@ -203,11 +204,19 @@ public class ConstraintManager {
         try {
         	assert first!= null : "Invalid constrait";
         	assert second!= null : "Invalid constrait";
+			long startCst = System.nanoTime();
 
 			BoolExpr inter = ctx.MkAnd(new BoolExpr[] { first, second });
 			//try to simplify.
 			Expr sim = inter.Simplify();
 			assert sim instanceof BoolExpr : "Unknown constraints in intersection!";
+			if (G.tuning) {
+				long endCst = System.nanoTime();
+				if(G.maxCst < sim.toString().length())
+					G.maxCst = sim.toString().length();
+				StringUtil.reportSec("Inst Edge:", startCst, endCst);
+				G.cstOpTime += (endCst - startCst);
+			}
 			return (BoolExpr)sim;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -221,11 +230,19 @@ public class ConstraintManager {
         try {
         	assert first!= null : "Invalid constrait";
         	assert second!= null : "Invalid constrait";
-        	
+			long startCst = System.nanoTime();
+
 			BoolExpr union = ctx.MkOr(new BoolExpr[] { first, second });
 			//try to simplify.
 			Expr sim = union.Simplify();
 			assert sim instanceof BoolExpr : "Unknown constraints in union!";
+			if (G.tuning) {
+				long endCst = System.nanoTime();
+				if(G.maxCst < sim.toString().length())
+					G.maxCst = sim.toString().length();
+				StringUtil.reportSec("Inst Edge:", startCst, endCst);
+				G.cstOpTime += (endCst - startCst);
+			}
 			return (BoolExpr)sim;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block

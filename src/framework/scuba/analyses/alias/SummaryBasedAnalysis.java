@@ -26,6 +26,7 @@ import framework.scuba.domain.Env;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
+import framework.scuba.helper.SCCHelper4CG;
 import framework.scuba.utils.Graph;
 import framework.scuba.utils.Node;
 import framework.scuba.utils.StringUtil;
@@ -135,10 +136,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		Set<jq_Method> cgs = new HashSet<jq_Method>();
 
 		cgs.addAll(callGraph.getNodes());
+		
+		SCCHelper4CG s4g = new SCCHelper4CG(callGraph, callGraph.getRoots());
 
-		for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
+		int maxSize = 0;
+		for (Set<jq_Method> scc : s4g.getComponents()) {
 			// create a representation node for each scc.
 			idx++;
+			if(scc.size() > maxSize) maxSize = scc.size();
 			Node node = new Node("scc" + idx);
 			nodeToScc.put(node, scc);
 			sccToNode.put(scc, node);
@@ -148,6 +153,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			repGraph.addNode(node);
 			sccs.addAll(scc);
 		}
+		
 
 		// FIXME: This is a bug in chord. The total number of SCCs is not equal
 		// to the total number of reachable methods. Adding the missing methods
@@ -163,7 +169,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			methToNode.put(miss, node);
 		}
 
-		for (Set<jq_Method> scc : callGraph.getTopSortedSCCs()) {
+		for (Set<jq_Method> scc : s4g.getComponents()) {
 			Node cur = sccToNode.get(scc);
 			for (jq_Method nb : scc) {
 				// init successor.
@@ -259,10 +265,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		intrapro.analyze(cfg);
 
 		if (G.tuning) {
-			StringUtil.reportTotalTime("Total Time to generate Constaint: ",
+			StringUtil.reportTotalTime("Total Time to generate Constraint: ",
 					G.genCstTime);
-			StringUtil.reportTotalTime("Total Time to instantiate Constaint: ",
+			StringUtil.reportTotalTime("Total Time to instantiate Constraint: ",
 					G.instCstTime);
+			StringUtil.reportTotalTime("Total Time to Constraint Operation: ",
+					G.cstOpTime);
+			StringUtil.reportTotalTime("Max Constraint: ",
+					G.maxCst);
 			StringUtil.reportTotalTime("Total Time to instantiate Edges: ",
 					G.instEdgeTime);
 		}

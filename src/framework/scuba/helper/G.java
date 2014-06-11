@@ -40,6 +40,12 @@ public class G {
 
 	// total time spending on inst edges
 	public static long instEdgeTime = 0;
+	
+	// total time spending on constaint operations
+	public static long cstOpTime = 0;
+	
+	//max constraint length.
+	public static int maxCst = 0;
 
-	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
+	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 }
