@@ -18,7 +18,6 @@ import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Z3Exception;
-import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
@@ -519,7 +518,7 @@ public class AbstractHeap {
 
 	// generalized field look-up for location which is described in definition
 	// 10 of the paper
-	public P2Set lookup(P2Set p2Set, FieldElem field) throws Z3Exception {
+	public P2Set lookup(P2Set p2Set, FieldElem field) {
 		// it is possible to have null pointers that are dereferenced if we
 		// think about reflection or some native methods which we cannot
 		// retrieve the active bodies
@@ -541,7 +540,7 @@ public class AbstractHeap {
 
 	// this lookup is used for instantiating memory locations
 	public InstantiatedLocSet instnLookup(InstantiatedLocSet instnLocSet,
-			FieldElem field) throws Z3Exception {
+			FieldElem field) {
 		InstantiatedLocSet ret = new InstantiatedLocSet();
 
 		for (AbstractMemLoc loc : instnLocSet.getAbstractMemLocs()) {
@@ -563,8 +562,7 @@ public class AbstractHeap {
 	// TODO we loose the constraint to allow LHS to be ParamElem (Not SSA)
 	protected boolean handleAssignStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register right,
-			VariableType rightVType, int numToAssign, boolean isInSCC)
-			throws Z3Exception {
+			VariableType rightVType, int numToAssign, boolean isInSCC) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
 				+ "for Assign stmt, LHS must be LocalElem (or ParamElem, we HAVE NOT fully fixed SSA";
@@ -623,8 +621,7 @@ public class AbstractHeap {
 
 	// this method is just a helper method for handling array allocations
 	private boolean handleArrayLoad(ArrayAllocElem left, IndexFieldElem index,
-			AllocElem right, int numToAssign, boolean isInSCC)
-			throws Z3Exception {
+			AllocElem right, int numToAssign, boolean isInSCC) {
 
 		// assert (memLocFactory.containsKey(right)) :
 		// "AllocElem (or ArrayAllocElem)"
@@ -656,7 +653,7 @@ public class AbstractHeap {
 	protected boolean handleLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register rightBase,
 			jq_Field rightField, VariableType rightBaseVType, int numToAssign,
-			boolean isInSCC) throws Z3Exception {
+			boolean isInSCC) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for non-static load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -717,8 +714,7 @@ public class AbstractHeap {
 	// treat it just like a load stmt: v1 = v2.\i where \i is the index field
 	protected boolean handleALoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, Register rightBase,
-			VariableType rightBaseVType, int numToAssign, boolean isInSCC)
-			throws Z3Exception {
+			VariableType rightBaseVType, int numToAssign, boolean isInSCC) {
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for array load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -767,8 +763,7 @@ public class AbstractHeap {
 	// v1 = (A.f) where A.f is just a stack object
 	protected boolean handleStatLoadStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Class rightBase,
-			jq_Field rightField, int numToAssign, boolean isInSCC)
-			throws Z3Exception {
+			jq_Field rightField, int numToAssign, boolean isInSCC) {
 
 		boolean ret = false;
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for static load stmt, LHS must be a local!";
@@ -816,8 +811,7 @@ public class AbstractHeap {
 	// field (all array base shares the same \i)
 	protected boolean handleAStoreStmt(jq_Class clazz, jq_Method method,
 			Register leftBase, VariableType leftBaseVType, Register right,
-			VariableType rightVType, int numToAssign, boolean isInSCC)
-			throws Z3Exception {
+			VariableType rightVType, int numToAssign, boolean isInSCC) {
 
 		assert (rightVType == VariableType.PARAMEMTER)
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
@@ -890,7 +884,7 @@ public class AbstractHeap {
 	protected boolean handleStoreStmt(jq_Class clazz, jq_Method method,
 			Register leftBase, VariableType leftBaseVType, jq_Field leftField,
 			Register right, VariableType rightVType, int numToAssign,
-			boolean isInSCC) throws Z3Exception {
+			boolean isInSCC) {
 
 		assert (rightVType == VariableType.PARAMEMTER)
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
@@ -968,8 +962,7 @@ public class AbstractHeap {
 	// (A.f) = v2 where (A.f) is just a stack object (StaticElem)
 	protected boolean handleStaticStoreStmt(jq_Class clazz, jq_Method method,
 			jq_Class leftBase, jq_Field leftField, Register right,
-			VariableType rightVType, int numToAssign, boolean isInSCC)
-			throws Z3Exception {
+			VariableType rightVType, int numToAssign, boolean isInSCC) {
 
 		boolean ret = false;
 		assert (rightVType == VariableType.PARAMEMTER)
@@ -1021,7 +1014,7 @@ public class AbstractHeap {
 	// v = new T
 	protected boolean handleNewStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int line,
-			int numToAssign, boolean isInSCC) throws Z3Exception {
+			int numToAssign, boolean isInSCC) {
 
 		boolean ret = false;
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "LHS of a new stmt must be a local variable!";
@@ -1060,7 +1053,7 @@ public class AbstractHeap {
 	// dim = 1
 	protected boolean handleNewArrayStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int line,
-			int numToAssign, boolean isInSCC) throws Z3Exception {
+			int numToAssign, boolean isInSCC) {
 		return handleMultiNewArrayStmt(clazz, method, left, leftVType, right,
 				1, line, numToAssign, isInSCC);
 	}
@@ -1069,7 +1062,7 @@ public class AbstractHeap {
 	// dim is the dimension of this array, dim >= 2
 	protected boolean handleMultiNewArrayStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int dim,
-			int line, int numToAssign, boolean isInSCC) throws Z3Exception {
+			int line, int numToAssign, boolean isInSCC) {
 
 		boolean ret = false;
 
@@ -1118,7 +1111,7 @@ public class AbstractHeap {
 	// return v;
 	protected boolean handleRetStmt(jq_Class clazz, jq_Method method,
 			Register retValue, VariableType type, int numToAssign,
-			boolean isInSCC) throws Z3Exception {
+			boolean isInSCC) {
 
 		boolean ret = false;
 		// first try to find the corresponding local or param that has been
@@ -1173,7 +1166,7 @@ public class AbstractHeap {
 			AbstractMemLoc src, HeapObject dst, FieldElem field,
 			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
 			ProgramPoint point, BoolExpr typeCst,
-			Set<Pair<AbstractMemLoc, P2Set>> toAdd) throws Z3Exception {
+			Set<Pair<AbstractMemLoc, P2Set>> toAdd) {
 
 		long startInstEdge = System.nanoTime();
 
@@ -1227,69 +1220,9 @@ public class AbstractHeap {
 				BoolExpr cst1 = instnSrc.getConstraint(newSrc);
 				BoolExpr cst2 = instnDst.getConstraint(newDst);
 
-				BoolExpr cst = null;
-
-				if (cst1.BoolValue() == Z3_lbool.Z3_L_FALSE
-						|| cst2.BoolValue() == Z3_lbool.Z3_L_FALSE
-						|| instnCst.BoolValue() == Z3_lbool.Z3_L_FALSE
-						|| typeCst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
-					cst = ConstraintManager.genFalse();
-				} else if (cst1.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-					if (cst2.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-						if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								cst = ConstraintManager.genTrue();
-							} else {
-								cst = ConstraintManager.clone(typeCst);
-							}
-						} else {
-							if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								cst = ConstraintManager.clone(instnCst);
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						}
-					} else {
-						if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								cst = ConstraintManager.clone(cst2);
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						} else {
-							cst = ConstraintManager.intersect(ConstraintManager
-									.intersect(cst1, cst2), ConstraintManager
-									.intersect(instnCst, typeCst));
-						}
-					}
-				} else {
-					if (cst2.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-						if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								cst = ConstraintManager.clone(cst1);
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						} else {
-							cst = ConstraintManager.intersect(ConstraintManager
-									.intersect(cst1, cst2), ConstraintManager
-									.intersect(instnCst, typeCst));
-						}
-					} else {
-						cst = ConstraintManager.intersect(
-								ConstraintManager.intersect(cst1, cst2),
-								ConstraintManager.intersect(instnCst, typeCst));
-					}
-				}
+				BoolExpr cst = ConstraintManager.intersect(
+						ConstraintManager.intersect(cst1, cst2),
+						ConstraintManager.intersect(instnCst, typeCst));
 
 				assert (cst != null) : "null cst1";
 				long s4 = System.nanoTime();
@@ -1325,8 +1258,7 @@ public class AbstractHeap {
 
 	protected boolean instantiateEdgeNoNumbering(AbstractMemLoc src,
 			HeapObject dst, FieldElem field, MemLocInstantiation memLocInstn,
-			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst)
-			throws Z3Exception {
+			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
 
 		boolean ret = false;
 
@@ -1371,69 +1303,9 @@ public class AbstractHeap {
 				long s1 = System.nanoTime();
 				BoolExpr cst1 = instnSrc.getConstraint(newSrc);
 				BoolExpr cst2 = instnDst.getConstraint(newDst);
-				BoolExpr cst = null;
-
-				if (cst1.BoolValue() == Z3_lbool.Z3_L_FALSE
-						|| cst2.BoolValue() == Z3_lbool.Z3_L_FALSE
-						|| instnCst.BoolValue() == Z3_lbool.Z3_L_FALSE
-						|| typeCst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
-					cst = ConstraintManager.genFalse();
-				} else if (cst1.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-					if (cst2.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-						if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								cst = ConstraintManager.genTrue();
-							} else {
-								cst = ConstraintManager.clone(typeCst);
-							}
-						} else {
-							if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								cst = ConstraintManager.clone(instnCst);
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						}
-					} else {
-						if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								cst = ConstraintManager.clone(cst2);
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						} else {
-							cst = ConstraintManager.intersect(ConstraintManager
-									.intersect(cst1, cst2), ConstraintManager
-									.intersect(instnCst, typeCst));
-						}
-					}
-				} else {
-					if (cst2.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-						if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								cst = ConstraintManager.clone(cst1);
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						} else {
-							cst = ConstraintManager.intersect(ConstraintManager
-									.intersect(cst1, cst2), ConstraintManager
-									.intersect(instnCst, typeCst));
-						}
-					} else {
-						cst = ConstraintManager.intersect(
-								ConstraintManager.intersect(cst1, cst2),
-								ConstraintManager.intersect(instnCst, typeCst));
-					}
-				}
+				BoolExpr cst = ConstraintManager.intersect(
+						ConstraintManager.intersect(cst1, cst2),
+						ConstraintManager.intersect(instnCst, typeCst));
 
 				assert (cst != null) : "null cst!";
 				long s2 = System.nanoTime();
@@ -1469,7 +1341,7 @@ public class AbstractHeap {
 			Set<HeapEdge> edges, MemLocInstantiation memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst,
 			int numToAssign, boolean isInSCC,
-			Map<Numbering, Set<HeapEdge>> toAdd) throws Z3Exception {
+			Map<Numbering, Set<HeapEdge>> toAdd) {
 		long startInstEdge = System.nanoTime();
 
 		boolean ret = false;
@@ -1537,74 +1409,9 @@ public class AbstractHeap {
 
 					BoolExpr cst1 = instnSrc.getConstraint(newSrc);
 					BoolExpr cst2 = instnDst.getConstraint(newDst);
-					BoolExpr cst = null;
-
-					if (cst1.BoolValue() == Z3_lbool.Z3_L_FALSE
-							|| cst2.BoolValue() == Z3_lbool.Z3_L_FALSE
-							|| instnCst.BoolValue() == Z3_lbool.Z3_L_FALSE
-							|| typeCst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
-						cst = ConstraintManager.genFalse();
-					} else if (cst1.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-						if (cst2.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-									cst = ConstraintManager.genTrue();
-								} else {
-									cst = ConstraintManager.clone(typeCst);
-								}
-							} else {
-								if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-									cst = ConstraintManager.clone(instnCst);
-								} else {
-									cst = ConstraintManager.intersect(
-											ConstraintManager.intersect(cst1,
-													cst2), ConstraintManager
-													.intersect(instnCst,
-															typeCst));
-								}
-							}
-						} else {
-							if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-									cst = ConstraintManager.clone(cst2);
-								} else {
-									cst = ConstraintManager.intersect(
-											ConstraintManager.intersect(cst1,
-													cst2), ConstraintManager
-													.intersect(instnCst,
-															typeCst));
-								}
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						}
-					} else {
-						if (cst2.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-									cst = ConstraintManager.clone(cst1);
-								} else {
-									cst = ConstraintManager.intersect(
-											ConstraintManager.intersect(cst1,
-													cst2), ConstraintManager
-													.intersect(instnCst,
-															typeCst));
-								}
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						} else {
-							cst = ConstraintManager.intersect(ConstraintManager
-									.intersect(cst1, cst2), ConstraintManager
-									.intersect(instnCst, typeCst));
-						}
-					}
+					BoolExpr cst = ConstraintManager.intersect(
+							ConstraintManager.intersect(cst1, cst2),
+							ConstraintManager.intersect(instnCst, typeCst));
 
 					assert (cst != null) : "null cst1";
 
@@ -1640,7 +1447,7 @@ public class AbstractHeap {
 	protected Pair<Boolean, Boolean> instantiateEdges(Set<HeapEdge> edges,
 			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
 			ProgramPoint point, BoolExpr typeCst, int numToAssign,
-			boolean isInSCC) throws Z3Exception {
+			boolean isInSCC) {
 		long startInstEdge = System.nanoTime();
 
 		boolean ret = false;
@@ -1702,74 +1509,9 @@ public class AbstractHeap {
 					BoolExpr cst1 = instnSrc.getConstraint(newSrc);
 					BoolExpr cst2 = instnDst.getConstraint(newDst);
 
-					BoolExpr cst = null;
-
-					if (cst1.BoolValue() == Z3_lbool.Z3_L_FALSE
-							|| cst2.BoolValue() == Z3_lbool.Z3_L_FALSE
-							|| instnCst.BoolValue() == Z3_lbool.Z3_L_FALSE
-							|| typeCst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
-						cst = ConstraintManager.genFalse();
-					} else if (cst1.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-						if (cst2.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-									cst = ConstraintManager.genTrue();
-								} else {
-									cst = ConstraintManager.clone(typeCst);
-								}
-							} else {
-								if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-									cst = ConstraintManager.clone(instnCst);
-								} else {
-									cst = ConstraintManager.intersect(
-											ConstraintManager.intersect(cst1,
-													cst2), ConstraintManager
-													.intersect(instnCst,
-															typeCst));
-								}
-							}
-						} else {
-							if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-									cst = ConstraintManager.clone(cst2);
-								} else {
-									cst = ConstraintManager.intersect(
-											ConstraintManager.intersect(cst1,
-													cst2), ConstraintManager
-													.intersect(instnCst,
-															typeCst));
-								}
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						}
-					} else {
-						if (cst2.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-							if (instnCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-								if (typeCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-									cst = ConstraintManager.clone(cst1);
-								} else {
-									cst = ConstraintManager.intersect(
-											ConstraintManager.intersect(cst1,
-													cst2), ConstraintManager
-													.intersect(instnCst,
-															typeCst));
-								}
-							} else {
-								cst = ConstraintManager
-										.intersect(ConstraintManager.intersect(
-												cst1, cst2), ConstraintManager
-												.intersect(instnCst, typeCst));
-							}
-						} else {
-							cst = ConstraintManager.intersect(ConstraintManager
-									.intersect(cst1, cst2), ConstraintManager
-									.intersect(instnCst, typeCst));
-						}
-					}
+					BoolExpr cst = ConstraintManager.intersect(
+							ConstraintManager.intersect(cst1, cst2),
+							ConstraintManager.intersect(instnCst, typeCst));
 
 					assert (cst != null) : "null cst1";
 
@@ -1807,7 +1549,7 @@ public class AbstractHeap {
 	protected boolean handleInvokeStmtNoNumbering(jq_Class clazz,
 			jq_Method method, int line, AbstractHeap calleeHeap,
 			MemLocInstantiation memLocInstn, BoolExpr typeCst, int numToAssign,
-			boolean isInSCC) throws Z3Exception {
+			boolean isInSCC) {
 		no++;
 		boolean ret = false;
 
@@ -1983,8 +1725,7 @@ public class AbstractHeap {
 	// TODO
 	protected boolean handleInvokeStmt(jq_Class clazz, jq_Method method,
 			int line, AbstractHeap calleeHeap, MemLocInstantiation memLocInstn,
-			BoolExpr typeCst, int numToAssign, boolean isInSCC)
-			throws Z3Exception {
+			BoolExpr typeCst, int numToAssign, boolean isInSCC) {
 		tmp++;
 		if (G.dbgSCC) {
 			StringUtil.reportInfo("in handling invoke: " + tmp);
@@ -2444,7 +2185,7 @@ public class AbstractHeap {
 	protected Pair<Boolean, Boolean> weakUpdateForRecursiveCall(
 			Pair<AbstractMemLoc, FieldElem> pair, P2Set p2Set,
 			int numberCounter, boolean isInSCC,
-			Map<Numbering, Set<HeapEdge>> toAdd) throws Z3Exception {
+			Map<Numbering, Set<HeapEdge>> toAdd) {
 
 		boolean ret = false;
 		AbstractMemLoc src = pair.val0;
@@ -2513,7 +2254,7 @@ public class AbstractHeap {
 
 	protected Pair<Boolean, Boolean> weakUpdate(
 			Pair<AbstractMemLoc, FieldElem> pair, P2Set p2Set, int numToAssign,
-			boolean isInSCC) throws Z3Exception {
+			boolean isInSCC) {
 		// ret.val0: boolean flag reflecting updates of the heap
 		// ret.val1: boolean flag reflecting updates of the numbering
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
@@ -2568,8 +2309,7 @@ public class AbstractHeap {
 	}
 
 	protected Pair<Boolean, Boolean> weakUpdateNoNumbering(
-			Pair<AbstractMemLoc, FieldElem> pair, P2Set p2Set)
-			throws Z3Exception {
+			Pair<AbstractMemLoc, FieldElem> pair, P2Set p2Set) {
 		// ret.val0: boolean flag reflecting updates of the heap
 		// ret.val1: boolean flag reflecting updates of the numbering
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);

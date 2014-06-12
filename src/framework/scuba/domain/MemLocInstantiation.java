@@ -103,7 +103,7 @@ public class MemLocInstantiation {
 	// this method implements the inference rules in figure 11 of the paper
 	// loc is the location in the callee's heap
 	public InstantiatedLocSet instantiate(AbstractMemLoc loc,
-			AbstractHeap callerHeap, ProgramPoint point) throws Z3Exception {
+			AbstractHeap callerHeap, ProgramPoint point) {
 
 		InstantiatedLocSet ret = instnMemLocMapping.get(loc);
 

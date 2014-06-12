@@ -321,14 +321,11 @@ public class Summary {
 						rhs.getRegister());
 
 				boolean flag = false;
-				try {
-					flag = absHeap.handleALoadStmt(meth.getDeclaringClass(),
-							meth, lhs.getRegister(), lvt, rhs.getRegister(),
-							rvt, numToAssign, isInSCC);
-				} catch (Z3Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+
+				flag = absHeap.handleALoadStmt(meth.getDeclaringClass(), meth,
+						lhs.getRegister(), lvt, rhs.getRegister(), rvt,
+						numToAssign, isInSCC);
+
 				absHeap.markChanged(flag);
 
 			} else {
@@ -354,14 +351,11 @@ public class Summary {
 						rhs.getRegister());
 
 				boolean flag = false;
-				try {
-					flag = absHeap.handleAStoreStmt(meth.getDeclaringClass(),
-							meth, lhs.getRegister(), lvt, rhs.getRegister(),
-							rvt, numToAssign, isInSCC);
-				} catch (Z3Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+
+				flag = absHeap.handleAStoreStmt(meth.getDeclaringClass(), meth,
+						lhs.getRegister(), lvt, rhs.getRegister(), rvt,
+						numToAssign, isInSCC);
+
 				absHeap.markChanged(flag);
 
 			} else {
@@ -418,15 +412,10 @@ public class Summary {
 						rhsBase.getRegister());
 
 				boolean flag = false;
-				try {
-					flag = absHeap.handleLoadStmt(meth.getDeclaringClass(),
-							meth, lhs.getRegister(), lvt,
-							rhsBase.getRegister(), field.getField(), rvt,
-							numToAssign, isInSCC);
-				} catch (Z3Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				flag = absHeap.handleLoadStmt(meth.getDeclaringClass(), meth,
+						lhs.getRegister(), lvt, rhsBase.getRegister(),
+						field.getField(), rvt, numToAssign, isInSCC);
+
 				absHeap.markChanged(flag);
 
 			} else {
@@ -450,14 +439,10 @@ public class Summary {
 						lhs.getRegister());
 
 				boolean flag = false;
-				try {
-					flag = absHeap.handleStatLoadStmt(meth.getDeclaringClass(),
-							meth, lhs.getRegister(), lvt, encloseClass,
-							field.getField(), numToAssign, isInSCC);
-				} catch (Z3Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				flag = absHeap.handleStatLoadStmt(meth.getDeclaringClass(),
+						meth, lhs.getRegister(), lvt, encloseClass,
+						field.getField(), numToAssign, isInSCC);
+
 				absHeap.markChanged(flag);
 
 			} else {
@@ -598,19 +583,15 @@ public class Summary {
 				// calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
 				// numToAssign, isInSCC);
 				boolean flag = false;
-				try {
-					flag = absHeap.handleInvokeStmtNoNumbering(
-							meth.getDeclaringClass(), meth, stmt.getID(),
-							calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
-							numToAssign, isInSCC);
-				} catch (Z3Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				flag = absHeap.handleInvokeStmtNoNumbering(
+						meth.getDeclaringClass(), meth, stmt.getID(),
+						calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
+						numToAssign, isInSCC);
+
 				absHeap.markChanged(flag);
-//				if (tmp == 1281) {
-//					absHeap.dumpHeapNumberingToFile("$caller" + count);
-//				}
+				// if (tmp == 1281) {
+				// absHeap.dumpHeapNumberingToFile("$caller" + count);
+				// }
 			}
 			if (G.debug4Sum) {
 				if (calleeSumCstPairs.isEmpty()) {
@@ -662,14 +643,10 @@ public class Summary {
 				VariableType rvt = getVarType(stmt.getMethod(),
 						rhs.getRegister());
 				boolean flag = false;
-				try {
-					flag = absHeap.handleAssignStmt(meth.getDeclaringClass(),
-							meth, lhs.getRegister(), lvt, rhs.getRegister(),
-							rvt, numToAssign, isInSCC);
-				} catch (Z3Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				flag = absHeap.handleAssignStmt(meth.getDeclaringClass(), meth,
+						lhs.getRegister(), lvt, rhs.getRegister(), rvt,
+						numToAssign, isInSCC);
+
 				absHeap.markChanged(flag);
 			} else {
 				if (G.debug4Sum) {
@@ -689,14 +666,9 @@ public class Summary {
 			VariableType vt = getVarType(meth, rop.getRegister());
 
 			boolean flag = false;
-			try {
-				flag = absHeap.handleNewStmt(stmt.getMethod()
-						.getDeclaringClass(), meth, rop.getRegister(), vt, to
-						.getType(), stmt.getID(), numToAssign, isInSCC);
-			} catch (Z3Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			flag = absHeap.handleNewStmt(stmt.getMethod().getDeclaringClass(),
+					meth, rop.getRegister(), vt, to.getType(), stmt.getID(),
+					numToAssign, isInSCC);
 
 			absHeap.markChanged(flag);
 		}
@@ -711,15 +683,9 @@ public class Summary {
 			VariableType vt = getVarType(meth, rop.getRegister());
 			ParamListOperand plo = MultiNewArray.getParamList(stmt);
 			boolean flag = false;
-			try {
-				flag = absHeap.handleMultiNewArrayStmt(
-						meth.getDeclaringClass(), meth, rop.getRegister(), vt,
-						to.getType(), plo.length(), stmt.getID(), numToAssign,
-						isInSCC);
-			} catch (Z3Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			flag = absHeap.handleMultiNewArrayStmt(meth.getDeclaringClass(),
+					meth, rop.getRegister(), vt, to.getType(), plo.length(),
+					stmt.getID(), numToAssign, isInSCC);
 
 			absHeap.markChanged(flag);
 		}
@@ -734,14 +700,10 @@ public class Summary {
 			VariableType vt = getVarType(meth, rop.getRegister());
 
 			boolean flag = false;
-			try {
-				flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(),
-						meth, rop.getRegister(), vt, to.getType(),
-						stmt.getID(), numToAssign, isInSCC);
-			} catch (Z3Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+
+			flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(), meth,
+					rop.getRegister(), vt, to.getType(), stmt.getID(),
+					numToAssign, isInSCC);
 
 			absHeap.markChanged(flag);
 		}
@@ -773,15 +735,9 @@ public class Summary {
 					tmp = true;
 					VariableType rvt = getVarType(meth, rhs.getRegister());
 					boolean flag = false;
-					try {
-						flag = absHeap.handleAssignStmt(
-								meth.getDeclaringClass(), meth,
-								lhs.getRegister(), lvt, rhs.getRegister(), rvt,
-								numToAssign, isInSCC);
-					} catch (Z3Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					flag = absHeap.handleAssignStmt(meth.getDeclaringClass(),
+							meth, lhs.getRegister(), lvt, rhs.getRegister(),
+							rvt, numToAssign, isInSCC);
 					sig = flag | sig;
 				}
 
@@ -814,15 +770,10 @@ public class Summary {
 					VariableType rvt = getVarType(stmt.getMethod(),
 							rhs.getRegister());
 
-					try {
-						flag = absHeap.handleStoreStmt(
-								meth.getDeclaringClass(), meth,
-								lhs.getRegister(), lvt, field.getField(),
-								rhs.getRegister(), rvt, numToAssign, isInSCC);
-					} catch (Z3Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					flag = absHeap.handleStoreStmt(meth.getDeclaringClass(),
+							meth, lhs.getRegister(), lvt, field.getField(),
+							rhs.getRegister(), rvt, numToAssign, isInSCC);
+
 					absHeap.markChanged(flag);
 				}
 			} else {
@@ -847,15 +798,10 @@ public class Summary {
 					VariableType rvt = getVarType(stmt.getMethod(),
 							rhs.getRegister());
 
-					try {
-						flag = absHeap.handleStaticStoreStmt(
-								meth.getDeclaringClass(), meth, encloseClass,
-								field.getField(), rhs.getRegister(), rvt,
-								numToAssign, isInSCC);
-					} catch (Z3Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					flag = absHeap.handleStaticStoreStmt(
+							meth.getDeclaringClass(), meth, encloseClass,
+							field.getField(), rhs.getRegister(), rvt,
+							numToAssign, isInSCC);
 
 					absHeap.markChanged(flag);
 				}
@@ -878,13 +824,10 @@ public class Summary {
 				jq_Method meth = stmt.getMethod();
 				jq_Class clazz = meth.getDeclaringClass();
 				VariableType type = getVarType(meth, ret);
-				try {
-					flag = absHeap.handleRetStmt(clazz, meth, ret, type,
-							numToAssign, isInSCC);
-				} catch (Z3Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+
+				flag = absHeap.handleRetStmt(clazz, meth, ret, type,
+						numToAssign, isInSCC);
+
 				absHeap.markChanged(flag);
 
 				// if (retValue == null) {

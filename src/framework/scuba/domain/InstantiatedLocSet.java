@@ -50,29 +50,13 @@ public class InstantiatedLocSet {
 		return instnLocSet.size();
 	}
 
-	public boolean join(P2Set other) throws Z3Exception {
+	public boolean join(P2Set other) {
 		boolean ret = false;
 		for (HeapObject hObj : other.getHeapObjects()) {
 			if (instnLocSet.containsKey(hObj)) {
 				// loc is in both sets
 				// directly get the other set's constraints
 				BoolExpr otherCst = other.getConstraint(hObj);
-
-				// early return
-				BoolExpr myCst = instnLocSet.get(hObj);
-				if (myCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-					continue;
-				} else if (otherCst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
-					continue;
-				} else if (otherCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
-					ret = true;
-					instnLocSet.put(hObj, ConstraintManager.genTrue());
-					continue;
-				} else if (myCst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
-					ret = true;
-					instnLocSet.put(hObj, ConstraintManager.clone(otherCst));
-					continue;
-				}
 
 				// check whether we need to union the constraint
 				// TODO maybe we can comment the following
