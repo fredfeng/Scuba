@@ -26,6 +26,8 @@ public class G {
 
 	// flag to tune performance.
 	public static boolean tuning = true;
+	
+	public static boolean stat = true;
 
 	public static int count = 0;
 

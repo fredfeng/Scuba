@@ -41,7 +41,11 @@ public class SummariesEnv {
 	public Summary getSummary(jq_Method meth) {
 		return summaries.get(meth);
 	}
-	
+
+	public Map<jq_Method, Summary> getSums() {
+		return summaries;
+	}
+
 	public Summary removeSummary(jq_Method meth) {
 		return summaries.remove(meth);
 	}
@@ -87,7 +91,8 @@ public class SummariesEnv {
 			}
 		}
 		if (G.tuning)
-			StringUtil.reportInfo("resolve callee: size: " + pts.size() + ":" + pts);
+			StringUtil.reportInfo("resolve callee: size: " + pts.size() + ":"
+					+ pts);
 		return pts;
 	}
 }

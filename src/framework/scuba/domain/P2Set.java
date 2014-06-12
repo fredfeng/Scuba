@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Set;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Z3Exception;
+import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.helper.ConstraintManager;
 
@@ -40,13 +42,29 @@ public class P2Set {
 	// of the paper, in which it only reads other and write this.p2Set
 	// this method will never get the pointer to the other p2set so do not worry
 	// about modifying the other p2set by modifying this p2set
-	public boolean join(P2Set other) {
+	public boolean join(P2Set other) throws Z3Exception {
 		boolean ret = false;
 		for (HeapObject obj : other.getHeapObjects()) {
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets
 				// directly get the other p2set's constraints
 				BoolExpr otherCst = other.getConstraint(obj);
+
+				// early return
+				BoolExpr myCst = p2Set.get(obj);
+				if (myCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
+					continue;
+				} else if (otherCst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
+					continue;
+				} else if (otherCst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
+					ret = true;
+					p2Set.put(obj, ConstraintManager.genTrue());
+					continue;
+				} else if (myCst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
+					ret = true;
+					p2Set.put(obj, ConstraintManager.clone(otherCst));
+					continue;
+				}
 
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)

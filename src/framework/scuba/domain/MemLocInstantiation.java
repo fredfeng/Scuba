@@ -8,6 +8,7 @@ import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.helper.ConstraintManager;
 
@@ -102,7 +103,7 @@ public class MemLocInstantiation {
 	// this method implements the inference rules in figure 11 of the paper
 	// loc is the location in the callee's heap
 	public InstantiatedLocSet instantiate(AbstractMemLoc loc,
-			AbstractHeap callerHeap, ProgramPoint point) {
+			AbstractHeap callerHeap, ProgramPoint point) throws Z3Exception {
 
 		InstantiatedLocSet ret = instnMemLocMapping.get(loc);
 

@@ -1,5 +1,7 @@
 package framework.scuba.analyses.alias;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,8 +24,18 @@ import chord.project.ClassicProject;
 import chord.project.OutDirUtils;
 import chord.project.analyses.JavaAnalysis;
 import chord.project.analyses.ProgramRel;
+import chord.util.tuple.object.Pair;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Z3Exception;
+import com.microsoft.z3.enumerations.Z3_lbool;
+
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
+import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.Env;
+import framework.scuba.domain.FieldElem;
+import framework.scuba.domain.HeapObject;
+import framework.scuba.domain.P2Set;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
@@ -233,6 +245,16 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			long endSCC = System.nanoTime();
 			StringUtil.reportSec("Analyzing SCC in ", startSCC, endSCC);
 		}
+		if (G.stat) {
+			if (G.countScc >= 1919) {
+				try {
+					dumpStatistics();
+				} catch (Z3Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	// mark current node as terminated and perform GC on its successor, if
@@ -434,7 +456,63 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	public void free() {
 		if (callGraph != null)
 			callGraph.free();
+	}
 
+	public void dumpStatistics() throws Z3Exception {
+		StringBuilder b = new StringBuilder("");
+		Map<jq_Method, Summary> sums = SummariesEnv.v().getSums();
+		int total_all = 0;
+		int t_all = 0;
+		int f_all = 0;
+		int other_all = 0;
+		for (jq_Method m : sums.keySet()) {
+			int total = 0;
+			int t = 0;
+			int f = 0;
+			int other = 0;
+			Map<Pair<AbstractMemLoc, FieldElem>, P2Set> absHeap = sums.get(m)
+					.getAbsHeap().getHeap();
+			for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.keySet()) {
+				P2Set p2set = absHeap.get(pair);
+				total += p2set.size();
+				total_all += p2set.size();
+				for (HeapObject hObj : p2set.getHeapObjects()) {
+					BoolExpr cst = p2set.getConstraint(hObj);
+					if (cst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
+						t++;
+						t_all++;
+					} else if (cst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
+						f++;
+						f_all++;
+					} else {
+						other++;
+						other_all++;
+					}
+				}
+				b.append("----------------------------------------------\n");
+				b.append("Method: " + m + "\n");
+				b.append("Total: " + total + "\n");
+				b.append("True cst: " + t + "\n");
+				b.append("False cst: " + f + "\n");
+				b.append("Other cst: " + other + "\n");
+			}
+		}
+
+		b.append("----------------------------------------------\n");
+		b.append("Total: " + total_all + "\n");
+		b.append("True cst: " + t_all + "\n");
+		b.append("False cst: " + f_all + "\n");
+		b.append("Other cst: " + other_all + "\n");
+
+		try {
+			BufferedWriter bufw = new BufferedWriter(new FileWriter(
+					G.dotOutputPath + "statistics"));
+			bufw.write(b.toString());
+			bufw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
 	}
 
 }
