@@ -1175,7 +1175,8 @@ public class AbstractHeap {
 
 		// propogation control for locals
 		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived()) {
+			// if (src.isNotArgDerived()) {
+			if (src instanceof LocalVarElem) {
 				return ret;
 			}
 		}
@@ -1285,7 +1286,8 @@ public class AbstractHeap {
 
 		// propogation control for locals
 		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived()) {
+			// if (src.isNotArgDerived()) {
+			if (src instanceof LocalVarElem) {
 				return ret;
 			}
 		}
@@ -1589,34 +1591,36 @@ public class AbstractHeap {
 			isRecursive = true;
 		}
 
-		if (SummariesEnv.v().propLocals) {
-			// pre update location
-			Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
-			for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
-					.keySet()) {
-				AbstractMemLoc loc = pair.val0;
-				FieldElem field = pair.val1;
-				InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(
-						loc, this, point);
+		// pre update location
+		Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
+		for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
+				.keySet()) {
+			AbstractMemLoc loc = pair.val0;
+			FieldElem field = pair.val1;
+			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
+					this, point);
 
-				assert (instnMemLocSet != null);
+			assert (instnMemLocSet != null);
 
-				for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
-					// weakUpdate(new Pair<AbstractMemLoc, FieldElem>(loc1,
-					// field),
-					// new P2Set(), -1, false);
-					// to avoid ConcurrentModification exception, we temporally
-					// store the (loc, field) pairs in a set
+			for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
+				// to avoid ConcurrentModification exception, we temporally
+				// store the (loc, field) pairs in a set
+				if (SummariesEnv.v().propLocals) {
 					toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1,
 							field));
+				} else {
+					if (loc1.isArgDerived()) {
+						toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1,
+								field));
+					}
 				}
 			}
-			// now we weakly update the heap of the caller so that it will
-			// include
-			// all the locations in the callee's heap
-			for (Pair<AbstractMemLoc, FieldElem> pair : toUpdate) {
-				weakUpdateNoNumbering(pair, new P2Set());
-			}
+		}
+		// now we weakly update the heap of the caller so that it will
+		// include
+		// all the locations in the callee's heap
+		for (Pair<AbstractMemLoc, FieldElem> pair : toUpdate) {
+			weakUpdateNoNumbering(pair, new P2Set());
 		}
 
 		if (G.dbgSCC) {
@@ -1666,14 +1670,14 @@ public class AbstractHeap {
 								memLocInstn, calleeHeap, point, typeCst) | go;
 						ret = ret | go;
 					}
-//					if (IntraProcSumAnalysis.opt && G.dbgSCC
-//							&& G.countScc == 3551 && go) {
-//						this.dumpHeapToFile("caller");
-//					}
-//					if (IntraProcSumAnalysis.opt && G.dbgSCC
-//							&& G.countScc == 3551 && go) {
-//						calleeHeap.dumpHeapToFile("callee");
-//					}
+					// if (IntraProcSumAnalysis.opt && G.dbgSCC
+					// && G.countScc == 3551 && go) {
+					// this.dumpHeapToFile("caller");
+					// }
+					// if (IntraProcSumAnalysis.opt && G.dbgSCC
+					// && G.countScc == 3551 && go) {
+					// calleeHeap.dumpHeapToFile("callee");
+					// }
 				}
 				if (!go) {
 					break;
