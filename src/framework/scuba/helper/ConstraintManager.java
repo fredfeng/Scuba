@@ -203,6 +203,8 @@ public class ConstraintManager {
 
 	//A and B.
 	public static BoolExpr intersect(BoolExpr first, BoolExpr second) {
+        if(G.disableCst)
+            return trueExpr;
         try {
         	assert first!= null : "Invalid constrait";
         	assert second!= null : "Invalid constrait";
@@ -229,6 +231,8 @@ public class ConstraintManager {
 
 	//A or B
 	public static BoolExpr union(BoolExpr first, BoolExpr second) {
+        if(G.disableCst)
+            return trueExpr;
         try {
         	assert first!= null : "Invalid constrait";
         	assert second!= null : "Invalid constrait";

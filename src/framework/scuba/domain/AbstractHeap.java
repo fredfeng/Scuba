@@ -1146,7 +1146,8 @@ public class AbstractHeap {
 	protected BoolExpr instCst(BoolExpr cst, AbstractHeap callerHeap,
 			ProgramPoint point, MemLocInstantiation memLocInstn) {
 		long startInstCst = System.nanoTime();
-
+        if(G.disableCst)
+            return cst;
 		assert cst != null : "Invalid Constrait before instantiation.";
 		// return directly.
 		if (ConstraintManager.isScala(cst))
