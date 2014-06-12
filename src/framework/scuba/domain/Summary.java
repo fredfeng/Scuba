@@ -1057,6 +1057,8 @@ public class Summary {
 	 * @return
 	 */
 	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT) {
+        if(G.disableCst)
+            return ConstraintManager.genTrue();
 		// 1. Base case: No subtype of T override m: type(o) <= T
 		if (!hasInherit(callee, statT)) {
 			return ConstraintManager.genSubTyping(p2Set, statT);
