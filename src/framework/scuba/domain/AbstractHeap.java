@@ -1666,14 +1666,14 @@ public class AbstractHeap {
 								memLocInstn, calleeHeap, point, typeCst) | go;
 						ret = ret | go;
 					}
-					if (IntraProcSumAnalysis.opt && G.dbgSCC
-							&& G.countScc == 3551 && go) {
-						this.dumpHeapToFile("caller");
-					}
-					if (IntraProcSumAnalysis.opt && G.dbgSCC
-							&& G.countScc == 3551 && go) {
-						calleeHeap.dumpHeapToFile("callee");
-					}
+//					if (IntraProcSumAnalysis.opt && G.dbgSCC
+//							&& G.countScc == 3551 && go) {
+//						this.dumpHeapToFile("caller");
+//					}
+//					if (IntraProcSumAnalysis.opt && G.dbgSCC
+//							&& G.countScc == 3551 && go) {
+//						calleeHeap.dumpHeapToFile("callee");
+//					}
 				}
 				if (!go) {
 					break;
