@@ -23,6 +23,10 @@ public class AllocElem extends HeapObject {
 		this.context.appendEnd(point);
 	}
 
+	public int length() {
+		return context.length();
+	}
+
 	public Alloc getAlloc() {
 		return alloc;
 	}

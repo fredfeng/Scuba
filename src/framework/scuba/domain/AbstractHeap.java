@@ -17,7 +17,6 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
@@ -1172,6 +1171,13 @@ public class AbstractHeap {
 
 		boolean ret = false;
 
+		// propogation control for locals
+		if (!SummariesEnv.v().propLocals) {
+			if (src instanceof LocalVarElem) {
+				return ret;
+			}
+		}
+
 		assert (src != null && dst != null && field != null) : "nulls!";
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
 		assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
@@ -1181,9 +1187,17 @@ public class AbstractHeap {
 		assert (calleeCst != null) : "constraint is null!";
 		long s1 = System.nanoTime();
 		// instantiate the calleeCst
+		if (G.dbgSCC) {
+			StringUtil.reportInfo("dbg: before instantiating the cst");
+		}
 		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
+
 		long s2 = System.nanoTime();
 		bug_cst += (s2 - s1);
+		if (G.dbgSCC) {
+			StringUtil.reportInfo("dbg: just after instantiating the cst ");
+			StringUtil.reportSec("dbg: cost time: ", s2 - s1);
+		}
 
 		long startInstLoc = System.nanoTime();
 		InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this, point);
@@ -1208,8 +1222,13 @@ public class AbstractHeap {
 		G.instToEdges = 0;
 		G.instToEdges += (instnSrc.size() * instnDst.size());
 
+		int it = 0;
 		for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
 			for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
+				if (G.dbgSCC) {
+					StringUtil.reportInfo("Bug: This is the " + ++it
+							+ "-th iteration");
+				}
 				assert (newDst instanceof HeapObject) : ""
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
@@ -1261,6 +1280,13 @@ public class AbstractHeap {
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
 
 		boolean ret = false;
+
+		// propogation control for locals
+		if (!SummariesEnv.v().propLocals) {
+			if (src instanceof LocalVarElem) {
+				return ret;
+			}
+		}
 
 		assert (src != null && dst != null && field != null) : "nulls!";
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
@@ -1561,29 +1587,34 @@ public class AbstractHeap {
 			isRecursive = true;
 		}
 
-		// pre update location
-		Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
-		for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
-				.keySet()) {
-			AbstractMemLoc loc = pair.val0;
-			FieldElem field = pair.val1;
-			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
-					this, point);
+		if (SummariesEnv.v().propLocals) {
+			// pre update location
+			Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
+			for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
+					.keySet()) {
+				AbstractMemLoc loc = pair.val0;
+				FieldElem field = pair.val1;
+				InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(
+						loc, this, point);
 
-			assert (instnMemLocSet != null);
+				assert (instnMemLocSet != null);
 
-			for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
-				// weakUpdate(new Pair<AbstractMemLoc, FieldElem>(loc1, field),
-				// new P2Set(), -1, false);
-				// to avoid ConcurrentModification exception, we temporally
-				// store the (loc, field) pairs in a set
-				toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1, field));
+				for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
+					// weakUpdate(new Pair<AbstractMemLoc, FieldElem>(loc1,
+					// field),
+					// new P2Set(), -1, false);
+					// to avoid ConcurrentModification exception, we temporally
+					// store the (loc, field) pairs in a set
+					toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1,
+							field));
+				}
 			}
-		}
-		// now we weakly update the heap of the caller so that it will include
-		// all the locations in the callee's heap
-		for (Pair<AbstractMemLoc, FieldElem> pair : toUpdate) {
-			weakUpdateNoNumbering(pair, new P2Set());
+			// now we weakly update the heap of the caller so that it will
+			// include
+			// all the locations in the callee's heap
+			for (Pair<AbstractMemLoc, FieldElem> pair : toUpdate) {
+				weakUpdateNoNumbering(pair, new P2Set());
+			}
 		}
 
 		if (G.dbgSCC) {

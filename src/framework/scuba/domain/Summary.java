@@ -478,9 +478,6 @@ public class Summary {
 			if (G.dbgSCC) {
 				StringUtil.reportInfo("in the invoke: " + tmp + " " + stmt
 						+ " " + calleeSumCstPairs.size());
-				if (tmp == 1281) {
-					absHeap.dumpHeapNumberingToFile("$caller");
-				}
 			}
 			if (G.tuning)
 				StringUtil.reportInfo("handle callsite: " + stmt + " In "
@@ -574,19 +571,20 @@ public class Summary {
 				if (G.dbgSCC) {
 					StringUtil
 							.reportInfo("[before handling invoke] weak update size: ");
-					if (tmp == 1281) {
-						calleeSum.absHeap.dumpHeapNumberingToFile("" + count);
-					}
 				}
-				// boolean flag = absHeap.handleInvokeStmt(
-				// meth.getDeclaringClass(), meth, stmt.getID(),
-				// calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
-				// numToAssign, isInSCC);
+
 				boolean flag = false;
-				flag = absHeap.handleInvokeStmtNoNumbering(
-						meth.getDeclaringClass(), meth, stmt.getID(),
-						calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
-						numToAssign, isInSCC);
+
+				if (SummariesEnv.v().useNumbering()) {
+					flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(),
+							meth, stmt.getID(), calleeSum.getAbsHeap(),
+							memLocInstn, hasTypeCst, numToAssign, isInSCC);
+				} else {
+					flag = absHeap.handleInvokeStmtNoNumbering(
+							meth.getDeclaringClass(), meth, stmt.getID(),
+							calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
+							numToAssign, isInSCC);
+				}
 
 				absHeap.markChanged(flag);
 				// if (tmp == 1281) {

@@ -149,16 +149,24 @@ public class MemLocInstantiation {
 				return ret;
 			}
 			// not hitting the cache
-			if (((AllocElem) loc).contains(point)) {
-				AllocElem allocElem = callerHeap
-						.getAllocElem(((AllocElem) loc));
-				ret = new InstantiatedLocSet(allocElem,
-						ConstraintManager.genTrue());
+			if (SummariesEnv.v().allocDepth == 0
+					|| ((AllocElem) loc).length() < SummariesEnv.v().allocDepth) {
+				assert false : "cannot be here! we are using depth 1";
+				if (((AllocElem) loc).contains(point)) {
+					AllocElem allocElem = callerHeap
+							.getAllocElem(((AllocElem) loc));
+					ret = new InstantiatedLocSet(allocElem,
+							ConstraintManager.genTrue());
+				} else {
+					AllocElem allocElem = callerHeap.getAllocElem(
+							((AllocElem) loc), point);
+					ret = new InstantiatedLocSet(allocElem,
+							ConstraintManager.genTrue());
+				}
+			} else if (((AllocElem) loc).length() >= SummariesEnv.v().allocDepth) {
+				ret = new InstantiatedLocSet(loc, ConstraintManager.genTrue());
 			} else {
-				AllocElem allocElem = callerHeap.getAllocElem(
-						((AllocElem) loc), point);
-				ret = new InstantiatedLocSet(allocElem,
-						ConstraintManager.genTrue());
+				assert false : "wrong!";
 			}
 			// put into the map
 			instnMemLocMapping.put(loc, ret);

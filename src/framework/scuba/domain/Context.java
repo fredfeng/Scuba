@@ -39,6 +39,10 @@ public class Context {
 		points.addAll(otherCtx.getProgramPoints());
 	}
 
+	public int length() {
+		return pointsSeq.size();
+	}
+
 	public boolean contains(ProgramPoint point) {
 		return points.contains(point);
 	}

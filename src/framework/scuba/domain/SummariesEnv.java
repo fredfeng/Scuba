@@ -34,6 +34,48 @@ public class SummariesEnv {
 		return instance;
 	}
 
+	// use numbering to produce the heap and do the instantiation
+	protected boolean useNumbering = false;
+
+	// the number of contexts in an AllocElem
+	// 0 means infinity
+	protected int allocDepth = 1;
+
+	// prop locals or not
+	protected boolean propLocals = false;
+	
+	public boolean propLocals() {
+		return propLocals;
+	}
+	
+	public void setPropLocals() {
+		propLocals = true;
+	}
+	
+	public void resetPropLocals() {
+		propLocals = false;
+	}
+
+	public int getAllocDepth() {
+		return allocDepth;
+	}
+
+	public void setAllocDepth(int depth) {
+		allocDepth = depth;
+	}
+
+	public boolean useNumbering() {
+		return useNumbering;
+	}
+
+	public void setUseNumbering() {
+		useNumbering = true;
+	}
+
+	public void resetUseNumbering() {
+		useNumbering = false;
+	}
+
 	public static void reset() {
 		instance = new SummariesEnv();
 	}
