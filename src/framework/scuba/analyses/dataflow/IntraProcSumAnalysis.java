@@ -157,12 +157,22 @@ public class IntraProcSumAnalysis {
 
 		Map<BasicBlock, Integer> map = new HashMap<BasicBlock, Integer>();
 		Set<BasicBlock> set = new HashSet<BasicBlock>();
+		int count = 0;
 		while (true) {
+			if (G.dbgSCC) {
+				StringUtil.reportInfo("opt: " + ++count);
+				StringUtil.reportInfo("opt: set size: " + set.size()
+						+ " out of " + scc.size());
+			}
 			BasicBlock bb = wl.poll();
 			if (set.contains(bb))
 				continue;
 
 			boolean flag = handleBasicBlock(bb, true);
+			if (flag) {
+				StringUtil.reportInfo("opt: basic block: ");
+				bb.fullDump();
+			}
 			Integer times = map.get(bb);
 			if (times == null) {
 				map.put(bb, 0);
@@ -192,7 +202,7 @@ public class IntraProcSumAnalysis {
 
 	public static int tmp = 0;
 	public static int tmp1 = 0;
-
+	public static boolean opt = false;
 	public boolean handleBasicBlock(BasicBlock bb, boolean isInSCC) {
 		accessBlocksList.add(bb);
 		tmp++;
@@ -208,6 +218,12 @@ public class IntraProcSumAnalysis {
 				StringUtil.reportInfo("In the stmt: " + tmp1 + " " + q);
 			}
 			boolean flagStmt = summary.handleStmt(q, numToAssign, isInSCC);
+			opt = flagStmt;
+			if (G.dbgSCC) {
+				if (flagStmt) {
+					StringUtil.reportInfo("opt: stmt: " + q);
+				}
+			}
 			flag = flag || flagStmt;
 
 			// increment the numbering counter properly:

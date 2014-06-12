@@ -52,6 +52,7 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Z3Exception;
 
+import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
@@ -478,6 +479,9 @@ public class Summary {
 			if (G.dbgSCC) {
 				StringUtil.reportInfo("in the invoke: " + tmp + " " + stmt
 						+ " " + calleeSumCstPairs.size());
+			}
+			if (G.dbgSCC && IntraProcSumAnalysis.opt && G.countScc == 3551) {
+				calleeSumCstPairs.get(0).val0.dumpSummaryToFile("callee");
 			}
 			if (G.tuning)
 				StringUtil.reportInfo("handle callsite: " + stmt + " In "
@@ -1057,8 +1061,8 @@ public class Summary {
 	 * @return
 	 */
 	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT) {
-        if(G.disableCst)
-            return ConstraintManager.genTrue();
+		if (G.disableCst)
+			return ConstraintManager.genTrue();
 		// 1. Base case: No subtype of T override m: type(o) <= T
 		if (!hasInherit(callee, statT)) {
 			return ConstraintManager.genSubTyping(p2Set, statT);

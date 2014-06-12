@@ -164,7 +164,11 @@ public class MemLocInstantiation {
 							ConstraintManager.genTrue());
 				}
 			} else if (((AllocElem) loc).length() >= SummariesEnv.v().allocDepth) {
-				ret = new InstantiatedLocSet(loc, ConstraintManager.genTrue());
+				// ret = new InstantiatedLocSet(loc,
+				// ConstraintManager.genTrue());
+				AllocElem allocElem = callerHeap.getAllocElem((AllocElem) loc);
+				ret = new InstantiatedLocSet(allocElem,
+						ConstraintManager.genTrue());
 			} else {
 				assert false : "wrong!";
 			}

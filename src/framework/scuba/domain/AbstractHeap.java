@@ -18,6 +18,7 @@ import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 
+import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
@@ -1146,8 +1147,8 @@ public class AbstractHeap {
 	protected BoolExpr instCst(BoolExpr cst, AbstractHeap callerHeap,
 			ProgramPoint point, MemLocInstantiation memLocInstn) {
 		long startInstCst = System.nanoTime();
-        if(G.disableCst)
-            return cst;
+		if (G.disableCst)
+			return cst;
 		assert cst != null : "Invalid Constrait before instantiation.";
 		// return directly.
 		if (ConstraintManager.isScala(cst))
@@ -1174,7 +1175,7 @@ public class AbstractHeap {
 
 		// propogation control for locals
 		if (!SummariesEnv.v().propLocals) {
-			if (src instanceof LocalVarElem) {
+			if (src.isNotArgDerived()) {
 				return ret;
 			}
 		}
@@ -1284,7 +1285,7 @@ public class AbstractHeap {
 
 		// propogation control for locals
 		if (!SummariesEnv.v().propLocals) {
-			if (src instanceof LocalVarElem) {
+			if (src.isNotArgDerived()) {
 				return ret;
 			}
 		}
@@ -1641,10 +1642,22 @@ public class AbstractHeap {
 			inst_time = 0;
 			inst_cst_time = 0;
 			inst_wu_time = 0;
+			int ttt = 0;
 			while (true) {
+				ttt++;
+				if (G.dbgSCC) {
+					StringUtil.reportInfo("opt: in the inner handling invoke: "
+							+ ttt + "-th iter");
+				}
 				boolean go = false;
+				int kkkk = 0;
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
 						.keySet()) {
+					if (G.dbgSCC) {
+						StringUtil
+								.reportInfo("opt: in the inner instantiation: "
+										+ ++kkkk + "-th iter");
+					}
 					AbstractMemLoc src = pair.val0;
 					FieldElem f = pair.val1;
 					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
@@ -1652,6 +1665,14 @@ public class AbstractHeap {
 						go = this.instantiateEdgeNoNumbering(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst) | go;
 						ret = ret | go;
+					}
+					if (IntraProcSumAnalysis.opt && G.dbgSCC
+							&& G.countScc == 3551 && go) {
+						this.dumpHeapToFile("caller");
+					}
+					if (IntraProcSumAnalysis.opt && G.dbgSCC
+							&& G.countScc == 3551 && go) {
+						calleeHeap.dumpHeapToFile("callee");
 					}
 				}
 				if (!go) {

@@ -27,8 +27,8 @@ public class G {
 	// flag to tune performance.
 	public static boolean tuning = true;
 	
-	public static boolean stat = true;
-
+	public static boolean stat = false;
+	
 	public static int count = 0;
 
 	// how many scc do we actuall pass.
@@ -62,7 +62,7 @@ public class G {
 
 	public static boolean disableCst = true;
 
-	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
+	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
 
 	public static long instCstSubTime;
 }
