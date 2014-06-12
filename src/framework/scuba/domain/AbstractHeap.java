@@ -1175,8 +1175,8 @@ public class AbstractHeap {
 
 		// propogation control for locals
 		if (!SummariesEnv.v().propLocals) {
-			// if (src.isNotArgDerived()) {
-			if (src instanceof LocalVarElem) {
+			if (src.isNotArgDerived()) {
+				// if (src instanceof LocalVarElem) {
 				return ret;
 			}
 		}
@@ -1284,10 +1284,10 @@ public class AbstractHeap {
 
 		boolean ret = false;
 
-		// propogation control for locals
+		// propagation control for locals
 		if (!SummariesEnv.v().propLocals) {
-			// if (src.isNotArgDerived()) {
-			if (src instanceof LocalVarElem) {
+			if (src.isNotArgDerived()) {
+				// if (src instanceof LocalVarElem) {
 				return ret;
 			}
 		}
