@@ -119,17 +119,19 @@ public class ConstraintManager {
 			if(isEqual) {
 				BoolExpr eq = ctx.MkEq(cur, ctx.MkInt(typeInt));
 				//perform simplification like 2=2 -> true, 2=3 -> false
-				Expr simEq = eq.Simplify();
-				assert simEq instanceof BoolExpr : "Must return a boolean expr.";
-				return (BoolExpr)simEq;
+				//Expr simEq = eq.Simplify();
+				//assert simEq instanceof BoolExpr : "Must return a boolean expr.";
+				//return (BoolExpr)simEq;
+                return eq;
 
 			//lift type(o)<=T
 			} else {
 				BoolExpr le = ctx.MkLe((IntExpr)cur, ctx.MkInt(typeInt));
 				//perform simplification like 2=2 -> true, 2=3 -> false
-				Expr simLe = le.Simplify();
-				assert simLe instanceof BoolExpr : "Must return a boolean expr.";
-				return (BoolExpr)simLe;
+				//Expr simLe = le.Simplify();
+				//assert simLe instanceof BoolExpr : "Must return a boolean expr.";
+				//return (BoolExpr)simLe;
+                return le;
 			}
 
 		} catch (Z3Exception e) {
@@ -208,9 +210,8 @@ public class ConstraintManager {
 
 			BoolExpr inter = ctx.MkAnd(new BoolExpr[] { first, second });
 			//try to simplify.
-			long startSimplify = System.nanoTime();
-//			Expr sim = inter.Simplify();
-			assert inter instanceof BoolExpr : "Unknown constraints in intersection!";
+            //Expr sim = inter.Simplify();
+			//assert inter instanceof BoolExpr : "Unknown constraints in intersection!";
 			return inter;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -228,9 +229,8 @@ public class ConstraintManager {
 
 			BoolExpr union = ctx.MkOr(new BoolExpr[] { first, second });
 			//try to simplify.
-			long startSimplify = System.nanoTime();
-//			Expr sim = union.Simplify();
-			assert union instanceof BoolExpr : "Unknown constraints in union!";
+			//Expr sim = union.Simplify();
+			//assert sim instanceof BoolExpr : "Unknown constraints in union!";
 			return union;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
