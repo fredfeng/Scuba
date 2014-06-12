@@ -1178,14 +1178,20 @@ public class AbstractHeap {
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";
-
+		long s1 = System.nanoTime();
 		// instantiate the calleeCst
 		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
+		long s2 = System.nanoTime();
+		bug_cst += (s2 - s1);
 
 		long startInstLoc = System.nanoTime();
 		InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this, point);
 		InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this, point);
 
+		if (G.dbgSCC) {
+			StringUtil.reportInfo("Bug: instantiate to : " + instnSrc.size()
+					* instnDst.size() + " edges ");
+		}
 		long endInstLoc = System.nanoTime();
 		G.instLocTimePerEdges += (endInstLoc - startInstLoc);
 
@@ -1209,17 +1215,21 @@ public class AbstractHeap {
 
 				assert (newDst1 != null) : "null!";
 
+				long s3 = System.nanoTime();
 				BoolExpr cst1 = instnSrc.getConstraint(newSrc);
 				BoolExpr cst2 = instnDst.getConstraint(newDst);
 
 				BoolExpr cst = ConstraintManager.intersect(
 						ConstraintManager.intersect(cst1, cst2),
 						ConstraintManager.intersect(instnCst, typeCst));
+				long s4 = System.nanoTime();
+				bug_cst += (s4 - s3);
 
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 
-				Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
-						newSrc, field);
+				// Pair<AbstractMemLoc, FieldElem> pair = new
+				// Pair<AbstractMemLoc, FieldElem>(
+				// newSrc, field);
 
 				toAdd.add(new Pair<AbstractMemLoc, P2Set>(newSrc, new P2Set(
 						newDst1, cst)));
@@ -1287,13 +1297,13 @@ public class AbstractHeap {
 				HeapObject newDst1 = (HeapObject) newDst;
 
 				assert (newDst1 != null) : "null!";
-
+				long s1 = System.nanoTime();
 				BoolExpr cst1 = instnSrc.getConstraint(newSrc);
 				BoolExpr cst2 = instnDst.getConstraint(newDst);
-
 				BoolExpr cst = ConstraintManager.intersect(
 						ConstraintManager.intersect(cst1, cst2),
 						ConstraintManager.intersect(instnCst, typeCst));
+				long s2 = System.nanoTime();
 
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 				Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
@@ -1301,7 +1311,9 @@ public class AbstractHeap {
 
 				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
 						new P2Set(newDst1, cst));
-
+				long s3 = System.nanoTime();
+				inst_cst_time += (s2 - s1);
+				inst_wu_time += (s3 - s2);
 				ret = ret | ret1.val0;
 			}
 		}
@@ -1522,6 +1534,8 @@ public class AbstractHeap {
 	public static int no = 0;
 	public static int no1 = 0;
 	public static long inst_time = 0;
+	public static long inst_cst_time = 0;
+	public static long inst_wu_time = 0;
 
 	protected boolean handleInvokeStmtNoNumbering(jq_Class clazz,
 			jq_Method method, int line, AbstractHeap calleeHeap,
@@ -1584,6 +1598,8 @@ public class AbstractHeap {
 		// this is the real updating
 		if (!isRecursive) {
 			inst_time = 0;
+			inst_cst_time = 0;
+			inst_wu_time = 0;
 			while (true) {
 				boolean go = false;
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
@@ -1602,25 +1618,58 @@ public class AbstractHeap {
 				}
 			}
 		} else {
-			int times = 0;
 			while (true) {
-				times++;
-				if (G.dbgSCC) {
-					StringUtil.reportInfo("Recursive: " + times);
-				}
+
 				boolean go = false;
+				int times = 0;
+
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
 						.keySet()) {
+					times++;
+					if (G.dbgSCC) {
+						StringUtil
+								.reportInfo("============================================");
+						StringUtil.reportInfo("Bug: " + times + " out of "
+								+ calleeHeap.heapObjectsToP2Set.size());
+						StringUtil.reportInfo("Bug: "
+								+ " need to instantiate "
+								+ calleeHeap.heapObjectsToP2Set.get(pair)
+										.size() + " edges ");
+					}
 					Set<Pair<AbstractMemLoc, P2Set>> toAdd = new HashSet<Pair<AbstractMemLoc, P2Set>>();
 					AbstractMemLoc src = pair.val0;
 					FieldElem f = pair.val1;
 					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
 					for (HeapObject tgt : tgts.getHeapObjects()) {
+						if (G.dbgSCC) {
+							StringUtil
+									.reportInfo("------------------------------------------");
+							StringUtil.reportInfo("Bug: I am here 1 " + times
+									+ " out of "
+									+ calleeHeap.heapObjectsToP2Set.size());
+						}
+						bug = 0;
+						bug_cst = 0;
+						long s1 = System.nanoTime();
 						this.instantiateEdgeNoNumberingForRecursiveCall(src,
 								tgt, f, memLocInstn, calleeHeap, point,
 								typeCst, toAdd);
+						long s2 = System.nanoTime();
+						bug = s2 - s1;
+						if (G.dbgSCC) {
+							StringUtil.reportSec(
+									"Bug: instantiate the edge time: ", bug);
+							StringUtil.reportSec("Bug: cst time: ", bug_cst);
+						}
 					}
 					for (Pair<AbstractMemLoc, P2Set> pair1 : toAdd) {
+						if (G.dbgSCC) {
+							StringUtil
+									.reportInfo("------------------------------------------");
+							StringUtil.reportInfo("Bug: I am here 2 " + times
+									+ " out of "
+									+ calleeHeap.heapObjectsToP2Set.size());
+						}
 						AbstractMemLoc newSrc = pair1.val0;
 						P2Set newP2Set = pair1.val1;
 						Pair<AbstractMemLoc, FieldElem> pair2 = new Pair<AbstractMemLoc, FieldElem>(
@@ -1628,6 +1677,9 @@ public class AbstractHeap {
 						go = weakUpdateNoNumbering(pair2, newP2Set).val0 | go;
 						ret = ret | go;
 					}
+				}
+				if (G.dbgSCC) {
+					StringUtil.reportInfo("Bug: go: " + go + " ret: " + ret);
 				}
 				if (!go) {
 					break;
@@ -1646,10 +1698,16 @@ public class AbstractHeap {
 			StringUtil.reportInfo("Recursive: " + "Ret: " + ret);
 			StringUtil.reportSec("Recursive: time: ", start, end);
 			StringUtil.reportSec("Recursive: time in inst ", inst_time);
+			StringUtil.reportSec("Recursive: time in inst cst ", inst_cst_time);
+			StringUtil.reportSec("Recursive: time in inst weak update",
+					inst_wu_time);
 		}
 
 		return ret;
 	}
+
+	public static long bug = 0;
+	public static long bug_cst = 0;
 
 	public static int tmp = 0;
 	public static int tmp1 = 0;
@@ -2262,9 +2320,10 @@ public class AbstractHeap {
 			currentP2Set = new P2Set();
 			heapObjectsToP2Set.put(pair, currentP2Set);
 		}
-
+		long s1 = System.nanoTime();
 		ret.val0 = currentP2Set.join(p2Set);
-
+		long s2 = System.nanoTime();
+		inst_cst_time += (s2 - s1);
 		return ret;
 	}
 
