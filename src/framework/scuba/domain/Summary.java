@@ -608,9 +608,9 @@ public class Summary {
 					e.printStackTrace();
 				}
 				absHeap.markChanged(flag);
-				if (tmp == 1281) {
-					absHeap.dumpHeapNumberingToFile("$caller" + count);
-				}
+//				if (tmp == 1281) {
+//					absHeap.dumpHeapNumberingToFile("$caller" + count);
+//				}
 			}
 			if (G.debug4Sum) {
 				if (calleeSumCstPairs.isEmpty()) {

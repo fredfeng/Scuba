@@ -206,7 +206,14 @@ public class ConstraintManager {
         try {
         	assert first!= null : "Invalid constrait";
         	assert second!= null : "Invalid constrait";
-			long startCst = System.nanoTime();
+			if (isFalse(first) || isFalse(second))
+				return falseExpr;
+
+			if (isTrue(first))
+				return second;
+
+			if (isTrue(second))
+				return first;
 
 			BoolExpr inter = ctx.MkAnd(new BoolExpr[] { first, second });
 			//try to simplify.
@@ -225,7 +232,15 @@ public class ConstraintManager {
         try {
         	assert first!= null : "Invalid constrait";
         	assert second!= null : "Invalid constrait";
-			long startCst = System.nanoTime();
+        	
+			if (isTrue(first) || isTrue(second))
+				return trueExpr;
+
+			if (isFalse(first))
+				return second;
+
+			if (isFalse(second))
+				return first;
 
 			BoolExpr union = ctx.MkOr(new BoolExpr[] { first, second });
 			//try to simplify.
@@ -247,6 +262,8 @@ public class ConstraintManager {
 		for(HeapObject ho : p2Set.getHeapObjects()) {
 			BoolExpr orgCst = p2Set.getConstraint(ho);
 			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, false));
+			if (isTrue(newCst))
+				return trueExpr;
 			b = union(b, newCst);
 		}
 		return b;
@@ -261,6 +278,8 @@ public class ConstraintManager {
 		for(HeapObject ho : p2Set.getHeapObjects()) {
 			BoolExpr orgCst = p2Set.getConstraint(ho);
 			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, true));
+			if (isTrue(newCst))
+				return trueExpr;
 			b = union(b, newCst);
 		}
 		return b;
@@ -277,6 +296,8 @@ public class ConstraintManager {
 				BoolExpr orgCst = p2Set.getConstraint(ho);
 				BoolExpr newCst = intersect(orgCst,
 						lift((HeapObject) ho, typeInt, false));
+				if (isTrue(newCst))
+					return trueExpr;
 				b = union(b, newCst);
 			} else {
 				assert false : "Invalid abstract MemLoc." + ho;
@@ -300,6 +321,9 @@ public class ConstraintManager {
 				BoolExpr orgCst = p2Set.getConstraint(ho);
 				BoolExpr newCst = intersect(orgCst,
 						lift((HeapObject) ho, typeInt, true));
+				if (isTrue(newCst))
+					return trueExpr;
+
 				b = union(b, newCst);
 			} else {
 				assert false : "Invalid abstract MemLoc." + ho;
@@ -319,6 +343,8 @@ public class ConstraintManager {
 	 */
 	public static BoolExpr clone(BoolExpr expr) {
 		assert expr != null : "Unknown boolExpr.";
+		// actually we don't need to clone a new instance. Since we will create
+		// a fresh new one during intersect or union
         return expr;
         /*try {
 			BoolExpr clone = ctx.MkOr(new BoolExpr[] { expr, expr });
@@ -358,9 +384,28 @@ public class ConstraintManager {
 	//check if cst is a scala constraint, e.g, true, false 
 	public static boolean isScala(BoolExpr cst) {
 		try {
-			if ((cst.BoolValue() == Z3_lbool.Z3_L_FALSE)
-					|| (cst.BoolValue() == Z3_lbool.Z3_L_TRUE))
+			if (cst.IsTrue()|| cst.IsFalse())
 				return true;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public static boolean isTrue(BoolExpr cst) {
+		try {
+			return cst.IsTrue();
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public static boolean isFalse(BoolExpr cst) {
+		try {
+			return cst.IsFalse();
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
