@@ -337,6 +337,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		return summary.isChanged();
 	}
 
+	public static int cgProgress = 0;
+
 	private void analyzeSCC(Node node) {
 		Set<jq_Method> scc = nodeToScc.get(node);
 		LinkedList<jq_Method> wl = new LinkedList<jq_Method>();
@@ -348,23 +350,33 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		 * if(gammaNew == gamma) set else reset add pred(unterminated) }
 		 */
 		Set<jq_Method> set = new HashSet<jq_Method>();
-		int tmp = 0;
+		cgProgress = 0;
 		while (true) {
-			tmp++;
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- CG progress: " + set.size()
+						+ " out of " + scc.size());
+				StringUtil.reportInfo("Sunny -- CG progress: " + " iteration: "
+						+ ++cgProgress + "-th");
+			}
 			jq_Method worker = wl.poll();
 			if (set.contains(worker))
 				continue;
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- CG progress: "
+						+ "handling method: " + worker);
+			}
 
 			boolean changed = analyze(worker);
+
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- CG progress: "
+						+ "finish method: " + worker + " result: " + changed);
+			}
+
 			if (changed)
 				set.clear();
 			else
 				set.add(worker);
-
-			if (G.dbgSCC) {
-				StringUtil.reportInfo("Analyzing SCC times: " + tmp);
-				StringUtil.reportInfo("Analyzing SCC times: " + wl);
-			}
 
 			if (G.tuning)
 				StringUtil.reportInfo("SCC counter: " + set.size() + ":"

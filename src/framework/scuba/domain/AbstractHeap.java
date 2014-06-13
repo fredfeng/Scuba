@@ -19,6 +19,8 @@ import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 
+import framework.scuba.analyses.alias.SummaryBasedAnalysis;
+import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
@@ -1638,10 +1640,38 @@ public class AbstractHeap {
 			weakUpdateNoNumbering(pair, new P2Set());
 		}
 
-		int tmp = 0;
+		if (G.dbgMatch) {
+			StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+					+ SummaryBasedAnalysis.cgProgress + " BB: "
+					+ IntraProcSumAnalysis.bbProgress + " ]");
+			StringUtil.reportInfo("Sunny -- Invoke progress: "
+					+ "is Recursive: " + isRecursive);
+			int s = 0;
+			for (Pair pair : this.heapObjectsToP2Set.keySet()) {
+				s += this.heapObjectsToP2Set.get(pair).size();
+			}
+			StringUtil.reportInfo("Sunny -- Invoke progress: "
+					+ "current caller heap size: " + s);
+			s = 0;
+			for (Pair pair : calleeHeap.heapObjectsToP2Set.keySet()) {
+				s += calleeHeap.heapObjectsToP2Set.get(pair).size();
+			}
+			StringUtil.reportInfo("Sunny -- Invoke progress: "
+					+ "the callee size: " + s);
+		}
 		// this is the real updating
 		if (!isRecursive) {
+			int it = 0;
 			while (true) {
+				it++;
+				if (G.dbgMatch) {
+					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+							+ SummaryBasedAnalysis.cgProgress + " BB: "
+							+ IntraProcSumAnalysis.bbProgress + " ]");
+					StringUtil.reportInfo("Sunny -- Invoke progress: "
+							+ "instantiation for NOT recursive iteration: "
+							+ it + "-th");
+				}
 				boolean go = false;
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
 						.keySet()) {
@@ -1655,91 +1685,37 @@ public class AbstractHeap {
 					}
 					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
 					for (HeapObject tgt : tgts.getHeapObjects()) {
-						tmp++;
-						if (G.dbgSCC) {
-							StringUtil.reportInfo("Rain: this is the " + tmp
-									+ "-th inner instantiation of the " + no
-									+ "-th outer invoke");
-							StringUtil.reportInfo("Rain: the go result is: "
-									+ go);
-						}
-						if (G.dbgSCC && G.countScc == 3551 && no == 69552
-								&& tmp == 7) {
-							assert go == false;
-							this.dumpHeapMappingToFile("callerBeforeMap");
-							this.dumpHeapToFile("callerBeforeHeap");
-							this.dumpAllMemLocsHeapToFile("callerBeforeAllMem");
-							this.dumpAllMemLocsToFile("callerBeforeAllMemLocs");
-							StringUtil.reportInfo("Rain: [IM] src-- " + src);
-							StringUtil.reportInfo("Rain: [IM] tgt --- " + tgt);
-							StringUtil.reportInfo("Rain: [IM] field --- " + f);
-							StringUtil.reportInfo("Rain: [IM] point: " + point);
-							calleeHeap.dumpHeapMappingToFile("calleeBeforeMap");
-							calleeHeap.dumpHeapToFile("calleeBeforeHeap");
-							calleeHeap
-									.dumpAllMemLocsHeapToFile("calleeBeforeAllMem");
-							calleeHeap
-									.dumpAllMemLocsToFile("calleeBeforeAllMemLocs");
-							memLocInstn.print();
-						}
-						if (G.dbgSCC && G.countScc == 3551 && no == 69538
-								&& tmp == 7) {
-							assert go == false;
-							this.dumpHeapMappingToFile("callerBeforeMap1");
-							this.dumpHeapToFile("callerBeforeHeap1");
-							this.dumpAllMemLocsHeapToFile("callerBeforeAllMem1");
-							this.dumpAllMemLocsToFile("callerBeforeAllMemLocs1");
-							StringUtil.reportInfo("Rain: [IM] src-- " + src);
-							StringUtil.reportInfo("Rain: [IM] tgt --- " + tgt);
-							StringUtil.reportInfo("Rain: [IM] field --- " + f);
-							StringUtil.reportInfo("Rain: [IM] point: " + point);
-							calleeHeap
-									.dumpHeapMappingToFile("calleeBeforeMap1");
-							calleeHeap.dumpHeapToFile("calleeBeforeHeap1");
-							calleeHeap
-									.dumpAllMemLocsHeapToFile("calleeBeforeAllMem1");
-							calleeHeap
-									.dumpAllMemLocsToFile("calleeBeforeAllMemLocs1");
-							memLocInstn.print();
-						}
+
 						go = this.instantiateEdgeNoNumbering(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst) | go;
 						ret = ret | go;
-						if (G.dbgSCC && G.countScc == 3551 && no == 69552
-								&& tmp == 7) {
-							assert go == true;
-							this.dumpHeapMappingToFile("callerAfterMap");
-							this.dumpHeapToFile("callerAfterHeap");
-							this.dumpAllMemLocsHeapToFile("callerAfterAllMem");
-							this.dumpAllMemLocsToFile("callerAfterAllMemLocs");
-							memLocInstn.print();
-						}
-						if (G.dbgSCC && G.countScc == 3551 && no == 69538
-								&& tmp == 7) {
-							assert go == true;
-							this.dumpHeapMappingToFile("callerAfterMap1");
-							this.dumpHeapToFile("callerAfterHeap1");
-							this.dumpAllMemLocsHeapToFile("callerAfterAllMem1");
-							this.dumpAllMemLocsToFile("callerAfterAllMemLocs1");
-							memLocInstn.print();
-						}
-						if (G.dbgSCC) {
-							StringUtil.reportInfo("Rain: this is after the "
-									+ tmp + "-th inner instantiation of the "
-									+ no + "-th outer invoke");
-							StringUtil.reportInfo("Rain: the go result is: "
-									+ go);
-							StringUtil.reportInfo("Rain: The ret result is: "
-									+ ret);
-						}
+
 					}
+				}
+				if (G.dbgMatch) {
+					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+							+ SummaryBasedAnalysis.cgProgress + " BB: "
+							+ IntraProcSumAnalysis.bbProgress + " ]");
+					StringUtil.reportInfo("Sunny -- Invoke progress: "
+							+ "instantiation for NOT recursive iteration: "
+							+ it + "-th" + " result: " + go);
 				}
 				if (!go) {
 					break;
 				}
 			}
 		} else {
+			int it = 0;
 			while (true) {
+				it++;
+				if (G.dbgMatch) {
+					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+							+ SummaryBasedAnalysis.cgProgress + " BB: "
+							+ IntraProcSumAnalysis.bbProgress + " ]");
+					StringUtil.reportInfo("Sunny -- Invoke progress: "
+							+ "instantiation for recursive iteration: " + it
+							+ "-th");
+				}
 				boolean go = false;
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
 						.keySet()) {
@@ -1767,7 +1743,14 @@ public class AbstractHeap {
 						ret = ret | go;
 					}
 				}
-
+				if (G.dbgMatch) {
+					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+							+ SummaryBasedAnalysis.cgProgress + " BB: "
+							+ IntraProcSumAnalysis.bbProgress + " ]");
+					StringUtil.reportInfo("Sunny -- Invoke progress: "
+							+ "instantiation for recursive iteration: " + it
+							+ "-th" + " result: " + go);
+				}
 				if (!go) {
 					break;
 				}

@@ -26,6 +26,8 @@ public class G {
 	
 	public static boolean dbgRet = true;
 	
+	public static boolean dbgMatch = true;
+	
 	public static boolean useConHashMap = true;
 
 	// flag to tune performance.

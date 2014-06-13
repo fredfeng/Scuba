@@ -14,6 +14,7 @@ import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import framework.scuba.analyses.alias.SummaryBasedAnalysis;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper;
@@ -142,7 +143,7 @@ public class IntraProcSumAnalysis {
 		}
 	}
 
-	public static int count = 0;
+	public static int sccProgress = 0;
 
 	// compute the fixed-point for this scc.
 	public boolean handleSCC(Set<BasicBlock> scc) {
@@ -158,22 +159,32 @@ public class IntraProcSumAnalysis {
 			wl.add(scc.iterator().next());
 
 		Set<BasicBlock> set = new HashSet<BasicBlock>();
-		count = 0;
+		sccProgress = 0;
 		while (true) {
-			if (G.dbgSCC) {
-				StringUtil.reportInfo("Rain: [" + G.countScc + "]"
-						+ " this is the " + ++count + "-th basic block");
-				StringUtil.reportInfo("opt: set size: " + set.size()
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
+						+ SummaryBasedAnalysis.cgProgress + " ]" + set.size()
 						+ " out of " + scc.size());
+				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
+						+ SummaryBasedAnalysis.cgProgress + " ]"
+						+ " iteration: " + ++sccProgress + "-th");
 			}
 			BasicBlock bb = wl.poll();
 			if (set.contains(bb))
 				continue;
 
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
+						+ SummaryBasedAnalysis.cgProgress + " ]"
+						+ "handling BB: " + bb);
+			}
+
 			boolean flag = handleBasicBlock(bb, true);
-			if (flag) {
-				StringUtil.reportInfo("opt: basic block: ");
-				bb.fullDump();
+
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
+						+ SummaryBasedAnalysis.cgProgress + " ]"
+						+ "finish BB: " + bb + " result: " + flag);
 			}
 
 			flagScc = flagScc || flag;
@@ -195,7 +206,7 @@ public class IntraProcSumAnalysis {
 		return flagScc;
 	}
 
-	public static int tmp = 0;
+	public static int bbProgress = 0;
 	public static int tmp1 = 0;
 	public static boolean opt = false;
 
@@ -203,20 +214,35 @@ public class IntraProcSumAnalysis {
 		accessBlocksList.add(bb);
 		boolean flag = false;
 		// handle each quad in the basicblock.
+		bbProgress = 0;
 		for (Quad q : bb.getQuads()) {
 			// handle the stmt
-			tmp++;
+			bbProgress++;
 
-			if (G.dbgRet) {
-				StringUtil.reportInfo("Sunny: the stmt is " + q + " " + tmp
-						+ "-th stmt");
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- BB progress: " + bbProgress
+						+ "-th iteration" + " out of " + bb.size());
 			}
+
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- BB progress: [ CG: "
+						+ SummaryBasedAnalysis.cgProgress + " ]"
+						+ "handling stmt: " + q);
+			}
+
 			boolean flagStmt = summary.handleStmt(q, numToAssign, isInSCC);
+
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- BB progress: [ CG: "
+						+ SummaryBasedAnalysis.cgProgress + " ]"
+						+ "finish stmt: " + q + " result: " + flagStmt);
+			}
+
 			opt = flagStmt;
 			if (G.dbgSCC) {
 				if (flagStmt) {
 					StringUtil.reportInfo("Rain: [" + G.countScc
-							+ "] this is the stmt: " + tmp + "-th");
+							+ "] this is the stmt: " + bbProgress + "-th");
 					bb.fullDump();
 				}
 			}
