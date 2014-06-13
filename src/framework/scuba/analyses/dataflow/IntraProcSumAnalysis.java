@@ -207,6 +207,10 @@ public class IntraProcSumAnalysis {
 			// handle the stmt
 			tmp++;
 
+			if (G.dbgRet) {
+				StringUtil.reportInfo("Sunny: the stmt is " + q + " " + tmp
+						+ "-th stmt");
+			}
 			boolean flagStmt = summary.handleStmt(q, numToAssign, isInSCC);
 			opt = flagStmt;
 			if (G.dbgSCC) {

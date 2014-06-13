@@ -60,7 +60,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relCHA;
 
 	// force to invoke garbage collector for abstract heap.
-	protected static boolean forceGc = true;
+	protected static boolean forceGc = false;
 
 	protected CICG callGraph;
 
