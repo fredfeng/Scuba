@@ -1612,6 +1612,19 @@ public class AbstractHeap {
 
 		// pre update location
 		Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
+
+		if (G.dbgRet && no == 31727) {
+			calleeHeap.dumpAllMemLocsHeapToFile("callee1");
+			calleeHeap.dumpAllMemLocsToFile("callee2");
+			calleeHeap.dumpHeapMappingToFile("callee3");
+			calleeHeap.dumpHeapToFile("callee4");
+
+			this.dumpAllMemLocsHeapToFile("caller1");
+			this.dumpAllMemLocsToFile("caller2");
+			this.dumpHeapMappingToFile("caller3");
+			this.dumpHeapToFile("caller4");
+		}
+
 		for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
 				.keySet()) {
 			AbstractMemLoc loc = pair.val0;
@@ -1623,6 +1636,9 @@ public class AbstractHeap {
 				}
 			}
 			// otherwise do the instantiation
+			if (G.dbgRet && no == 31727) {
+				StringUtil.reportInfo("dbg Ret: " + " to instantiate: " + loc);
+			}
 			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
 					this, point);
 
