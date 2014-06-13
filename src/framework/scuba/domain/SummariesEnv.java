@@ -42,7 +42,10 @@ public class SummariesEnv {
 	protected int allocDepth = 1;
 
 	// prop locals or not
-	protected boolean propLocals = false;
+	protected boolean propLocals = true;
+	
+	//treating
+	protected boolean treating = true;
 	
 	public boolean propLocals() {
 		return propLocals;

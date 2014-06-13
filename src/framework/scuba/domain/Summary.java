@@ -50,7 +50,6 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractHeap.VariableType;
@@ -952,6 +951,21 @@ public class Summary {
 					continue;
 
 				assert tgtType.extendsClass(recvStatType) : "Dynamic type must be a subclass for static type!";
+				
+				if (SummariesEnv.v().treating) {
+					if (callee.getName().toString().equals("study")
+							&& (tgtSet.size() > 30)
+							&& (callsite.getMethod().getNameAndDesc()
+									.equals(pair.val1.getNameAndDesc()))) {
+						if (!tgtType.equals(callsite.getMethod()
+								.getDeclaringClass()))
+							continue;
+					}
+				}
+		
+//				assert !(callee.getName().toString().equals("study")
+//						&& (tgtSet.size() > 30) && (callsite.getMethod()
+//						.getNameAndDesc().equals(pair.val1.getNameAndDesc()))) : "stop.";
 
 				long startGenCst = System.nanoTime();
 
@@ -962,11 +976,6 @@ public class Summary {
 				}
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
-				if (G.tuning && (dySum != null)) {
-					StringUtil.reportInfo("Same methods: " + dySum.getMethod()
-							+ "::" + pair.val1);
-					assert dySum.getMethod().equals(pair.val1) : "Must be the same methods!";
-				}
 				if (dySum == null) {
 					System.err
 							.println("[WARNING:]Unreachable method because of missing model."
