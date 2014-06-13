@@ -23,6 +23,10 @@ public class G {
 	public static boolean validate = false;
 
 	public static boolean dbgSCC = true;
+	
+	public static boolean dbgRet = true;
+	
+	public static boolean useConHashMap = true;
 
 	// flag to tune performance.
 	public static boolean tuning = true;

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
@@ -18,7 +19,6 @@ import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 
-import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
@@ -82,7 +82,9 @@ public class AbstractHeap {
 	public AbstractHeap(jq_Method method) {
 		this.method = method;
 		heap = new HashSet<AbstractMemLoc>();
-		heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
+		// heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>,
+		// P2Set>();
+		heapObjectsToP2Set = new ConcurrentHashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
 	}
 
@@ -1157,7 +1159,7 @@ public class AbstractHeap {
 				point, memLocInstn);
 
 		assert instC != null : "Invalid instantiated Constrait.";
-		assert instC.toString().length() < 1000 : "We are in trouble." + instC; 
+		assert instC.toString().length() < 1000 : "We are in trouble." + instC;
 		long endInstCst = System.nanoTime();
 		G.instCstTime += (endInstCst - startInstCst);
 
@@ -1343,7 +1345,7 @@ public class AbstractHeap {
 
 				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
 						new P2Set(newDst1, cst));
-				
+
 				long s3 = System.nanoTime();
 				inst_cst_time += (s2 - s1);
 				inst_wu_time += (s3 - s2);
@@ -1612,8 +1614,7 @@ public class AbstractHeap {
 			FieldElem field = pair.val1;
 			// if not propagating locals
 			if (!SummariesEnv.v().propLocals) {
-				// if (loc.isNotArgDerived()) {
-				if (loc instanceof LocalVarElem) {
+				if (loc.isNotArgDerived()) {
 					continue;
 				}
 			}
@@ -1646,8 +1647,7 @@ public class AbstractHeap {
 					FieldElem f = pair.val1;
 					// propagation control for locals
 					if (!SummariesEnv.v().propLocals) {
-						// if (src.isNotArgDerived()) {
-						if (src instanceof LocalVarElem) {
+						if (src.isNotArgDerived()) {
 							continue;
 						}
 					}
@@ -1739,15 +1739,13 @@ public class AbstractHeap {
 		} else {
 			while (true) {
 				boolean go = false;
-
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
 						.keySet()) {
 					AbstractMemLoc src = pair.val0;
 					FieldElem f = pair.val1;
 					// propagation control for locals
 					if (!SummariesEnv.v().propLocals) {
-						// if (src.isNotArgDerived()) {
-						if (src instanceof LocalVarElem) {
+						if (src.isNotArgDerived()) {
 							continue;
 						}
 					}
