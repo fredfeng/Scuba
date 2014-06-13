@@ -217,7 +217,8 @@ public class IntraProcSumAnalysis {
 		bbProgress = 0;
 		for (Quad q : bb.getQuads()) {
 			if (G.dbgRet) {
-				StringUtil.reportInfo("Full dump: " + bb.fullDump());
+				System.out.println("Full dump");
+				System.out.println(bb.fullDump());
 			}
 			// handle the stmt
 			bbProgress++;
