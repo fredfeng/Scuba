@@ -62,7 +62,7 @@ public class P2Set {
 					continue;
 
 				p2Set.put(obj, newCst);
-//				ret = true;
+				ret = true;
 			} else {
 				// obj is only in other's p2set
 				// AVOID directly get the constraint instance of the other

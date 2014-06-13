@@ -142,6 +142,8 @@ public class IntraProcSumAnalysis {
 		}
 	}
 
+	public static int count = 0;
+
 	// compute the fixed-point for this scc.
 	public boolean handleSCC(Set<BasicBlock> scc) {
 		LinkedList<BasicBlock> wl = new LinkedList<BasicBlock>();
@@ -155,12 +157,12 @@ public class IntraProcSumAnalysis {
 		if (wl.size() == 0)
 			wl.add(scc.iterator().next());
 
-		Map<BasicBlock, Integer> map = new HashMap<BasicBlock, Integer>();
 		Set<BasicBlock> set = new HashSet<BasicBlock>();
-		int count = 0;
+		count = 0;
 		while (true) {
 			if (G.dbgSCC) {
-				StringUtil.reportInfo("opt: " + ++count);
+				StringUtil.reportInfo("Rain: [" + G.countScc + "]"
+						+ " this is the " + ++count + "-th basic block");
 				StringUtil.reportInfo("opt: set size: " + set.size()
 						+ " out of " + scc.size());
 			}
@@ -173,14 +175,7 @@ public class IntraProcSumAnalysis {
 				StringUtil.reportInfo("opt: basic block: ");
 				bb.fullDump();
 			}
-			Integer times = map.get(bb);
-			if (times == null) {
-				map.put(bb, 0);
-			}
-			map.put(bb, map.get(bb) + 1);
-			if (G.dbgSCC) {
-				StringUtil.reportInfo("times for adding: " + map.get(bb));
-			}
+
 			flagScc = flagScc || flag;
 			assert scc.contains(bb) : "You can't analyze the node that is out of current scc.";
 			if (flag)
@@ -203,25 +198,22 @@ public class IntraProcSumAnalysis {
 	public static int tmp = 0;
 	public static int tmp1 = 0;
 	public static boolean opt = false;
+
 	public boolean handleBasicBlock(BasicBlock bb, boolean isInSCC) {
 		accessBlocksList.add(bb);
-		tmp++;
-		if (G.dbgSCC) {
-			StringUtil.reportInfo("In the bb: " + tmp + bb);
-		}
 		boolean flag = false;
 		// handle each quad in the basicblock.
 		for (Quad q : bb.getQuads()) {
 			// handle the stmt
 			tmp++;
-			if (G.dbgSCC) {
-				StringUtil.reportInfo("In the stmt: " + tmp1 + " " + q);
-			}
+
 			boolean flagStmt = summary.handleStmt(q, numToAssign, isInSCC);
 			opt = flagStmt;
 			if (G.dbgSCC) {
 				if (flagStmt) {
-					StringUtil.reportInfo("opt: stmt: " + q);
+					StringUtil.reportInfo("Rain: [" + G.countScc
+							+ "] this is the stmt: " + tmp + "-th");
+					bb.fullDump();
 				}
 			}
 			flag = flag || flagStmt;
