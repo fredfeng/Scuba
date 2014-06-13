@@ -50,6 +50,7 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractHeap.VariableType;
@@ -970,6 +971,12 @@ public class Summary {
 				long startGenCst = System.nanoTime();
 
 				cst = genCst(p2Set, pair.val1, tgtType);
+				try {
+					cst = (BoolExpr)cst.Simplify();
+				} catch (Z3Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				if (G.tuning) {
 					long endGenCst = System.nanoTime();
 					G.genCstTime += (endGenCst - startGenCst);
@@ -1083,6 +1090,7 @@ public class Summary {
 				if (sub.getVirtualMethod(callee.getNameAndDesc()) != null
 						|| hasInherit(callee, sub))
 					continue;
+				assert !sub.equals(statT) : "do not repeat!";
 				BoolExpr phi = genCst(p2Set, callee, sub);
 				t = ConstraintManager.union(t, phi);
 			}
