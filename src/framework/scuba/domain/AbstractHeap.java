@@ -1595,6 +1595,11 @@ public class AbstractHeap {
 			jq_Method method, int line, AbstractHeap calleeHeap,
 			MemLocInstantiation memLocInstn, BoolExpr typeCst, int numToAssign,
 			boolean isInSCC) {
+		if (G.dbgRet) {
+			StringUtil.reportInfo("the mem loc instantation");
+			memLocInstn.print();
+		}
+
 		no++;
 		if (G.dbgSCC) {
 			StringUtil.reportInfo("Rain: [" + G.countScc + "] this is in the "

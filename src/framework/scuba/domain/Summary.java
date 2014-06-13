@@ -566,6 +566,11 @@ public class Summary {
 					if (opr instanceof INVOKESTATIC_A
 							|| opr instanceof INVOKEVIRTUAL_A
 							|| opr instanceof INVOKEINTERFACE_A) {
+
+						if (G.dbgRet) {
+							StringUtil.reportInfo("init the return mapping");
+						}
+
 						RegisterOperand ro = Invoke.getDest(stmt);
 						StackObject sObj = getMemLocation(
 								meth.getDeclaringClass(), meth,
@@ -1141,9 +1146,10 @@ public class Summary {
 			P2Set tgts = absHeap.heapObjectsToP2Set.get(pair);
 			for (HeapObject tgt : tgts.getHeapObjects()) {
 				if (src instanceof ParamElem && tgt instanceof AllocElem) {
-					param2Alloc ++;
-				} else if (src instanceof ParamElem && tgt instanceof AccessPath) {
-					param2AP ++;
+					param2Alloc++;
+				} else if (src instanceof ParamElem
+						&& tgt instanceof AccessPath) {
+					param2AP++;
 				}
 			}
 		}
