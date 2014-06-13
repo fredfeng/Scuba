@@ -586,6 +586,10 @@ public class Summary {
 
 				boolean flag = false;
 
+				if (G.dbgMatch) {
+
+				}
+
 				if (SummariesEnv.v().useNumbering()) {
 					flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(),
 							meth, stmt.getID(), calleeSum.getAbsHeap(),
@@ -1122,4 +1126,21 @@ public class Summary {
 		absHeap = null;
 	}
 
+	public void printCalleeHeapInfo(AbstractHeap absHeap) {
+		int param2Alloc = 0;
+		int param2AP = 0;
+		int static2Alloc = 0; // can avoid
+		int static2AP = 0;
+		int local2Alloc = 0; // can avoid
+		int local2AP = 0;
+		for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.heapObjectsToP2Set
+				.keySet()) {
+			AbstractMemLoc src = pair.val0;
+			FieldElem f = pair.val1;
+			P2Set tgts = absHeap.heapObjectsToP2Set.get(pair);
+			for (HeapObject tgt : tgts.getHeapObjects()) {
+
+			}
+		}
+	}
 }
