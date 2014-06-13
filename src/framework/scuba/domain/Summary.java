@@ -1133,13 +1133,18 @@ public class Summary {
 		int static2AP = 0;
 		int local2Alloc = 0; // can avoid
 		int local2AP = 0;
+		int total = 0;
 		for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.heapObjectsToP2Set
 				.keySet()) {
 			AbstractMemLoc src = pair.val0;
 			FieldElem f = pair.val1;
 			P2Set tgts = absHeap.heapObjectsToP2Set.get(pair);
 			for (HeapObject tgt : tgts.getHeapObjects()) {
-
+				if (src instanceof ParamElem && tgt instanceof AllocElem) {
+					param2Alloc ++;
+				} else if (src instanceof ParamElem && tgt instanceof AccessPath) {
+					param2AP ++;
+				}
 			}
 		}
 	}
