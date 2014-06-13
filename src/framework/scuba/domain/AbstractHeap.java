@@ -1159,7 +1159,9 @@ public class AbstractHeap {
 				point, memLocInstn);
 
 		assert instC != null : "Invalid instantiated Constrait.";
-		assert instC.toString().length() < 1000 : "We are in trouble." + instC;
+
+		assert instC.toString().length() < 2500 : "We are in trouble." + instC;
+
 		long endInstCst = System.nanoTime();
 		G.instCstTime += (endInstCst - startInstCst);
 
