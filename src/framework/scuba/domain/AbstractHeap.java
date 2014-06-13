@@ -307,7 +307,7 @@ public class AbstractHeap {
 		}
 	}
 
-	public void dumpAllMemLocsToFile(int count) {
+	public void dumpAllMemLocsToFile(String count) {
 		StringBuilder b = new StringBuilder("");
 		for (AbstractMemLoc loc : memLocFactory.keySet()) {
 			b.append(loc + "\n");
@@ -503,7 +503,7 @@ public class AbstractHeap {
 			if (ret != null) {
 				// if the field of this memory does point to something, return
 				// that memory location
-				return ret;
+				return ret.clone();
 			} else {
 				// if the field of this memory does NOT point to anything, just
 				// return an empty P2Set
@@ -1102,7 +1102,7 @@ public class AbstractHeap {
 					numToAssign, isInSCC) | ret;
 		}
 
-		assert (isInSCC || numToAssign > maxNumber) : "we should increment the counter every time!";
+		assert (isInSCC || numToAssign >= maxNumber) : "we should increment the counter every time!";
 		maxNumber = ret2 ? Math.max(maxNumber, numToAssign) : maxNumber;
 
 		return ret;
@@ -1172,14 +1172,6 @@ public class AbstractHeap {
 		long startInstEdge = System.nanoTime();
 
 		boolean ret = false;
-
-		// propogation control for locals
-		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived()) {
-				// if (src instanceof LocalVarElem) {
-				return ret;
-			}
-		}
 
 		assert (src != null && dst != null && field != null) : "nulls!";
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
@@ -1284,14 +1276,6 @@ public class AbstractHeap {
 
 		boolean ret = false;
 
-		// propagation control for locals
-		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived()) {
-				// if (src instanceof LocalVarElem) {
-				return ret;
-			}
-		}
-
 		assert (src != null && dst != null && field != null) : "nulls!";
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
 		assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
@@ -1307,6 +1291,18 @@ public class AbstractHeap {
 		InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this, point);
 		InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this, point);
 
+		if (G.dbgSCC && G.countScc == 3551 && no == 69552) {
+			StringUtil.reportInfo("Rain: instnSrc into : "
+					+ instnSrc.getAbstractMemLocs());
+			StringUtil.reportInfo("Rain: instnDst into : "
+					+ instnDst.getAbstractMemLocs());
+		}
+		if (G.dbgSCC && G.countScc == 3551 && no == 69538) {
+			StringUtil.reportInfo("Rain: instnSrc into : "
+					+ instnSrc.getAbstractMemLocs());
+			StringUtil.reportInfo("Rain: instnDst into : "
+					+ instnDst.getAbstractMemLocs());
+		}
 		long endInstLoc = System.nanoTime();
 		G.instLocTimePerEdges += (endInstLoc - startInstLoc);
 
@@ -1346,9 +1342,21 @@ public class AbstractHeap {
 
 				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
 						new P2Set(newDst1, cst));
+				
 				long s3 = System.nanoTime();
 				inst_cst_time += (s2 - s1);
 				inst_wu_time += (s3 - s2);
+				if (G.dbgSCC && G.countScc == 3551 && no == 69552) {
+					StringUtil.reportInfo("Rain: result : " + newSrc + " "
+							+ newDst + " " + ret1.val0);
+				}
+				if (G.dbgSCC && G.countScc == 3551 && no == 69538) {
+					StringUtil.reportInfo("Rain: result : " + newSrc + " "
+							+ newDst + " " + ret1.val0);
+				}
+				if (no == 69553) {
+					assert false;
+				}
 				ret = ret | ret1.val0;
 			}
 		}
@@ -1581,6 +1589,10 @@ public class AbstractHeap {
 			MemLocInstantiation memLocInstn, BoolExpr typeCst, int numToAssign,
 			boolean isInSCC) {
 		no++;
+		if (G.dbgSCC) {
+			StringUtil.reportInfo("Rain: [" + G.countScc + "] this is in the "
+					+ no + "-th handle invoke.");
+		}
 		boolean ret = false;
 
 		ProgramPoint point = Env.getProgramPoint(clazz, method, line);
@@ -1597,6 +1609,14 @@ public class AbstractHeap {
 				.keySet()) {
 			AbstractMemLoc loc = pair.val0;
 			FieldElem field = pair.val1;
+			// if not propagating locals
+			if (!SummariesEnv.v().propLocals) {
+				// if (loc.isNotArgDerived()) {
+				if (loc instanceof LocalVarElem) {
+					continue;
+				}
+			}
+			// otherwise do the instantiation
 			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
 					this, point);
 
@@ -1605,79 +1625,111 @@ public class AbstractHeap {
 			for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
 				// to avoid ConcurrentModification exception, we temporally
 				// store the (loc, field) pairs in a set
-				if (SummariesEnv.v().propLocals) {
-					toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1,
-							field));
-				} else {
-					if (loc1.isArgDerived()) {
-						toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1,
-								field));
-					}
-				}
+				toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1, field));
 			}
 		}
 		// now we weakly update the heap of the caller so that it will
-		// include
-		// all the locations in the callee's heap
+		// include all the locations in the callee's heap
 		for (Pair<AbstractMemLoc, FieldElem> pair : toUpdate) {
 			weakUpdateNoNumbering(pair, new P2Set());
 		}
 
-		if (G.dbgSCC) {
-			StringUtil.reportInfo("Recursive: " + isRecursive + " of " + no);
-			int s = 0;
-			for (Pair<AbstractMemLoc, FieldElem> a : calleeHeap.heapObjectsToP2Set
-					.keySet()) {
-				s += calleeHeap.heapObjectsToP2Set.get(a).size();
-			}
-			StringUtil.reportInfo("Recursive: " + "callee size: " + s);
-		}
-		if (G.dbgSCC) {
-			int i = 0;
-			for (Pair<AbstractMemLoc, FieldElem> a : heapObjectsToP2Set
-					.keySet()) {
-				i += heapObjectsToP2Set.get(a).size();
-			}
-			StringUtil.reportInfo("Recursive: " + "current heap size: " + i);
-		}
-		long start = System.nanoTime();
+		int tmp = 0;
 		// this is the real updating
 		if (!isRecursive) {
-			inst_time = 0;
-			inst_cst_time = 0;
-			inst_wu_time = 0;
-			int ttt = 0;
 			while (true) {
-				ttt++;
-				if (G.dbgSCC) {
-					StringUtil.reportInfo("opt: in the inner handling invoke: "
-							+ ttt + "-th iter");
-				}
 				boolean go = false;
-				int kkkk = 0;
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
 						.keySet()) {
-					if (G.dbgSCC) {
-						StringUtil
-								.reportInfo("opt: in the inner instantiation: "
-										+ ++kkkk + "-th iter");
-					}
 					AbstractMemLoc src = pair.val0;
 					FieldElem f = pair.val1;
+					// propagation control for locals
+					if (!SummariesEnv.v().propLocals) {
+						// if (src.isNotArgDerived()) {
+						if (src instanceof LocalVarElem) {
+							continue;
+						}
+					}
 					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
 					for (HeapObject tgt : tgts.getHeapObjects()) {
+						tmp++;
+						if (G.dbgSCC) {
+							StringUtil.reportInfo("Rain: this is the " + tmp
+									+ "-th inner instantiation of the " + no
+									+ "-th outer invoke");
+							StringUtil.reportInfo("Rain: the go result is: "
+									+ go);
+						}
+						if (G.dbgSCC && G.countScc == 3551 && no == 69552
+								&& tmp == 7) {
+							assert go == false;
+							this.dumpHeapMappingToFile("callerBeforeMap");
+							this.dumpHeapToFile("callerBeforeHeap");
+							this.dumpAllMemLocsHeapToFile("callerBeforeAllMem");
+							this.dumpAllMemLocsToFile("callerBeforeAllMemLocs");
+							StringUtil.reportInfo("Rain: [IM] src-- " + src);
+							StringUtil.reportInfo("Rain: [IM] tgt --- " + tgt);
+							StringUtil.reportInfo("Rain: [IM] field --- " + f);
+							StringUtil.reportInfo("Rain: [IM] point: " + point);
+							calleeHeap.dumpHeapMappingToFile("calleeBeforeMap");
+							calleeHeap.dumpHeapToFile("calleeBeforeHeap");
+							calleeHeap
+									.dumpAllMemLocsHeapToFile("calleeBeforeAllMem");
+							calleeHeap
+									.dumpAllMemLocsToFile("calleeBeforeAllMemLocs");
+							memLocInstn.print();
+						}
+						if (G.dbgSCC && G.countScc == 3551 && no == 69538
+								&& tmp == 7) {
+							assert go == false;
+							this.dumpHeapMappingToFile("callerBeforeMap1");
+							this.dumpHeapToFile("callerBeforeHeap1");
+							this.dumpAllMemLocsHeapToFile("callerBeforeAllMem1");
+							this.dumpAllMemLocsToFile("callerBeforeAllMemLocs1");
+							StringUtil.reportInfo("Rain: [IM] src-- " + src);
+							StringUtil.reportInfo("Rain: [IM] tgt --- " + tgt);
+							StringUtil.reportInfo("Rain: [IM] field --- " + f);
+							StringUtil.reportInfo("Rain: [IM] point: " + point);
+							calleeHeap
+									.dumpHeapMappingToFile("calleeBeforeMap1");
+							calleeHeap.dumpHeapToFile("calleeBeforeHeap1");
+							calleeHeap
+									.dumpAllMemLocsHeapToFile("calleeBeforeAllMem1");
+							calleeHeap
+									.dumpAllMemLocsToFile("calleeBeforeAllMemLocs1");
+							memLocInstn.print();
+						}
 						go = this.instantiateEdgeNoNumbering(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst) | go;
 						ret = ret | go;
+						if (G.dbgSCC && G.countScc == 3551 && no == 69552
+								&& tmp == 7) {
+							assert go == true;
+							this.dumpHeapMappingToFile("callerAfterMap");
+							this.dumpHeapToFile("callerAfterHeap");
+							this.dumpAllMemLocsHeapToFile("callerAfterAllMem");
+							this.dumpAllMemLocsToFile("callerAfterAllMemLocs");
+							memLocInstn.print();
+						}
+						if (G.dbgSCC && G.countScc == 3551 && no == 69538
+								&& tmp == 7) {
+							assert go == true;
+							this.dumpHeapMappingToFile("callerAfterMap1");
+							this.dumpHeapToFile("callerAfterHeap1");
+							this.dumpAllMemLocsHeapToFile("callerAfterAllMem1");
+							this.dumpAllMemLocsToFile("callerAfterAllMemLocs1");
+							memLocInstn.print();
+						}
+						if (G.dbgSCC) {
+							StringUtil.reportInfo("Rain: this is after the "
+									+ tmp + "-th inner instantiation of the "
+									+ no + "-th outer invoke");
+							StringUtil.reportInfo("Rain: the go result is: "
+									+ go);
+							StringUtil.reportInfo("Rain: The ret result is: "
+									+ ret);
+						}
 					}
-					// if (IntraProcSumAnalysis.opt && G.dbgSCC
-					// && G.countScc == 3551 && go) {
-					// this.dumpHeapToFile("caller");
-					// }
-					// if (IntraProcSumAnalysis.opt && G.dbgSCC
-					// && G.countScc == 3551 && go) {
-					// calleeHeap.dumpHeapToFile("callee");
-					// }
 				}
 				if (!go) {
 					break;
@@ -1685,57 +1737,27 @@ public class AbstractHeap {
 			}
 		} else {
 			while (true) {
-
 				boolean go = false;
-				int times = 0;
 
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
 						.keySet()) {
-					times++;
-					if (G.dbgSCC) {
-						StringUtil
-								.reportInfo("============================================");
-						StringUtil.reportInfo("Bug: " + times + " out of "
-								+ calleeHeap.heapObjectsToP2Set.size());
-						StringUtil.reportInfo("Bug: "
-								+ " need to instantiate "
-								+ calleeHeap.heapObjectsToP2Set.get(pair)
-										.size() + " edges ");
-					}
-					Set<Pair<AbstractMemLoc, P2Set>> toAdd = new HashSet<Pair<AbstractMemLoc, P2Set>>();
 					AbstractMemLoc src = pair.val0;
 					FieldElem f = pair.val1;
-					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
-					for (HeapObject tgt : tgts.getHeapObjects()) {
-						if (G.dbgSCC) {
-							StringUtil
-									.reportInfo("------------------------------------------");
-							StringUtil.reportInfo("Bug: I am here 1 " + times
-									+ " out of "
-									+ calleeHeap.heapObjectsToP2Set.size());
+					// propagation control for locals
+					if (!SummariesEnv.v().propLocals) {
+						// if (src.isNotArgDerived()) {
+						if (src instanceof LocalVarElem) {
+							continue;
 						}
-						bug = 0;
-						bug_cst = 0;
-						long s1 = System.nanoTime();
+					}
+					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
+					Set<Pair<AbstractMemLoc, P2Set>> toAdd = new HashSet<Pair<AbstractMemLoc, P2Set>>();
+					for (HeapObject tgt : tgts.getHeapObjects()) {
 						this.instantiateEdgeNoNumberingForRecursiveCall(src,
 								tgt, f, memLocInstn, calleeHeap, point,
 								typeCst, toAdd);
-						long s2 = System.nanoTime();
-						bug = s2 - s1;
-						if (G.dbgSCC) {
-							StringUtil.reportSec(
-									"Bug: instantiate the edge time: ", bug);
-							StringUtil.reportSec("Bug: cst time: ", bug_cst);
-						}
 					}
 					for (Pair<AbstractMemLoc, P2Set> pair1 : toAdd) {
-						if (G.dbgSCC) {
-							StringUtil
-									.reportInfo("------------------------------------------");
-							StringUtil.reportInfo("Bug: I am here 2 " + times
-									+ " out of "
-									+ calleeHeap.heapObjectsToP2Set.size());
-						}
 						AbstractMemLoc newSrc = pair1.val0;
 						P2Set newP2Set = pair1.val1;
 						Pair<AbstractMemLoc, FieldElem> pair2 = new Pair<AbstractMemLoc, FieldElem>(
@@ -1744,29 +1766,12 @@ public class AbstractHeap {
 						ret = ret | go;
 					}
 				}
-				if (G.dbgSCC) {
-					StringUtil.reportInfo("Bug: go: " + go + " ret: " + ret);
-				}
+
 				if (!go) {
 					break;
 				}
 			}
 
-		}
-		long end = System.nanoTime();
-		if (G.dbgSCC) {
-			int s = 0;
-			for (Pair<AbstractMemLoc, FieldElem> a : heapObjectsToP2Set
-					.keySet()) {
-				s += heapObjectsToP2Set.get(a).size();
-			}
-			StringUtil.reportInfo("Recursive: " + "caller new size: " + s);
-			StringUtil.reportInfo("Recursive: " + "Ret: " + ret);
-			StringUtil.reportSec("Recursive: time: ", start, end);
-			StringUtil.reportSec("Recursive: time in inst ", inst_time);
-			StringUtil.reportSec("Recursive: time in inst cst ", inst_cst_time);
-			StringUtil.reportSec("Recursive: time in inst weak update",
-					inst_wu_time);
 		}
 
 		return ret;
