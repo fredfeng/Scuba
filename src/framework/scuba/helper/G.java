@@ -22,7 +22,7 @@ public class G {
 
 	public static boolean validate = false;
 
-	public static boolean dbgSCC = true;
+	public static boolean dbgSCC = false;
 
 	// flag to tune performance.
 	public static boolean tuning = true;
@@ -62,7 +62,7 @@ public class G {
 
 	public static boolean disableCst = true;
 
-	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
+	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 
 	public static long instCstSubTime;
 }
