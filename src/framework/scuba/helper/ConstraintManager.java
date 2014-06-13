@@ -17,7 +17,6 @@ import com.microsoft.z3.IntNum;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Z3Exception;
-import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.AbstractMemLoc;
@@ -146,36 +145,36 @@ public class ConstraintManager {
 	public static BoolExpr instConstaint(BoolExpr expr, AbstractHeap callerHeap,
 			ProgramPoint point, MemLocInstantiation memLocInstn) {
 		try {
-			Set<BoolExpr> set = new HashSet<BoolExpr>();
-			if(expr.IsAnd() || expr.IsOr())
-				extractTerm(expr, set);
-			else {
-				assert expr.IsEq() || expr.IsLE() : "invalid expr" + expr;
-				set.add(expr);
-			}
+			expr = (BoolExpr)expr.Simplify();
+			if(isScala(expr)) 
+				return expr;
 			
-			for (BoolExpr sub : set) {
-				if (sub.IsEq() || sub.IsLE()) {
-					Expr term = sub.Args()[0].Args()[0];
-					//Using toString is ugly, but that's the only way i can get from Z3...
-					AccessPath ap = term2Ap.get(term.toString());
-					assert ap != null : "Fails to load access path for " + term
-							+ " in " + term2Ap;
-					assert sub.Args()[1] instanceof IntNum : "arg must be IntNum!";
-					IntNum typeInt = (IntNum) sub.Args()[1];
-					// get points-to set for term
-					assert(ap instanceof AccessPath);
-					InstantiatedLocSet p2Set = memLocInstn.instantiate(ap, callerHeap, point);
-					BoolExpr instSub;
-					if (sub.IsEq())
-						instSub = instEqTyping(p2Set, typeInt.Int());
-					else
-						instSub = instSubTyping(p2Set, typeInt.Int());
+			HashMap<String, BoolExpr> map = new HashMap<String, BoolExpr>();
+			extractTerm(expr, map);
+	
+			for (BoolExpr sub : map.values()) {
+				assert sub.IsEq() || sub.IsLE() : "invalid sub expr" + sub;
+				Expr term = sub.Args()[0].Args()[0];
+				// Using toString is ugly, but that's the only way i can get
+				// from Z3...
+				AccessPath ap = term2Ap.get(term.toString());
+				assert ap != null : "Fails to load access path for " + term
+						+ " in " + term2Ap;
+				assert sub.Args()[1] instanceof IntNum : "arg must be IntNum!";
+				IntNum typeInt = (IntNum) sub.Args()[1];
+				// get points-to set for term
+				assert (ap instanceof AccessPath);
+				InstantiatedLocSet p2Set = memLocInstn.instantiate(ap,
+						callerHeap, point);
+				BoolExpr instSub;
+				if (sub.IsEq())
+					instSub = instEqTyping(p2Set, typeInt.Int());
+				else
+					instSub = instSubTyping(p2Set, typeInt.Int());
 
-					expr = (BoolExpr)expr.Substitute(sub, instSub);
-				}
+				expr = (BoolExpr) expr.Substitute(sub, instSub);
 			}
-			return expr;
+			return (BoolExpr)expr.Simplify();
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -184,17 +183,19 @@ public class ConstraintManager {
 	}
 	
 	//given an expr, extract all its sub terms for instantiating.
-	public static void extractTerm(Expr expr, Set<BoolExpr> set) {
+	public static void extractTerm(Expr expr, HashMap<String, BoolExpr> map) {
         try {
-			for(int i = 0; i < expr.NumArgs(); i++) {
-				assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:" + expr.Args()[i];
-				BoolExpr sub = (BoolExpr)expr.Args()[i];
-				if(sub.IsAnd() || sub.IsOr())
-					extractTerm(sub, set);
-				else {
-					set.add(sub);
+        	//using toString as the key to map the same expr, buggy.
+        	if(expr.IsEq() || expr.IsLE())
+        		map.put(expr.toString(), (BoolExpr)expr);
+        	
+			if (expr.IsAnd() || expr.IsOr())
+				for (int i = 0; i < expr.NumArgs(); i++) {
+					assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:"
+							+ expr.Args()[i];
+					BoolExpr sub = (BoolExpr) expr.Args()[i];
+					extractTerm(sub, map);
 				}
-			}
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
