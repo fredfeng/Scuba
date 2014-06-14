@@ -934,11 +934,11 @@ public class Summary {
 			// always true.
 			// invoke_v : v.foo()
 			if (opr instanceof INVOKESTATIC_V) {
-				if(calleeSum.hasAnalyzed)
+				if (calleeSum.hasAnalyzed)
 					ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
 				// invoke_a : u = v.foo()
 			} else if (opr instanceof INVOKESTATIC_A) {
-				if(calleeSum.hasAnalyzed)
+				if (calleeSum.hasAnalyzed)
 					ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
 				// handle the return value.
 			} else {
@@ -1069,7 +1069,7 @@ public class Summary {
 					}
 					continue;
 				}
-				if(dySum.hasAnalyzed)
+				if (dySum.hasAnalyzed)
 					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
 			}
 			// TODO
@@ -1164,7 +1164,7 @@ public class Summary {
 		hasAnalyzed = true;
 	}
 
-	public void printCalleeHeapInfo(AbstractHeap absHeap) {
+	public void printCalleeHeapInfo() {
 		int param2Alloc = 0;
 		int param2AP = 0;
 		int static2Alloc = 0; // can avoid
@@ -1175,7 +1175,6 @@ public class Summary {
 		for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.heapObjectsToP2Set
 				.keySet()) {
 			AbstractMemLoc src = pair.val0;
-			FieldElem f = pair.val1;
 			P2Set tgts = absHeap.heapObjectsToP2Set.get(pair);
 			for (HeapObject tgt : tgts.getHeapObjects()) {
 				if (src instanceof ParamElem && tgt instanceof AllocElem) {
@@ -1183,8 +1182,40 @@ public class Summary {
 				} else if (src instanceof ParamElem
 						&& tgt instanceof AccessPath) {
 					param2AP++;
+				} else if (src instanceof StaticElem
+						&& tgt instanceof AllocElem) {
+					static2Alloc++;
+				} else if (src instanceof StaticElem
+						&& tgt instanceof AccessPath) {
+					static2AP++;
+				} else if (src instanceof LocalVarElem
+						&& tgt instanceof AllocElem) {
+					local2Alloc++;
+				} else if (src instanceof LocalVarElem
+						&& tgt instanceof AccessPath) {
+					local2AP++;
+				} else {
+					assert false;
 				}
 			}
+		}
+		total = param2Alloc + param2AP + static2Alloc + static2AP + local2Alloc
+				+ local2AP;
+		if (G.dbgMatch) {
+			StringUtil
+					.reportInfo("Blowup: -----------------------------------");
+			StringUtil.reportInfo("Blowup: parameter --> Alloc: " + param2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: parameter --> AccessPath: "
+					+ param2AP + " out of " + total);
+			StringUtil.reportInfo("Blowup: static --> Alloc: " + static2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: static --> AccessPath: " + static2AP
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: local --> Alloc: " + local2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: local --> AccessPath: " + local2AP
+					+ " out of " + total);
 		}
 	}
 
