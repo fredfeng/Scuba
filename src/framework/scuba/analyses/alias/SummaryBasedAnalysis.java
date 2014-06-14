@@ -12,7 +12,6 @@ import java.util.Set;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
-import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
@@ -33,7 +32,6 @@ import com.microsoft.z3.Z3Exception;
 import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
-import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.FieldElem;
@@ -379,6 +377,22 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private void analyzeSCC(Node node) {
 		inS = true;
 		Set<jq_Method> scc = nodeToScc.get(node);
+
+		if (G.dbgPermission) {
+			if (G.countScc == G.sample) {
+				Set<jq_Method> evils = new HashSet<jq_Method>();
+				for (jq_Method m : scc) {
+					Summary sum = SummariesEnv.v().getSummary(m);
+					if (sum.getHeapSize() > 300) {
+						evils.add(m);
+					}
+				}
+				for (jq_Method m : evils) {
+					StringUtil.reportInfo("Evils: " + m);
+				}
+			}
+		}
+
 		LinkedList<jq_Method> wl = new LinkedList<jq_Method>();
 		// add all methods to worklist
 		wl.addAll(scc);
