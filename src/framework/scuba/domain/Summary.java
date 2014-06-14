@@ -564,7 +564,7 @@ public class Summary {
 				// the constraint for calling that callee
 				BoolExpr hasTypeCst = calleeSumCst.val1;
 				if (G.dbgPermission) {
-					if (G.countScc == 4212) {
+					if (G.countScc == 2443) {
 						StringUtil
 								.reportInfo("dbgPermission: "
 										+ "------------------------------------------------");
