@@ -1290,7 +1290,7 @@ public class Summary {
 		hasAnalyzed = true;
 	}
 
-	public void printCalleeHeapInfo() {
+	public void printCalleeHeapInfo(String s) {
 		int param2Alloc = 0;
 		int param2AP = 0;
 		int static2Alloc = 0; // can avoid
@@ -1343,8 +1343,8 @@ public class Summary {
 						&& tgt instanceof AccessPath) {
 					alloc2AP++;
 				} else {
-					StringUtil.reportInfo("Blowup: src " + src.getClass());
-					StringUtil.reportInfo("Blowup: tgt " + tgt.getClass());
+					StringUtil.reportInfo(s + ": src " + src.getClass());
+					StringUtil.reportInfo(s + ": tgt " + tgt.getClass());
 					assert false;
 				}
 			}
@@ -1352,32 +1352,31 @@ public class Summary {
 		total = param2Alloc + param2AP + static2Alloc + static2AP + local2Alloc
 				+ local2AP + ret2Alloc + ret2AP + ap2Alloc + ap2AP
 				+ alloc2Alloc + alloc2AP;
-		if (G.dbgMatch) {
-			StringUtil
-					.reportInfo("Blowup: -----------------------------------");
-			StringUtil.reportInfo("Blowup: parameter --> Alloc: " + param2Alloc
+		if (G.dbgPermission) {
+			StringUtil.reportInfo(s + ": -----------------------------------");
+			StringUtil.reportInfo(s + ": parameter --> Alloc: " + param2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: parameter --> AccessPath: "
-					+ param2AP + " out of " + total);
-			StringUtil.reportInfo("Blowup: static --> Alloc: " + static2Alloc
+			StringUtil.reportInfo(s + ": parameter --> AccessPath: " + param2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: static --> AccessPath: " + static2AP
+			StringUtil.reportInfo(s + ": static --> Alloc: " + static2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: local --> Alloc: " + local2Alloc
+			StringUtil.reportInfo(s + ": static --> AccessPath: " + static2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: local --> AccessPath: " + local2AP
+			StringUtil.reportInfo(s + ": local --> Alloc: " + local2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: ret --> Alloc: " + ret2Alloc
+			StringUtil.reportInfo(s + ": local --> AccessPath: " + local2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: ret --> AccessPath: " + ret2AP
+			StringUtil.reportInfo(s + ": ret --> Alloc: " + ret2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: AccessPath --> Alloc: " + ap2Alloc
+			StringUtil.reportInfo(s + ": ret --> AccessPath: " + ret2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: AccessPath --> AccessPath: " + ap2AP
+			StringUtil.reportInfo(s + ": AccessPath --> Alloc: " + ap2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: Alloc --> Alloc: " + alloc2Alloc
+			StringUtil.reportInfo(s + ": AccessPath --> AccessPath: " + ap2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: Alloc --> AccessPath: " + alloc2AP
+			StringUtil.reportInfo(s + ": Alloc --> Alloc: " + alloc2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": Alloc --> AccessPath: " + alloc2AP
 					+ " out of " + total);
 		}
 	}

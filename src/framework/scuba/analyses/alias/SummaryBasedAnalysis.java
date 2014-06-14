@@ -89,30 +89,29 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
 		System.out.println("Total downcast------------" + Summary.castCnt);
 	}
-	
-//	private void dumpMeth() {
-//		//elements:()Ljava/util/Enumeration;@java.security.Permissions
-//		//<clinit>:()V@sun.nio.cs.StandardCharsets
-	//toEnvironmentBlock:([I)[B@java.lang.ProcessEnvironment$StringEnvironment
-//		jq_Method meth = Program.g().getMethod(
-//				"elements:()Ljava/util/Enumeration;@java.security.Permissions");
-//		ControlFlowGraph cfg = meth.getCFG();
-//		for(BasicBlock bb : cfg.reversePostOrder()) {
-//			System.out.println(bb.fullDump());
-//			for(Quad q : bb.getQuads()) {
-//				if(O)
-//			}
-//		}
-//	}
+
+	// private void dumpMeth() {
+	// //elements:()Ljava/util/Enumeration;@java.security.Permissions
+	// //<clinit>:()V@sun.nio.cs.StandardCharsets
+	// toEnvironmentBlock:([I)[B@java.lang.ProcessEnvironment$StringEnvironment
+	// jq_Method meth = Program.g().getMethod(
+	// "elements:()Ljava/util/Enumeration;@java.security.Permissions");
+	// ControlFlowGraph cfg = meth.getCFG();
+	// for(BasicBlock bb : cfg.reversePostOrder()) {
+	// System.out.println(bb.fullDump());
+	// for(Quad q : bb.getQuads()) {
+	// if(O)
+	// }
+	// }
+	// }
 
 	private void sumAnalyze() {
 
 		if (G.dump) {
 			dumpCallGraph();
 		}
-		
-//		dumpMeth();
-		
+
+		// dumpMeth();
 
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
@@ -272,7 +271,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						+ "] Blowup: for method: " + m);
 				StringUtil.reportInfo("Blowup: " + "successors: "
 						+ Env.cg.getSuccs(m));
-				sum.printCalleeHeapInfo();
+				sum.printCalleeHeapInfo("Blowup");
 			}
 		}
 
