@@ -1032,7 +1032,6 @@ public class Summary {
 				// ignore the rest of cases.
 			}
 		} else if (opr instanceof InvokeVirtual) {
-			// assume all csts are true.
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
 			Register recv = ro.getRegister();
 
@@ -1064,6 +1063,8 @@ public class Summary {
 				// generate constraint for each potential target.
 				if (pair.val0 instanceof jq_Array)
 					continue;
+				if(!Env.cg.calls(callsite, pair.val1))
+					continue;
 				jq_Class tgtType = (jq_Class) pair.val0;
 				if (!tgtType.extendsClass(recvStatType))
 					continue;
@@ -1088,13 +1089,16 @@ public class Summary {
 				// "stop.";
 
 				long startGenCst = System.nanoTime();
-
-				cst = genCst(p2Set, pair.val1, tgtType);
-				try {
-					cst = (BoolExpr) cst.Simplify();
-				} catch (Z3Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				if (SummariesEnv.v().disableCst)
+					cst = ConstraintManager.genTrue();
+				else {
+					cst = genCst(p2Set, pair.val1, tgtType);
+					try {
+						cst = (BoolExpr) cst.Simplify();
+					} catch (Z3Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 				if (G.tuning) {
 					long endGenCst = System.nanoTime();
@@ -1144,8 +1148,21 @@ public class Summary {
 			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				if (pair.val0 instanceof jq_Array)
 					continue;
+				if(!Env.cg.calls(callsite, pair.val1))
+					continue;
 				// generate constraint for each potential target.
-				cst = genCst(p2Set, pair.val1, (jq_Class) pair.val0);
+				if (SummariesEnv.v().disableCst)
+					cst = ConstraintManager.genTrue();
+				else {
+					cst = genCst(p2Set, pair.val1, (jq_Class) pair.val0);
+					try {
+						cst = (BoolExpr) cst.Simplify();
+					} catch (Z3Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
 				if (dySum == null) {
