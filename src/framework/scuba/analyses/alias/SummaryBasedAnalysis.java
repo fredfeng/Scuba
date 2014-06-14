@@ -246,8 +246,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (G.dbgMatch) {
 			for (jq_Method m : scc) {
 				Summary sum = SummariesEnv.v().getSummary(m);
+				if (sum == null) {
+					continue;
+				}
 				StringUtil.reportInfo("[" + G.countScc
-						+ "]Blowup: for method: " + m);
+						+ "] Blowup: for method: " + m);
 				sum.printCalleeHeapInfo();
 			}
 		}

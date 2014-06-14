@@ -1226,4 +1226,8 @@ public class Summary {
 		assert (ret != null);
 		return ret;
 	}
+
+	public int getHeapSize() {
+		return absHeap.size();
+	}
 }

@@ -2482,4 +2482,12 @@ public class AbstractHeap {
 		return maxNumber;
 	}
 
+	public int size() {
+		int ret = 0;
+		for (Pair loc : heapObjectsToP2Set.keySet()) {
+			ret += heapObjectsToP2Set.get(loc).size();
+		}
+		return ret;
+	}
+
 }
