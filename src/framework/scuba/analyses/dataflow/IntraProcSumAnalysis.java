@@ -38,6 +38,13 @@ public class IntraProcSumAnalysis {
 
 	// analyze one method based on the cfg of this method
 	public void analyze(ControlFlowGraph g) {
+
+		if (G.dbgPermission) {
+			if (G.countScc == 4212) {
+				StringUtil.reportInfo("dbgPermission: " + " analyzing...");
+			}
+		}
+
 		// before analyzing the CFG g of some method
 		// first retrieve the numbering counter of that summary that was
 		// maintained last time

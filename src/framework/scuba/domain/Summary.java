@@ -285,6 +285,14 @@ public class Summary {
 	}
 
 	public boolean handleStmt(Quad quad, int numToAssign, boolean isInSCC) {
+
+		if (G.dbgPermission) {
+			if (G.countScc == 4212) {
+				StringUtil.reportInfo("dbgPermission: " + "handling stmt: "
+						+ quad);
+			}
+		}
+
 		absHeap.markChanged(false);
 		this.numToAssign = numToAssign;
 		this.isInSCC = isInSCC;
@@ -520,6 +528,7 @@ public class Summary {
 			}
 
 			int count = 0;
+
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
 				count++;
@@ -535,7 +544,6 @@ public class Summary {
 				BoolExpr hasTypeCst = calleeSumCst.val1;
 				if (G.dbgPermission) {
 					if (G.countScc == 4212) {
-
 						StringUtil
 								.reportInfo("dbgPermission: "
 										+ "------------------------------------------------");
