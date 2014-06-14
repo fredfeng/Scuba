@@ -381,18 +381,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (G.dbgPermission) {
 			if (G.countScc == G.sample) {
 				StringUtil.reportInfo("Evils: begin SCC");
-				Set<jq_Method> evils = new HashSet<jq_Method>();
+				Map<jq_Method, Integer> evils = new HashMap<jq_Method, Integer>();
 				for (jq_Method m : scc) {
 					Summary sum = SummariesEnv.v().getSummary(m);
 					if (sum == null) {
 						continue;
 					}
-					if (sum.getHeapSize() > 300) {
-						evils.add(m);
-					}
+					evils.put(m, sum.getHeapSize());
 				}
-				for (jq_Method m : evils) {
-					StringUtil.reportInfo("Evils: " + m);
+				for (jq_Method m : evils.keySet()) {
+					StringUtil.reportInfo("Evils: " + "Method: " + m + "---"
+							+ " Size:" + evils.get(m));
 				}
 			}
 		}
@@ -410,23 +409,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		int times = 0;
 		while (true) {
 			times++;
-			if (times == 50) {
-				if (G.dbgPermission) {
-					if (G.countScc == G.sample) {
-						StringUtil.reportInfo("Evils: begin Iteration");
-						Set<jq_Method> evils = new HashSet<jq_Method>();
-						for (jq_Method m : scc) {
-							Summary sum = SummariesEnv.v().getSummary(m);
-							if (sum == null) {
-								continue;
-							}
-							if (sum.getHeapSize() > 300) {
-								evils.add(m);
-							}
+			if (G.dbgPermission) {
+				if (G.countScc == G.sample) {
+					StringUtil.reportInfo("Evils: begin Iteration [" + times
+							+ "]");
+					Map<jq_Method, Integer> evils = new HashMap<jq_Method, Integer>();
+					for (jq_Method m : scc) {
+						Summary sum = SummariesEnv.v().getSummary(m);
+						if (sum == null) {
+							continue;
 						}
-						for (jq_Method m : evils) {
-							StringUtil.reportInfo("Evils: " + m);
-						}
+						evils.put(m, sum.getHeapSize());
+					}
+					for (jq_Method m : evils.keySet()) {
+						StringUtil.reportInfo("Evils: " + "Method: " + m
+								+ "---" + " Size:" + evils.get(m));
 					}
 				}
 			}
