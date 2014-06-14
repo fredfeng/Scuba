@@ -33,7 +33,7 @@ public class G {
 	public static boolean useConHashMap = true;
 
 	// flag to tune performance.
-	public static boolean tuning = false;
+	public static boolean tuning = true;
 
 	public static boolean stat = false;
 
