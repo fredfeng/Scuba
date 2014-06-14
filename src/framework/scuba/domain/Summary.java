@@ -1171,7 +1171,10 @@ public class Summary {
 		int static2AP = 0;
 		int local2Alloc = 0; // can avoid
 		int local2AP = 0;
+		int ret2Alloc = 0;
+		int ret2AP = 0;
 		int total = 0;
+
 		for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.heapObjectsToP2Set
 				.keySet()) {
 			AbstractMemLoc src = pair.val0;
@@ -1194,13 +1197,19 @@ public class Summary {
 				} else if (src instanceof LocalVarElem
 						&& tgt instanceof AccessPath) {
 					local2AP++;
+				} else if (src instanceof RetElem && tgt instanceof AllocElem) {
+					ret2Alloc++;
+				} else if (src instanceof RetElem && tgt instanceof AccessPath) {
+					ret2AP++;
 				} else {
+					StringUtil.reportInfo("Blowup: src " + src.getClass());
+					StringUtil.reportInfo("Blowup: tgt " + tgt.getClass());
 					assert false;
 				}
 			}
 		}
 		total = param2Alloc + param2AP + static2Alloc + static2AP + local2Alloc
-				+ local2AP;
+				+ local2AP + ret2Alloc + ret2AP;
 		if (G.dbgMatch) {
 			StringUtil
 					.reportInfo("Blowup: -----------------------------------");
