@@ -59,9 +59,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relMM;
 	protected ProgramRel relCHA;
 
-	// force to invoke garbage collector for abstract heap.
-	protected static boolean forceGc = false;
-
 	protected CICG callGraph;
 
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
@@ -99,9 +96,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
 
-		if (G.tuning)
+		if (G.tuning) {
 			StringUtil.reportInfo("Total # of SCCs: "
 					+ repGraph.getNodes().size());
+			StringUtil.reportInfo("Total reachableM: " + relReachableM.size());
+		}
 
 		LinkedList<Node> worklist = new LinkedList<Node>();
 
@@ -261,7 +260,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	// possible.
 	private void terminateAndDoGC(Node node) {
 		node.setTerminated(true);
-		if (!forceGc)
+		if (!SummariesEnv.v().forceGc())
 			return;
 		for (Node succ : node.getSuccessors()) {
 			// for each successor, if all its preds are terminated, we can gc

@@ -1155,7 +1155,7 @@ public class AbstractHeap {
 	protected BoolExpr instCst(BoolExpr cst, AbstractHeap callerHeap,
 			ProgramPoint point, MemLocInstantiation memLocInstn) {
 		long startInstCst = System.nanoTime();
-		if (G.disableCst)
+		if (SummariesEnv.v().disableCst())
 			return cst;
 		assert cst != null : "Invalid Constrait before instantiation.";
 		// return directly.
@@ -1166,10 +1166,16 @@ public class AbstractHeap {
 
 		assert instC != null : "Invalid instantiated Constrait.";
 
-		assert instC.toString().length() < 2500 : "We are in trouble." + instC;
 
 		long endInstCst = System.nanoTime();
 		G.instCstTime += (endInstCst - startInstCst);
+		if(instC.toString().length() > 2500) {
+			int length = instC.toString().length();
+			StringUtil.reportInfo("We are in trouble..." + length + ":" + instC);
+			StringUtil.reportSec("Inst Cst time: ", startInstCst, endInstCst);
+//		assert instC.toString().length() < 2500 : "We are in trouble." + instC; 
+		}
+
 
 		return instC;
 	}

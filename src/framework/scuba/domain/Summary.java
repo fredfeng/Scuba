@@ -50,6 +50,7 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.analyses.alias.SummaryBasedAnalysis;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
@@ -965,8 +966,7 @@ public class Summary {
 					.loadInheritMeths(callee, null);
 
 			if (G.tuning)
-				StringUtil.reportInfo("resolve callee: 222222222 " + "---"
-						+ tgtSet);
+				StringUtil.reportInfo("resolve callee: " + tgtSet);
 
 			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				// generate constraint for each potential target.
@@ -978,8 +978,8 @@ public class Summary {
 
 				assert tgtType.extendsClass(recvStatType) : "Dynamic type must be a subclass for static type!";
 
-				if (SummariesEnv.v().treating) {
-					if (callee.getName().toString().equals("study")
+				if (SummariesEnv.v().cheating()) {
+					if ((callee.getName().toString().equals("study") || callee.getName().toString().equals("match"))
 							&& (tgtSet.size() > 30)
 							&& (callsite.getMethod().getNameAndDesc()
 									.equals(pair.val1.getNameAndDesc()))) {
@@ -997,6 +997,12 @@ public class Summary {
 				long startGenCst = System.nanoTime();
 
 				cst = genCst(p2Set, pair.val1, tgtType);
+				try {
+					cst = (BoolExpr)cst.Simplify();
+				} catch (Z3Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				if (G.tuning) {
 					long endGenCst = System.nanoTime();
 					G.genCstTime += (endGenCst - startGenCst);
@@ -1097,7 +1103,7 @@ public class Summary {
 	 * @return
 	 */
 	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT) {
-		if (G.disableCst)
+        if(SummariesEnv.v().disableCst())
 			return ConstraintManager.genTrue();
 		// 1. Base case: No subtype of T override m: type(o) <= T
 		if (!hasInherit(callee, statT)) {
@@ -1110,6 +1116,7 @@ public class Summary {
 				if (sub.getVirtualMethod(callee.getNameAndDesc()) != null
 						|| hasInherit(callee, sub))
 					continue;
+				assert !sub.equals(statT) : "do not repeat!";
 				BoolExpr phi = genCst(p2Set, callee, sub);
 				t = ConstraintManager.union(t, phi);
 			}

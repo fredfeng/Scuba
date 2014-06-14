@@ -66,8 +66,6 @@ public class G {
 	// number of edges that are instantiated into in the caller
 	public static int instToEdges = 0;
 
-	public static boolean disableCst = true;
-
 	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 
 	public static long instCstSubTime;

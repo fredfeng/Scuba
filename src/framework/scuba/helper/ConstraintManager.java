@@ -28,6 +28,7 @@ import framework.scuba.domain.InstantiatedLocSet;
 import framework.scuba.domain.MemLocInstantiation;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.ProgramPoint;
+import framework.scuba.domain.SummariesEnv;
 
 /**
  * Class for generating/solving constraints, since right now our system can only
@@ -204,7 +205,7 @@ public class ConstraintManager {
 
 	//A and B.
 	public static BoolExpr intersect(BoolExpr first, BoolExpr second) {
-        if(G.disableCst)
+        if(SummariesEnv.v().disableCst())
             return trueExpr;
         try {
         	assert first!= null : "Invalid constrait";
@@ -232,7 +233,7 @@ public class ConstraintManager {
 
 	//A or B
 	public static BoolExpr union(BoolExpr first, BoolExpr second) {
-        if(G.disableCst)
+        if(SummariesEnv.v().disableCst())
             return trueExpr;
         try {
         	assert first!= null : "Invalid constrait";
