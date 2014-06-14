@@ -338,8 +338,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	}
 
 	public static int cgProgress = 0;
+	public static boolean inS = false;
 
 	private void analyzeSCC(Node node) {
+		inS = true;
 		Set<jq_Method> scc = nodeToScc.get(node);
 		LinkedList<jq_Method> wl = new LinkedList<jq_Method>();
 		// add all methods to worklist
@@ -389,6 +391,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				if (scc.contains(pred))
 					wl.add(pred);
 		}
+		inS = false;
 	}
 
 	/* This method will be invoked by Chord automatically. */

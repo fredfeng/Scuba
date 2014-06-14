@@ -528,6 +528,15 @@ public class Summary {
 				MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
 						.get(new Pair<Quad, jq_Method>(stmt, calleeSum
 								.getMethod()));
+				if (G.dbgRet) {
+					StringUtil.reportInfo(" get the mem loc instn");
+					if (memLocInstn == null) {
+						StringUtil.reportInfo("it is a null!");
+					} else {
+						StringUtil.reportInfo("------");
+						memLocInstn.print();
+					}
+				}
 				// if has not been cached
 				if (memLocInstn == null) {
 					memLocInstn = new MemLocInstantiation(meth, stmt,
