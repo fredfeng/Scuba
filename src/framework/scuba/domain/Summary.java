@@ -1173,6 +1173,10 @@ public class Summary {
 		int local2AP = 0;
 		int ret2Alloc = 0;
 		int ret2AP = 0;
+		int ap2AP = 0;
+		int ap2Alloc = 0;
+		int alloc2Alloc = 0;
+		int alloc2AP = 0;
 		int total = 0;
 
 		for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.heapObjectsToP2Set
@@ -1201,6 +1205,17 @@ public class Summary {
 					ret2Alloc++;
 				} else if (src instanceof RetElem && tgt instanceof AccessPath) {
 					ret2AP++;
+				} else if (src instanceof AccessPath
+						&& tgt instanceof AllocElem) {
+					ap2Alloc++;
+				} else if (src instanceof AccessPath
+						&& tgt instanceof AccessPath) {
+					ap2AP++;
+				} else if (src instanceof AllocElem && tgt instanceof AllocElem) {
+					alloc2Alloc++;
+				} else if (src instanceof AllocElem
+						&& tgt instanceof AccessPath) {
+					alloc2AP++;
 				} else {
 					StringUtil.reportInfo("Blowup: src " + src.getClass());
 					StringUtil.reportInfo("Blowup: tgt " + tgt.getClass());
@@ -1209,7 +1224,8 @@ public class Summary {
 			}
 		}
 		total = param2Alloc + param2AP + static2Alloc + static2AP + local2Alloc
-				+ local2AP + ret2Alloc + ret2AP;
+				+ local2AP + ret2Alloc + ret2AP + ap2Alloc + ap2AP
+				+ alloc2Alloc + alloc2AP;
 		if (G.dbgMatch) {
 			StringUtil
 					.reportInfo("Blowup: -----------------------------------");
@@ -1224,6 +1240,18 @@ public class Summary {
 			StringUtil.reportInfo("Blowup: local --> Alloc: " + local2Alloc
 					+ " out of " + total);
 			StringUtil.reportInfo("Blowup: local --> AccessPath: " + local2AP
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: ret --> Alloc: " + ret2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: ret --> AccessPath: " + ret2AP
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: AccessPath --> Alloc: " + ap2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: AccessPath --> AccessPath: " + ap2AP
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: Alloc --> Alloc: " + alloc2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: Alloc --> AccessPath: " + alloc2AP
 					+ " out of " + total);
 		}
 	}
