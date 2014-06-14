@@ -1184,4 +1184,12 @@ public class Summary {
 			}
 		}
 	}
+
+	public P2Set getP2Set(jq_Class clazz, jq_Method method, Register variable) {
+		LocalVarElem local = absHeap.getLocalVarElem(clazz, method, variable);
+		assert (local != null);
+		P2Set ret = absHeap.heapObjectsToP2Set.get(local);
+		assert (ret != null);
+		return ret;
+	}
 }

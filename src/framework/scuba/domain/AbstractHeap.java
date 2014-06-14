@@ -1367,9 +1367,7 @@ public class AbstractHeap {
 					StringUtil.reportInfo("Rain: result : " + newSrc + " "
 							+ newDst + " " + ret1.val0);
 				}
-				if (no == 69553) {
-					assert false;
-				}
+
 				ret = ret | ret1.val0;
 			}
 		}

@@ -15,6 +15,7 @@ import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.alias.CICG;
 import chord.analyses.alias.ICICG;
 import chord.analyses.method.DomM;
@@ -472,6 +473,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	public void free() {
 		if (callGraph != null)
 			callGraph.free();
+	}
+
+	public P2Set query(jq_Class clazz, jq_Method method, Register variable) {
+		jq_Method entry = Program.g().getMainMethod();
+		Summary sum = SummariesEnv.v().getSummary(entry);
+		assert (sum != null) : "the entry method should have a summary!";
+		P2Set ret = sum.getP2Set(clazz, method, variable);
+		return ret;
 	}
 
 	public void dumpStatistics() throws Z3Exception {
