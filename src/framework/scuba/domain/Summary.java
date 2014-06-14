@@ -589,6 +589,8 @@ public class Summary {
 						}
 						StringUtil.reportInfo("dbgPermission: "
 								+ " edges in the current callee: " + num);
+						StringUtil.reportInfo("dbgPermission: "
+								+ " callee method: " + calleeSum.getMethod());
 					}
 				}
 
@@ -691,9 +693,19 @@ public class Summary {
 				}
 
 				absHeap.markChanged(flag);
-				// if (tmp == 1281) {
-				// absHeap.dumpHeapNumberingToFile("$caller" + count);
-				// }
+				if (G.dbgPermission) {
+					if (G.countScc == G.sample) {
+
+						int num = 0;
+						for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
+							num += absHeap.heapObjectsToP2Set.get(p).size();
+						}
+						StringUtil.reportInfo("dbgPermission: "
+								+ " edges in the current caller: " + num);
+						StringUtil.reportInfo("dbgPermission: "
+								+ "----------------------------------------");
+					}
+				}
 			}
 			if (G.debug4Sum) {
 				if (calleeSumCstPairs.isEmpty()) {
@@ -1073,7 +1085,7 @@ public class Summary {
 				// generate constraint for each potential target.
 				if (pair.val0 instanceof jq_Array)
 					continue;
-				if(!Env.cg.calls(callsite, pair.val1))
+				if (!Env.cg.calls(callsite, pair.val1))
 					continue;
 				jq_Class tgtType = (jq_Class) pair.val0;
 				if (!tgtType.extendsClass(recvStatType))
@@ -1158,7 +1170,7 @@ public class Summary {
 			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				if (pair.val0 instanceof jq_Array)
 					continue;
-				if(!Env.cg.calls(callsite, pair.val1))
+				if (!Env.cg.calls(callsite, pair.val1))
 					continue;
 				// generate constraint for each potential target.
 				if (SummariesEnv.v().disableCst)
@@ -1172,7 +1184,7 @@ public class Summary {
 						e.printStackTrace();
 					}
 				}
-				
+
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
 				if (dySum == null) {
