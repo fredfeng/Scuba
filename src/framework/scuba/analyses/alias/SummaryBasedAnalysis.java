@@ -33,6 +33,7 @@ import com.microsoft.z3.Z3Exception;
 import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
+import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.FieldElem;
@@ -260,6 +261,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// at the end, mark it as terminated.
 		terminateAndDoGC(node);
+
+		if (G.dbgMatch) {
+			for (jq_Method m : scc) {
+				Summary sum = SummariesEnv.v().getSummary(m);
+				if (sum == null) {
+					continue;
+				}
+				StringUtil.reportInfo("[" + G.countScc
+						+ "] Blowup: for method: " + m);
+				StringUtil.reportInfo("Blowup: " + "successors: "
+						+ Env.cg.getSuccs(m));
+				sum.printCalleeHeapInfo();
+			}
+		}
+
 		if (G.tuning) {
 			long endSCC = System.nanoTime();
 			StringUtil.reportSec("Analyzing SCC in ", startSCC, endSCC);
@@ -412,6 +428,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				if (scc.contains(pred))
 					wl.add(pred);
 		}
+
 		inS = false;
 	}
 

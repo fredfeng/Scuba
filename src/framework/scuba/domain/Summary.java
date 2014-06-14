@@ -286,6 +286,14 @@ public class Summary {
 	}
 
 	public boolean handleStmt(Quad quad, int numToAssign, boolean isInSCC) {
+
+		if (G.dbgPermission) {
+			if (G.countScc == 4212) {
+				StringUtil.reportInfo("dbgPermission: " + "handling stmt: "
+						+ quad);
+			}
+		}
+
 		absHeap.markChanged(false);
 		this.numToAssign = numToAssign;
 		this.isInSCC = isInSCC;
@@ -501,6 +509,19 @@ public class Summary {
 			// have been analyzed
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
 
+			if (G.dbgPermission) {
+				if (G.countScc == 4212) {
+					StringUtil.reportInfo("dbgPermission: "
+							+ "========================================");
+					StringUtil.reportInfo("dbgPermission: " + "call site: "
+							+ stmt);
+					StringUtil.reportInfo("dbgPermission: "
+							+ "resolved number of callees: "
+							+ calleeSumCstPairs.size());
+				}
+
+			}
+
 			if (G.dbgMatch) {
 				StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
 						+ SummaryBasedAnalysis.cgProgress + " BB: "
@@ -528,6 +549,7 @@ public class Summary {
 			}
 
 			int count = 0;
+
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
 				count++;
@@ -541,6 +563,30 @@ public class Summary {
 				Summary calleeSum = calleeSumCst.val0;
 				// the constraint for calling that callee
 				BoolExpr hasTypeCst = calleeSumCst.val1;
+				if (G.dbgPermission) {
+					if (G.countScc == 4212) {
+						StringUtil
+								.reportInfo("dbgPermission: "
+										+ "------------------------------------------------");
+						StringUtil.reportInfo("dbgPermission: "
+								+ " this is the " + count + "-th callee"
+								+ " out of " + calleeSumCstPairs.size());
+						int num = 0;
+						for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
+							num += absHeap.heapObjectsToP2Set.get(p).size();
+						}
+						StringUtil.reportInfo("dbgPermission: "
+								+ " edges in the current caller: " + num);
+						num = 0;
+						for (Pair p : calleeSum.absHeap.heapObjectsToP2Set
+								.keySet()) {
+							num += calleeSum.absHeap.heapObjectsToP2Set.get(p)
+									.size();
+						}
+						StringUtil.reportInfo("dbgPermission: "
+								+ " edges in the current callee: " + num);
+					}
+				}
 
 				// we should only get non-null summary for getSumCstPairList
 				assert (calleeSum != null) : "null summary!";
@@ -975,11 +1021,11 @@ public class Summary {
 			// always true.
 			// invoke_v : v.foo()
 			if (opr instanceof INVOKESTATIC_V) {
-				if(calleeSum.hasAnalyzed)
+				if (calleeSum.hasAnalyzed)
 					ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
 				// invoke_a : u = v.foo()
 			} else if (opr instanceof INVOKESTATIC_A) {
-				if(calleeSum.hasAnalyzed)
+				if (calleeSum.hasAnalyzed)
 					ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
 				// handle the return value.
 			} else {
@@ -1110,7 +1156,7 @@ public class Summary {
 					}
 					continue;
 				}
-				if(dySum.hasAnalyzed)
+				if (dySum.hasAnalyzed)
 					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
 			}
 			// TODO
@@ -1205,18 +1251,24 @@ public class Summary {
 		hasAnalyzed = true;
 	}
 
-	public void printCalleeHeapInfo(AbstractHeap absHeap) {
+	public void printCalleeHeapInfo() {
 		int param2Alloc = 0;
 		int param2AP = 0;
 		int static2Alloc = 0; // can avoid
 		int static2AP = 0;
 		int local2Alloc = 0; // can avoid
 		int local2AP = 0;
+		int ret2Alloc = 0;
+		int ret2AP = 0;
+		int ap2AP = 0;
+		int ap2Alloc = 0;
+		int alloc2Alloc = 0;
+		int alloc2AP = 0;
 		int total = 0;
+
 		for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.heapObjectsToP2Set
 				.keySet()) {
 			AbstractMemLoc src = pair.val0;
-			FieldElem f = pair.val1;
 			P2Set tgts = absHeap.heapObjectsToP2Set.get(pair);
 			for (HeapObject tgt : tgts.getHeapObjects()) {
 				if (src instanceof ParamElem && tgt instanceof AllocElem) {
@@ -1224,8 +1276,70 @@ public class Summary {
 				} else if (src instanceof ParamElem
 						&& tgt instanceof AccessPath) {
 					param2AP++;
+				} else if (src instanceof StaticElem
+						&& tgt instanceof AllocElem) {
+					static2Alloc++;
+				} else if (src instanceof StaticElem
+						&& tgt instanceof AccessPath) {
+					static2AP++;
+				} else if (src instanceof LocalVarElem
+						&& tgt instanceof AllocElem) {
+					local2Alloc++;
+				} else if (src instanceof LocalVarElem
+						&& tgt instanceof AccessPath) {
+					local2AP++;
+				} else if (src instanceof RetElem && tgt instanceof AllocElem) {
+					ret2Alloc++;
+				} else if (src instanceof RetElem && tgt instanceof AccessPath) {
+					ret2AP++;
+				} else if (src instanceof AccessPath
+						&& tgt instanceof AllocElem) {
+					ap2Alloc++;
+				} else if (src instanceof AccessPath
+						&& tgt instanceof AccessPath) {
+					ap2AP++;
+				} else if (src instanceof AllocElem && tgt instanceof AllocElem) {
+					alloc2Alloc++;
+				} else if (src instanceof AllocElem
+						&& tgt instanceof AccessPath) {
+					alloc2AP++;
+				} else {
+					StringUtil.reportInfo("Blowup: src " + src.getClass());
+					StringUtil.reportInfo("Blowup: tgt " + tgt.getClass());
+					assert false;
 				}
 			}
+		}
+		total = param2Alloc + param2AP + static2Alloc + static2AP + local2Alloc
+				+ local2AP + ret2Alloc + ret2AP + ap2Alloc + ap2AP
+				+ alloc2Alloc + alloc2AP;
+		if (G.dbgMatch) {
+			StringUtil
+					.reportInfo("Blowup: -----------------------------------");
+			StringUtil.reportInfo("Blowup: parameter --> Alloc: " + param2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: parameter --> AccessPath: "
+					+ param2AP + " out of " + total);
+			StringUtil.reportInfo("Blowup: static --> Alloc: " + static2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: static --> AccessPath: " + static2AP
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: local --> Alloc: " + local2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: local --> AccessPath: " + local2AP
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: ret --> Alloc: " + ret2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: ret --> AccessPath: " + ret2AP
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: AccessPath --> Alloc: " + ap2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: AccessPath --> AccessPath: " + ap2AP
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: Alloc --> Alloc: " + alloc2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo("Blowup: Alloc --> AccessPath: " + alloc2AP
+					+ " out of " + total);
 		}
 	}
 
@@ -1235,5 +1349,9 @@ public class Summary {
 		P2Set ret = absHeap.heapObjectsToP2Set.get(local);
 		assert (ret != null);
 		return ret;
+	}
+
+	public int getHeapSize() {
+		return absHeap.size();
 	}
 }

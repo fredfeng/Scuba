@@ -22,11 +22,13 @@ public class G {
 
 	public static boolean validate = false;
 
-	public static boolean dbgSCC = true;
+	public static boolean dbgSCC = false;
 
 	public static boolean dbgRet = false;
 
 	public static boolean dbgMatch = true;
+
+	public static boolean dbgPermission = true;
 
 	public static boolean useConHashMap = true;
 
