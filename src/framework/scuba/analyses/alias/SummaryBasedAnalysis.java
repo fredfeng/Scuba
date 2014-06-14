@@ -384,6 +384,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				Set<jq_Method> evils = new HashSet<jq_Method>();
 				for (jq_Method m : scc) {
 					Summary sum = SummariesEnv.v().getSummary(m);
+					if (sum == null) {
+						continue;
+					}
 					if (sum.getHeapSize() > 300) {
 						evils.add(m);
 					}
@@ -404,7 +407,29 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		 */
 		Set<jq_Method> set = new HashSet<jq_Method>();
 		cgProgress = 0;
+		int times = 0;
 		while (true) {
+			times++;
+			if (times == 50) {
+				if (G.dbgPermission) {
+					StringUtil.reportInfo("Evils: begin");
+					if (G.countScc == G.sample) {
+						Set<jq_Method> evils = new HashSet<jq_Method>();
+						for (jq_Method m : scc) {
+							Summary sum = SummariesEnv.v().getSummary(m);
+							if (sum == null) {
+								continue;
+							}
+							if (sum.getHeapSize() > 300) {
+								evils.add(m);
+							}
+						}
+						for (jq_Method m : evils) {
+							StringUtil.reportInfo("Evils: " + m);
+						}
+					}
+				}
+			}
 			if (G.dbgMatch) {
 				StringUtil.reportInfo("Sunny -- CG progress: " + set.size()
 						+ " out of " + scc.size());
