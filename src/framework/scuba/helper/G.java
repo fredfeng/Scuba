@@ -29,6 +29,8 @@ public class G {
 	public static boolean dbgMatch = true;
 
 	public static boolean dbgPermission = true;
+	
+	public static int sample = 1891;
 
 	public static boolean useConHashMap = true;
 
