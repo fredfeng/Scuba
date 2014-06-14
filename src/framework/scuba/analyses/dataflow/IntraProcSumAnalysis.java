@@ -41,8 +41,9 @@ public class IntraProcSumAnalysis {
 
 		if (G.dbgPermission) {
 			if (G.countScc == G.sample) {
-				StringUtil.reportInfo("\n dbgPermission: "
-						+ " analyzing method: " + g.getMethod());
+				StringUtil.reportInfo("dbgPermission");
+				StringUtil.reportInfo("dbgPermission: " + " analyzing method: "
+						+ g.getMethod());
 			}
 		}
 

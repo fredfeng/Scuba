@@ -308,6 +308,8 @@ public class Summary {
 	public static int tmp = 0;
 	public static int tmp1 = 0;
 	public static int tmp2 = 0;
+	public static int perCallerId = 0;
+	public static int perCalleeId = 0;
 
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
 
@@ -553,9 +555,10 @@ public class Summary {
 			}
 
 			int count = 0;
-
+			perCallerId++;
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
+				perCalleeId++;
 				count++;
 				tmp1++;
 				if (G.dbgSCC) {
@@ -581,6 +584,9 @@ public class Summary {
 						}
 						StringUtil.reportInfo("dbgPermission: "
 								+ " edges in the current caller: " + num);
+						StringUtil.reportInfo("dbgPermission: "
+								+ " caller method: " + getMethod() + " ["
+								+ perCallerId + " ]");
 						StringUtil
 								.reportInfo("dbgPermission: "
 										+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
@@ -594,7 +600,8 @@ public class Summary {
 						StringUtil.reportInfo("dbgPermission: "
 								+ " edges in the current callee: " + num);
 						StringUtil.reportInfo("dbgPermission: "
-								+ " callee method: " + calleeSum.getMethod());
+								+ " callee method: " + calleeSum.getMethod()
+								+ " [" + perCalleeId + " ]");
 						StringUtil
 								.reportInfo("dbgPermission: "
 										+ "~~~~~~~~~~~~~~~~callee sum info~~~~~~~~~~~~~~~~~~~~");
@@ -711,6 +718,9 @@ public class Summary {
 						}
 						StringUtil.reportInfo("dbgPermission: "
 								+ " edges in the current caller: " + num);
+						StringUtil.reportInfo("dbgPermission: "
+								+ " caller method: " + getMethod() + " ["
+								+ perCallerId + " ]");
 						StringUtil.reportInfo("dbgPermission: "
 								+ "----------------------------------------");
 						StringUtil
