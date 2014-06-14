@@ -333,7 +333,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (G.validate) {
 			summary.validate();
 		}
-		
+
 		summary.setHasAnalyzed();
 		return summary.isChanged();
 	}

@@ -1021,8 +1021,8 @@ public class Summary {
 				}
 				if (G.tuning)
 					StringUtil.reportInfo("Generate Constraint: " + cst);
-				
-				if(dySum.hasRet())
+
+				if (dySum.hasAnalyzed())
 					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
 			}
 			if (G.tuning)
@@ -1156,7 +1156,7 @@ public class Summary {
 	public boolean hasAnalyzed() {
 		return hasAnalyzed;
 	}
-	
+
 	public void setHasAnalyzed() {
 		hasAnalyzed = true;
 	}
