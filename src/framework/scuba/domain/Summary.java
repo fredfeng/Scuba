@@ -581,6 +581,10 @@ public class Summary {
 						}
 						StringUtil.reportInfo("dbgPermission: "
 								+ " edges in the current caller: " + num);
+						StringUtil
+								.reportInfo("dbgPermission: "
+										+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
+						printCalleeHeapInfo("dbgPermission");
 						num = 0;
 						for (Pair p : calleeSum.absHeap.heapObjectsToP2Set
 								.keySet()) {
@@ -591,6 +595,11 @@ public class Summary {
 								+ " edges in the current callee: " + num);
 						StringUtil.reportInfo("dbgPermission: "
 								+ " callee method: " + calleeSum.getMethod());
+						StringUtil
+								.reportInfo("dbgPermission: "
+										+ "~~~~~~~~~~~~~~~~callee sum info~~~~~~~~~~~~~~~~~~~~");
+						calleeSum.printCalleeHeapInfo("dbgPermission");
+
 					}
 				}
 
@@ -704,6 +713,10 @@ public class Summary {
 								+ " edges in the current caller: " + num);
 						StringUtil.reportInfo("dbgPermission: "
 								+ "----------------------------------------");
+						StringUtil
+								.reportInfo("dbgPermission: "
+										+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
+						printCalleeHeapInfo("dbgPermission");
 					}
 				}
 			}
