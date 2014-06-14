@@ -379,6 +379,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		Set<jq_Method> scc = nodeToScc.get(node);
 
 		if (G.dbgPermission) {
+			StringUtil.reportInfo("Evils: begin");
 			if (G.countScc == G.sample) {
 				Set<jq_Method> evils = new HashSet<jq_Method>();
 				for (jq_Method m : scc) {
