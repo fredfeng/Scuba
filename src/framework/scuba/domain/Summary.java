@@ -287,7 +287,7 @@ public class Summary {
 	public boolean handleStmt(Quad quad, int numToAssign, boolean isInSCC) {
 
 		if (G.dbgPermission) {
-			if (G.countScc == 4212) {
+			if (G.countScc == 2443) {
 				StringUtil.reportInfo("dbgPermission: " + "handling stmt: "
 						+ quad);
 			}
@@ -489,7 +489,7 @@ public class Summary {
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
 
 			if (G.dbgPermission) {
-				if (G.countScc == 4212) {
+				if (G.countScc == 2443) {
 					StringUtil.reportInfo("dbgPermission: "
 							+ "========================================");
 					StringUtil.reportInfo("dbgPermission: " + "call site: "

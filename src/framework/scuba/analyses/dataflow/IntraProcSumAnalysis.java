@@ -40,7 +40,7 @@ public class IntraProcSumAnalysis {
 	public void analyze(ControlFlowGraph g) {
 
 		if (G.dbgPermission) {
-			if (G.countScc == 4212) {
+			if (G.countScc == 2443) {
 				StringUtil.reportInfo("dbgPermission: " + " analyzing...");
 			}
 		}
