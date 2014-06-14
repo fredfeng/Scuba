@@ -1119,6 +1119,7 @@ public class AbstractHeap {
 	protected boolean handleRetStmt(jq_Class clazz, jq_Method method,
 			Register retValue, VariableType type, int numToAssign,
 			boolean isInSCC) {
+		hasRet = true;
 
 		boolean ret = false;
 		// first try to find the corresponding local or param that has been
@@ -1147,7 +1148,6 @@ public class AbstractHeap {
 		assert (isInSCC || numToAssign > maxNumber) : "we should increment the counter every time!";
 		maxNumber = ret2 ? Math.max(maxNumber, numToAssign) : maxNumber;
 
-		hasRet = true;
 		return ret;
 	}
 
