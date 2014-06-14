@@ -481,7 +481,7 @@ public class Summary {
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
 
 			if (G.dbgPermission) {
-				if (G.countScc == 4240) {
+				if (G.countScc == 4212) {
 					StringUtil.reportInfo("dbgPermission: "
 							+ "========================================");
 					StringUtil.reportInfo("dbgPermission: " + "call site: "
@@ -534,7 +534,7 @@ public class Summary {
 				// the constraint for calling that callee
 				BoolExpr hasTypeCst = calleeSumCst.val1;
 				if (G.dbgPermission) {
-					if (G.countScc == 4240) {
+					if (G.countScc == 4212) {
 
 						StringUtil
 								.reportInfo("dbgPermission: "
