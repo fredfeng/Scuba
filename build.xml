@@ -10,6 +10,11 @@
   </target>
   <target name="compile">
     <mkdir dir="classes"/>
+    <copy todir="classes/framework/scuba/analyses/downcast/">
+        <fileset dir="src/framework/scuba/analyses/downcast">
+          <exclude name="**/*.java"/>
+        </fileset>
+    </copy>
     <javac debug="true" debuglevel="${debuglevel}"
 		source="${source}" target="${target}" includeAntRuntime="false"
 		srcdir="src" destdir="classes">

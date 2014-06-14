@@ -52,6 +52,7 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Z3Exception;
 
+import framework.scuba.analyses.alias.SummaryBasedAnalysis;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.ConstraintManager;
@@ -476,13 +477,20 @@ public class Summary {
 			// have been analyzed
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
 
+			if (G.dbgMatch) {
+				StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+						+ SummaryBasedAnalysis.cgProgress + " BB: "
+						+ IntraProcSumAnalysis.bbProgress + " ]");
+				StringUtil.reportInfo("Sunny -- Invoke progress: "
+						+ "potential callee sums size: "
+						+ calleeSumCstPairs.size());
+			}
+
 			if (G.dbgSCC) {
 				StringUtil.reportInfo("in the invoke: " + tmp + " " + stmt
 						+ " " + calleeSumCstPairs.size());
 			}
-			if (G.dbgSCC && IntraProcSumAnalysis.opt && G.countScc == 3551) {
-				calleeSumCstPairs.get(0).val0.dumpSummaryToFile("callee");
-			}
+
 			if (G.tuning)
 				StringUtil.reportInfo("handle callsite: " + stmt + " In "
 						+ stmt.getMethod() + " Size: "
@@ -578,6 +586,10 @@ public class Summary {
 				}
 
 				boolean flag = false;
+
+				if (G.dbgMatch) {
+
+				}
 
 				if (SummariesEnv.v().useNumbering()) {
 					flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(),
@@ -940,8 +952,7 @@ public class Summary {
 					.loadInheritMeths(callee, null);
 
 			if (G.tuning)
-				StringUtil.reportInfo("resolve callee: 222222222 " + "---"
-						+ tgtSet);
+				StringUtil.reportInfo("resolve callee: " + tgtSet);
 
 			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				// generate constraint for each potential target.
@@ -952,9 +963,9 @@ public class Summary {
 					continue;
 
 				assert tgtType.extendsClass(recvStatType) : "Dynamic type must be a subclass for static type!";
-				
-				if (SummariesEnv.v().treating) {
-					if (callee.getName().toString().equals("study")
+
+				if (SummariesEnv.v().cheating()) {
+					if ((callee.getName().toString().equals("study") || callee.getName().toString().equals("match"))
 							&& (tgtSet.size() > 30)
 							&& (callsite.getMethod().getNameAndDesc()
 									.equals(pair.val1.getNameAndDesc()))) {
@@ -963,10 +974,11 @@ public class Summary {
 							continue;
 					}
 				}
-		
-//				assert !(callee.getName().toString().equals("study")
-//						&& (tgtSet.size() > 30) && (callsite.getMethod()
-//						.getNameAndDesc().equals(pair.val1.getNameAndDesc()))) : "stop.";
+
+				// assert !(callee.getName().toString().equals("study")
+				// && (tgtSet.size() > 30) && (callsite.getMethod()
+				// .getNameAndDesc().equals(pair.val1.getNameAndDesc()))) :
+				// "stop.";
 
 				long startGenCst = System.nanoTime();
 
@@ -1077,7 +1089,7 @@ public class Summary {
 	 * @return
 	 */
 	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT) {
-		if (G.disableCst)
+        if(SummariesEnv.v().disableCst())
 			return ConstraintManager.genTrue();
 		// 1. Base case: No subtype of T override m: type(o) <= T
 		if (!hasInherit(callee, statT)) {
@@ -1121,4 +1133,26 @@ public class Summary {
 		absHeap = null;
 	}
 
+	public void printCalleeHeapInfo(AbstractHeap absHeap) {
+		int param2Alloc = 0;
+		int param2AP = 0;
+		int static2Alloc = 0; // can avoid
+		int static2AP = 0;
+		int local2Alloc = 0; // can avoid
+		int local2AP = 0;
+		int total = 0;
+		for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.heapObjectsToP2Set
+				.keySet()) {
+			AbstractMemLoc src = pair.val0;
+			FieldElem f = pair.val1;
+			P2Set tgts = absHeap.heapObjectsToP2Set.get(pair);
+			for (HeapObject tgt : tgts.getHeapObjects()) {
+				if (src instanceof ParamElem && tgt instanceof AllocElem) {
+					param2Alloc ++;
+				} else if (src instanceof ParamElem && tgt instanceof AccessPath) {
+					param2AP ++;
+				}
+			}
+		}
+	}
 }

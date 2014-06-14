@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
@@ -18,6 +19,7 @@ import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 
+import framework.scuba.analyses.alias.SummaryBasedAnalysis;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
@@ -82,7 +84,9 @@ public class AbstractHeap {
 	public AbstractHeap(jq_Method method) {
 		this.method = method;
 		heap = new HashSet<AbstractMemLoc>();
-		heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
+		// heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>,
+		// P2Set>();
+		heapObjectsToP2Set = new ConcurrentHashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
 		memLocFactory = new HashMap<AbstractMemLoc, AbstractMemLoc>();
 	}
 
@@ -1147,7 +1151,7 @@ public class AbstractHeap {
 	protected BoolExpr instCst(BoolExpr cst, AbstractHeap callerHeap,
 			ProgramPoint point, MemLocInstantiation memLocInstn) {
 		long startInstCst = System.nanoTime();
-		if (G.disableCst)
+		if (SummariesEnv.v().disableCst())
 			return cst;
 		assert cst != null : "Invalid Constrait before instantiation.";
 		// return directly.
@@ -1157,6 +1161,8 @@ public class AbstractHeap {
 				point, memLocInstn);
 
 		assert instC != null : "Invalid instantiated Constrait.";
+
+
 		long endInstCst = System.nanoTime();
 		G.instCstTime += (endInstCst - startInstCst);
 		if(instC.toString().length() > 2500) {
@@ -1349,7 +1355,7 @@ public class AbstractHeap {
 
 				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
 						new P2Set(newDst1, cst));
-				
+
 				long s3 = System.nanoTime();
 				inst_cst_time += (s2 - s1);
 				inst_wu_time += (s3 - s2);
@@ -1612,18 +1618,33 @@ public class AbstractHeap {
 
 		// pre update location
 		Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
+
+		if (G.dbgRet && no == 31727) {
+			calleeHeap.dumpAllMemLocsHeapToFile("callee1");
+			calleeHeap.dumpAllMemLocsToFile("callee2");
+			calleeHeap.dumpHeapMappingToFile("callee3");
+			calleeHeap.dumpHeapToFile("callee4");
+
+			this.dumpAllMemLocsHeapToFile("caller1");
+			this.dumpAllMemLocsToFile("caller2");
+			this.dumpHeapMappingToFile("caller3");
+			this.dumpHeapToFile("caller4");
+		}
+
 		for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
 				.keySet()) {
 			AbstractMemLoc loc = pair.val0;
 			FieldElem field = pair.val1;
 			// if not propagating locals
 			if (!SummariesEnv.v().propLocals) {
-				// if (loc.isNotArgDerived()) {
-				if (loc instanceof LocalVarElem) {
+				if (loc.isNotArgDerived()) {
 					continue;
 				}
 			}
 			// otherwise do the instantiation
+			if (G.dbgRet && no == 31727) {
+				StringUtil.reportInfo("dbg Ret: " + " to instantiate: " + loc);
+			}
 			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
 					this, point);
 
@@ -1641,10 +1662,38 @@ public class AbstractHeap {
 			weakUpdateNoNumbering(pair, new P2Set());
 		}
 
-		int tmp = 0;
+		if (G.dbgMatch) {
+			StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+					+ SummaryBasedAnalysis.cgProgress + " BB: "
+					+ IntraProcSumAnalysis.bbProgress + " ]");
+			StringUtil.reportInfo("Sunny -- Invoke progress: "
+					+ "is Recursive: " + isRecursive);
+			int s = 0;
+			for (Pair pair : this.heapObjectsToP2Set.keySet()) {
+				s += this.heapObjectsToP2Set.get(pair).size();
+			}
+			StringUtil.reportInfo("Sunny -- Invoke progress: "
+					+ "current caller heap size: " + s);
+			s = 0;
+			for (Pair pair : calleeHeap.heapObjectsToP2Set.keySet()) {
+				s += calleeHeap.heapObjectsToP2Set.get(pair).size();
+			}
+			StringUtil.reportInfo("Sunny -- Invoke progress: "
+					+ "the callee size: " + s);
+		}
 		// this is the real updating
 		if (!isRecursive) {
+			int it = 0;
 			while (true) {
+				it++;
+				if (G.dbgMatch) {
+					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+							+ SummaryBasedAnalysis.cgProgress + " BB: "
+							+ IntraProcSumAnalysis.bbProgress + " ]");
+					StringUtil.reportInfo("Sunny -- Invoke progress: "
+							+ "instantiation for NOT recursive iteration: "
+							+ it + "-th");
+				}
 				boolean go = false;
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
 						.keySet()) {
@@ -1652,108 +1701,51 @@ public class AbstractHeap {
 					FieldElem f = pair.val1;
 					// propagation control for locals
 					if (!SummariesEnv.v().propLocals) {
-						// if (src.isNotArgDerived()) {
-						if (src instanceof LocalVarElem) {
+						if (src.isNotArgDerived()) {
 							continue;
 						}
 					}
 					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
 					for (HeapObject tgt : tgts.getHeapObjects()) {
-						tmp++;
-						if (G.dbgSCC) {
-							StringUtil.reportInfo("Rain: this is the " + tmp
-									+ "-th inner instantiation of the " + no
-									+ "-th outer invoke");
-							StringUtil.reportInfo("Rain: the go result is: "
-									+ go);
-						}
-						if (G.dbgSCC && G.countScc == 3551 && no == 69552
-								&& tmp == 7) {
-							assert go == false;
-							this.dumpHeapMappingToFile("callerBeforeMap");
-							this.dumpHeapToFile("callerBeforeHeap");
-							this.dumpAllMemLocsHeapToFile("callerBeforeAllMem");
-							this.dumpAllMemLocsToFile("callerBeforeAllMemLocs");
-							StringUtil.reportInfo("Rain: [IM] src-- " + src);
-							StringUtil.reportInfo("Rain: [IM] tgt --- " + tgt);
-							StringUtil.reportInfo("Rain: [IM] field --- " + f);
-							StringUtil.reportInfo("Rain: [IM] point: " + point);
-							calleeHeap.dumpHeapMappingToFile("calleeBeforeMap");
-							calleeHeap.dumpHeapToFile("calleeBeforeHeap");
-							calleeHeap
-									.dumpAllMemLocsHeapToFile("calleeBeforeAllMem");
-							calleeHeap
-									.dumpAllMemLocsToFile("calleeBeforeAllMemLocs");
-							memLocInstn.print();
-						}
-						if (G.dbgSCC && G.countScc == 3551 && no == 69538
-								&& tmp == 7) {
-							assert go == false;
-							this.dumpHeapMappingToFile("callerBeforeMap1");
-							this.dumpHeapToFile("callerBeforeHeap1");
-							this.dumpAllMemLocsHeapToFile("callerBeforeAllMem1");
-							this.dumpAllMemLocsToFile("callerBeforeAllMemLocs1");
-							StringUtil.reportInfo("Rain: [IM] src-- " + src);
-							StringUtil.reportInfo("Rain: [IM] tgt --- " + tgt);
-							StringUtil.reportInfo("Rain: [IM] field --- " + f);
-							StringUtil.reportInfo("Rain: [IM] point: " + point);
-							calleeHeap
-									.dumpHeapMappingToFile("calleeBeforeMap1");
-							calleeHeap.dumpHeapToFile("calleeBeforeHeap1");
-							calleeHeap
-									.dumpAllMemLocsHeapToFile("calleeBeforeAllMem1");
-							calleeHeap
-									.dumpAllMemLocsToFile("calleeBeforeAllMemLocs1");
-							memLocInstn.print();
-						}
+
 						go = this.instantiateEdgeNoNumbering(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst) | go;
 						ret = ret | go;
-						if (G.dbgSCC && G.countScc == 3551 && no == 69552
-								&& tmp == 7) {
-							assert go == true;
-							this.dumpHeapMappingToFile("callerAfterMap");
-							this.dumpHeapToFile("callerAfterHeap");
-							this.dumpAllMemLocsHeapToFile("callerAfterAllMem");
-							this.dumpAllMemLocsToFile("callerAfterAllMemLocs");
-							memLocInstn.print();
-						}
-						if (G.dbgSCC && G.countScc == 3551 && no == 69538
-								&& tmp == 7) {
-							assert go == true;
-							this.dumpHeapMappingToFile("callerAfterMap1");
-							this.dumpHeapToFile("callerAfterHeap1");
-							this.dumpAllMemLocsHeapToFile("callerAfterAllMem1");
-							this.dumpAllMemLocsToFile("callerAfterAllMemLocs1");
-							memLocInstn.print();
-						}
-						if (G.dbgSCC) {
-							StringUtil.reportInfo("Rain: this is after the "
-									+ tmp + "-th inner instantiation of the "
-									+ no + "-th outer invoke");
-							StringUtil.reportInfo("Rain: the go result is: "
-									+ go);
-							StringUtil.reportInfo("Rain: The ret result is: "
-									+ ret);
-						}
+
 					}
+				}
+				if (G.dbgMatch) {
+					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+							+ SummaryBasedAnalysis.cgProgress + " BB: "
+							+ IntraProcSumAnalysis.bbProgress + " ]");
+					StringUtil.reportInfo("Sunny -- Invoke progress: "
+							+ "instantiation for NOT recursive iteration: "
+							+ it + "-th" + " result: " + go);
 				}
 				if (!go) {
 					break;
 				}
 			}
 		} else {
+			int it = 0;
 			while (true) {
+				it++;
+				if (G.dbgMatch) {
+					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+							+ SummaryBasedAnalysis.cgProgress + " BB: "
+							+ IntraProcSumAnalysis.bbProgress + " ]");
+					StringUtil.reportInfo("Sunny -- Invoke progress: "
+							+ "instantiation for recursive iteration: " + it
+							+ "-th");
+				}
 				boolean go = false;
-
 				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
 						.keySet()) {
 					AbstractMemLoc src = pair.val0;
 					FieldElem f = pair.val1;
 					// propagation control for locals
 					if (!SummariesEnv.v().propLocals) {
-						// if (src.isNotArgDerived()) {
-						if (src instanceof LocalVarElem) {
+						if (src.isNotArgDerived()) {
 							continue;
 						}
 					}
@@ -1773,7 +1765,14 @@ public class AbstractHeap {
 						ret = ret | go;
 					}
 				}
-
+				if (G.dbgMatch) {
+					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+							+ SummaryBasedAnalysis.cgProgress + " BB: "
+							+ IntraProcSumAnalysis.bbProgress + " ]");
+					StringUtil.reportInfo("Sunny -- Invoke progress: "
+							+ "instantiation for recursive iteration: " + it
+							+ "-th" + " result: " + go);
+				}
 				if (!go) {
 					break;
 				}

@@ -44,8 +44,14 @@ public class SummariesEnv {
 	// prop locals or not
 	protected boolean propLocals = true;
 	
-	//treating
-	protected boolean treating = true;
+	//cheating
+	protected boolean cheating = true;
+	
+	// force to invoke garbage collector for abstract heap.
+	protected boolean forceGc = false;
+
+    //disable constraint instantiate.
+	protected boolean disableCst = true;
 	
 	public boolean propLocals() {
 		return propLocals;
@@ -57,6 +63,18 @@ public class SummariesEnv {
 	
 	public void resetPropLocals() {
 		propLocals = false;
+	}
+	
+	public boolean disableCst() {
+		return disableCst;
+	}
+	
+	public boolean forceGc() {
+		return forceGc;
+	}
+	
+	public boolean cheating() {
+		return cheating;
 	}
 
 	public int getAllocDepth() {

@@ -24,11 +24,17 @@ public class G {
 
 	public static boolean dbgSCC = true;
 
+	public static boolean dbgRet = true;
+
+	public static boolean dbgMatch = true;
+
+	public static boolean useConHashMap = true;
+
 	// flag to tune performance.
 	public static boolean tuning = true;
-	
+
 	public static boolean stat = false;
-	
+
 	public static int count = 0;
 
 	// how many scc do we actuall pass.
@@ -60,9 +66,7 @@ public class G {
 	// number of edges that are instantiated into in the caller
 	public static int instToEdges = 0;
 
-	public static boolean disableCst = true;
-
-	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
+	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 
 	public static long instCstSubTime;
 }
