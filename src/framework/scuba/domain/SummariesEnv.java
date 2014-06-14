@@ -47,6 +47,9 @@ public class SummariesEnv {
 	//cheating
 	protected boolean cheating = true;
 	
+	//ignore string
+	protected boolean ignoreString = true;
+	
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 
@@ -67,6 +70,10 @@ public class SummariesEnv {
 	
 	public boolean disableCst() {
 		return disableCst;
+	}
+	
+	public boolean ignoreString() {
+		return ignoreString;
 	}
 	
 	public boolean forceGc() {

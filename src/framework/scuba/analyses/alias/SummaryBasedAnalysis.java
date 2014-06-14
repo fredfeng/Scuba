@@ -12,6 +12,7 @@ import java.util.Set;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
@@ -87,12 +88,30 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
 		System.out.println("Total downcast------------" + Summary.castCnt);
 	}
+	
+//	private void dumpMeth() {
+//		//elements:()Ljava/util/Enumeration;@java.security.Permissions
+//		//<clinit>:()V@sun.nio.cs.StandardCharsets
+	//toEnvironmentBlock:([I)[B@java.lang.ProcessEnvironment$StringEnvironment
+//		jq_Method meth = Program.g().getMethod(
+//				"elements:()Ljava/util/Enumeration;@java.security.Permissions");
+//		ControlFlowGraph cfg = meth.getCFG();
+//		for(BasicBlock bb : cfg.reversePostOrder()) {
+//			System.out.println(bb.fullDump());
+//			for(Quad q : bb.getQuads()) {
+//				if(O)
+//			}
+//		}
+//	}
 
 	private void sumAnalyze() {
 
 		if (G.dump) {
 			dumpCallGraph();
 		}
+		
+//		dumpMeth();
+		
 
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();

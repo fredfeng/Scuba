@@ -24,7 +24,7 @@ public class G {
 
 	public static boolean dbgSCC = true;
 
-	public static boolean dbgRet = true;
+	public static boolean dbgRet = false;
 
 	public static boolean dbgMatch = true;
 
