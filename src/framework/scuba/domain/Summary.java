@@ -1017,7 +1017,9 @@ public class Summary {
 				}
 				if (G.tuning)
 					StringUtil.reportInfo("Generate Constraint: " + cst);
-				ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
+				
+				if(dySum.hasRet())
+					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
 			}
 			if (G.tuning)
 				StringUtil.reportInfo("filter callee: " + tgtSet.size()
