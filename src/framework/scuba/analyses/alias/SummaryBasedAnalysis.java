@@ -251,6 +251,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				}
 				StringUtil.reportInfo("[" + G.countScc
 						+ "] Blowup: for method: " + m);
+				StringUtil.reportInfo("Blowup: " + "successors: "
+						+ Env.cg.getSuccs(m));
 				sum.printCalleeHeapInfo();
 			}
 		}
