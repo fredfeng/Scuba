@@ -1140,6 +1140,10 @@ public class Summary {
 		absHeap = null;
 	}
 
+	public boolean hasRet() {
+		return absHeap.hasRet();
+	}
+
 	public void printCalleeHeapInfo(AbstractHeap absHeap) {
 		int param2Alloc = 0;
 		int param2AP = 0;

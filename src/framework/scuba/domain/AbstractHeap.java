@@ -42,6 +42,9 @@ public class AbstractHeap {
 
 	private boolean isChanged = false;
 
+	// used for instantiation recursive call
+	protected boolean hasRet = false;
+
 	// this map records the sequence that the edges are added into the heap
 	// it contains a LOT of information such as:
 	// (1) the sequence the edges are added (edges with the same number are
@@ -1144,6 +1147,7 @@ public class AbstractHeap {
 		assert (isInSCC || numToAssign > maxNumber) : "we should increment the counter every time!";
 		maxNumber = ret2 ? Math.max(maxNumber, numToAssign) : maxNumber;
 
+		hasRet = true;
 		return ret;
 	}
 
@@ -2476,5 +2480,9 @@ public class AbstractHeap {
 
 	public int getMaxNumber() {
 		return maxNumber;
+	}
+
+	public boolean hasRet() {
+		return hasRet;
 	}
 }
