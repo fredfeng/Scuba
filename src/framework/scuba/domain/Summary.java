@@ -934,10 +934,12 @@ public class Summary {
 			// always true.
 			// invoke_v : v.foo()
 			if (opr instanceof INVOKESTATIC_V) {
-				ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
+				if(calleeSum.hasAnalyzed)
+					ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
 				// invoke_a : u = v.foo()
 			} else if (opr instanceof INVOKESTATIC_A) {
-				ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
+				if(calleeSum.hasAnalyzed)
+					ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
 				// handle the return value.
 			} else {
 				// ignore the rest of cases.
@@ -1067,7 +1069,8 @@ public class Summary {
 					}
 					continue;
 				}
-				ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
+				if(dySum.hasAnalyzed)
+					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
 			}
 			// TODO
 		} else {
