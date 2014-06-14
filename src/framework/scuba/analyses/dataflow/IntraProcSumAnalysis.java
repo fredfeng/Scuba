@@ -42,6 +42,7 @@ public class IntraProcSumAnalysis {
 		// first retrieve the numbering counter of that summary that was
 		// maintained last time
 		// getNumberCounter gets the number counter that is used last time
+
 		this.numToAssign = summary.getCurrNumCounter() + 1;
 		// for dbg
 

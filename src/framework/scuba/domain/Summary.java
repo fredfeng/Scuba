@@ -480,6 +480,15 @@ public class Summary {
 			// have been analyzed
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
 
+			if (G.dbgPermission) {
+				StringUtil.reportInfo("Permission: "
+						+ "========================================");
+				StringUtil.reportInfo("Permission: " + "call site: " + stmt);
+				StringUtil.reportInfo("Permission: "
+						+ "resolved number of callees: "
+						+ calleeSumCstPairs.size());
+			}
+
 			if (G.dbgMatch) {
 				StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
 						+ SummaryBasedAnalysis.cgProgress + " BB: "
@@ -520,6 +529,27 @@ public class Summary {
 				Summary calleeSum = calleeSumCst.val0;
 				// the constraint for calling that callee
 				BoolExpr hasTypeCst = calleeSumCst.val1;
+				if (G.dbgPermission) {
+					StringUtil
+							.reportInfo("Permission: "
+									+ "------------------------------------------------");
+					StringUtil.reportInfo("Permission: " + " this is the "
+							+ count + "-th callee" + " out of "
+							+ calleeSumCstPairs.size());
+					int num = 0;
+					for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
+						num += absHeap.heapObjectsToP2Set.get(p).size();
+					}
+					StringUtil.reportInfo("Permission: "
+							+ " edges in the current caller: " + num);
+					num = 0;
+					for (Pair p : calleeSum.absHeap.heapObjectsToP2Set.keySet()) {
+						num += calleeSum.absHeap.heapObjectsToP2Set.get(p)
+								.size();
+					}
+					StringUtil.reportInfo("Permission: "
+							+ " edges in the current callee: " + num);
+				}
 
 				// we should only get non-null summary for getSumCstPairList
 				assert (calleeSum != null) : "null summary!";
