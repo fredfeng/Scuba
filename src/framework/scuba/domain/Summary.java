@@ -108,6 +108,9 @@ public class Summary {
 	// heap for the whole summary has changed?
 	protected boolean changed = false;
 
+	// used for dealing with recursive call
+	protected boolean hasAnalyzed = false;
+
 	public boolean isChanged() {
 		return changed;
 	}
@@ -979,7 +982,8 @@ public class Summary {
 				assert tgtType.extendsClass(recvStatType) : "Dynamic type must be a subclass for static type!";
 
 				if (SummariesEnv.v().cheating()) {
-					if ((callee.getName().toString().equals("study") || callee.getName().toString().equals("match"))
+					if ((callee.getName().toString().equals("study") || callee
+							.getName().toString().equals("match"))
 							&& (tgtSet.size() > 30)
 							&& (callsite.getMethod().getNameAndDesc()
 									.equals(pair.val1.getNameAndDesc()))) {
@@ -998,7 +1002,7 @@ public class Summary {
 
 				cst = genCst(p2Set, pair.val1, tgtType);
 				try {
-					cst = (BoolExpr)cst.Simplify();
+					cst = (BoolExpr) cst.Simplify();
 				} catch (Z3Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -1103,7 +1107,7 @@ public class Summary {
 	 * @return
 	 */
 	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT) {
-        if(SummariesEnv.v().disableCst())
+		if (SummariesEnv.v().disableCst())
 			return ConstraintManager.genTrue();
 		// 1. Base case: No subtype of T override m: type(o) <= T
 		if (!hasInherit(callee, statT)) {
@@ -1147,8 +1151,12 @@ public class Summary {
 		absHeap = null;
 	}
 
-	public boolean hasRet() {
-		return absHeap.hasRet();
+	public boolean hasAnalyzed() {
+		return hasAnalyzed;
+	}
+	
+	public void setHasAnalyzed() {
+		hasAnalyzed = true;
 	}
 
 	public void printCalleeHeapInfo(AbstractHeap absHeap) {

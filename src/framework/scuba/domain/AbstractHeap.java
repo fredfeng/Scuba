@@ -42,9 +42,6 @@ public class AbstractHeap {
 
 	private boolean isChanged = false;
 
-	// used for instantiation recursive call
-	protected boolean hasRet = false;
-
 	// this map records the sequence that the edges are added into the heap
 	// it contains a LOT of information such as:
 	// (1) the sequence the edges are added (edges with the same number are
@@ -1119,7 +1116,6 @@ public class AbstractHeap {
 	protected boolean handleRetStmt(jq_Class clazz, jq_Method method,
 			Register retValue, VariableType type, int numToAssign,
 			boolean isInSCC) {
-		hasRet = true;
 
 		boolean ret = false;
 		// first try to find the corresponding local or param that has been
@@ -1166,16 +1162,16 @@ public class AbstractHeap {
 
 		assert instC != null : "Invalid instantiated Constrait.";
 
-
 		long endInstCst = System.nanoTime();
 		G.instCstTime += (endInstCst - startInstCst);
-		if(instC.toString().length() > 2500) {
+		if (instC.toString().length() > 2500) {
 			int length = instC.toString().length();
-			StringUtil.reportInfo("We are in trouble..." + length + ":" + instC);
+			StringUtil
+					.reportInfo("We are in trouble..." + length + ":" + instC);
 			StringUtil.reportSec("Inst Cst time: ", startInstCst, endInstCst);
-//		assert instC.toString().length() < 2500 : "We are in trouble." + instC; 
+			// assert instC.toString().length() < 2500 : "We are in trouble." +
+			// instC;
 		}
-
 
 		return instC;
 	}
@@ -1651,7 +1647,7 @@ public class AbstractHeap {
 				}
 			}
 			// otherwise do the instantiation
-			if (G.dbgRet && no == 31727) {
+			if (G.dbgRet) {
 				StringUtil.reportInfo("dbg Ret: " + " to instantiate: " + loc);
 			}
 			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
@@ -2488,7 +2484,4 @@ public class AbstractHeap {
 		return maxNumber;
 	}
 
-	public boolean hasRet() {
-		return hasRet;
-	}
 }
