@@ -529,6 +529,15 @@ public class Summary {
 				MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
 						.get(new Pair<Quad, jq_Method>(stmt, calleeSum
 								.getMethod()));
+				if (G.dbgRet) {
+					StringUtil.reportInfo(" get the mem loc instn");
+					if (memLocInstn == null) {
+						StringUtil.reportInfo("it is a null!");
+					} else {
+						StringUtil.reportInfo("------");
+						memLocInstn.print();
+					}
+				}
 				// if has not been cached
 				if (memLocInstn == null) {
 					memLocInstn = new MemLocInstantiation(meth, stmt,
@@ -567,6 +576,11 @@ public class Summary {
 					if (opr instanceof INVOKESTATIC_A
 							|| opr instanceof INVOKEVIRTUAL_A
 							|| opr instanceof INVOKEINTERFACE_A) {
+
+						if (G.dbgRet) {
+							StringUtil.reportInfo("init the return mapping");
+						}
+
 						RegisterOperand ro = Invoke.getDest(stmt);
 						StackObject sObj = getMemLocation(
 								meth.getDeclaringClass(), meth,
@@ -1133,6 +1147,10 @@ public class Summary {
 		absHeap = null;
 	}
 
+	public boolean hasRet() {
+		return absHeap.hasRet();
+	}
+
 	public void printCalleeHeapInfo(AbstractHeap absHeap) {
 		int param2Alloc = 0;
 		int param2AP = 0;
@@ -1148,9 +1166,10 @@ public class Summary {
 			P2Set tgts = absHeap.heapObjectsToP2Set.get(pair);
 			for (HeapObject tgt : tgts.getHeapObjects()) {
 				if (src instanceof ParamElem && tgt instanceof AllocElem) {
-					param2Alloc ++;
-				} else if (src instanceof ParamElem && tgt instanceof AccessPath) {
-					param2AP ++;
+					param2Alloc++;
+				} else if (src instanceof ParamElem
+						&& tgt instanceof AccessPath) {
+					param2AP++;
 				}
 			}
 		}

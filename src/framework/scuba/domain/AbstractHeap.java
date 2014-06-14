@@ -42,6 +42,9 @@ public class AbstractHeap {
 
 	private boolean isChanged = false;
 
+	// used for instantiation recursive call
+	protected boolean hasRet = false;
+
 	// this map records the sequence that the edges are added into the heap
 	// it contains a LOT of information such as:
 	// (1) the sequence the edges are added (edges with the same number are
@@ -1144,6 +1147,7 @@ public class AbstractHeap {
 		assert (isInSCC || numToAssign > maxNumber) : "we should increment the counter every time!";
 		maxNumber = ret2 ? Math.max(maxNumber, numToAssign) : maxNumber;
 
+		hasRet = true;
 		return ret;
 	}
 
@@ -1601,6 +1605,11 @@ public class AbstractHeap {
 			jq_Method method, int line, AbstractHeap calleeHeap,
 			MemLocInstantiation memLocInstn, BoolExpr typeCst, int numToAssign,
 			boolean isInSCC) {
+		if (G.dbgRet) {
+			StringUtil.reportInfo("the mem loc instantation");
+			memLocInstn.print();
+		}
+
 		no++;
 		if (G.dbgSCC) {
 			StringUtil.reportInfo("Rain: [" + G.countScc + "] this is in the "
@@ -2477,5 +2486,9 @@ public class AbstractHeap {
 
 	public int getMaxNumber() {
 		return maxNumber;
+	}
+
+	public boolean hasRet() {
+		return hasRet;
 	}
 }
