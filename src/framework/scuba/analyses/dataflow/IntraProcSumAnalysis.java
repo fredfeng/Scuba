@@ -229,6 +229,7 @@ public class IntraProcSumAnalysis {
 			}
 
 			if (G.dbgMatch) {
+				System.out.println("in the scc: " + SummaryBasedAnalysis.inS);
 				StringUtil.reportInfo("Sunny -- BB progress: [ CG: "
 						+ SummaryBasedAnalysis.cgProgress + " ]"
 						+ "handling stmt: " + q);
