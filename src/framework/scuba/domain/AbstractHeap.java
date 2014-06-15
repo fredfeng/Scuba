@@ -2273,7 +2273,7 @@ public class AbstractHeap {
 
 	public int size() {
 		int ret = 0;
-		for (Pair loc : heapObjectsToP2Set.keySet()) {
+		for (Pair<AbstractMemLoc, FieldElem> loc : heapObjectsToP2Set.keySet()) {
 			ret += heapObjectsToP2Set.get(loc).size();
 		}
 		return ret;
