@@ -31,11 +31,10 @@ public class SummariesEnv {
 	protected ProgramRel relCHA;
 
 	Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
-	
+
 	String[] blklist = {
 			"fixAfterDeletion:(Ljava/util/TreeMap$Entry;)V@java.util.TreeMap",
-			""
-	};
+			"" };
 
 	public static SummariesEnv v() {
 		return instance;
@@ -46,14 +45,14 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 1;
+	protected int allocDepth = 0;
 
 	// prop locals or not
 	protected boolean propLocals = true;
-	
-	//ignore string
+
+	// ignore string
 	protected boolean openBlklist = true;
-	
+
 	// cheating
 	protected boolean cheating = false;
 
@@ -81,11 +80,11 @@ public class SummariesEnv {
 	public boolean disableCst() {
 		return disableCst;
 	}
-	
+
 	public boolean openBlklist() {
 		return openBlklist;
 	}
-	
+
 	public boolean ignoreString() {
 		return ignoreString;
 	}
@@ -179,7 +178,7 @@ public class SummariesEnv {
 					+ pts);
 		return pts;
 	}
-	
+
 	public boolean isInBlacklist(String blk) {
 		return Arrays.asList(blklist).contains(blk);
 	}
