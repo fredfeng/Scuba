@@ -1359,14 +1359,6 @@ public class AbstractHeap {
 		boolean ret = false;
 		boolean ret2 = false;
 
-		if (G.tuning) {
-			StringUtil.reportInfo("Edges size for recursive call: "
-					+ edges.size());
-		}
-
-		G.instLocTimePerEdges = 0;
-		G.instToEdges = 0;
-
 		for (HeapEdge edge : edges) {
 
 			AbstractMemLoc src = edge.getSrc();
@@ -1385,13 +1377,10 @@ public class AbstractHeap {
 			// instantiate the calleeCst
 			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
-			long startInstLoc = System.nanoTime();
 			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
 					point);
 			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
 					point);
-			long endInstLoc = System.nanoTime();
-			G.instLocTimePerEdges += (endInstLoc - startInstLoc);
 
 			assert (instnDst != null) : "instantiation of dst cannot be null!";
 			if (instnSrc == null) {
@@ -1440,19 +1429,6 @@ public class AbstractHeap {
 			}
 		}
 
-		if (G.tuning) {
-			long endtInstEdge = System.nanoTime();
-			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
-			G.instEdgeTime += (endtInstEdge - startInstEdge);
-			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
-			StringUtil.reportInfo("Number of edges in the caller: "
-					+ G.instToEdges);
-			StringUtil.reportTotalTime(
-					"Total Time to instantiate Constraint: ", G.instCstTime);
-			StringUtil.reportTotalTime("Total Time to instantiate Edges: ",
-					G.instEdgeTime);
-
-		}
 		return new Pair<Boolean, Boolean>(ret, ret2);
 	}
 
