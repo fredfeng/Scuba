@@ -36,6 +36,7 @@ import com.microsoft.z3.BoolExpr;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.Env;
+import framework.scuba.domain.EpsilonFieldElem;
 import framework.scuba.domain.FieldElem;
 import framework.scuba.domain.HeapObject;
 import framework.scuba.domain.LocalVarElem;
@@ -54,7 +55,8 @@ import framework.scuba.utils.StringUtil;
  * SCC 3. Run the worklist algorithm author: Yu Feng email: yufeng@cs.utexas.edu
  */
 
-@Chord(name = "sum-java", consumes = { "rootM", "reachableM", "IM", "MM", "cha", "dcm" })
+@Chord(name = "sum-java", consumes = { "rootM", "reachableM", "IM", "MM",
+		"cha", "dcm" })
 public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	protected DomM domM;
@@ -64,7 +66,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relMM;
 	protected ProgramRel relCHA;
 	protected ProgramRel relDcm;
-
 
 	protected CICG callGraph;
 
@@ -84,7 +85,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// dump interesting stats
 		dumpStatistics();
-		
+
 		// perform downcast analysis
 		downcast();
 	}
@@ -534,22 +535,49 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			callGraph.free();
 	}
 
+	public static int count = 0;
+
 	public P2Set query(jq_Class clazz, jq_Method method, Register variable) {
 		jq_Method entry = Program.g().getMainMethod();
 		Summary sum = SummariesEnv.v().getSummary(entry);
 		if (G.dbgQuery) {
 			StringUtil.reportInfo("Query: " + " size of sum: "
 					+ sum.getHeapSize());
+			StringUtil.reportInfo("Query: " + " entry method: " + entry);
 		}
 		assert (sum != null) : "the entry method should have a summary!";
 		Summary sum1 = SummariesEnv.v().getSummary(method);
+		if (sum1 == null) {
+			return null;
+		}
 		assert (sum1 != null) : "the method of the variable should have a summary!";
-		LocalVarElem local = sum.getLocalVarElem(clazz, method, variable);
+		if (G.dbgQuery) {
+			StringUtil.reportInfo("Query: " + " size of sum: "
+					+ sum1.getHeapSize());
+			StringUtil.reportInfo("Query: " + " variable method: " + method);
+		}
+		if (sum1.getAbsHeap()
+				.getHeap()
+				.containsKey(
+						new Pair<AbstractMemLoc, FieldElem>(new LocalVarElem(
+								clazz, method, variable), EpsilonFieldElem
+								.getEpsilonFieldElem()))) {
+			count++;
+			StringUtil.reportInfo("Query: "
+					+ sum1.getAbstractHeap()
+							.getHeap()
+							.get(new Pair<AbstractMemLoc, FieldElem>(
+									new LocalVarElem(clazz, method, variable),
+									EpsilonFieldElem.getEpsilonFieldElem())));
+		} else {
+			return null;
+		}
+		LocalVarElem local = sum1.getLocalVarElem(clazz, method, variable);
 		P2Set ret = sum.getP2Set(local);
 		return ret;
 	}
-	
-	//downcast analysis.
+
+	// downcast analysis.
 	public void downcast() {
 		if (!relDcm.isOpen())
 			relDcm.load();
@@ -565,6 +593,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
 			P2Set p2Set = query(meth.getDeclaringClass(), meth, r);
 			StringUtil.reportInfo("p2Set...for." + r + ":" + p2Set);
+		}
+
+		if (G.dbgQuery) {
+			StringUtil.reportInfo("Query: " + count);
 		}
 
 	}
