@@ -66,6 +66,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relMM;
 	protected ProgramRel relCHA;
 	protected ProgramRel relDcm;
+	protected ProgramRel relDVH;
+
 
 	protected CICG callGraph;
 
@@ -464,6 +466,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relMM = (ProgramRel) ClassicProject.g().getTrgt("MM");
 		relCHA = (ProgramRel) ClassicProject.g().getTrgt("cha");
 		relDcm = (ProgramRel) ClassicProject.g().getTrgt("dcm");
+		relDVH = (ProgramRel) ClassicProject.g().getTrgt("dcmVH");
+
 
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
@@ -582,6 +586,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (!relDcm.isOpen())
 			relDcm.load();
 
+		if (!relDVH.isOpen())
+			relDVH.load();
+		
 		RelView view = relDcm.getView();
 		Iterable<Trio<jq_Method, Register, jq_Type>> res = view
 				.getAry3ValTuples();
@@ -592,7 +599,19 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			Register r = trio.val1;
 			System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
 			P2Set p2Set = query(meth.getDeclaringClass(), meth, r);
-			StringUtil.reportInfo("p2Set...for." + r + ":" + p2Set);
+			StringUtil.reportInfo("[Scuba]p2Set of " + r + ":" + p2Set);
+			
+			//p2set of r in chord.
+			RelView viewChord = relDVH.getView();
+			viewChord.selectAndDelete(0, r);
+			Iterable<Quad> resChord = viewChord.getAry1ValTuples();
+			Set<Quad> pts = SetUtils.newSet(viewChord.size());
+			// no filter, add all
+			for (Quad inst : resChord)
+				pts.add(inst);
+
+			StringUtil.reportInfo("[Chord]p2Set of " + r + ":" + pts);
+
 		}
 
 		if (G.dbgQuery) {
