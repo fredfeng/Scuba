@@ -256,9 +256,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				if (G.dbgPermission) {
 					StringUtil.reportInfo("Evils:[" + G.countScc
 							+ "] begin regular node");
-					int i = SummariesEnv.v().getSummary(m).getHeapSize();
-					StringUtil.reportInfo("Evils:[" + G.countScc + "] size ["
-							+ i + "]" + " method: " + m);
+					Summary sum = SummariesEnv.v().getSummary(m);
+					if (sum != null) {
+						int i = sum.getHeapSize();
+						StringUtil.reportInfo("Evils:[" + G.countScc
+								+ "] size [" + i + "]" + " method: " + m);
+					} else {
+						StringUtil.reportInfo("Evils:[" + G.countScc
+								+ "] no IR" + " method: " + m);
+					}
 				}
 			}
 		} else {
