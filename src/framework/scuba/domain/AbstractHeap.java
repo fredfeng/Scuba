@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -1326,7 +1327,6 @@ public class AbstractHeap {
 				HeapObject newDst1 = (HeapObject) newDst;
 
 				assert (newDst1 != null) : "null!";
-				long s1 = System.nanoTime();
 				BoolExpr cst1 = instnSrc.getConstraint(newSrc);
 				BoolExpr cst2 = instnDst.getConstraint(newDst);
 				BoolExpr cst = ConstraintManager.intersect(
@@ -1338,6 +1338,18 @@ public class AbstractHeap {
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 				Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 						newSrc, field);
+
+				if (!SummariesEnv.v().propLocals) {
+					// do not propagate locals-->alloc
+					if (newSrc instanceof LocalVarElem
+							&& newDst1 instanceof AllocElem
+							&& ((AllocElem) newDst1).length() == SummariesEnv
+									.v().allocDepth
+							&& ConstraintManager.isTrue(cst)) {
+						SummariesEnv.v().cacheLocals(((LocalVarElem) newSrc),
+								((AllocElem) newDst1));
+					}
+				}
 
 				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
 						new P2Set(newDst1, cst));
@@ -1564,12 +1576,7 @@ public class AbstractHeap {
 					.keySet()) {
 				AbstractMemLoc loc = pair.val0;
 				FieldElem field = pair.val1;
-				// if not propagating locals
-				if (!SummariesEnv.v().propLocals) {
-					if (loc.isNotArgDerived()) {
-						continue;
-					}
-				}
+
 				// otherwise do the instantiation
 				if (G.dbgRet) {
 					StringUtil.reportInfo("dbg Ret: " + " to instantiate: "
@@ -1615,37 +1622,55 @@ public class AbstractHeap {
 		}
 		// this is the real updating
 		if (!isRecursive) {
-			int it = 0;
+			int itt = 0;
 			while (true) {
-				it++;
+				itt++;
 				if (G.dbgMatch) {
 					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
 							+ SummaryBasedAnalysis.cgProgress + " BB: "
 							+ IntraProcSumAnalysis.bbProgress + " ]");
 					StringUtil.reportInfo("Sunny -- Invoke progress: "
 							+ "instantiation for NOT recursive iteration: "
-							+ it + "-th");
+							+ itt + "-th");
 				}
 				boolean go = false;
-				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
-						.keySet()) {
-					AbstractMemLoc src = pair.val0;
-					FieldElem f = pair.val1;
-					// propagation control for locals
-					if (!SummariesEnv.v().propLocals) {
-						if (src.isNotArgDerived()) {
-							continue;
-						}
-					}
-					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
-					for (HeapObject tgt : tgts.getHeapObjects()) {
 
+				Iterator<Map.Entry<Pair<AbstractMemLoc, FieldElem>, P2Set>> it = calleeHeap.heapObjectsToP2Set
+						.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry<Pair<AbstractMemLoc, FieldElem>, P2Set> entry = it
+							.next();
+					Pair<AbstractMemLoc, FieldElem> key = entry.getKey();
+					P2Set tgts = entry.getValue();
+					AbstractMemLoc src = key.val0;
+					FieldElem f = key.val1;
+
+					Iterator<Map.Entry<HeapObject, BoolExpr>> it1 = tgts
+							.iterator();
+					while (it1.hasNext()) {
+						Map.Entry<HeapObject, BoolExpr> entry1 = it1.next();
+						HeapObject tgt = entry1.getKey();
 						go = this.instantiateEdgeNoNumbering(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst) | go;
 						ret = ret | go;
-
 					}
 				}
+
+				// for (Pair<AbstractMemLoc, FieldElem> pair :
+				// calleeHeap.heapObjectsToP2Set
+				// .keySet()) {
+				// AbstractMemLoc src = pair.val0;
+				// FieldElem f = pair.val1;
+				//
+				// P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
+				// for (HeapObject tgt : tgts.getHeapObjects()) {
+				//
+				// go = this.instantiateEdgeNoNumbering(src, tgt, f,
+				// memLocInstn, calleeHeap, point, typeCst) | go;
+				// ret = ret | go;
+				//
+				// }
+				// }
 				if (G.dbgMatch) {
 					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
 							+ SummaryBasedAnalysis.cgProgress + " BB: "
@@ -1675,12 +1700,7 @@ public class AbstractHeap {
 						.keySet()) {
 					AbstractMemLoc src = pair.val0;
 					FieldElem f = pair.val1;
-					// propagation control for locals
-					if (!SummariesEnv.v().propLocals) {
-						if (src.isNotArgDerived()) {
-							continue;
-						}
-					}
+
 					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
 					Set<Pair<AbstractMemLoc, P2Set>> toAdd = new HashSet<Pair<AbstractMemLoc, P2Set>>();
 					for (HeapObject tgt : tgts.getHeapObjects()) {

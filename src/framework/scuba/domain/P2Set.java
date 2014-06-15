@@ -1,12 +1,11 @@
 package framework.scuba.domain;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Z3Exception;
-import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.helper.ConstraintManager;
 
@@ -196,5 +195,9 @@ public class P2Set {
 		}
 		ret.append("}");
 		return ret.toString();
+	}
+
+	Iterator<Map.Entry<HeapObject, BoolExpr>> iterator() {
+		return p2Set.entrySet().iterator();
 	}
 }

@@ -2,6 +2,7 @@ package framework.scuba.domain;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,18 +69,6 @@ public class SummariesEnv {
 
 	// disable constraint instantiate.
 	protected boolean disableCst = false;
-
-	public boolean propLocals() {
-		return propLocals;
-	}
-
-	public void setPropLocals() {
-		propLocals = true;
-	}
-
-	public void resetPropLocals() {
-		propLocals = false;
-	}
 
 	public boolean disableCst() {
 		return disableCst;
@@ -185,5 +174,15 @@ public class SummariesEnv {
 
 	public boolean isInBlacklist(String blk) {
 		return Arrays.asList(blklist).contains(blk);
+	}
+
+	public Set<AllocElem> cacheLocals(LocalVarElem local, AllocElem allocT) {
+		Set<AllocElem> ret = localsToAlloc.get(local);
+		if (ret == null) {
+			ret = new HashSet<AllocElem>();
+			localsToAlloc.put(local, ret);
+		}
+		ret.add(allocT);
+		return ret;
 	}
 }
