@@ -1621,7 +1621,7 @@ public class AbstractHeap {
 					+ "the callee size: " + s);
 		}
 		// this is the real updating
-		if (!isRecursive) {
+//		if (!isRecursive) {
 			int itt = 0;
 			while (true) {
 				itt++;
@@ -1683,54 +1683,57 @@ public class AbstractHeap {
 					break;
 				}
 			}
-		} else {
-			int it = 0;
-			while (true) {
-				it++;
-				if (G.dbgMatch) {
-					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
-							+ SummaryBasedAnalysis.cgProgress + " BB: "
-							+ IntraProcSumAnalysis.bbProgress + " ]");
-					StringUtil.reportInfo("Sunny -- Invoke progress: "
-							+ "instantiation for recursive iteration: " + it
-							+ "-th");
-				}
-				boolean go = false;
-				for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.heapObjectsToP2Set
-						.keySet()) {
-					AbstractMemLoc src = pair.val0;
-					FieldElem f = pair.val1;
-
-					P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
-					Set<Pair<AbstractMemLoc, P2Set>> toAdd = new HashSet<Pair<AbstractMemLoc, P2Set>>();
-					for (HeapObject tgt : tgts.getHeapObjects()) {
-						this.instantiateEdgeNoNumberingForRecursiveCall(src,
-								tgt, f, memLocInstn, calleeHeap, point,
-								typeCst, toAdd);
-					}
-					for (Pair<AbstractMemLoc, P2Set> pair1 : toAdd) {
-						AbstractMemLoc newSrc = pair1.val0;
-						P2Set newP2Set = pair1.val1;
-						Pair<AbstractMemLoc, FieldElem> pair2 = new Pair<AbstractMemLoc, FieldElem>(
-								newSrc, f);
-						go = weakUpdateNoNumbering(pair2, newP2Set).val0 | go;
-						ret = ret | go;
-					}
-				}
-				if (G.dbgMatch) {
-					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
-							+ SummaryBasedAnalysis.cgProgress + " BB: "
-							+ IntraProcSumAnalysis.bbProgress + " ]");
-					StringUtil.reportInfo("Sunny -- Invoke progress: "
-							+ "instantiation for recursive iteration: " + it
-							+ "-th" + " result: " + go);
-				}
-				if (!go) {
-					break;
-				}
-			}
-
-		}
+		// } else {
+		// int itt = 0;
+		// while (true) {
+		// itt++;
+		// if (G.dbgMatch) {
+		// StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+		// + SummaryBasedAnalysis.cgProgress + " BB: "
+		// + IntraProcSumAnalysis.bbProgress + " ]");
+		// StringUtil.reportInfo("Sunny -- Invoke progress: "
+		// + "instantiation for recursive iteration: " + itt
+		// + "-th");
+		// }
+		// boolean go = false;
+		// for (Pair<AbstractMemLoc, FieldElem> pair :
+		// calleeHeap.heapObjectsToP2Set
+		// .keySet()) {
+		// AbstractMemLoc src = pair.val0;
+		// FieldElem f = pair.val1;
+		//
+		// P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
+		// Set<Pair<AbstractMemLoc, P2Set>> toAdd = new
+		// HashSet<Pair<AbstractMemLoc, P2Set>>();
+		// for (HeapObject tgt : tgts.getHeapObjects()) {
+		// this.instantiateEdgeNoNumberingForRecursiveCall(src,
+		// tgt, f, memLocInstn, calleeHeap, point,
+		// typeCst, toAdd);
+		// }
+		// for (Pair<AbstractMemLoc, P2Set> pair1 : toAdd) {
+		// AbstractMemLoc newSrc = pair1.val0;
+		// P2Set newP2Set = pair1.val1;
+		// Pair<AbstractMemLoc, FieldElem> pair2 = new Pair<AbstractMemLoc,
+		// FieldElem>(
+		// newSrc, f);
+		// go = weakUpdateNoNumbering(pair2, newP2Set).val0 | go;
+		// ret = ret | go;
+		// }
+		// }
+		// if (G.dbgMatch) {
+		// StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
+		// + SummaryBasedAnalysis.cgProgress + " BB: "
+		// + IntraProcSumAnalysis.bbProgress + " ]");
+		// StringUtil.reportInfo("Sunny -- Invoke progress: "
+		// + "instantiation for recursive iteration: " + itt
+		// + "-th" + " result: " + go);
+		// }
+		// if (!go) {
+		// break;
+		// }
+		// }
+		//
+		// }
 
 		return ret;
 	}
