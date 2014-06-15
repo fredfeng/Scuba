@@ -30,6 +30,8 @@ public class G {
 
 	public static boolean dbgPermission = true;
 
+	public static boolean dbgQuery = true;
+
 	public static int sample = 4244;
 
 	// flag to tune performance.

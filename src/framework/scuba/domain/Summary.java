@@ -1380,20 +1380,23 @@ public class Summary {
 				+ " out of " + total);
 		StringUtil.reportInfo(s + ": Alloc --> AccessPath: " + alloc2AP
 				+ " out of " + total);
-
 	}
 
-	public P2Set getP2Set(jq_Class clazz, jq_Method method, Register variable) {
-		LocalVarElem local = absHeap.getLocalVarElem(clazz, method, variable);
+	public LocalVarElem getLocalVarElem(jq_Class clazz, jq_Method method,
+			Register variable) {
+		return absHeap.getLocalVarElem(clazz, method, variable);
+	}
+
+	public P2Set getP2Set(LocalVarElem local) {
 		assert (local != null);
-		assert (absHeap.heapObjectsToP2Set
-				.containsKey(new Pair<AbstractMemLoc, FieldElem>(local,
-						EpsilonFieldElem.getEpsilonFieldElem()))) : ""
-				+ "the entry method does not contain this local!";
+		// assert (absHeap.heapObjectsToP2Set
+		// .containsKey(new Pair<AbstractMemLoc, FieldElem>(local,
+		// EpsilonFieldElem.getEpsilonFieldElem()))) : ""
+		// + "the entry method does not contain this local!";
 		P2Set ret = absHeap.heapObjectsToP2Set
 				.get(new Pair<AbstractMemLoc, FieldElem>(local,
 						EpsilonFieldElem.getEpsilonFieldElem()));
-		assert (ret != null);
+		// assert (ret != null);
 		return ret;
 	}
 

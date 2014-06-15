@@ -34,6 +34,7 @@ import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.FieldElem;
 import framework.scuba.domain.HeapObject;
+import framework.scuba.domain.LocalVarElem;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
@@ -525,8 +526,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	public P2Set query(jq_Class clazz, jq_Method method, Register variable) {
 		jq_Method entry = Program.g().getMainMethod();
 		Summary sum = SummariesEnv.v().getSummary(entry);
+		if (G.dbgQuery) {
+			StringUtil.reportInfo("Query: " + " size of sum: "
+					+ sum.getHeapSize());
+		}
 		assert (sum != null) : "the entry method should have a summary!";
-		P2Set ret = sum.getP2Set(clazz, method, variable);
+		Summary sum1 = SummariesEnv.v().getSummary(method);
+		assert (sum1 != null) : "the method of the variable should have a summary!";
+		LocalVarElem local = sum.getLocalVarElem(clazz, method, variable);
+		P2Set ret = sum.getP2Set(local);
 		return ret;
 	}
 
