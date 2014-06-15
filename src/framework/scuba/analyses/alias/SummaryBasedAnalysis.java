@@ -542,21 +542,23 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	}
 	
 	//downcast analysis.
-	public void downcast(){
-		if(!relDcm.isOpen())
+	public void downcast() {
+		if (!relDcm.isOpen())
 			relDcm.load();
-		
-        RelView view = relDcm.getView();
+
+		RelView view = relDcm.getView();
 		Iterable<Trio<jq_Method, Register, jq_Type>> res = view
 				.getAry3ValTuples();
-		
+
 		StringUtil.reportInfo("Number of downcast: " + relDcm.size());
-		for(Trio<jq_Method, Register, jq_Type> trio : res) {
-			System.out.println(trio.val0 + " reg: " + trio.val1 + " Type: " + trio.val2);
-			P2Set p2Set = query(trio.val0.getDeclaringClass(), trio.val0, trio.val1);
-			System.out.println("p2Set...for." + trio.val1 + ":" + p2Set);
+		for (Trio<jq_Method, Register, jq_Type> trio : res) {
+			jq_Method meth = trio.val0;
+			Register r = trio.val1;
+			System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
+			P2Set p2Set = query(meth.getDeclaringClass(), meth, r);
+			StringUtil.reportInfo("p2Set...for." + r + ":" + p2Set);
 		}
-		
+
 	}
 
 	public void dumpStatistics() {
