@@ -3,6 +3,7 @@ package framework.scuba.analyses.alias;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -397,18 +398,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			}
 		}
 
-		LinkedList<jq_Method> wl = new LinkedList<jq_Method>();
+		// Set<jq_Method> wl = new HashSet<jq_Method>();
+		Set<jq_Method> wl = new LinkedHashSet<jq_Method>();
 		// add all methods to worklist
 		wl.addAll(scc);
-		/*
-		 * while(wl is not empty) { gamma = worker.getSummary(); m =
-		 * worklist.poll(); analyze(m); reset gammaNew = m.getSummary();
-		 * if(gammaNew == gamma) set else reset add pred(unterminated) }
-		 */
-		Set<jq_Method> set = new HashSet<jq_Method>();
-		cgProgress = 0;
+
 		int times = 0;
-		while (true) {
+
+		while (!wl.isEmpty()) {
+
 			times++;
 
 			if (G.dbgPermission) {
@@ -437,45 +435,22 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				}
 			}
 
-			if (G.dbgMatch) {
-				StringUtil.reportInfo("Sunny -- CG progress: " + set.size()
-						+ " out of " + scc.size());
-				StringUtil.reportInfo("Sunny -- CG progress: " + " iteration: "
-						+ ++cgProgress + "-th");
-			}
-			jq_Method worker = wl.poll();
-			if (set.contains(worker))
-				continue;
-			if (G.dbgMatch) {
-				StringUtil.reportInfo("Sunny -- CG progress: "
-						+ "handling method: " + worker);
-			}
+			jq_Method worker = wl.iterator().next();
+			wl.remove(worker);
+
+			if (G.tuning)
+				StringUtil.reportInfo("SCC counter: " + wl.size() + ":"
+						+ worker);
 
 			boolean changed = analyze(worker);
 
-			if (G.dbgMatch) {
-				StringUtil.reportInfo("Sunny -- CG progress: "
-						+ "finish method: " + worker + " result: " + changed);
+			if (changed) {
+				for (jq_Method pred : callGraph.getPreds(worker))
+					if (scc.contains(pred))
+						wl.add(pred);
 			}
 
-			if (changed)
-				set.clear();
-			else
-				set.add(worker);
-
-			if (G.tuning)
-				StringUtil.reportInfo("SCC counter: " + set.size() + ":"
-						+ worker);
-
-			if (set.size() == scc.size())
-				break;
-
-			for (jq_Method pred : callGraph.getPreds(worker))
-				if (scc.contains(pred))
-					wl.add(pred);
 		}
-
-		inS = false;
 	}
 
 	/* This method will be invoked by Chord automatically. */

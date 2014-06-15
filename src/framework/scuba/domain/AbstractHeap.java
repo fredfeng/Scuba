@@ -1187,6 +1187,10 @@ public class AbstractHeap {
 		assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
+		if (src.isNotArgDerived() || src instanceof RetElem) {
+			return ret;
+		}
+
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";
 		// instantiate the calleeCst
@@ -1225,19 +1229,6 @@ public class AbstractHeap {
 
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 
-				if (!SummariesEnv.v().propLocals) {
-					// do not propagate locals-->alloc
-					if (newSrc instanceof LocalVarElem
-							&& newDst1 instanceof AllocElem
-							&& ((AllocElem) newDst1).length() == SummariesEnv
-									.v().allocDepth
-							&& ConstraintManager.isTrue(cst)) {
-						SummariesEnv.v().cacheLocals(((LocalVarElem) newSrc),
-								((AllocElem) newDst1));
-						continue;
-					}
-				}
-
 				toAdd.add(new Pair<AbstractMemLoc, P2Set>(newSrc, new P2Set(
 						newDst1, cst)));
 			}
@@ -1256,6 +1247,10 @@ public class AbstractHeap {
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
 		assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
+
+		if (src.isNotArgDerived() || src instanceof RetElem) {
+			return ret;
+		}
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";
@@ -1294,19 +1289,6 @@ public class AbstractHeap {
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 				Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 						newSrc, field);
-
-				if (!SummariesEnv.v().propLocals) {
-					// do not propagate locals-->alloc
-					if (newSrc instanceof LocalVarElem
-							&& newDst1 instanceof AllocElem
-							&& ((AllocElem) newDst1).length() == SummariesEnv
-									.v().allocDepth
-							&& ConstraintManager.isTrue(cst)) {
-						SummariesEnv.v().cacheLocals(((LocalVarElem) newSrc),
-								((AllocElem) newDst1));
-						continue;
-					}
-				}
 
 				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
 						new P2Set(newDst1, cst));
