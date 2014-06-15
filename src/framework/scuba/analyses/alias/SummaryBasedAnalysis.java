@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
@@ -250,7 +251,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			if (node.getSuccessors().contains(node)) {
 				analyzeSCC(node);
 			} else {
-				analyze(scc.iterator().next());
+				jq_Method m = scc.iterator().next();
+				analyze(m);
+				if (G.dbgPermission) {
+					StringUtil.reportInfo("Evils:[" + G.countScc
+							+ "] begin regular node");
+					int i = SummariesEnv.v().getSummary(m).getHeapSize();
+					StringUtil.reportInfo("Evils:[" + G.countScc + "] size ["
+							+ i + "]" + " method: " + m);
+				}
 			}
 		} else {
 			analyzeSCC(node);
@@ -379,19 +388,24 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		Set<jq_Method> scc = nodeToScc.get(node);
 
 		if (G.dbgPermission) {
-			if (G.countScc == G.sample) {
-				StringUtil.reportInfo("Evils: begin SCC");
-				Map<jq_Method, Integer> evils = new HashMap<jq_Method, Integer>();
-				for (jq_Method m : scc) {
-					Summary sum = SummariesEnv.v().getSummary(m);
-					if (sum == null) {
-						continue;
-					}
-					evils.put(m, sum.getHeapSize());
+			StringUtil.reportInfo("Evils:[" + G.countScc + "] begin SCC");
+			Map<Integer, Set<jq_Method>> evils = new TreeMap<Integer, Set<jq_Method>>();
+			for (jq_Method m : scc) {
+				Summary sum = SummariesEnv.v().getSummary(m);
+				if (sum == null) {
+					continue;
 				}
-				for (jq_Method m : evils.keySet()) {
-					StringUtil.reportInfo("Evils: " + "Method: " + m + "---"
-							+ " Size:" + evils.get(m));
+				Set<jq_Method> s = evils.get(sum.getHeapSize());
+				if (s == null) {
+					s = new HashSet<jq_Method>();
+					evils.put(sum.getHeapSize(), s);
+				}
+			}
+			for (int i : evils.keySet()) {
+				Set<jq_Method> s = evils.get(i);
+				for (jq_Method m : s) {
+					StringUtil.reportInfo("Evils:[" + G.countScc + "]size ["
+							+ i + "]" + " method: " + m);
 				}
 			}
 		}
@@ -409,24 +423,32 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		int times = 0;
 		while (true) {
 			times++;
+
 			if (G.dbgPermission) {
-				if (G.countScc == G.sample) {
-					StringUtil.reportInfo("Evils: begin Iteration [" + times
-							+ "]");
-					Map<jq_Method, Integer> evils = new HashMap<jq_Method, Integer>();
-					for (jq_Method m : scc) {
-						Summary sum = SummariesEnv.v().getSummary(m);
-						if (sum == null) {
-							continue;
-						}
-						evils.put(m, sum.getHeapSize());
+				StringUtil.reportInfo("Evils:[" + G.countScc
+						+ "] begin Iteration [" + times + "]");
+				Map<Integer, Set<jq_Method>> evils = new TreeMap<Integer, Set<jq_Method>>();
+				for (jq_Method m : scc) {
+					Summary sum = SummariesEnv.v().getSummary(m);
+					if (sum == null) {
+						continue;
 					}
-					for (jq_Method m : evils.keySet()) {
-						StringUtil.reportInfo("Evils: " + "Method: " + m
-								+ "---" + " Size:" + evils.get(m));
+					Set<jq_Method> s = evils.get(sum.getHeapSize());
+					if (s == null) {
+						s = new HashSet<jq_Method>();
+						evils.put(sum.getHeapSize(), s);
 					}
 				}
+				for (int i : evils.keySet()) {
+					Set<jq_Method> s = evils.get(i);
+					for (jq_Method m : s) {
+						StringUtil.reportInfo("Evils:[" + G.countScc
+								+ "] size [" + i + "]" + " method: " + m);
+					}
+
+				}
 			}
+
 			if (G.dbgMatch) {
 				StringUtil.reportInfo("Sunny -- CG progress: " + set.size()
 						+ " out of " + scc.size());
