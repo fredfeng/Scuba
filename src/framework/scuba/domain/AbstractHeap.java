@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
@@ -20,8 +19,6 @@ import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 
-import framework.scuba.analyses.alias.SummaryBasedAnalysis;
-import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
@@ -1183,8 +1180,6 @@ public class AbstractHeap {
 			ProgramPoint point, BoolExpr typeCst,
 			Set<Pair<AbstractMemLoc, P2Set>> toAdd) {
 
-		long startInstEdge = System.nanoTime();
-
 		boolean ret = false;
 
 		assert (src != null && dst != null && field != null) : "nulls!";
@@ -1197,16 +1192,8 @@ public class AbstractHeap {
 		// instantiate the calleeCst
 		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
-		long startInstLoc = System.nanoTime();
 		InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this, point);
 		InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this, point);
-
-		if (G.dbgSCC) {
-			StringUtil.reportInfo("Bug: instantiate to : " + instnSrc.size()
-					* instnDst.size() + " edges ");
-		}
-		long endInstLoc = System.nanoTime();
-		G.instLocTimePerEdges += (endInstLoc - startInstLoc);
 
 		assert (instnDst != null) : "instantiation of dst cannot be null!";
 		if (instnSrc == null) {
@@ -1217,16 +1204,10 @@ public class AbstractHeap {
 		if (instnSrc == null) {
 			return ret;
 		}
-		G.instToEdges = 0;
-		G.instToEdges += (instnSrc.size() * instnDst.size());
 
-		int it = 0;
 		for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
 			for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
-				if (G.dbgSCC) {
-					StringUtil.reportInfo("Bug: This is the " + ++it
-							+ "-th iteration");
-				}
+
 				assert (newDst instanceof HeapObject) : ""
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
@@ -1244,27 +1225,22 @@ public class AbstractHeap {
 
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 
-				// Pair<AbstractMemLoc, FieldElem> pair = new
-				// Pair<AbstractMemLoc, FieldElem>(
-				// newSrc, field);
+				if (!SummariesEnv.v().propLocals) {
+					// do not propagate locals-->alloc
+					if (newSrc instanceof LocalVarElem
+							&& newDst1 instanceof AllocElem
+							&& ((AllocElem) newDst1).length() == SummariesEnv
+									.v().allocDepth
+							&& ConstraintManager.isTrue(cst)) {
+						SummariesEnv.v().cacheLocals(((LocalVarElem) newSrc),
+								((AllocElem) newDst1));
+						continue;
+					}
+				}
 
 				toAdd.add(new Pair<AbstractMemLoc, P2Set>(newSrc, new P2Set(
 						newDst1, cst)));
-
-				// Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
-				// new P2Set(newDst1, cst));
-
-				// ret = ret | ret1.val0;
 			}
-		}
-
-		if (G.tuning) {
-			long endtInstEdge = System.nanoTime();
-			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
-			G.instEdgeTime += (endtInstEdge - startInstEdge);
-			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
-			StringUtil.reportInfo("Number of edges in the caller: "
-					+ G.instToEdges);
 		}
 
 		return ret;
@@ -1334,6 +1310,7 @@ public class AbstractHeap {
 							&& ConstraintManager.isTrue(cst)) {
 						SummariesEnv.v().cacheLocals(((LocalVarElem) newSrc),
 								((AllocElem) newDst1));
+						continue;
 					}
 				}
 
@@ -1417,6 +1394,20 @@ public class AbstractHeap {
 
 					Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 							newSrc, field);
+
+					if (!SummariesEnv.v().propLocals) {
+						// do not propagate locals-->alloc
+						if (newSrc instanceof LocalVarElem
+								&& newDst1 instanceof AllocElem
+								&& ((AllocElem) newDst1).length() == SummariesEnv
+										.v().allocDepth
+								&& ConstraintManager.isTrue(cst)) {
+							SummariesEnv.v().cacheLocals(
+									((LocalVarElem) newSrc),
+									((AllocElem) newDst1));
+							continue;
+						}
+					}
 					Pair<Boolean, Boolean> ret1 = weakUpdateForRecursiveCall(
 							pair, new P2Set(newDst1, cst), numToAssign,
 							isInSCC, toAdd);
@@ -1525,26 +1516,11 @@ public class AbstractHeap {
 		return new Pair<Boolean, Boolean>(ret, ret2);
 	}
 
-	public static int no = 0;
-	public static int no1 = 0;
-	public static long inst_time = 0;
-	public static long inst_cst_time = 0;
-	public static long inst_wu_time = 0;
-
 	protected boolean handleInvokeStmtNoNumbering(jq_Class clazz,
 			jq_Method method, int line, AbstractHeap calleeHeap,
 			MemLocInstantiation memLocInstn, BoolExpr typeCst, int numToAssign,
 			boolean isInSCC) {
-		if (G.dbgRet) {
-			StringUtil.reportInfo("the mem loc instantation");
-			memLocInstn.print();
-		}
 
-		no++;
-		if (G.dbgSCC) {
-			StringUtil.reportInfo("Rain: [" + G.countScc + "] this is in the "
-					+ no + "-th handle invoke.");
-		}
 		boolean ret = false;
 
 		ProgramPoint point = Env.getProgramPoint(clazz, method, line);
@@ -1555,38 +1531,9 @@ public class AbstractHeap {
 			isRecursive = true;
 		}
 
-		if (G.dbgMatch) {
-			StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
-					+ SummaryBasedAnalysis.cgProgress + " BB: "
-					+ IntraProcSumAnalysis.bbProgress + " ]");
-			StringUtil.reportInfo("Sunny -- Invoke progress: "
-					+ "is Recursive: " + isRecursive);
-			int s = 0;
-			for (Pair pair : this.heapObjectsToP2Set.keySet()) {
-				s += this.heapObjectsToP2Set.get(pair).size();
-			}
-			StringUtil.reportInfo("Sunny -- Invoke progress: "
-					+ "current caller heap size: " + s);
-			s = 0;
-			for (Pair pair : calleeHeap.heapObjectsToP2Set.keySet()) {
-				s += calleeHeap.heapObjectsToP2Set.get(pair).size();
-			}
-			StringUtil.reportInfo("Sunny -- Invoke progress: "
-					+ "the callee size: " + s);
-		}
 		// this is the real updating
 		if (!isRecursive) {
-			int itt = 0;
 			while (true) {
-				itt++;
-				if (G.dbgMatch) {
-					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
-							+ SummaryBasedAnalysis.cgProgress + " BB: "
-							+ IntraProcSumAnalysis.bbProgress + " ]");
-					StringUtil.reportInfo("Sunny -- Invoke progress: "
-							+ "instantiation for NOT recursive iteration: "
-							+ itt + "-th");
-				}
 				boolean go = false;
 
 				Iterator<Map.Entry<Pair<AbstractMemLoc, FieldElem>, P2Set>> it = calleeHeap.heapObjectsToP2Set
@@ -1610,36 +1557,12 @@ public class AbstractHeap {
 					}
 				}
 
-				// for (Pair<AbstractMemLoc, FieldElem> pair :
-				// calleeHeap.heapObjectsToP2Set
-				// .keySet()) {
-				// AbstractMemLoc src = pair.val0;
-				// FieldElem f = pair.val1;
-				//
-				// P2Set tgts = calleeHeap.heapObjectsToP2Set.get(pair);
-				// for (HeapObject tgt : tgts.getHeapObjects()) {
-				//
-				// go = this.instantiateEdgeNoNumbering(src, tgt, f,
-				// memLocInstn, calleeHeap, point, typeCst) | go;
-				// ret = ret | go;
-				//
-				// }
-				// }
-				if (G.dbgMatch) {
-					StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
-							+ SummaryBasedAnalysis.cgProgress + " BB: "
-							+ IntraProcSumAnalysis.bbProgress + " ]");
-					StringUtil.reportInfo("Sunny -- Invoke progress: "
-							+ "instantiation for NOT recursive iteration: "
-							+ it + "-th" + " result: " + go);
-				}
 				if (!go) {
 					break;
 				}
 			}
 		} else {
 			while (true) {
-
 				boolean go = false;
 				Map<Pair<AbstractMemLoc, FieldElem>, Set<Pair<AbstractMemLoc, P2Set>>> result = new HashMap<Pair<AbstractMemLoc, FieldElem>, Set<Pair<AbstractMemLoc, P2Set>>>();
 
@@ -2282,10 +2205,7 @@ public class AbstractHeap {
 			currentP2Set = new P2Set();
 			heapObjectsToP2Set.put(pair, currentP2Set);
 		}
-		long s1 = System.nanoTime();
 		ret.val0 = currentP2Set.join(p2Set);
-		long s2 = System.nanoTime();
-		inst_cst_time += (s2 - s1);
 		return ret;
 	}
 
