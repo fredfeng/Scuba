@@ -325,14 +325,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		Summary summary = SummariesEnv.v().initSummary(m);
 		summary.setChanged(false);
 		intrapro.setSummary(summary);
-		
-		//check blacklist methods.
+
+		// check blacklist methods.
 		if (SummariesEnv.v().openBlklist()
 				&& SummariesEnv.v().isInBlacklist(m.toString())) {
 			StringUtil.reportInfo("add to blacklist: " + m.toString());
 			return false;
 		}
-		
+
 		// set intrapro's number counter to be the counter of the last time the
 		// summary is concluded, so that it will continue numbering from the
 		// last time, to keep the numbers increasing
