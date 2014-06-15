@@ -1104,11 +1104,11 @@ public class Summary {
 							&& (callsite.getMethod().getNameAndDesc()
 									.equals(tgt.getNameAndDesc()))) {
 						continue;
-//						if (!tgtType.equals(callsite.getMethod()
-//								.getDeclaringClass())) {
-//							StringUtil.reportInfo("Cheating...." + pair.val1);
-//							continue;
-//						}
+						// if (!tgtType.equals(callsite.getMethod()
+						// .getDeclaringClass())) {
+						// StringUtil.reportInfo("Cheating...." + pair.val1);
+						// continue;
+						// }
 					}
 				}
 
@@ -1183,7 +1183,8 @@ public class Summary {
 				if (dySum == null) {
 					if (G.debug4Sum) {
 						System.err
-								.println("Unreachable method because of missing model."+ tgt);
+								.println("Unreachable method because of missing model."
+										+ tgt);
 					}
 					continue;
 				}
@@ -1229,7 +1230,8 @@ public class Summary {
 	 * 
 	 * @return
 	 */
-	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT, Set<jq_Method> tgtSet) {
+	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT,
+			Set<jq_Method> tgtSet) {
 		if (SummariesEnv.v().disableCst())
 			return ConstraintManager.genTrue();
 		// 1. Base case: No subtype of T override m: type(o) <= T
@@ -1384,7 +1386,13 @@ public class Summary {
 	public P2Set getP2Set(jq_Class clazz, jq_Method method, Register variable) {
 		LocalVarElem local = absHeap.getLocalVarElem(clazz, method, variable);
 		assert (local != null);
-		P2Set ret = absHeap.heapObjectsToP2Set.get(local);
+		assert (absHeap.heapObjectsToP2Set
+				.containsKey(new Pair<AbstractMemLoc, FieldElem>(local,
+						EpsilonFieldElem.getEpsilonFieldElem()))) : ""
+				+ "the entry method does not contain this local!";
+		P2Set ret = absHeap.heapObjectsToP2Set
+				.get(new Pair<AbstractMemLoc, FieldElem>(local,
+						EpsilonFieldElem.getEpsilonFieldElem()));
 		assert (ret != null);
 		return ret;
 	}

@@ -1,10 +1,9 @@
 package framework.scuba.analyses.alias;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +28,6 @@ import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Z3Exception;
-import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractMemLoc;
@@ -392,15 +389,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			}
 		}
 
-		Set<jq_Method> wl = new HashSet<jq_Method>();
+		// Set<jq_Method> wl = new HashSet<jq_Method>();
+		Set<jq_Method> wl = new LinkedHashSet<jq_Method>();
 		// add all methods to worklist
 		wl.addAll(scc);
-		/*
-		 * while(wl is not empty) { gamma = worker.getSummary(); m =
-		 * worklist.poll(); analyze(m); reset gammaNew = m.getSummary();
-		 * if(gammaNew == gamma) set else reset add pred(unterminated) }
-		 */
-		cgProgress = 0;
+
 		int times = 0;
 
 		while (!wl.isEmpty()) {
