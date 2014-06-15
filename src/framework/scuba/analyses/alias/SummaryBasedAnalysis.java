@@ -12,6 +12,7 @@ import java.util.TreeMap;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
@@ -19,13 +20,16 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.alias.CICG;
 import chord.analyses.alias.ICICG;
 import chord.analyses.method.DomM;
+import chord.bddbddb.Rel.RelView;
 import chord.program.Program;
 import chord.project.Chord;
 import chord.project.ClassicProject;
 import chord.project.OutDirUtils;
 import chord.project.analyses.JavaAnalysis;
 import chord.project.analyses.ProgramRel;
+import chord.util.SetUtils;
 import chord.util.tuple.object.Pair;
+import chord.util.tuple.object.Trio;
 
 import com.microsoft.z3.BoolExpr;
 
@@ -50,7 +54,7 @@ import framework.scuba.utils.StringUtil;
  * SCC 3. Run the worklist algorithm author: Yu Feng email: yufeng@cs.utexas.edu
  */
 
-@Chord(name = "sum-java", consumes = { "rootM", "reachableM", "IM", "MM", "cha" })
+@Chord(name = "sum-java", consumes = { "rootM", "reachableM", "IM", "MM", "cha", "dcm" })
 public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	protected DomM domM;
@@ -59,6 +63,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relIM;
 	protected ProgramRel relMM;
 	protected ProgramRel relCHA;
+	protected ProgramRel relDcm;
+
 
 	protected CICG callGraph;
 
@@ -78,6 +84,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// dump interesting stats
 		dumpStatistics();
+		
+		// perform downcast analysis
+		downcast();
 	}
 
 	private void sumAnalyze() {
@@ -453,6 +462,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relIM = (ProgramRel) ClassicProject.g().getTrgt("IM");
 		relMM = (ProgramRel) ClassicProject.g().getTrgt("MM");
 		relCHA = (ProgramRel) ClassicProject.g().getTrgt("cha");
+		relDcm = (ProgramRel) ClassicProject.g().getTrgt("dcm");
+
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
 
@@ -536,6 +547,26 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		LocalVarElem local = sum.getLocalVarElem(clazz, method, variable);
 		P2Set ret = sum.getP2Set(local);
 		return ret;
+	}
+	
+	//downcast analysis.
+	public void downcast() {
+		if (!relDcm.isOpen())
+			relDcm.load();
+
+		RelView view = relDcm.getView();
+		Iterable<Trio<jq_Method, Register, jq_Type>> res = view
+				.getAry3ValTuples();
+
+		StringUtil.reportInfo("Number of downcast: " + relDcm.size());
+		for (Trio<jq_Method, Register, jq_Type> trio : res) {
+			jq_Method meth = trio.val0;
+			Register r = trio.val1;
+			System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
+			P2Set p2Set = query(meth.getDeclaringClass(), meth, r);
+			StringUtil.reportInfo("p2Set...for." + r + ":" + p2Set);
+		}
+
 	}
 
 	public void dumpStatistics() {
