@@ -55,6 +55,11 @@ public class P2Set {
 				BoolExpr newCst = ConstraintManager.union(p2Set.get(obj),
 						otherCst);
 
+				// TODO
+				// remove the edges with false constraints
+				if (ConstraintManager.isFalse(newCst)) {
+					continue;
+				}
 				// check whether we need to update the p2set of this heap object
 				// TODO check the return value
 				// we should use the equivalence checking
@@ -67,6 +72,13 @@ public class P2Set {
 				// obj is only in other's p2set
 				// AVOID directly get the constraint instance of the other
 				// p2set!!!! only get the shallow copy of the other constraints
+
+				BoolExpr otherCst = other.getConstraint(obj);
+				// TODO
+				// remove the edges with false constraints
+				if (ConstraintManager.isFalse(otherCst)) {
+					continue;
+				}
 
 				// for this case, we should add a new edge
 				p2Set.put(obj,

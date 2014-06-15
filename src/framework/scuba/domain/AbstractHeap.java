@@ -1298,10 +1298,10 @@ public class AbstractHeap {
 		assert (calleeCst != null) : "constraint is null!";
 
 		// remove the edges with false constraints
-		if (ConstraintManager.isFalse(calleeCst)) {
-			calleeHeap.remove(src, field, dst);
-			return ret;
-		}
+		// if (ConstraintManager.isFalse(calleeCst)) {
+		// calleeHeap.remove(src, field, dst);
+		// return ret;
+		// }
 
 		// instantiate the calleeCst
 		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
@@ -1353,6 +1353,7 @@ public class AbstractHeap {
 						ConstraintManager.intersect(instnCst, typeCst));
 
 				assert (cst != null) : "null cst!";
+
 				long s2 = System.nanoTime();
 
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
@@ -2390,6 +2391,7 @@ public class AbstractHeap {
 		// ret.val0: boolean flag reflecting updates of the heap
 		// ret.val1: boolean flag reflecting updates of the numbering
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
+
 		AbstractMemLoc src = pair.val0;
 		FieldElem f = pair.val1;
 		Set<HeapObject> tgts = p2Set.getHeapObjects();
