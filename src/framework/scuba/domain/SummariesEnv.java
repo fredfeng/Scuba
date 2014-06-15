@@ -39,7 +39,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 0;
+	protected int allocDepth = 1;
 
 	// prop locals or not
 	protected boolean propLocals = true;
@@ -48,7 +48,7 @@ public class SummariesEnv {
 	protected boolean cheating = false;
 
 	// ignore string
-	protected boolean ignoreString = false;
+	protected boolean ignoreString = true;
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;

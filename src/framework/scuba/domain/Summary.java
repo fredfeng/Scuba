@@ -288,10 +288,8 @@ public class Summary {
 	public boolean handleStmt(Quad quad, int numToAssign, boolean isInSCC) {
 
 		if (G.dbgPermission) {
-			if (G.countScc == G.sample) {
-				StringUtil.reportInfo("dbgPermission: " + "handling stmt: "
-						+ quad);
-			}
+			StringUtil.reportInfo("dbgPermission: " + "handling stmt: " + quad);
+
 		}
 
 		absHeap.markChanged(false);
@@ -516,16 +514,12 @@ public class Summary {
 			List<Pair<Summary, BoolExpr>> calleeSumCstPairs = getSumCstPairList(stmt);
 
 			if (G.dbgPermission) {
-				if (G.countScc == G.sample) {
-					StringUtil.reportInfo("dbgPermission: "
-							+ "========================================");
-					StringUtil.reportInfo("dbgPermission: " + "call site: "
-							+ stmt);
-					StringUtil.reportInfo("dbgPermission: "
-							+ "resolved number of callees: "
-							+ calleeSumCstPairs.size());
-				}
-
+				StringUtil.reportInfo("dbgPermission: "
+						+ "========================================");
+				StringUtil.reportInfo("dbgPermission: " + "call site: " + stmt);
+				StringUtil.reportInfo("dbgPermission: "
+						+ "resolved number of callees: "
+						+ calleeSumCstPairs.size());
 			}
 
 			if (G.dbgMatch) {
@@ -571,43 +565,39 @@ public class Summary {
 				// the constraint for calling that callee
 				BoolExpr hasTypeCst = calleeSumCst.val1;
 				if (G.dbgPermission) {
-					if (G.countScc == G.sample) {
-						StringUtil
-								.reportInfo("dbgPermission: "
-										+ "------------------------------------------------");
-						StringUtil.reportInfo("dbgPermission: "
-								+ " this is the " + count + "-th callee"
-								+ " out of " + calleeSumCstPairs.size());
-						int num = 0;
-						for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
-							num += absHeap.heapObjectsToP2Set.get(p).size();
-						}
-						StringUtil.reportInfo("dbgPermission: "
-								+ " edges in the current caller: " + num);
-						StringUtil.reportInfo("dbgPermission: "
-								+ " caller method: " + getMethod() + " ["
-								+ perCallerId + " ]");
-						StringUtil
-								.reportInfo("dbgPermission: "
-										+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
-						printCalleeHeapInfo("dbgPermission");
-						num = 0;
-						for (Pair p : calleeSum.absHeap.heapObjectsToP2Set
-								.keySet()) {
-							num += calleeSum.absHeap.heapObjectsToP2Set.get(p)
-									.size();
-						}
-						StringUtil.reportInfo("dbgPermission: "
-								+ " edges in the current callee: " + num);
-						StringUtil.reportInfo("dbgPermission: "
-								+ " callee method: " + calleeSum.getMethod()
-								+ " [" + perCalleeId + " ]");
-						StringUtil
-								.reportInfo("dbgPermission: "
-										+ "~~~~~~~~~~~~~~~~callee sum info~~~~~~~~~~~~~~~~~~~~");
-						calleeSum.printCalleeHeapInfo("dbgPermission");
-
+					StringUtil
+							.reportInfo("dbgPermission: "
+									+ "------------------------------------------------");
+					StringUtil.reportInfo("dbgPermission: " + " this is the "
+							+ count + "-th callee" + " out of "
+							+ calleeSumCstPairs.size());
+					int num = 0;
+					for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
+						num += absHeap.heapObjectsToP2Set.get(p).size();
 					}
+					StringUtil.reportInfo("dbgPermission: "
+							+ " edges in the current caller: " + num);
+					StringUtil.reportInfo("dbgPermission: "
+							+ " caller method: " + getMethod() + " ["
+							+ perCallerId + " ]");
+					StringUtil
+							.reportInfo("dbgPermission: "
+									+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
+					printCalleeHeapInfo("dbgPermission");
+					num = 0;
+					for (Pair p : calleeSum.absHeap.heapObjectsToP2Set.keySet()) {
+						num += calleeSum.absHeap.heapObjectsToP2Set.get(p)
+								.size();
+					}
+					StringUtil.reportInfo("dbgPermission: "
+							+ " edges in the current callee: " + num);
+					StringUtil.reportInfo("dbgPermission: "
+							+ " callee method: " + calleeSum.getMethod() + " ["
+							+ perCalleeId + " ]");
+					StringUtil
+							.reportInfo("dbgPermission: "
+									+ "~~~~~~~~~~~~~~~~callee sum info~~~~~~~~~~~~~~~~~~~~");
+					calleeSum.printCalleeHeapInfo("dbgPermission");
 				}
 
 				// we should only get non-null summary for getSumCstPairList
@@ -710,24 +700,21 @@ public class Summary {
 
 				absHeap.markChanged(flag);
 				if (G.dbgPermission) {
-					if (G.countScc == G.sample) {
-
-						int num = 0;
-						for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
-							num += absHeap.heapObjectsToP2Set.get(p).size();
-						}
-						StringUtil.reportInfo("dbgPermission: "
-								+ " edges in the current caller: " + num);
-						StringUtil.reportInfo("dbgPermission: "
-								+ " caller method: " + getMethod() + " ["
-								+ perCallerId + " ]");
-						StringUtil.reportInfo("dbgPermission: "
-								+ "----------------------------------------");
-						StringUtil
-								.reportInfo("dbgPermission: "
-										+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
-						printCalleeHeapInfo("dbgPermission");
+					int num = 0;
+					for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
+						num += absHeap.heapObjectsToP2Set.get(p).size();
 					}
+					StringUtil.reportInfo("dbgPermission: "
+							+ " edges in the current caller: " + num);
+					StringUtil.reportInfo("dbgPermission: "
+							+ " caller method: " + getMethod() + " ["
+							+ perCallerId + " ]");
+					StringUtil.reportInfo("dbgPermission: "
+							+ "----------------------------------------");
+					StringUtil
+							.reportInfo("dbgPermission: "
+									+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
+					printCalleeHeapInfo("dbgPermission");
 				}
 			}
 			if (G.debug4Sum) {
@@ -1375,33 +1362,32 @@ public class Summary {
 		total = param2Alloc + param2AP + static2Alloc + static2AP + local2Alloc
 				+ local2AP + ret2Alloc + ret2AP + ap2Alloc + ap2AP
 				+ alloc2Alloc + alloc2AP;
-		if (G.dbgPermission) {
-			StringUtil.reportInfo(s + ": -----------------------------------");
-			StringUtil.reportInfo(s + ": parameter --> Alloc: " + param2Alloc
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": parameter --> AccessPath: " + param2AP
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": static --> Alloc: " + static2Alloc
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": static --> AccessPath: " + static2AP
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": local --> Alloc: " + local2Alloc
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": local --> AccessPath: " + local2AP
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": ret --> Alloc: " + ret2Alloc
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": ret --> AccessPath: " + ret2AP
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": AccessPath --> Alloc: " + ap2Alloc
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": AccessPath --> AccessPath: " + ap2AP
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": Alloc --> Alloc: " + alloc2Alloc
-					+ " out of " + total);
-			StringUtil.reportInfo(s + ": Alloc --> AccessPath: " + alloc2AP
-					+ " out of " + total);
-		}
+		StringUtil.reportInfo(s + ": -----------------------------------");
+		StringUtil.reportInfo(s + ": parameter --> Alloc: " + param2Alloc
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": parameter --> AccessPath: " + param2AP
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": static --> Alloc: " + static2Alloc
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": static --> AccessPath: " + static2AP
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": local --> Alloc: " + local2Alloc
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": local --> AccessPath: " + local2AP
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": ret --> Alloc: " + ret2Alloc + " out of "
+				+ total);
+		StringUtil.reportInfo(s + ": ret --> AccessPath: " + ret2AP
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": AccessPath --> Alloc: " + ap2Alloc
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": AccessPath --> AccessPath: " + ap2AP
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": Alloc --> Alloc: " + alloc2Alloc
+				+ " out of " + total);
+		StringUtil.reportInfo(s + ": Alloc --> AccessPath: " + alloc2AP
+				+ " out of " + total);
+
 	}
 
 	public P2Set getP2Set(jq_Class clazz, jq_Method method, Register variable) {
