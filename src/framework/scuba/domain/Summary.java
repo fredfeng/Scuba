@@ -308,6 +308,8 @@ public class Summary {
 	public static int tmp = 0;
 	public static int tmp1 = 0;
 	public static int tmp2 = 0;
+	public static int perCallerId = 0;
+	public static int perCalleeId = 0;
 
 	QuadVisitor qv = new QuadVisitor.EmptyVisitor() {
 
@@ -553,9 +555,10 @@ public class Summary {
 			}
 
 			int count = 0;
-
+			perCallerId++;
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
+				perCalleeId++;
 				count++;
 				tmp1++;
 				if (G.dbgSCC) {
@@ -581,6 +584,13 @@ public class Summary {
 						}
 						StringUtil.reportInfo("dbgPermission: "
 								+ " edges in the current caller: " + num);
+						StringUtil.reportInfo("dbgPermission: "
+								+ " caller method: " + getMethod() + " ["
+								+ perCallerId + " ]");
+						StringUtil
+								.reportInfo("dbgPermission: "
+										+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
+						printCalleeHeapInfo("dbgPermission");
 						num = 0;
 						for (Pair p : calleeSum.absHeap.heapObjectsToP2Set
 								.keySet()) {
@@ -589,6 +599,14 @@ public class Summary {
 						}
 						StringUtil.reportInfo("dbgPermission: "
 								+ " edges in the current callee: " + num);
+						StringUtil.reportInfo("dbgPermission: "
+								+ " callee method: " + calleeSum.getMethod()
+								+ " [" + perCalleeId + " ]");
+						StringUtil
+								.reportInfo("dbgPermission: "
+										+ "~~~~~~~~~~~~~~~~callee sum info~~~~~~~~~~~~~~~~~~~~");
+						calleeSum.printCalleeHeapInfo("dbgPermission");
+
 					}
 				}
 
@@ -691,9 +709,26 @@ public class Summary {
 				}
 
 				absHeap.markChanged(flag);
-				// if (tmp == 1281) {
-				// absHeap.dumpHeapNumberingToFile("$caller" + count);
-				// }
+				if (G.dbgPermission) {
+					if (G.countScc == G.sample) {
+
+						int num = 0;
+						for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
+							num += absHeap.heapObjectsToP2Set.get(p).size();
+						}
+						StringUtil.reportInfo("dbgPermission: "
+								+ " edges in the current caller: " + num);
+						StringUtil.reportInfo("dbgPermission: "
+								+ " caller method: " + getMethod() + " ["
+								+ perCallerId + " ]");
+						StringUtil.reportInfo("dbgPermission: "
+								+ "----------------------------------------");
+						StringUtil
+								.reportInfo("dbgPermission: "
+										+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
+						printCalleeHeapInfo("dbgPermission");
+					}
+				}
 			}
 			if (G.debug4Sum) {
 				if (calleeSumCstPairs.isEmpty()) {
@@ -1073,7 +1108,7 @@ public class Summary {
 				// generate constraint for each potential target.
 				if (pair.val0 instanceof jq_Array)
 					continue;
-				if(!Env.cg.calls(callsite, pair.val1))
+				if (!Env.cg.calls(callsite, pair.val1))
 					continue;
 				jq_Class tgtType = (jq_Class) pair.val0;
 				if (!tgtType.extendsClass(recvStatType))
@@ -1158,7 +1193,7 @@ public class Summary {
 			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
 				if (pair.val0 instanceof jq_Array)
 					continue;
-				if(!Env.cg.calls(callsite, pair.val1))
+				if (!Env.cg.calls(callsite, pair.val1))
 					continue;
 				// generate constraint for each potential target.
 				if (SummariesEnv.v().disableCst)
@@ -1172,7 +1207,7 @@ public class Summary {
 						e.printStackTrace();
 					}
 				}
-				
+
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
 				if (dySum == null) {
@@ -1278,7 +1313,7 @@ public class Summary {
 		hasAnalyzed = true;
 	}
 
-	public void printCalleeHeapInfo() {
+	public void printCalleeHeapInfo(String s) {
 		int param2Alloc = 0;
 		int param2AP = 0;
 		int static2Alloc = 0; // can avoid
@@ -1331,8 +1366,8 @@ public class Summary {
 						&& tgt instanceof AccessPath) {
 					alloc2AP++;
 				} else {
-					StringUtil.reportInfo("Blowup: src " + src.getClass());
-					StringUtil.reportInfo("Blowup: tgt " + tgt.getClass());
+					StringUtil.reportInfo(s + ": src " + src.getClass());
+					StringUtil.reportInfo(s + ": tgt " + tgt.getClass());
 					assert false;
 				}
 			}
@@ -1340,32 +1375,31 @@ public class Summary {
 		total = param2Alloc + param2AP + static2Alloc + static2AP + local2Alloc
 				+ local2AP + ret2Alloc + ret2AP + ap2Alloc + ap2AP
 				+ alloc2Alloc + alloc2AP;
-		if (G.dbgMatch) {
-			StringUtil
-					.reportInfo("Blowup: -----------------------------------");
-			StringUtil.reportInfo("Blowup: parameter --> Alloc: " + param2Alloc
+		if (G.dbgPermission) {
+			StringUtil.reportInfo(s + ": -----------------------------------");
+			StringUtil.reportInfo(s + ": parameter --> Alloc: " + param2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: parameter --> AccessPath: "
-					+ param2AP + " out of " + total);
-			StringUtil.reportInfo("Blowup: static --> Alloc: " + static2Alloc
+			StringUtil.reportInfo(s + ": parameter --> AccessPath: " + param2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: static --> AccessPath: " + static2AP
+			StringUtil.reportInfo(s + ": static --> Alloc: " + static2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: local --> Alloc: " + local2Alloc
+			StringUtil.reportInfo(s + ": static --> AccessPath: " + static2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: local --> AccessPath: " + local2AP
+			StringUtil.reportInfo(s + ": local --> Alloc: " + local2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: ret --> Alloc: " + ret2Alloc
+			StringUtil.reportInfo(s + ": local --> AccessPath: " + local2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: ret --> AccessPath: " + ret2AP
+			StringUtil.reportInfo(s + ": ret --> Alloc: " + ret2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: AccessPath --> Alloc: " + ap2Alloc
+			StringUtil.reportInfo(s + ": ret --> AccessPath: " + ret2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: AccessPath --> AccessPath: " + ap2AP
+			StringUtil.reportInfo(s + ": AccessPath --> Alloc: " + ap2Alloc
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: Alloc --> Alloc: " + alloc2Alloc
+			StringUtil.reportInfo(s + ": AccessPath --> AccessPath: " + ap2AP
 					+ " out of " + total);
-			StringUtil.reportInfo("Blowup: Alloc --> AccessPath: " + alloc2AP
+			StringUtil.reportInfo(s + ": Alloc --> Alloc: " + alloc2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": Alloc --> AccessPath: " + alloc2AP
 					+ " out of " + total);
 		}
 	}

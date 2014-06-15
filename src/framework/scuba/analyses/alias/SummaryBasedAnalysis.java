@@ -9,10 +9,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
-import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
@@ -33,7 +33,6 @@ import com.microsoft.z3.Z3Exception;
 import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
-import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.FieldElem;
@@ -89,30 +88,29 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
 		System.out.println("Total downcast------------" + Summary.castCnt);
 	}
-	
-//	private void dumpMeth() {
-//		//elements:()Ljava/util/Enumeration;@java.security.Permissions
-//		//<clinit>:()V@sun.nio.cs.StandardCharsets
-	//toEnvironmentBlock:([I)[B@java.lang.ProcessEnvironment$StringEnvironment
-//		jq_Method meth = Program.g().getMethod(
-//				"elements:()Ljava/util/Enumeration;@java.security.Permissions");
-//		ControlFlowGraph cfg = meth.getCFG();
-//		for(BasicBlock bb : cfg.reversePostOrder()) {
-//			System.out.println(bb.fullDump());
-//			for(Quad q : bb.getQuads()) {
-//				if(O)
-//			}
-//		}
-//	}
+
+	// private void dumpMeth() {
+	// //elements:()Ljava/util/Enumeration;@java.security.Permissions
+	// //<clinit>:()V@sun.nio.cs.StandardCharsets
+	// toEnvironmentBlock:([I)[B@java.lang.ProcessEnvironment$StringEnvironment
+	// jq_Method meth = Program.g().getMethod(
+	// "elements:()Ljava/util/Enumeration;@java.security.Permissions");
+	// ControlFlowGraph cfg = meth.getCFG();
+	// for(BasicBlock bb : cfg.reversePostOrder()) {
+	// System.out.println(bb.fullDump());
+	// for(Quad q : bb.getQuads()) {
+	// if(O)
+	// }
+	// }
+	// }
 
 	private void sumAnalyze() {
 
 		if (G.dump) {
 			dumpCallGraph();
 		}
-		
-//		dumpMeth();
-		
+
+		// dumpMeth();
 
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
@@ -253,7 +251,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			if (node.getSuccessors().contains(node)) {
 				analyzeSCC(node);
 			} else {
-				analyze(scc.iterator().next());
+				jq_Method m = scc.iterator().next();
+				analyze(m);
+				if (G.dbgPermission) {
+					StringUtil.reportInfo("Evils:[" + G.countScc
+							+ "] begin regular node");
+					Summary sum = SummariesEnv.v().getSummary(m);
+					if (sum != null) {
+						int i = sum.getHeapSize();
+						StringUtil.reportInfo("Evils:[" + G.countScc
+								+ "] size [" + i + "]" + " method: " + m);
+					} else {
+						StringUtil.reportInfo("Evils:[" + G.countScc
+								+ "] no IR" + " method: " + m);
+					}
+				}
 			}
 		} else {
 			analyzeSCC(node);
@@ -272,7 +284,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						+ "] Blowup: for method: " + m);
 				StringUtil.reportInfo("Blowup: " + "successors: "
 						+ Env.cg.getSuccs(m));
-				sum.printCalleeHeapInfo();
+				sum.printCalleeHeapInfo("Blowup");
 			}
 		}
 
@@ -388,6 +400,30 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private void analyzeSCC(Node node) {
 		inS = true;
 		Set<jq_Method> scc = nodeToScc.get(node);
+
+		if (G.dbgPermission) {
+			StringUtil.reportInfo("Evils:[" + G.countScc + "] begin SCC");
+			Map<Integer, Set<jq_Method>> evils = new TreeMap<Integer, Set<jq_Method>>();
+			for (jq_Method m : scc) {
+				Summary sum = SummariesEnv.v().getSummary(m);
+				if (sum == null) {
+					continue;
+				}
+				Set<jq_Method> s = evils.get(sum.getHeapSize());
+				if (s == null) {
+					s = new HashSet<jq_Method>();
+					evils.put(sum.getHeapSize(), s);
+				}
+			}
+			for (int i : evils.keySet()) {
+				Set<jq_Method> s = evils.get(i);
+				for (jq_Method m : s) {
+					StringUtil.reportInfo("Evils:[" + G.countScc + "]size ["
+							+ i + "]" + " method: " + m);
+				}
+			}
+		}
+
 		LinkedList<jq_Method> wl = new LinkedList<jq_Method>();
 		// add all methods to worklist
 		wl.addAll(scc);
@@ -398,7 +434,36 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		 */
 		Set<jq_Method> set = new HashSet<jq_Method>();
 		cgProgress = 0;
+		int times = 0;
 		while (true) {
+			times++;
+
+			if (G.dbgPermission) {
+				StringUtil.reportInfo("Evils:[" + G.countScc
+						+ "] begin Iteration [" + times + "]");
+				Map<Integer, Set<jq_Method>> evils = new TreeMap<Integer, Set<jq_Method>>();
+				for (jq_Method m : scc) {
+					Summary sum = SummariesEnv.v().getSummary(m);
+					if (sum == null) {
+						continue;
+					}
+					Set<jq_Method> s = evils.get(sum.getHeapSize());
+					if (s == null) {
+						s = new HashSet<jq_Method>();
+						evils.put(sum.getHeapSize(), s);
+					}
+					s.add(m);
+				}
+				for (int i : evils.keySet()) {
+					Set<jq_Method> s = evils.get(i);
+					for (jq_Method m : s) {
+						StringUtil.reportInfo("Evils:[" + G.countScc
+								+ "] size [" + i + "]" + " method: " + m);
+					}
+
+				}
+			}
+
 			if (G.dbgMatch) {
 				StringUtil.reportInfo("Sunny -- CG progress: " + set.size()
 						+ " out of " + scc.size());

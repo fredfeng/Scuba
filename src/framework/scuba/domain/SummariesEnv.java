@@ -46,38 +46,38 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 1;
+	protected int allocDepth = 0;
 
 	// prop locals or not
 	protected boolean propLocals = true;
 	
-	//cheating
-	protected boolean cheating = true;
-	
-	//ignore string
-	protected boolean ignoreString = true;
-	
 	//ignore string
 	protected boolean openBlklist = true;
 	
+	// cheating
+	protected boolean cheating = false;
+
+	// ignore string
+	protected boolean ignoreString = false;
+
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 
-    //disable constraint instantiate.
+	// disable constraint instantiate.
 	protected boolean disableCst = true;
-	
+
 	public boolean propLocals() {
 		return propLocals;
 	}
-	
+
 	public void setPropLocals() {
 		propLocals = true;
 	}
-	
+
 	public void resetPropLocals() {
 		propLocals = false;
 	}
-	
+
 	public boolean disableCst() {
 		return disableCst;
 	}
@@ -89,11 +89,11 @@ public class SummariesEnv {
 	public boolean ignoreString() {
 		return ignoreString;
 	}
-	
+
 	public boolean forceGc() {
 		return forceGc;
 	}
-	
+
 	public boolean cheating() {
 		return cheating;
 	}
