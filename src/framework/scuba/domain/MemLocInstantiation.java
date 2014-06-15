@@ -151,7 +151,7 @@ public class MemLocInstantiation {
 			// not hitting the cache
 			if (SummariesEnv.v().allocDepth == 0
 					|| ((AllocElem) loc).length() < SummariesEnv.v().allocDepth) {
-				assert false : "cannot be here! we are using depth 1";
+				// assert false : "cannot be here! we are using depth 1";
 				if (((AllocElem) loc).contains(point)) {
 					AllocElem allocElem = callerHeap
 							.getAllocElem(((AllocElem) loc));
