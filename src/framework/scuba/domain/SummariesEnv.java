@@ -1,6 +1,8 @@
 package framework.scuba.domain;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,6 +31,11 @@ public class SummariesEnv {
 	protected ProgramRel relCHA;
 
 	Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
+	
+	String[] blklist = {
+			"fixAfterDeletion:(Ljava/util/TreeMap$Entry;)V@java.util.TreeMap",
+			""
+	};
 
 	public static SummariesEnv v() {
 		return instance;
@@ -43,7 +50,10 @@ public class SummariesEnv {
 
 	// prop locals or not
 	protected boolean propLocals = true;
-
+	
+	//ignore string
+	protected boolean openBlklist = true;
+	
 	// cheating
 	protected boolean cheating = false;
 
@@ -71,7 +81,11 @@ public class SummariesEnv {
 	public boolean disableCst() {
 		return disableCst;
 	}
-
+	
+	public boolean openBlklist() {
+		return openBlklist;
+	}
+	
 	public boolean ignoreString() {
 		return ignoreString;
 	}
@@ -164,5 +178,9 @@ public class SummariesEnv {
 			StringUtil.reportInfo("resolve callee: size: " + pts.size() + ":"
 					+ pts);
 		return pts;
+	}
+	
+	public boolean isInBlacklist(String blk) {
+		return Arrays.asList(blklist).contains(blk);
 	}
 }
