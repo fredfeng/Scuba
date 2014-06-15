@@ -2,7 +2,6 @@ package framework.scuba.domain;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +31,11 @@ public class SummariesEnv {
 
 	Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
 
+	// to handle local's pt set
+	// when the context depth reaches the bound, just fill the (local, alloc)
+	// into this map instead of propagating those locals upwards
+	Map<LocalVarElem, Set<AllocElem>> localsToAlloc = new HashMap<LocalVarElem, Set<AllocElem>>();
+
 	String[] blklist = {
 			"fixAfterDeletion:(Ljava/util/TreeMap$Entry;)V@java.util.TreeMap",
 			"" };
@@ -45,7 +49,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 0;
+	protected int allocDepth = 1;
 
 	// prop locals or not
 	protected boolean propLocals = true;
@@ -54,7 +58,7 @@ public class SummariesEnv {
 	protected boolean openBlklist = true;
 
 	// cheating
-	protected boolean cheating = false;
+	protected boolean cheating = true;
 
 	// ignore string
 	protected boolean ignoreString = true;
@@ -63,7 +67,7 @@ public class SummariesEnv {
 	protected boolean forceGc = false;
 
 	// disable constraint instantiate.
-	protected boolean disableCst = true;
+	protected boolean disableCst = false;
 
 	public boolean propLocals() {
 		return propLocals;

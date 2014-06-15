@@ -29,7 +29,7 @@ public class G {
 	public static boolean dbgMatch = true;
 
 	public static boolean dbgPermission = true;
-	
+
 	public static int sample = 4244;
 
 	public static boolean useConHashMap = true;
