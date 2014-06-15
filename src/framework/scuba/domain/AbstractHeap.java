@@ -1187,6 +1187,10 @@ public class AbstractHeap {
 		assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
+		if (src.isNotArgDerived() || src instanceof RetElem) {
+			return ret;
+		}
+
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";
 		// instantiate the calleeCst
@@ -1243,6 +1247,10 @@ public class AbstractHeap {
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
 		assert (calleeHeap.lookup(src, field).containsHeapObject(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
+
+		if (src.isNotArgDerived() || src instanceof RetElem) {
+			return ret;
+		}
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";

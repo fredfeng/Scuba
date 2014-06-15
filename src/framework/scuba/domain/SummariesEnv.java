@@ -38,13 +38,13 @@ public class SummariesEnv {
 	protected boolean propLocals = true;
 
 	// ignore string
-	protected boolean openBlklist = true;
+	protected boolean openBlklist = false;
 
 	// cheating
 	protected boolean cheating = false;
 
 	// ignore string
-	protected boolean ignoreString = true;
+	protected boolean ignoreString = false;
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
