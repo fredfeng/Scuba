@@ -40,6 +40,7 @@ import framework.scuba.domain.HeapObject;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
+import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper4CG;
 import framework.scuba.utils.Graph;
@@ -78,31 +79,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		sumAnalyze();
 
 		// dump interesting stats
-		dumpStats();
+		dumpStatistics();
 	}
 
-	private void dumpStats() {
-		System.out.println("ALOADS------------" + Summary.aloadCnt);
-		System.out.println("ASTORES------------" + Summary.astoreCnt);
-		System.out.println("Array------------" + Summary.aNewArrayCnt);
-		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
-		System.out.println("Total downcast------------" + Summary.castCnt);
-	}
 
-	// private void dumpMeth() {
-	// //elements:()Ljava/util/Enumeration;@java.security.Permissions
-	// //<clinit>:()V@sun.nio.cs.StandardCharsets
-	// toEnvironmentBlock:([I)[B@java.lang.ProcessEnvironment$StringEnvironment
-	// jq_Method meth = Program.g().getMethod(
-	// "elements:()Ljava/util/Enumeration;@java.security.Permissions");
-	// ControlFlowGraph cfg = meth.getCFG();
-	// for(BasicBlock bb : cfg.reversePostOrder()) {
-	// System.out.println(bb.fullDump());
-	// for(Quad q : bb.getQuads()) {
-	// if(O)
-	// }
-	// }
-	// }
 
 	private void sumAnalyze() {
 
@@ -291,16 +271,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (G.tuning) {
 			long endSCC = System.nanoTime();
 			StringUtil.reportSec("Analyzing SCC in ", startSCC, endSCC);
-		}
-		if (G.stat) {
-			if (G.countScc >= 1919) {
-				try {
-					dumpStatistics();
-				} catch (Z3Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
 		}
 	}
 
@@ -514,7 +484,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relMM = (ProgramRel) ClassicProject.g().getTrgt("MM");
 		relCHA = (ProgramRel) ClassicProject.g().getTrgt("cha");
 		// pass relCha ref to SummariesEnv
-		SummariesEnv.v().setCHA(relCHA);
 		Env.buildClassHierarchy();
 
 		// init scuba.
@@ -592,7 +561,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		return ret;
 	}
 
-	public void dumpStatistics() throws Z3Exception {
+	public void dumpStatistics() {
 		StringBuilder b = new StringBuilder("");
 		Map<jq_Method, Summary> sums = SummariesEnv.v().getSums();
 		int total_all = 0;
@@ -612,10 +581,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				total_all += p2set.size();
 				for (HeapObject hObj : p2set.getHeapObjects()) {
 					BoolExpr cst = p2set.getConstraint(hObj);
-					if (cst.BoolValue() == Z3_lbool.Z3_L_TRUE) {
+					if (ConstraintManager.isTrue(cst)) {
 						t++;
 						t_all++;
-					} else if (cst.BoolValue() == Z3_lbool.Z3_L_FALSE) {
+					} else if (ConstraintManager.isFalse(cst)) {
 						f++;
 						f_all++;
 					} else {
@@ -637,16 +606,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		b.append("True cst: " + t_all + "\n");
 		b.append("False cst: " + f_all + "\n");
 		b.append("Other cst: " + other_all + "\n");
-
-		try {
-			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					G.dotOutputPath + "statistics"));
-			bufw.write(b.toString());
-			bufw.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(0);
-		}
+		
+		System.out.println(b.toString());
+		System.out.println("ALOADS------------" + Summary.aloadCnt);
+		System.out.println("ASTORES------------" + Summary.astoreCnt);
+		System.out.println("Array------------" + Summary.aNewArrayCnt);
+		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
+		System.out.println("Total downcast------------" + Summary.castCnt);
 	}
 
 }

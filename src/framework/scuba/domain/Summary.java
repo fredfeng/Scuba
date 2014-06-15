@@ -1085,19 +1085,14 @@ public class Summary {
 			}
 
 			// all dynamic targets.
-			Set<Pair<jq_Reference, jq_Method>> tgtSet = SummariesEnv.v()
-					.loadInheritMeths(callee, null);
+			Set<jq_Method> tgtSet = Env.cg.getTargets(callsite);
 
 			if (G.tuning)
 				StringUtil.reportInfo("resolve callee: " + tgtSet);
 
-			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
+			for (jq_Method tgt : tgtSet) {
 				// generate constraint for each potential target.
-				if (pair.val0 instanceof jq_Array)
-					continue;
-				if (!Env.cg.calls(callsite, pair.val1))
-					continue;
-				jq_Class tgtType = (jq_Class) pair.val0;
+				jq_Class tgtType = tgt.getDeclaringClass();
 				if (!tgtType.extendsClass(recvStatType))
 					continue;
 
@@ -1106,25 +1101,22 @@ public class Summary {
 				if (SummariesEnv.v().cheating()) {
 					if ((callee.getName().toString().equals("study") || callee
 							.getName().toString().equals("match"))
-							&& (tgtSet.size() > 30)
 							&& (callsite.getMethod().getNameAndDesc()
-									.equals(pair.val1.getNameAndDesc()))) {
-						if (!tgtType.equals(callsite.getMethod()
-								.getDeclaringClass()))
-							continue;
+									.equals(tgt.getNameAndDesc()))) {
+						continue;
+//						if (!tgtType.equals(callsite.getMethod()
+//								.getDeclaringClass())) {
+//							StringUtil.reportInfo("Cheating...." + pair.val1);
+//							continue;
+//						}
 					}
 				}
-
-				// assert !(callee.getName().toString().equals("study")
-				// && (tgtSet.size() > 30) && (callsite.getMethod()
-				// .getNameAndDesc().equals(pair.val1.getNameAndDesc()))) :
-				// "stop.";
 
 				long startGenCst = System.nanoTime();
 				if (SummariesEnv.v().disableCst)
 					cst = ConstraintManager.genTrue();
 				else {
-					cst = genCst(p2Set, pair.val1, tgtType);
+					cst = genCst(p2Set, tgt, tgtType, tgtSet);
 					try {
 						cst = (BoolExpr) cst.Simplify();
 					} catch (Z3Exception e) {
@@ -1137,11 +1129,11 @@ public class Summary {
 					G.genCstTime += (endGenCst - startGenCst);
 				}
 				assert cst != null : "Invalid constaint!";
-				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
+				Summary dySum = SummariesEnv.v().getSummary(tgt);
 				if (dySum == null) {
 					System.err
 							.println("[WARNING:]Unreachable method because of missing model."
-									+ pair.val1);
+									+ tgt);
 					continue;
 				}
 				if (G.tuning)
@@ -1150,10 +1142,6 @@ public class Summary {
 				if (dySum.hasAnalyzed())
 					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
 			}
-			if (G.tuning)
-				StringUtil.reportInfo("filter callee: " + tgtSet.size()
-						+ " -- " + ret.size());
-
 		} else if (opr instanceof InvokeInterface) {
 			// assume all csts are true.
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
@@ -1174,19 +1162,14 @@ public class Summary {
 			}
 
 			// all dynamic targets.
-			Set<Pair<jq_Reference, jq_Method>> tgtSet = SummariesEnv.v()
-					.loadInheritMeths(callee, null);
+			Set<jq_Method> tgtSet = Env.cg.getTargets(callsite);
 
-			for (Pair<jq_Reference, jq_Method> pair : tgtSet) {
-				if (pair.val0 instanceof jq_Array)
-					continue;
-				if (!Env.cg.calls(callsite, pair.val1))
-					continue;
+			for (jq_Method tgt : tgtSet) {
 				// generate constraint for each potential target.
 				if (SummariesEnv.v().disableCst)
 					cst = ConstraintManager.genTrue();
 				else {
-					cst = genCst(p2Set, pair.val1, (jq_Class) pair.val0);
+					cst = genCst(p2Set, tgt, tgt.getDeclaringClass(), tgtSet);
 					try {
 						cst = (BoolExpr) cst.Simplify();
 					} catch (Z3Exception e) {
@@ -1196,12 +1179,11 @@ public class Summary {
 				}
 
 				assert cst != null : "Invalid constaint!";
-				Summary dySum = SummariesEnv.v().getSummary(pair.val1);
+				Summary dySum = SummariesEnv.v().getSummary(tgt);
 				if (dySum == null) {
 					if (G.debug4Sum) {
 						System.err
-								.println("Unreachable method because of missing model."
-										+ pair.val1);
+								.println("Unreachable method because of missing model."+ tgt);
 					}
 					continue;
 				}
@@ -1247,11 +1229,11 @@ public class Summary {
 	 * 
 	 * @return
 	 */
-	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT) {
+	public BoolExpr genCst(P2Set p2Set, jq_Method callee, jq_Class statT, Set<jq_Method> tgtSet) {
 		if (SummariesEnv.v().disableCst())
 			return ConstraintManager.genTrue();
 		// 1. Base case: No subtype of T override m: type(o) <= T
-		if (!hasInherit(callee, statT)) {
+		if (!hasInherit(callee, statT, tgtSet)) {
 			return ConstraintManager.genSubTyping(p2Set, statT);
 		} else {
 			// 2. Inductive case: for each its *direct* subclasses that
@@ -1259,10 +1241,10 @@ public class Summary {
 			BoolExpr t = ConstraintManager.genFalse();
 			for (jq_Class sub : Env.getSuccessors(statT)) {
 				if (sub.getVirtualMethod(callee.getNameAndDesc()) != null
-						|| hasInherit(callee, sub))
+						|| hasInherit(callee, sub, tgtSet))
 					continue;
 				assert !sub.equals(statT) : "do not repeat!";
-				BoolExpr phi = genCst(p2Set, callee, sub);
+				BoolExpr phi = genCst(p2Set, callee, sub, tgtSet);
 				t = ConstraintManager.union(t, phi);
 			}
 			// do the union.
@@ -1279,8 +1261,17 @@ public class Summary {
 	 * @param tgt
 	 * @return
 	 */
-	protected boolean hasInherit(jq_Method callee, jq_Class statT) {
-		return SummariesEnv.v().loadInheritMeths(callee, statT).size() > 0;
+	protected boolean hasInherit(jq_Method callee, jq_Class statT,
+			Set<jq_Method> tgtSet) {
+
+		for (jq_Method tgt : tgtSet) {
+			if (tgt.equals(callee))
+				continue;
+			jq_Class dyClz = tgt.getDeclaringClass();
+			if (dyClz.extendsClass(statT))
+				return true;
+		}
+		return false;
 	}
 
 	public AbstractHeap getAbsHeap() {

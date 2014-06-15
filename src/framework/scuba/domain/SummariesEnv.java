@@ -28,8 +28,6 @@ public class SummariesEnv {
 
 	private static SummariesEnv instance = new SummariesEnv();
 
-	protected ProgramRel relCHA;
-
 	Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
 
 	// to handle local's pt set
@@ -138,38 +136,6 @@ public class SummariesEnv {
 
 	public Summary putSummary(jq_Method meth, Summary sum) {
 		return summaries.put(meth, sum);
-	}
-
-	public void setCHA(ProgramRel cha) {
-		relCHA = cha;
-	}
-
-	public Set<Pair<jq_Reference, jq_Method>> loadInheritMeths(jq_Method m,
-			jq_Class statType) {
-		if (!relCHA.isOpen())
-			relCHA.load();
-		RelView view = relCHA.getView();
-		view.selectAndDelete(0, m);
-		Iterable<Pair<jq_Reference, jq_Method>> res = view.getAry2ValTuples();
-		Set<Pair<jq_Reference, jq_Method>> pts = SetUtils.newSet(view.size());
-		// no filter, add all
-		if (statType == null) {
-			for (Pair<jq_Reference, jq_Method> inst : res)
-				pts.add(inst);
-		} else {
-			for (Pair<jq_Reference, jq_Method> inst : res) {
-				if (inst.val0 instanceof jq_Array)
-					continue;
-				jq_Class clz = (jq_Class) inst.val0;
-				// add the one that extents statType, no include itself.
-				if (clz.extendsClass(statType) && !clz.equals(statType))
-					pts.add(inst);
-			}
-		}
-		if (G.tuning)
-			StringUtil.reportInfo("resolve callee: size: " + pts.size() + ":"
-					+ pts);
-		return pts;
 	}
 
 	public boolean isInBlacklist(String blk) {
