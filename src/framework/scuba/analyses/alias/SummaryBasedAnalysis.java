@@ -82,8 +82,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		dumpStatistics();
 	}
 
-
-
 	private void sumAnalyze() {
 
 		if (G.dump) {
@@ -606,7 +604,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		b.append("True cst: " + t_all + "\n");
 		b.append("False cst: " + f_all + "\n");
 		b.append("Other cst: " + other_all + "\n");
-		
+
 		System.out.println(b.toString());
 		System.out.println("ALOADS------------" + Summary.aloadCnt);
 		System.out.println("ASTORES------------" + Summary.astoreCnt);

@@ -1260,12 +1260,6 @@ public class AbstractHeap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
-		// remove the edges with false constraints
-		// if (ConstraintManager.isFalse(calleeCst)) {
-		// calleeHeap.remove(src, field, dst);
-		// return ret;
-		// }
-
 		// instantiate the calleeCst
 		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
