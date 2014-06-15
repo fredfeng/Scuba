@@ -1354,7 +1354,6 @@ public class AbstractHeap {
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst,
 			int numToAssign, boolean isInSCC,
 			Map<Numbering, Set<HeapEdge>> toAdd) {
-		long startInstEdge = System.nanoTime();
 
 		boolean ret = false;
 		boolean ret2 = false;
@@ -1559,49 +1558,40 @@ public class AbstractHeap {
 		}
 
 		// pre update location
-		Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
+		if (!G.useConHashMap) {
+			Set<Pair<AbstractMemLoc, FieldElem>> toUpdate = new HashSet<Pair<AbstractMemLoc, FieldElem>>();
+			for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
+					.keySet()) {
+				AbstractMemLoc loc = pair.val0;
+				FieldElem field = pair.val1;
+				// if not propagating locals
+				if (!SummariesEnv.v().propLocals) {
+					if (loc.isNotArgDerived()) {
+						continue;
+					}
+				}
+				// otherwise do the instantiation
+				if (G.dbgRet) {
+					StringUtil.reportInfo("dbg Ret: " + " to instantiate: "
+							+ loc);
+				}
+				InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(
+						loc, this, point);
 
-		if (G.dbgRet && no == 31727) {
-			calleeHeap.dumpAllMemLocsHeapToFile("callee1");
-			calleeHeap.dumpAllMemLocsToFile("callee2");
-			calleeHeap.dumpHeapMappingToFile("callee3");
-			calleeHeap.dumpHeapToFile("callee4");
+				assert (instnMemLocSet != null);
 
-			this.dumpAllMemLocsHeapToFile("caller1");
-			this.dumpAllMemLocsToFile("caller2");
-			this.dumpHeapMappingToFile("caller3");
-			this.dumpHeapToFile("caller4");
-		}
-
-		for (Pair<AbstractMemLoc, FieldElem> pair : calleeHeap.getHeap()
-				.keySet()) {
-			AbstractMemLoc loc = pair.val0;
-			FieldElem field = pair.val1;
-			// if not propagating locals
-			if (!SummariesEnv.v().propLocals) {
-				if (loc.isNotArgDerived()) {
-					continue;
+				for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
+					// to avoid ConcurrentModification exception, we temporally
+					// store the (loc, field) pairs in a set
+					toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1,
+							field));
 				}
 			}
-			// otherwise do the instantiation
-			if (G.dbgRet) {
-				StringUtil.reportInfo("dbg Ret: " + " to instantiate: " + loc);
+			// now we weakly update the heap of the caller so that it will
+			// include all the locations in the callee's heap
+			for (Pair<AbstractMemLoc, FieldElem> pair : toUpdate) {
+				weakUpdateNoNumbering(pair, new P2Set());
 			}
-			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
-					this, point);
-
-			assert (instnMemLocSet != null);
-
-			for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
-				// to avoid ConcurrentModification exception, we temporally
-				// store the (loc, field) pairs in a set
-				toUpdate.add(new Pair<AbstractMemLoc, FieldElem>(loc1, field));
-			}
-		}
-		// now we weakly update the heap of the caller so that it will
-		// include all the locations in the callee's heap
-		for (Pair<AbstractMemLoc, FieldElem> pair : toUpdate) {
-			weakUpdateNoNumbering(pair, new P2Set());
 		}
 
 		if (G.dbgMatch) {
