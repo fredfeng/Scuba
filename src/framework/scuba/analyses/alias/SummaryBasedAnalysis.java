@@ -444,6 +444,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						s = new HashSet<jq_Method>();
 						evils.put(sum.getHeapSize(), s);
 					}
+					s.add(m);
 				}
 				for (int i : evils.keySet()) {
 					Set<jq_Method> s = evils.get(i);

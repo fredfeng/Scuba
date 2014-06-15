@@ -40,11 +40,9 @@ public class IntraProcSumAnalysis {
 	public void analyze(ControlFlowGraph g) {
 
 		if (G.dbgPermission) {
-			if (G.countScc == G.sample) {
-				StringUtil.reportInfo("dbgPermission");
-				StringUtil.reportInfo("dbgPermission: " + " analyzing method: "
-						+ g.getMethod());
-			}
+			StringUtil.reportInfo("dbgPermission");
+			StringUtil.reportInfo("dbgPermission: " + " analyzing method: "
+					+ g.getMethod());
 		}
 
 		// before analyzing the CFG g of some method
