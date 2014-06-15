@@ -2,20 +2,9 @@ package framework.scuba.domain;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
-import joeq.Class.jq_Array;
-import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
-import joeq.Class.jq_Reference;
-import chord.bddbddb.Rel.RelView;
-import chord.project.analyses.ProgramRel;
-import chord.util.SetUtils;
-import chord.util.tuple.object.Pair;
-import framework.scuba.helper.G;
-import framework.scuba.utils.StringUtil;
 
 /**
  * Global env to store all summaries of their methods. Singleton pattern.
@@ -29,11 +18,6 @@ public class SummariesEnv {
 	private static SummariesEnv instance = new SummariesEnv();
 
 	Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
-
-	// to handle local's pt set
-	// when the context depth reaches the bound, just fill the (local, alloc)
-	// into this map instead of propagating those locals upwards
-	Map<LocalVarElem, Set<AllocElem>> localsToAlloc = new HashMap<LocalVarElem, Set<AllocElem>>();
 
 	String[] blklist = {
 			"fixAfterDeletion:(Ljava/util/TreeMap$Entry;)V@java.util.TreeMap",
@@ -57,7 +41,7 @@ public class SummariesEnv {
 	protected boolean openBlklist = true;
 
 	// cheating
-	protected boolean cheating = true;
+	protected boolean cheating = false;
 
 	// ignore string
 	protected boolean ignoreString = true;
@@ -66,7 +50,7 @@ public class SummariesEnv {
 	protected boolean forceGc = false;
 
 	// disable constraint instantiate.
-	protected boolean disableCst = true;
+	protected boolean disableCst = false;
 
 	public boolean disableCst() {
 		return disableCst;
@@ -142,13 +126,4 @@ public class SummariesEnv {
 		return Arrays.asList(blklist).contains(blk);
 	}
 
-	public Set<AllocElem> cacheLocals(LocalVarElem local, AllocElem allocT) {
-		Set<AllocElem> ret = localsToAlloc.get(local);
-		if (ret == null) {
-			ret = new HashSet<AllocElem>();
-			localsToAlloc.put(local, ret);
-		}
-		ret.add(allocT);
-		return ret;
-	}
 }

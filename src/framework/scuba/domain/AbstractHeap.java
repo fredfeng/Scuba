@@ -1225,19 +1225,6 @@ public class AbstractHeap {
 
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 
-				if (!SummariesEnv.v().propLocals) {
-					// do not propagate locals-->alloc
-					if (newSrc instanceof LocalVarElem
-							&& newDst1 instanceof AllocElem
-							&& ((AllocElem) newDst1).length() == SummariesEnv
-									.v().allocDepth
-							&& ConstraintManager.isTrue(cst)) {
-						SummariesEnv.v().cacheLocals(((LocalVarElem) newSrc),
-								((AllocElem) newDst1));
-						continue;
-					}
-				}
-
 				toAdd.add(new Pair<AbstractMemLoc, P2Set>(newSrc, new P2Set(
 						newDst1, cst)));
 			}
@@ -1294,19 +1281,6 @@ public class AbstractHeap {
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 				Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 						newSrc, field);
-
-				if (!SummariesEnv.v().propLocals) {
-					// do not propagate locals-->alloc
-					if (newSrc instanceof LocalVarElem
-							&& newDst1 instanceof AllocElem
-							&& ((AllocElem) newDst1).length() == SummariesEnv
-									.v().allocDepth
-							&& ConstraintManager.isTrue(cst)) {
-						SummariesEnv.v().cacheLocals(((LocalVarElem) newSrc),
-								((AllocElem) newDst1));
-						continue;
-					}
-				}
 
 				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
 						new P2Set(newDst1, cst));
