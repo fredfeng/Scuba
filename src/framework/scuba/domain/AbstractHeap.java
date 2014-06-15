@@ -1297,6 +1297,12 @@ public class AbstractHeap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
+		// remove the edges with false constraints
+		if (ConstraintManager.isFalse(calleeCst)) {
+			calleeHeap.remove(src, field, dst);
+			return ret;
+		}
+
 		// instantiate the calleeCst
 		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
@@ -2488,6 +2494,19 @@ public class AbstractHeap {
 			ret += heapObjectsToP2Set.get(loc).size();
 		}
 		return ret;
+	}
+
+	public BoolExpr remove(AbstractMemLoc src, FieldElem f, HeapObject tgt) {
+		P2Set tgts = heapObjectsToP2Set
+				.get(new Pair<AbstractMemLoc, FieldElem>(src, f));
+
+		if (tgts.containsHeapObject(tgt)) {
+			return tgts.remove(tgt);
+		} else {
+			assert false : "null";
+			return null;
+		}
+
 	}
 
 }
