@@ -1306,24 +1306,8 @@ public class AbstractHeap {
 		// instantiate the calleeCst
 		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
-		long startInstLoc = System.nanoTime();
 		InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this, point);
 		InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this, point);
-
-		if (G.dbgSCC && G.countScc == 3551 && no == 69552) {
-			StringUtil.reportInfo("Rain: instnSrc into : "
-					+ instnSrc.getAbstractMemLocs());
-			StringUtil.reportInfo("Rain: instnDst into : "
-					+ instnDst.getAbstractMemLocs());
-		}
-		if (G.dbgSCC && G.countScc == 3551 && no == 69538) {
-			StringUtil.reportInfo("Rain: instnSrc into : "
-					+ instnSrc.getAbstractMemLocs());
-			StringUtil.reportInfo("Rain: instnDst into : "
-					+ instnDst.getAbstractMemLocs());
-		}
-		long endInstLoc = System.nanoTime();
-		G.instLocTimePerEdges += (endInstLoc - startInstLoc);
 
 		assert (instnDst != null) : "instantiation of dst cannot be null!";
 		if (instnSrc == null) {
@@ -1335,9 +1319,6 @@ public class AbstractHeap {
 			return ret;
 		}
 
-		G.instToEdges += (instnSrc.size() * instnDst.size());
-
-		long startInstEdge = System.nanoTime();
 		for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
 			for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
 				assert (newDst instanceof HeapObject) : ""
@@ -1354,8 +1335,6 @@ public class AbstractHeap {
 
 				assert (cst != null) : "null cst!";
 
-				long s2 = System.nanoTime();
-
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 				Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 						newSrc, field);
@@ -1363,31 +1342,8 @@ public class AbstractHeap {
 				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
 						new P2Set(newDst1, cst));
 
-				long s3 = System.nanoTime();
-				inst_cst_time += (s2 - s1);
-				inst_wu_time += (s3 - s2);
-				if (G.dbgSCC && G.countScc == 3551 && no == 69552) {
-					StringUtil.reportInfo("Rain: result : " + newSrc + " "
-							+ newDst + " " + ret1.val0);
-				}
-				if (G.dbgSCC && G.countScc == 3551 && no == 69538) {
-					StringUtil.reportInfo("Rain: result : " + newSrc + " "
-							+ newDst + " " + ret1.val0);
-				}
-
 				ret = ret | ret1.val0;
 			}
-		}
-		long endInstEdge = System.nanoTime();
-		inst_time += (endInstEdge - startInstEdge);
-
-		if (G.tuning) {
-			long endtInstEdge = System.nanoTime();
-			StringUtil.reportSec("Inst Edge:", startInstEdge, endtInstEdge);
-			G.instEdgeTime += (endtInstEdge - startInstEdge);
-			StringUtil.reportSec("Inst Loc Per Edges", G.instLocTimePerEdges);
-			StringUtil.reportInfo("Number of edges in the caller: "
-					+ G.instToEdges);
 		}
 
 		return ret;
