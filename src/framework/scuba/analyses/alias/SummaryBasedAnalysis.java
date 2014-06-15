@@ -541,6 +541,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		jq_Method entry = Program.g().getMainMethod();
 		Summary sum = SummariesEnv.v().getSummary(entry);
 		if (G.dbgQuery) {
+			StringUtil.reportInfo("Query: "
+					+ "---------------------------------------------");
 			StringUtil.reportInfo("Query: " + " size of sum: "
 					+ sum.getHeapSize());
 			StringUtil.reportInfo("Query: " + " entry method: " + entry);
@@ -548,6 +550,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		assert (sum != null) : "the entry method should have a summary!";
 		Summary sum1 = SummariesEnv.v().getSummary(method);
 		if (sum1 == null) {
+			if (G.dbgQuery) {
+				StringUtil.reportInfo("Query: "
+						+ "[we cannot get the summary for the method!]");
+			}
 			return null;
 		}
 		assert (sum1 != null) : "the method of the variable should have a summary!";
@@ -563,13 +569,45 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 								clazz, method, variable), EpsilonFieldElem
 								.getEpsilonFieldElem()))) {
 			count++;
-			StringUtil.reportInfo("Query: "
-					+ sum1.getAbstractHeap()
-							.getHeap()
-							.get(new Pair<AbstractMemLoc, FieldElem>(
-									new LocalVarElem(clazz, method, variable),
-									EpsilonFieldElem.getEpsilonFieldElem())));
+			if (G.dbgQuery) {
+				StringUtil.reportInfo("Query: "
+						+ "[we can get the location in the heap!]");
+				// for (jq_Method m : SummariesEnv.v().getSums().keySet()) {
+				// Summary sum2 = SummariesEnv.v().getSummary(m);
+				// if (sum2.getAbsHeap()
+				// .getHeap()
+				// .containsKey(
+				// new Pair<AbstractMemLoc, FieldElem>(
+				// new LocalVarElem(clazz, method,
+				// variable), EpsilonFieldElem
+				// .getEpsilonFieldElem()))) {
+				// P2Set p2set = sum2
+				// .getAbsHeap()
+				// .getHeap()
+				// .get(new Pair<AbstractMemLoc, FieldElem>(
+				// new LocalVarElem(clazz, method,
+				// variable), EpsilonFieldElem
+				// .getEpsilonFieldElem()));
+				//
+				// for (HeapObject hObj : p2set.getHeapObjects()) {
+				// StringUtil.reportInfo("Query: " + "[Heap Object:]");
+				// }
+				// }
+				// }
+				StringUtil.reportInfo("Query: "
+						+ "[P2Set in the declearing method]"
+						+ sum1.getAbsHeap()
+								.getHeap()
+								.get(new Pair<AbstractMemLoc, FieldElem>(
+										new LocalVarElem(clazz, method,
+												variable), EpsilonFieldElem
+												.getEpsilonFieldElem())));
+			}
 		} else {
+			if (G.dbgQuery) {
+				StringUtil.reportInfo("Query: "
+						+ "[we cannot get the location in the heap!]");
+			}
 			return null;
 		}
 		LocalVarElem local = sum1.getLocalVarElem(clazz, method, variable);
