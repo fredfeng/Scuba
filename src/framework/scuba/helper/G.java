@@ -32,7 +32,7 @@ public class G {
 
 	public static int sample = 4244;
 
-	public static boolean useConHashMap = true;
+	public static boolean useConHashMap = false;
 
 	// flag to tune performance.
 	public static boolean tuning = true;
