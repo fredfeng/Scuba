@@ -300,7 +300,7 @@ public class AbstractHeap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					G.dotOutputPath + count + "heapMapping.dot"));
+					G.dotOutputPath + count + "_heapMapping"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {

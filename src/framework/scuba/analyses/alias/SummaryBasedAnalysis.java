@@ -90,6 +90,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// perform downcast analysis
 		downcast();
+		
+		StringUtil.reportInfo("[Scuba] summaries size: " + SummariesEnv.v().getSums().keySet().size());
+		
+		for(jq_Method meth : SummariesEnv.v().getSums().keySet()) 
+			StringUtil.reportInfo("[Scuba] Summaries: " + meth);
+
 	}
 
 	private void sumAnalyze() {
@@ -322,13 +328,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private boolean analyze(jq_Method m) {
 		accessSeq.add(m);
 
-		if (m.getBytecode() == null) {
-			if (G.info) {
-				System.err.println("ERROR: the method: " + m
-						+ " is lacking models");
-			}
-			return false;
-		}
+//		if (m.getBytecode() == null) {
+//			if (G.info) {
+//				System.err.println("ERROR: the method: " + m
+//						+ " is lacking models");
+//			}
+//			return false;
+//		}
 
 		Summary summary = SummariesEnv.v().initSummary(m);
 		summary.setChanged(false);
@@ -345,7 +351,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// summary is concluded, so that it will continue numbering from the
 		// last time, to keep the numbers increasing
 
-		ControlFlowGraph cfg = CodeCache.getCode(m);
+//		ControlFlowGraph cfg = CodeCache.getCode(m);
+		ControlFlowGraph cfg = m.getCFG();
+
 		if (G.dump) {
 			System.out.println("*****************************************");
 			System.out.println(cfg.fullDump());
@@ -540,6 +548,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	}
 
 	public static int count = 0;
+	public static int me = 0;
 
 	public P2Set query(jq_Class clazz, jq_Method method, Register variable) {
 		jq_Method entry = Program.g().getMainMethod();
@@ -556,7 +565,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (sum1 == null) {
 			if (G.dbgQuery) {
 				StringUtil.reportInfo("Query: "
-						+ "[we cannot get the summary for the method!]");
+						+ "[we cannot get the summary for the method!] " + method);
 			}
 			return null;
 		}
@@ -611,6 +620,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			if (G.dbgQuery) {
 				StringUtil.reportInfo("Query: "
 						+ "[we cannot get the location in the heap!]");
+				sum1.dumpSummaryToFile("" + me++);
 			}
 			return null;
 		}
@@ -635,9 +645,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (Trio<jq_Method, Register, jq_Type> trio : res) {
 			jq_Method meth = trio.val0;
 			Register r = trio.val1;
-			System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
+//			System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
 			P2Set p2Set = query(meth.getDeclaringClass(), meth, r);
-			StringUtil.reportInfo("[Scuba]p2Set of " + r + ":" + p2Set);
+			StringUtil.reportInfo("[Scuba] method: " + meth);
+			StringUtil.reportInfo("[Scuba] p2Set of " + r + ":" + p2Set);
 			
 			//p2set of r in chord.
 			RelView viewChord = relDVH.getView();
@@ -648,7 +659,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			for (Quad inst : resChord)
 				pts.add(inst);
 
-			StringUtil.reportInfo("[Chord]p2Set of " + r + ":" + pts);
+			StringUtil.reportInfo("[Chord] p2Set of " + r + ":" + pts);
 
 		}
 

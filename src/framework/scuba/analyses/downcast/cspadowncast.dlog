@@ -36,7 +36,8 @@ safeDowncast(v:V,t:T) output
 
 ## v is downcast to type t in method m.
 dcm(m:M,v:V,t:T) output
-
+## dump out the points-to set related to downcast.
+dcmVH(v:V,h:H) output
 
 reachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableCM(_,m).
 
@@ -47,6 +48,8 @@ downcast(r,t) :- reachableLR(l,r), \
 	VT(l,t), VT(r,t2), !sub(t2,t).
 	
 dcm(m,v,t) :- MV(m,v), downcast(v,t). 
+
+dcmVH(v,h) :- ptsVH(v,h), downcast(v,_).
 
 unsafeDowncast(v,t) :- downcast(v,t), ptsVT(v,t2), !sub(t2,t).
 safeDowncast(v,t) :- downcast(v,t), !unsafeDowncast(v,t).

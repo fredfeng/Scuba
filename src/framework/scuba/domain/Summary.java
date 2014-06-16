@@ -254,7 +254,8 @@ public class Summary {
 	}
 
 	public void dumpSummaryToFile(String count) {
-		absHeap.dumpHeapToFile(count);
+//		absHeap.dumpHeapToFile(count);
+		absHeap.dumpHeapMappingToFile(count);
 	}
 
 	public void dumpAllMemLocsHeapToFile(String count) {
@@ -1065,6 +1066,7 @@ public class Summary {
 			}
 		} else if (opr instanceof InvokeVirtual) {
 			RegisterOperand ro = Invoke.getParam(callsite, 0);
+			if(ro.getType() instanceof jq_Array) return ret;
 			Register recv = ro.getRegister();
 
 			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";

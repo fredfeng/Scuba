@@ -50,7 +50,7 @@ public class SummariesEnv {
 	protected boolean forceGc = false;
 
 	// disable constraint instantiate.
-	protected boolean disableCst = false;
+	protected boolean disableCst = true;
 
 	public boolean disableCst() {
 		return disableCst;
