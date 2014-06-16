@@ -23,11 +23,11 @@ import joeq.Compiler.Quad.Operand.TypeOperand;
 import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Operator.ALoad;
 import joeq.Compiler.Quad.Operator.AStore;
+import joeq.Compiler.Quad.Operator.CheckCast;
 import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Getstatic;
 import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_A;
-import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_V;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_A;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_V;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKEVIRTUAL_A;
@@ -43,7 +43,6 @@ import joeq.Compiler.Quad.Operator.Phi;
 import joeq.Compiler.Quad.Operator.Putfield;
 import joeq.Compiler.Quad.Operator.Putstatic;
 import joeq.Compiler.Quad.Operator.Return;
-import joeq.Compiler.Quad.Operator.Return.RETURN_A;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.QuadVisitor;
 import joeq.Compiler.Quad.RegisterFactory;
@@ -418,9 +417,28 @@ public class Summary {
 			}
 		}
 
-		// no sure whether we should mark this as no op.
+		// treat it as assignment.
 		public void visitCheckCast(Quad stmt) {
 			Summary.castCnt++;
+
+			Operand rx = CheckCast.getSrc(stmt);
+			if (rx instanceof RegisterOperand) {
+				jq_Method meth = stmt.getMethod();
+				RegisterOperand ro = (RegisterOperand) rx;
+				if (ro.getType().isReferenceType()) {
+					Register r = ro.getRegister();
+					RegisterOperand lo = CheckCast.getDest(stmt);
+					Register l = lo.getRegister();
+
+					VariableType lvt = getVarType(stmt.getMethod(), l);
+					VariableType rvt = getVarType(stmt.getMethod(), r);
+					boolean flag = false;
+					flag = absHeap.handleAssignStmt(meth.getDeclaringClass(),
+							meth, l, lvt, r, rvt, numToAssign, isInSCC);
+					absHeap.markChanged(flag);
+				}
+			}
+
 		}
 
 		// v1 = v2.f
