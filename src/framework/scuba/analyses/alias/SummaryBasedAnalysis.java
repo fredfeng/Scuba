@@ -68,7 +68,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relDcm;
 	protected ProgramRel relDVH;
 
-
 	protected CICG callGraph;
 
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
@@ -90,10 +89,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// perform downcast analysis
 		downcast();
-		
-		StringUtil.reportInfo("[Scuba] summaries size: " + SummariesEnv.v().getSums().keySet().size());
-		
-		for(jq_Method meth : SummariesEnv.v().getSums().keySet()) 
+
+		StringUtil.reportInfo("[Scuba] summaries size: "
+				+ SummariesEnv.v().getSums().keySet().size());
+
+		for (jq_Method meth : SummariesEnv.v().getSums().keySet())
 			StringUtil.reportInfo("[Scuba] Summaries: " + meth);
 
 	}
@@ -260,6 +260,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 								+ "] no IR" + " method: " + m);
 					}
 				}
+
+				if (G.dbgQuery) {
+					if (G.countScc == 147) {
+						SummariesEnv.v().getSummary(m).dumpSummaryToFile("147");
+					}
+				}
 			}
 		} else {
 			analyzeSCC(node);
@@ -328,13 +334,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private boolean analyze(jq_Method m) {
 		accessSeq.add(m);
 
-//		if (m.getBytecode() == null) {
-//			if (G.info) {
-//				System.err.println("ERROR: the method: " + m
-//						+ " is lacking models");
-//			}
-//			return false;
-//		}
+		// if (m.getBytecode() == null) {
+		// if (G.info) {
+		// System.err.println("ERROR: the method: " + m
+		// + " is lacking models");
+		// }
+		// return false;
+		// }
 
 		Summary summary = SummariesEnv.v().initSummary(m);
 		summary.setChanged(false);
@@ -351,7 +357,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// summary is concluded, so that it will continue numbering from the
 		// last time, to keep the numbers increasing
 
-//		ControlFlowGraph cfg = CodeCache.getCode(m);
+		// ControlFlowGraph cfg = CodeCache.getCode(m);
 		ControlFlowGraph cfg = m.getCFG();
 
 		if (G.dump) {
@@ -476,7 +482,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relDcm = (ProgramRel) ClassicProject.g().getTrgt("dcm");
 		relDVH = (ProgramRel) ClassicProject.g().getTrgt("dcmVH");
 
-
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
 
@@ -565,7 +570,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (sum1 == null) {
 			if (G.dbgQuery) {
 				StringUtil.reportInfo("Query: "
-						+ "[we cannot get the summary for the method!] " + method);
+						+ "[we cannot get the summary for the method!] "
+						+ method);
 			}
 			return null;
 		}
@@ -636,7 +642,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		if (!relDVH.isOpen())
 			relDVH.load();
-		
+
 		RelView view = relDcm.getView();
 		Iterable<Trio<jq_Method, Register, jq_Type>> res = view
 				.getAry3ValTuples();
@@ -645,12 +651,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (Trio<jq_Method, Register, jq_Type> trio : res) {
 			jq_Method meth = trio.val0;
 			Register r = trio.val1;
-//			System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
+			// System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
 			P2Set p2Set = query(meth.getDeclaringClass(), meth, r);
 			StringUtil.reportInfo("[Scuba] method: " + meth);
 			StringUtil.reportInfo("[Scuba] p2Set of " + r + ":" + p2Set);
-			
-			//p2set of r in chord.
+
+			// p2set of r in chord.
 			RelView viewChord = relDVH.getView();
 			viewChord.selectAndDelete(0, r);
 			Iterable<Quad> resChord = viewChord.getAry1ValTuples();
