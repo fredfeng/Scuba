@@ -259,6 +259,11 @@ public class Summary {
 		// absHeap.dumpHeapMappingToFile(count);
 	}
 
+	public void dumpSummaryMappingToFile(String count) {
+		// absHeap.dumpHeapToFile(count);
+		absHeap.dumpHeapMappingToFile(count);
+	}
+
 	public void dumpAllMemLocsHeapToFile(String count) {
 		absHeap.dumpAllMemLocsHeapToFile(count);
 	}
@@ -502,7 +507,7 @@ public class Summary {
 		}
 
 		public void visitInvoke(Quad stmt) {
-			
+
 			StringUtil.reportInfo("my invoke: " + stmt);
 			tmp++;
 
@@ -967,31 +972,31 @@ public class Summary {
 
 		public void visitReturn(Quad stmt) {
 			boolean flag = false;
-//			if (stmt.getOperator() instanceof RETURN_A) {
-				Operand operand = Return.getSrc(stmt);
-				if (!(operand instanceof RegisterOperand))
-					return;
-				Register ret = ((RegisterOperand) operand).getRegister();
-				jq_Method meth = stmt.getMethod();
-				jq_Class clazz = meth.getDeclaringClass();
-				VariableType type = getVarType(meth, ret);
+			// if (stmt.getOperator() instanceof RETURN_A) {
+			Operand operand = Return.getSrc(stmt);
+			if (!(operand instanceof RegisterOperand))
+				return;
+			Register ret = ((RegisterOperand) operand).getRegister();
+			jq_Method meth = stmt.getMethod();
+			jq_Class clazz = meth.getDeclaringClass();
+			VariableType type = getVarType(meth, ret);
 
-				flag = absHeap.handleRetStmt(clazz, meth, ret, type,
-						numToAssign, isInSCC);
+			flag = absHeap.handleRetStmt(clazz, meth, ret, type, numToAssign,
+					isInSCC);
 
-				absHeap.markChanged(flag);
+			absHeap.markChanged(flag);
 
-				// if (retValue == null) {
-				assert (absHeap.contains(new RetElem(clazz, meth))) : ""
-						+ "the return value should be contained in the heap!";
-				retValue = absHeap.getRetElem(clazz, meth);
-				// }
-//			} else {
-//				if (G.debug4Sum) {
-//					System.out
-//							.println("[Debug4Sum] Not a processable instruction!");
-//				}
-//			}
+			// if (retValue == null) {
+			assert (absHeap.contains(new RetElem(clazz, meth))) : ""
+					+ "the return value should be contained in the heap!";
+			retValue = absHeap.getRetElem(clazz, meth);
+			// }
+			// } else {
+			// if (G.debug4Sum) {
+			// System.out
+			// .println("[Debug4Sum] Not a processable instruction!");
+			// }
+			// }
 		}
 
 		// no sure whether we should mark this as no op.

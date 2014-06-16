@@ -1941,6 +1941,10 @@ public class AbstractHeap {
 		// every time generating a memory location, do this marking
 		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
+		// init the P2Set of this local
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				ret, EpsilonFieldElem.getEpsilonFieldElem());
+		weakUpdateNoNumbering(pair, new P2Set());
 
 		return ret;
 	}
@@ -1959,6 +1963,10 @@ public class AbstractHeap {
 		// every time generating a memory location, do this marking
 		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
+		// init the P2Set of this param
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				ret, EpsilonFieldElem.getEpsilonFieldElem());
+		weakUpdateNoNumbering(pair, new P2Set());
 
 		return ret;
 	}
@@ -1978,6 +1986,10 @@ public class AbstractHeap {
 		// every time generating a memory location, do this marking
 		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
+		// init the P2Set of this Ret
+		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+				ret, EpsilonFieldElem.getEpsilonFieldElem());
+		weakUpdateNoNumbering(pair, new P2Set());
 
 		return ret;
 	}

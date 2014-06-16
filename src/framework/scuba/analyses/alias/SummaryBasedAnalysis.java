@@ -233,12 +233,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 					+ nodeToScc.get(node));
 			StringUtil.reportInfo("Size of SCC: " + nodeToScc.get(node).size());
 		}
+
 		long startSCC = System.nanoTime();
 
 		assert !node.isTerminated() : "Should not analyze a node twice.";
 
 		// 1.get its corresponding scc
 		Set<jq_Method> scc = nodeToScc.get(node);
+
+		if (G.dbgQuery) {
+			for (jq_Method m : scc) {
+				StringUtil.reportInfo("Byte code for Method: [" + G.countScc
+						+ "]" + m);
+				StringUtil.reportInfo(m.getCFG().fullDump());
+			}
+		}
 
 		if (scc.size() == 1) {
 			// self loop. perform scc.
@@ -264,6 +273,20 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				if (G.dbgQuery) {
 					if (G.countScc == 147) {
 						SummariesEnv.v().getSummary(m).dumpSummaryToFile("147");
+						SummariesEnv.v().getSummary(m)
+								.dumpSummaryMappingToFile("147");
+
+					}
+					if (G.countScc == 350) {
+						SummariesEnv.v().getSummary(m).dumpSummaryToFile("350");
+						SummariesEnv.v().getSummary(m)
+								.dumpSummaryMappingToFile("350");
+					}
+
+					if (G.countScc == 352) {
+						SummariesEnv.v().getSummary(m).dumpSummaryToFile("352");
+						SummariesEnv.v().getSummary(m)
+								.dumpSummaryMappingToFile("352");
 					}
 				}
 			}
