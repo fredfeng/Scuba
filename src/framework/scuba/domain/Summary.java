@@ -27,6 +27,7 @@ import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Getstatic;
 import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_A;
+import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_V;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_A;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_V;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKEVIRTUAL_A;
@@ -501,6 +502,8 @@ public class Summary {
 		}
 
 		public void visitInvoke(Quad stmt) {
+			
+			StringUtil.reportInfo("my invoke: " + stmt);
 			tmp++;
 
 			long startInstCallsite = System.nanoTime();
@@ -658,7 +661,8 @@ public class Summary {
 					Operator opr = stmt.getOperator();
 					if (opr instanceof INVOKESTATIC_A
 							|| opr instanceof INVOKEVIRTUAL_A
-							|| opr instanceof INVOKEINTERFACE_A) {
+							|| opr instanceof INVOKEINTERFACE_A
+							|| Invoke.getDest(stmt) != null) {
 
 						if (G.dbgRet) {
 							StringUtil.reportInfo("init the return mapping");
@@ -683,10 +687,6 @@ public class Summary {
 				}
 
 				boolean flag = false;
-
-				if (G.dbgMatch) {
-
-				}
 
 				if (SummariesEnv.v().useNumbering()) {
 					flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(),
@@ -967,7 +967,7 @@ public class Summary {
 
 		public void visitReturn(Quad stmt) {
 			boolean flag = false;
-			if (stmt.getOperator() instanceof RETURN_A) {
+//			if (stmt.getOperator() instanceof RETURN_A) {
 				Operand operand = Return.getSrc(stmt);
 				if (!(operand instanceof RegisterOperand))
 					return;
@@ -986,12 +986,12 @@ public class Summary {
 						+ "the return value should be contained in the heap!";
 				retValue = absHeap.getRetElem(clazz, meth);
 				// }
-			} else {
-				if (G.debug4Sum) {
-					System.out
-							.println("[Debug4Sum] Not a processable instruction!");
-				}
-			}
+//			} else {
+//				if (G.debug4Sum) {
+//					System.out
+//							.println("[Debug4Sum] Not a processable instruction!");
+//				}
+//			}
 		}
 
 		// no sure whether we should mark this as no op.
@@ -1037,9 +1037,6 @@ public class Summary {
 		// find all qualified callees and the constraints
 
 		jq_Method callee = Invoke.getMethod(callsite).getMethod();
-
-		if (G.tuning)
-			StringUtil.reportInfo("static callee: " + callee);
 
 		Operator opr = callsite.getOperator();
 		Summary calleeSum = SummariesEnv.v().getSummary(callee);
