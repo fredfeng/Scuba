@@ -1055,39 +1055,40 @@ public class Summary {
 	public List<Pair<Summary, BoolExpr>> getSumCstPairList(Quad callsite) {
 		jq_Method caller = callsite.getMethod();
 		jq_Class clz = caller.getDeclaringClass();
-
+		BoolExpr cst = ConstraintManager.genTrue();
+		Operator opr = callsite.getOperator();
 		List<Pair<Summary, BoolExpr>> ret = new ArrayList<Pair<Summary, BoolExpr>>();
 		// find all qualified callees and the constraints
-
-		jq_Method callee = Invoke.getMethod(callsite).getMethod();
-
-		Operator opr = callsite.getOperator();
-		Summary calleeSum = SummariesEnv.v().getSummary(callee);
-		// FIXME: if the summary is null, return nothing.
-		// But for interface, we need to continue.
-		if (calleeSum == null && !(opr instanceof InvokeInterface))
+		// all dynamic targets.
+		Set<jq_Method> tgtSet = Env.cg.getTargets(callsite);
+		if (tgtSet.size() == 0) {
+			StringUtil
+					.reportInfo("Fail to find model for callee..." + callsite);
 			return ret;
-		BoolExpr cst = ConstraintManager.genTrue();
+		}
 
-		// trivial cases: final, private, static. We know its exactly target.
-		if (opr instanceof InvokeStatic) {
-			// always true.
-			// invoke_v : v.foo()
-			if (opr instanceof INVOKESTATIC_V) {
-				if (calleeSum.hasAnalyzed)
-					ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
-				// invoke_a : u = v.foo()
-			} else if (opr instanceof INVOKESTATIC_A) {
-				if (calleeSum.hasAnalyzed)
-					ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
-				// handle the return value.
-			} else {
-				// ignore the rest of cases.
-			}
-		} else if (opr instanceof InvokeVirtual) {
-			RegisterOperand ro = Invoke.getParam(callsite, 0);
-			if (ro.getType() instanceof jq_Array)
+		// include stativinvoke, vitualinvoke with one target.
+		if (tgtSet.size() == 1) {
+			jq_Method callee = tgtSet.iterator().next();
+			Summary calleeSum = SummariesEnv.v().getSummary(callee);
+			if(calleeSum == null) {
+				StringUtil.reportInfo("Missing model for " + callee);
 				return ret;
+			}
+//			assert calleeSum != null : "CalleeSum can not be null" + callsite;
+			if (calleeSum.hasAnalyzed()) {
+				ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
+				return ret;
+			}
+		}
+
+		if ((opr instanceof InvokeVirtual) || (opr instanceof InvokeInterface)) {
+			RegisterOperand ro = Invoke.getParam(callsite, 0);
+
+			if (ro.getType() instanceof jq_Array) {
+				StringUtil.reportInfo("Do not handle array for " + callsite);
+				return ret;
+			}
 			Register recv = ro.getRegister();
 
 			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
@@ -1103,54 +1104,21 @@ public class Summary {
 			// FIXME: We should assume that v can point to any object.
 			if (p2Set.isEmpty()) {
 				System.err
-						.println("[WARNING:]Receiver's p2Set can't be empty. Missing models?");
+						.println("[WARNING:]Receiver's p2Set can't be empty. Missing models?"
+								+ callsite);
 				return ret;
 			}
 
-			// all dynamic targets.
-			Set<jq_Method> tgtSet = Env.cg.getTargets(callsite);
-
-			if (G.tuning)
-				StringUtil.reportInfo("resolve callee: " + tgtSet);
-
+			// only one target, resolve it as static call.
 			for (jq_Method tgt : tgtSet) {
 				// generate constraint for each potential target.
 				jq_Class tgtType = tgt.getDeclaringClass();
-				if (!tgtType.extendsClass(recvStatType))
-					continue;
 
-				assert tgtType.extendsClass(recvStatType) : "Dynamic type must be a subclass for static type!";
-
-				if (SummariesEnv.v().cheating()) {
-					if ((callee.getName().toString().equals("study") || callee
-							.getName().toString().equals("match"))
-							&& (callsite.getMethod().getNameAndDesc()
-									.equals(tgt.getNameAndDesc()))) {
-						continue;
-						// if (!tgtType.equals(callsite.getMethod()
-						// .getDeclaringClass())) {
-						// StringUtil.reportInfo("Cheating...." + pair.val1);
-						// continue;
-						// }
-					}
-				}
-
-				long startGenCst = System.nanoTime();
 				if (SummariesEnv.v().disableCst)
 					cst = ConstraintManager.genTrue();
-				else {
+				else
 					cst = genCst(p2Set, tgt, tgtType, tgtSet);
-					try {
-						cst = (BoolExpr) cst.Simplify();
-					} catch (Z3Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-				if (G.tuning) {
-					long endGenCst = System.nanoTime();
-					G.genCstTime += (endGenCst - startGenCst);
-				}
+
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(tgt);
 				if (dySum == null) {
@@ -1165,58 +1133,8 @@ public class Summary {
 				if (dySum.hasAnalyzed())
 					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
 			}
-		} else if (opr instanceof InvokeInterface) {
-			// assume all csts are true.
-			RegisterOperand ro = Invoke.getParam(callsite, 0);
-			Register recv = ro.getRegister();
-			assert recv.getType() instanceof jq_Class : "Receiver must be a ref type.";
-			// generate pt-set for the receiver.
-			StackObject so = getMemLocation(clz, caller, recv);
-			P2Set p2Set = absHeap.lookup(so,
-					EpsilonFieldElem.getEpsilonFieldElem());
-
-			// assert !p2Set.isEmpty() : "Receiver's p2Set can't be empty." ;
-			if (p2Set.isEmpty()) {
-				if (G.debug4Sum) {
-					System.err
-							.println("[WARNING:] Receiver's p2Set can't be empty. Missing models?");
-				}
-				return ret;
-			}
-
-			// all dynamic targets.
-			Set<jq_Method> tgtSet = Env.cg.getTargets(callsite);
-
-			for (jq_Method tgt : tgtSet) {
-				// generate constraint for each potential target.
-				if (SummariesEnv.v().disableCst)
-					cst = ConstraintManager.genTrue();
-				else {
-					cst = genCst(p2Set, tgt, tgt.getDeclaringClass(), tgtSet);
-					try {
-						cst = (BoolExpr) cst.Simplify();
-					} catch (Z3Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-
-				assert cst != null : "Invalid constaint!";
-				Summary dySum = SummariesEnv.v().getSummary(tgt);
-				if (dySum == null) {
-					if (G.debug4Sum) {
-						System.err
-								.println("Unreachable method because of missing model."
-										+ tgt);
-					}
-					continue;
-				}
-				if (dySum.hasAnalyzed)
-					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
-			}
-			// TODO
 		} else {
-			assert false : "Unhandled invoke!" + callsite;
+			StringUtil.reportInfo("May be recursive call." + tgtSet);
 		}
 		return ret;
 	}
