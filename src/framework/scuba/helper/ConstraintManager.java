@@ -32,7 +32,7 @@ import framework.scuba.domain.SummariesEnv;
 
 /**
  * Class for generating/solving constraints, since right now our system can only
- * have true | false | Type(v) = T. 
+ * have true | false | Type(v) = T.
  * 
  * Integrate Z3 to perform the constraint solving and simplification.
  * 
@@ -40,28 +40,28 @@ import framework.scuba.domain.SummariesEnv;
  * 
  */
 public class ConstraintManager {
-	
+
 	private static ConstraintManager instance = new ConstraintManager();
 
 	static Context ctx;
-	
-    static Solver solver;
-    
-	//define the uninterpreted function. type(o)=T
-    static FuncDecl typeFun;
 
-	//constant expr.
+	static Solver solver;
+
+	// define the uninterpreted function. type(o)=T
+	static FuncDecl typeFun;
+
+	// constant expr.
 	static BoolExpr trueExpr;
-	
+
 	static BoolExpr falseExpr;
-	
-	//map from term to heapObject. for unlifting.
+
+	// map from term to heapObject. for unlifting.
 	static Map<String, AccessPath> term2Ap = new HashMap<String, AccessPath>();
-	
+
 	public ConstraintManager() {
 		try {
 			ctx = new Context();
-		    solver = ctx.MkSolver();
+			solver = ctx.MkSolver();
 			trueExpr = ctx.MkBool(true);
 			falseExpr = ctx.MkBool(false);
 			typeFun = ctx.MkFuncDecl("type", ctx.IntSort(), ctx.IntSort());
@@ -71,12 +71,12 @@ public class ConstraintManager {
 		}
 
 	}
-	
+
 	public static ConstraintManager v() {
 		return instance;
 	}
-	
-	//constraint generations.
+
+	// constraint generations.
 	public static BoolExpr genTrue() {
 		return trueExpr;
 	}
@@ -84,12 +84,12 @@ public class ConstraintManager {
 	public static BoolExpr genFalse() {
 		return falseExpr;
 	}
-	
+
 	/**
-	 * lift operation: Given a heap object, return its term.
-	 * if ho is an allocElem, return its number;
-	 * if ho is an accesspath, return its unique variable v_i
-	 * where i is read from a global counter.
+	 * lift operation: Given a heap object, return its term. if ho is an
+	 * allocElem, return its number; if ho is an accesspath, return its unique
+	 * variable v_i where i is read from a global counter.
+	 * 
 	 * @param ho
 	 * @return
 	 */
@@ -106,7 +106,7 @@ public class ConstraintManager {
 			} else if (ho instanceof AccessPath) {
 				AccessPath ap = (AccessPath) ho;
 				String symbol = "v" + ap.getId();
-				//put to map for unlifting later.
+				// put to map for unlifting later.
 				term2Ap.put(symbol, ap);
 				Expr o = ctx.MkConst(symbol, ctx.IntSort());
 				// type(o)
@@ -114,24 +114,26 @@ public class ConstraintManager {
 			} else {
 				assert false : "Unknown heap object.";
 			}
-			
-			//lift type(o)=T
-			if(isEqual) {
-				BoolExpr eq = ctx.MkEq(cur, ctx.MkInt(typeInt));
-				//perform simplification like 2=2 -> true, 2=3 -> false
-				//Expr simEq = eq.Simplify();
-				//assert simEq instanceof BoolExpr : "Must return a boolean expr.";
-				//return (BoolExpr)simEq;
-                return eq;
 
-			//lift type(o)<=T
+			// lift type(o)=T
+			if (isEqual) {
+				BoolExpr eq = ctx.MkEq(cur, ctx.MkInt(typeInt));
+				// perform simplification like 2=2 -> true, 2=3 -> false
+				// Expr simEq = eq.Simplify();
+				// assert simEq instanceof BoolExpr :
+				// "Must return a boolean expr.";
+				// return (BoolExpr)simEq;
+				return eq;
+
+				// lift type(o)<=T
 			} else {
-				BoolExpr le = ctx.MkLe((IntExpr)cur, ctx.MkInt(typeInt));
-				//perform simplification like 2=2 -> true, 2=3 -> false
-				//Expr simLe = le.Simplify();
-				//assert simLe instanceof BoolExpr : "Must return a boolean expr.";
-				//return (BoolExpr)simLe;
-                return le;
+				BoolExpr le = ctx.MkLe((IntExpr) cur, ctx.MkInt(typeInt));
+				// perform simplification like 2=2 -> true, 2=3 -> false
+				// Expr simLe = le.Simplify();
+				// assert simLe instanceof BoolExpr :
+				// "Must return a boolean expr.";
+				// return (BoolExpr)simLe;
+				return le;
 			}
 
 		} catch (Z3Exception e) {
@@ -141,18 +143,19 @@ public class ConstraintManager {
 
 		return null;
 	}
-	
-	//perform unlifting and instantiation. Rule 2 in figure 10.
-	public static BoolExpr instConstaint(BoolExpr expr, AbstractHeap callerHeap,
-			ProgramPoint point, MemLocInstnItem memLocInstn) {
+
+	// perform unlifting and instantiation. Rule 2 in figure 10.
+	public static BoolExpr instConstaint(BoolExpr expr,
+			AbstractHeap callerHeap, ProgramPoint point,
+			MemLocInstnItem memLocInstn) {
 		try {
-			expr = (BoolExpr)expr.Simplify();
-			if(isScala(expr)) 
+			expr = (BoolExpr) expr.Simplify();
+			if (isScala(expr))
 				return expr;
-			
+
 			HashMap<String, BoolExpr> map = new HashMap<String, BoolExpr>();
 			extractTerm(expr, map);
-	
+
 			for (BoolExpr sub : map.values()) {
 				assert sub.IsEq() || sub.IsLE() : "invalid sub expr" + sub;
 				Expr term = sub.Args()[0].Args()[0];
@@ -165,8 +168,8 @@ public class ConstraintManager {
 				IntNum typeInt = (IntNum) sub.Args()[1];
 				// get points-to set for term
 				assert (ap instanceof AccessPath);
-				MemLocInstnSet p2Set = memLocInstn.instnMemLoc(ap,
-						callerHeap, point);
+				MemLocInstnSet p2Set = memLocInstn.instnMemLoc(ap, callerHeap,
+						point);
 				BoolExpr instSub;
 				if (sub.IsEq())
 					instSub = instEqTyping(p2Set, typeInt.Int());
@@ -175,21 +178,21 @@ public class ConstraintManager {
 
 				expr = (BoolExpr) expr.Substitute(sub, instSub);
 			}
-			return (BoolExpr)expr.Simplify();
+			return (BoolExpr) expr.Simplify();
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
 	}
-	
-	//given an expr, extract all its sub terms for instantiating.
+
+	// given an expr, extract all its sub terms for instantiating.
 	public static void extractTerm(Expr expr, HashMap<String, BoolExpr> map) {
-        try {
-        	//using toString as the key to map the same expr, buggy.
-        	if(expr.IsEq() || expr.IsLE())
-        		map.put(expr.toString(), (BoolExpr)expr);
-        	
+		try {
+			// using toString as the key to map the same expr, buggy.
+			if (expr.IsEq() || expr.IsLE())
+				map.put(expr.toString(), (BoolExpr) expr);
+
 			if (expr.IsAnd() || expr.IsOr())
 				for (int i = 0; i < expr.NumArgs(); i++) {
 					assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:"
@@ -203,13 +206,13 @@ public class ConstraintManager {
 		}
 	}
 
-	//A and B.
+	// A and B.
 	public static BoolExpr intersect(BoolExpr first, BoolExpr second) {
-        if(SummariesEnv.v().disableCst())
-            return trueExpr;
-        try {
-        	assert first!= null : "Invalid constrait";
-        	assert second!= null : "Invalid constrait";
+		if (SummariesEnv.v().disableCst())
+			return trueExpr;
+		try {
+			assert first != null : "Invalid constrait";
+			assert second != null : "Invalid constrait";
 			if (isFalse(first) || isFalse(second))
 				return falseExpr;
 
@@ -220,9 +223,10 @@ public class ConstraintManager {
 				return first;
 
 			BoolExpr inter = ctx.MkAnd(new BoolExpr[] { first, second });
-			//try to simplify.
-            //Expr sim = inter.Simplify();
-			//assert inter instanceof BoolExpr : "Unknown constraints in intersection!";
+			// try to simplify.
+			// Expr sim = inter.Simplify();
+			// assert inter instanceof BoolExpr :
+			// "Unknown constraints in intersection!";
 			return inter;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -231,14 +235,14 @@ public class ConstraintManager {
 		return null;
 	}
 
-	//A or B
+	// A or B
 	public static BoolExpr union(BoolExpr first, BoolExpr second) {
-        if(SummariesEnv.v().disableCst())
-            return trueExpr;
-        try {
-        	assert first!= null : "Invalid constrait";
-        	assert second!= null : "Invalid constrait";
-        	
+		if (SummariesEnv.v().disableCst())
+			return trueExpr;
+		try {
+			assert first != null : "Invalid constrait";
+			assert second != null : "Invalid constrait";
+
 			if (isTrue(first) || isTrue(second))
 				return trueExpr;
 
@@ -249,9 +253,9 @@ public class ConstraintManager {
 				return first;
 
 			BoolExpr union = ctx.MkOr(new BoolExpr[] { first, second });
-			//try to simplify.
-			//Expr sim = union.Simplify();
-			//assert sim instanceof BoolExpr : "Unknown constraints in union!";
+			// try to simplify.
+			// Expr sim = union.Simplify();
+			// assert sim instanceof BoolExpr : "Unknown constraints in union!";
 			return union;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -259,13 +263,13 @@ public class ConstraintManager {
 		}
 		return null;
 	}
-	
-	//generate subtyping constraint.
+
+	// generate subtyping constraint.
 	public static BoolExpr genSubTyping(P2Set p2Set, jq_Class t) {
 		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		for(HeapObject ho : p2Set.getHeapObjects()) {
+		for (HeapObject ho : p2Set.getHeapObjects()) {
 			BoolExpr orgCst = p2Set.getConstraint(ho);
 			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, false));
 			if (isTrue(newCst))
@@ -274,14 +278,14 @@ public class ConstraintManager {
 		}
 		return b;
 	}
-	
-	//generate equality typing constraint.
+
+	// generate equality typing constraint.
 	public static BoolExpr genEqTyping(P2Set p2Set, jq_Class t) {
 
 		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		for(HeapObject ho : p2Set.getHeapObjects()) {
+		for (HeapObject ho : p2Set.getHeapObjects()) {
 			BoolExpr orgCst = p2Set.getConstraint(ho);
 			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, true));
 			if (isTrue(newCst))
@@ -290,7 +294,7 @@ public class ConstraintManager {
 		}
 		return b;
 	}
-	
+
 	// instantiate subtyping constraint by term.
 	public static BoolExpr instSubTyping(MemLocInstnSet p2Set, int typeInt) {
 		long startICst = System.nanoTime();
@@ -341,9 +345,11 @@ public class ConstraintManager {
 		}
 		return b;
 	}
-	
+
 	/**
-	 * Z3 doesn't provide a clone function. Use A' = A or A to generate a new one 
+	 * Z3 doesn't provide a clone function. Use A' = A or A to generate a new
+	 * one
+	 * 
 	 * @param expr
 	 * @return
 	 */
@@ -351,20 +357,18 @@ public class ConstraintManager {
 		assert expr != null : "Unknown boolExpr.";
 		// actually we don't need to clone a new instance. Since we will create
 		// a fresh new one during intersect or union
-        return expr;
-        /*try {
-			BoolExpr clone = ctx.MkOr(new BoolExpr[] { expr, expr });
-			return (BoolExpr)clone.Simplify();
-		} catch (Z3Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;*/
+		return expr;
+		/*
+		 * try { BoolExpr clone = ctx.MkOr(new BoolExpr[] { expr, expr });
+		 * return (BoolExpr)clone.Simplify(); } catch (Z3Exception e) { // TODO
+		 * Auto-generated catch block e.printStackTrace(); } return null;
+		 */
 	}
-	
+
 	/**
-	 * Check whether expr1 and expr2 are equivalent.
-	 * iff \neg(expr1 iff expr2) is unsatisfiable.
+	 * Check whether expr1 and expr2 are equivalent. iff \neg(expr1 iff expr2)
+	 * is unsatisfiable.
+	 * 
 	 * @param expr1
 	 * @param expr2
 	 * @return
@@ -378,7 +382,7 @@ public class ConstraintManager {
 			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
 			solver.Assert(e2);
-			if(solver.Check() == Status.UNSATISFIABLE)
+			if (solver.Check() == Status.UNSATISFIABLE)
 				return true;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -386,11 +390,11 @@ public class ConstraintManager {
 		}
 		return false;
 	}
-	
-	//check if cst is a scala constraint, e.g, true, false 
+
+	// check if cst is a scala constraint, e.g, true, false
 	public static boolean isScala(BoolExpr cst) {
 		try {
-			if (cst.IsTrue()|| cst.IsFalse())
+			if (cst.IsTrue() || cst.IsFalse())
 				return true;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -398,7 +402,7 @@ public class ConstraintManager {
 		}
 		return false;
 	}
-	
+
 	public static boolean isTrue(BoolExpr cst) {
 		try {
 			return cst.IsTrue();
@@ -408,7 +412,7 @@ public class ConstraintManager {
 		}
 		return false;
 	}
-	
+
 	public static boolean isFalse(BoolExpr cst) {
 		try {
 			return cst.IsFalse();

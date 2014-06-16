@@ -2,9 +2,11 @@ package framework.scuba.domain;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
+import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 
@@ -15,17 +17,18 @@ public class MemLocInstnItem {
 	// this maps from the abstract memory locations in the heap of the callee to
 	// the abstract memory locations in the heap of the caller
 	// callee locations --> caller locations
-	protected MemLocInstnItemCache cache;
-	// protected Map<AbstractMemLoc, MemLocInstnSet> instnMemLocMapping;
+	final protected MemLocInstnItemCache cache;
+
+	final protected MemLocInstn4Method result;
 
 	// the caller that this instantiation belongs to
-	protected jq_Method caller;
+	final protected jq_Method caller;
 
 	// the call site that this instantiation is for
-	protected Quad callsite;
+	final protected Quad callsite;
 
 	// the callee that this instantiation is for
-	protected jq_Method callee;
+	final protected jq_Method callee;
 
 	// whether use cache for instantiating AccessPath
 	protected boolean useCache = false;
@@ -33,10 +36,12 @@ public class MemLocInstnItem {
 	// hasRet = true: there is a location mapped in the caller's heap
 	protected boolean hasRet = false;
 
-	public MemLocInstnItem(jq_Method caller, Quad callsite, jq_Method callee) {
+	public MemLocInstnItem(jq_Method caller, Quad callsite, jq_Method callee,
+			MemLocInstn4Method result) {
 		this.caller = caller;
 		this.callsite = callsite;
 		this.callee = callee;
+		this.result = result;
 		cache = new MemLocInstnItemCache();
 	}
 
@@ -54,6 +59,11 @@ public class MemLocInstnItem {
 
 	public int size() {
 		return cache.size();
+	}
+
+	// given a location in the callee's heap, remove the cache item in the cache
+	public MemLocInstnSet remove(AbstractMemLoc loc) {
+		return cache.remove(loc);
 	}
 
 	public void print() {
@@ -113,9 +123,41 @@ public class MemLocInstnItem {
 		cache.put(ret, new MemLocInstnSet(lhs, ConstraintManager.genTrue()));
 	}
 
-	// this method implements the inference rules in figure 11 of the paper
-	// loc is the location in the callee's heap
 	public MemLocInstnSet instnMemLoc(AbstractMemLoc loc,
+			AbstractHeap callerHeap, ProgramPoint point) {
+		MemLocInstnSet ret = null;
+		if (useCache) {
+			ret = instnMemLocUsingCache(loc, callerHeap, point);
+		} else {
+			ret = instnMemLocNoCache(loc, callerHeap, point);
+		}
+		return ret;
+	}
+
+	public MemLocInstnSet instnAccessPathUsingCache(Set<AccessPath> orgs,
+			AbstractMemLoc loc, AbstractHeap callerHeap, ProgramPoint point) {
+
+		MemLocInstnSet ret = cache.get(loc);
+		if (ret != null) {
+			return ret;
+		}
+
+		AbstractMemLoc base = ((AccessPath) loc).getBase();
+		FieldElem field = ((AccessPath) loc).getField();
+		MemLocInstnSet instnLocSet = instnAccessPathUsingCache(orgs, base,
+				callerHeap, point);
+		for (AbstractMemLoc loc1 : instnLocSet.keySet()) {
+			for (AccessPath ap : orgs) {
+				result.getSum().addToDepMap(loc1,
+						new Pair<MemLocInstnItem, AccessPath>(this, ap));
+			}
+		}
+		ret = callerHeap.instnLookup(instnLocSet, field);
+
+		return ret;
+	}
+
+	public MemLocInstnSet instnMemLocUsingCache(AbstractMemLoc loc,
 			AbstractHeap callerHeap, ProgramPoint point) {
 
 		MemLocInstnSet ret = cache.get(loc);
@@ -186,16 +228,98 @@ public class MemLocInstnItem {
 			// put into the map
 			cache.put(loc, ret);
 		} else if (loc instanceof AccessPath) {
-			if (useCache) {
-				// hitting cache TODO
-				if (ret != null) {
-					return ret;
-				}
-			}
-			// currently we do not do cache here
 			AbstractMemLoc base = ((AccessPath) loc).getBase();
 			FieldElem field = ((AccessPath) loc).getField();
-			MemLocInstnSet instnLocSet = instnMemLoc(base, callerHeap, point);
+			MemLocInstnSet instnLocSet = instnMemLocUsingCache(base,
+					callerHeap, point);
+			ret = callerHeap.instnLookup(instnLocSet, field);
+			// put into the map
+			cache.put(loc, ret);
+
+		} else {
+			assert false : "wried things happen! Unknow type.";
+		}
+
+		return ret;
+	}
+
+	// this method implements the inference rules in figure 11 of the paper
+	// loc is the location in the callee's heap
+	public MemLocInstnSet instnMemLocNoCache(AbstractMemLoc loc,
+			AbstractHeap callerHeap, ProgramPoint point) {
+
+		MemLocInstnSet ret = cache.get(loc);
+
+		if (loc instanceof ParamElem) {
+			assert (ret != null) : "parameters should have been instantiated"
+					+ " when the first time init the instantiation";
+		}
+
+		if (loc instanceof RetElem) {
+			if (hasRet) {
+				assert (ret != null) : "return value should have been instantiated"
+						+ " when the first time init the instantiation!";
+			} else {
+				assert (ret == null) : "if there is no LHS in the call site, "
+						+ "we cannot instantiate the return value";
+			}
+		}
+
+		if (loc instanceof LocalVarElem || loc instanceof ParamElem
+				|| loc instanceof StaticElem) {
+			// this is my little cute cache
+			if (ret != null) {
+				return ret;
+			}
+			// not hitting cache
+			ret = new MemLocInstnSet(loc, ConstraintManager.genTrue());
+			// put into the map
+			cache.put(loc, ret);
+		} else if (loc instanceof RetElem) {
+			if (hasRet) {
+				assert (ret != null) : "return value should be mapped"
+						+ " the first time init the instantiation";
+				return ret;
+			} else {
+				assert (ret == null) : "return value should"
+						+ " not be instantiated if there is no LHS!";
+				return null;
+			}
+		} else if (loc instanceof AllocElem) {
+			// we also instantiated allocElem only once!
+			// wow! I guess it will save a LOT of time by doing this
+			if (ret != null) {
+				return ret;
+			}
+			// not hitting the cache
+			if (SummariesEnv.v().allocDepth == 0
+					|| ((AllocElem) loc).length() < SummariesEnv.v().allocDepth) {
+
+				if (((AllocElem) loc).contains(point)) {
+					AllocElem allocElem = callerHeap
+							.getAllocElem(((AllocElem) loc));
+					ret = new MemLocInstnSet(allocElem,
+							ConstraintManager.genTrue());
+				} else {
+					AllocElem allocElem = callerHeap.getAllocElem(
+							((AllocElem) loc), point);
+					ret = new MemLocInstnSet(allocElem,
+							ConstraintManager.genTrue());
+				}
+			} else if (((AllocElem) loc).length() == SummariesEnv.v().allocDepth) {
+
+				AllocElem allocElem = callerHeap.getAllocElem((AllocElem) loc);
+				ret = new MemLocInstnSet(allocElem, ConstraintManager.genTrue());
+			} else {
+				assert false : "wrong!";
+			}
+			// put into the map
+			cache.put(loc, ret);
+		} else if (loc instanceof AccessPath) {
+			AbstractMemLoc base = ((AccessPath) loc).getBase();
+			FieldElem field = ((AccessPath) loc).getField();
+			MemLocInstnSet instnLocSet = instnMemLocNoCache(base, callerHeap,
+					point);
 			ret = callerHeap.instnLookup(instnLocSet, field);
 			// put into the map
 			cache.put(loc, ret);

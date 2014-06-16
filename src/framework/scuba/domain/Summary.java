@@ -84,9 +84,10 @@ public class Summary {
 
 	// (call site, callee method) --> memory location instantiation
 	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
-	// private Map<Pair<Quad, jq_Method>, MemLocInstnItem>
-	// methCallToMemLocInstantiation;
-	MemLocInstn4Method memLocInstnResult;
+	final protected MemLocInstn4Method memLocInstnResult;
+
+	// used for efficient caching
+	final protected DependenceMap depMap;
 
 	// finish current summary.
 	private boolean terminated;
@@ -125,8 +126,9 @@ public class Summary {
 
 	public Summary(jq_Method meth) {
 		this.method = meth;
-		this.absHeap = new AbstractHeap(meth, this);
+		this.absHeap = new AbstractHeap(this);
 		this.memLocInstnResult = new MemLocInstn4Method(this);
+		this.depMap = new DependenceMap(this);
 		this.aliasQueries = new AliasQueries(meth, this);
 		if (G.dump) {
 			this.dumpSummary4Method(meth);
@@ -580,10 +582,8 @@ public class Summary {
 			}
 
 			int count = 0;
-			perCallerId++;
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
-				perCalleeId++;
 				count++;
 				tmp1++;
 				if (G.dbgSCC) {
@@ -639,24 +639,24 @@ public class Summary {
 				assert (hasTypeCst != null) : "invalid has type constraint!";
 
 				// get the memory location instantiation for the callee
-				MemLocInstnItem memLocInstn = memLocInstnResult
+				MemLocInstnItem item = memLocInstnResult
 						.get(new Pair<Quad, jq_Method>(stmt, calleeSum
 								.getMethod()));
 				if (G.dbgRet) {
 					StringUtil.reportInfo(" get the mem loc instn");
-					if (memLocInstn == null) {
+					if (item == null) {
 						StringUtil.reportInfo("it is a null!");
 					} else {
 						StringUtil.reportInfo("------");
-						memLocInstn.print();
+						item.print();
 					}
 				}
 				// if has not been cached
-				if (memLocInstn == null) {
-					memLocInstn = new MemLocInstnItem(meth, stmt,
-							calleeSum.getMethod());
+				if (item == null) {
+					item = new MemLocInstnItem(meth, stmt,
+							calleeSum.getMethod(), memLocInstnResult);
 					memLocInstnResult.put(new Pair<Quad, jq_Method>(stmt,
-							calleeSum.getMethod()), memLocInstn);
+							calleeSum.getMethod()), item);
 					// fill the formal-to-actual mapping
 					ParamListOperand actuals = Invoke.getParamList(stmt);
 					List<StackObject> actualsMemLoc = new ArrayList<StackObject>();
@@ -680,8 +680,8 @@ public class Summary {
 					assert (calleeSum.getFormals().size() == actualsMemLoc
 							.size()) : "unmatched actuals and formals list!";
 
-					memLocInstn.initFormalToActualMapping(
-							calleeSum.getFormals(), actualsMemLoc);
+					item.initFormalToActualMapping(calleeSum.getFormals(),
+							actualsMemLoc);
 					// fill the return-value mapping
 					// ONLY for x = v.foo(a1, a2)
 					Operator opr = stmt.getOperator();
@@ -699,8 +699,7 @@ public class Summary {
 								meth.getDeclaringClass(), meth,
 								ro.getRegister());
 						assert (sObj != null) : "Fails to locate the right heap obj.";
-						memLocInstn.initReturnToLHS(calleeSum.getRetValue(),
-								sObj);
+						item.initReturnToLHS(calleeSum.getRetValue(), sObj);
 					}
 				}
 				if (G.tuning)
@@ -716,12 +715,12 @@ public class Summary {
 
 				if (SummariesEnv.v().useNumbering()) {
 					flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(),
-							meth, stmt.getID(), calleeSum.getAbsHeap(),
-							memLocInstn, hasTypeCst, numToAssign, isInSCC);
+							meth, stmt.getID(), calleeSum.getAbsHeap(), item,
+							hasTypeCst, numToAssign, isInSCC);
 				} else {
 					flag = absHeap.handleInvokeStmtNoNumbering(
 							meth.getDeclaringClass(), meth, stmt.getID(),
-							calleeSum.getAbsHeap(), memLocInstn, hasTypeCst,
+							calleeSum.getAbsHeap(), item, hasTypeCst,
 							numToAssign, isInSCC);
 				}
 
@@ -1428,5 +1427,10 @@ public class Summary {
 
 	public int getHeapSize() {
 		return absHeap.size();
+	}
+
+	public Set<Pair<MemLocInstnItem, AccessPath>> addToDepMap(
+			AbstractMemLoc loc, Pair<MemLocInstnItem, AccessPath> pair) {
+		return depMap.add(loc, pair);
 	}
 }

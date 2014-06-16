@@ -29,7 +29,7 @@ public class AbstractHeap {
 	// the summary this heap belongs to
 	final protected Summary summary;
 	// the method whose heap is represented by this AbstractHeap
-	final protected jq_Method method;
+	// final protected jq_Method method;
 
 	protected final Set<AbstractMemLoc> heap;
 
@@ -80,9 +80,9 @@ public class AbstractHeap {
 		// currently we are only use the first two
 	}
 
-	public AbstractHeap(jq_Method method, Summary summary) {
+	public AbstractHeap(Summary summary) {
 		this.summary = summary;
-		this.method = method;
+		// this.method = method;
 		heap = new HashSet<AbstractMemLoc>();
 		heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
 		// heapObjectsToP2Set = new ConcurrentHashMap<Pair<AbstractMemLoc,
@@ -91,7 +91,7 @@ public class AbstractHeap {
 	}
 
 	public jq_Method getMethod() {
-		return this.method;
+		return this.summary.getMethod();
 	}
 
 	public void validate() {
@@ -1333,10 +1333,8 @@ public class AbstractHeap {
 			// instantiate the calleeCst
 			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
-			MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this,
-					point);
-			MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this,
-					point);
+			MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
+			MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
 
 			assert (instnDst != null) : "instantiation of dst cannot be null!";
 			if (instnSrc == null) {
@@ -1423,10 +1421,8 @@ public class AbstractHeap {
 			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
 			long startInstLoc = System.nanoTime();
-			MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this,
-					point);
-			MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this,
-					point);
+			MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
+			MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
 
 			long endInstLoc = System.nanoTime();
 			G.instLocTimePerEdges += (endInstLoc - startInstLoc);
@@ -1631,8 +1627,8 @@ public class AbstractHeap {
 				.keySet()) {
 			AbstractMemLoc loc = pair.val0;
 			FieldElem field = pair.val1;
-			MemLocInstnSet instnMemLocSet = memLocInstn.instnMemLoc(loc,
-					this, point);
+			MemLocInstnSet instnMemLocSet = memLocInstn.instnMemLoc(loc, this,
+					point);
 
 			assert (instnMemLocSet != null);
 
