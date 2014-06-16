@@ -26,7 +26,8 @@ import framework.scuba.helper.P2SetHelper;
 import framework.scuba.utils.StringUtil;
 
 public class AbstractHeap {
-
+	// the summary this heap belongs to
+	final protected Summary summary;
 	// the method whose heap is represented by this AbstractHeap
 	final protected jq_Method method;
 
@@ -79,7 +80,8 @@ public class AbstractHeap {
 		// currently we are only use the first two
 	}
 
-	public AbstractHeap(jq_Method method) {
+	public AbstractHeap(jq_Method method, Summary summary) {
+		this.summary = summary;
 		this.method = method;
 		heap = new HashSet<AbstractMemLoc>();
 		heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();

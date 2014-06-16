@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Z3Exception;
-import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.helper.ConstraintManager;
 

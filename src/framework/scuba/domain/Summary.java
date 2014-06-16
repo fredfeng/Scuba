@@ -112,6 +112,9 @@ public class Summary {
 	// used for dealing with recursive call
 	protected boolean hasAnalyzed = false;
 
+	// alias query in this method or instantiated in this method
+	protected AliasQueries aliasQueries;
+
 	public boolean isChanged() {
 		return changed;
 	}
@@ -121,9 +124,10 @@ public class Summary {
 	}
 
 	public Summary(jq_Method meth) {
-		method = meth;
-		absHeap = new AbstractHeap(meth);
-		methCallToMemLocInstantiation = new HashMap<Pair<Quad, jq_Method>, MemLocInstantiation>();
+		this.method = meth;
+		this.absHeap = new AbstractHeap(meth, this);
+		this.methCallToMemLocInstantiation = new HashMap<Pair<Quad, jq_Method>, MemLocInstantiation>();
+		this.aliasQueries = new AliasQueries(meth, this);
 		if (G.dump) {
 			this.dumpSummary4Method(meth);
 		}
