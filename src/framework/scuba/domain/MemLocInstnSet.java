@@ -5,20 +5,18 @@ import java.util.Map;
 import java.util.Set;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Z3Exception;
-import com.microsoft.z3.enumerations.Z3_lbool;
 
 import framework.scuba.helper.ConstraintManager;
 
-public class InstantiatedLocSet {
+public class MemLocInstnSet {
 
 	protected Map<AbstractMemLoc, BoolExpr> instnLocSet = new HashMap<AbstractMemLoc, BoolExpr>();
 
-	public InstantiatedLocSet() {
+	public MemLocInstnSet() {
 
 	}
 
-	public InstantiatedLocSet(AbstractMemLoc loc, BoolExpr constraint) {
+	public MemLocInstnSet(AbstractMemLoc loc, BoolExpr constraint) {
 		instnLocSet.put(loc, constraint);
 	}
 
@@ -26,15 +24,15 @@ public class InstantiatedLocSet {
 		instnLocSet.put(loc, constraint);
 	}
 
-	public boolean containsAbstractMemLoc(AbstractMemLoc loc) {
+	public boolean containsKey(AbstractMemLoc loc) {
 		return instnLocSet.containsKey(loc);
 	}
 
-	public Set<AbstractMemLoc> getAbstractMemLocs() {
+	public Set<AbstractMemLoc> keySet() {
 		return instnLocSet.keySet();
 	}
 
-	public BoolExpr getConstraint(AbstractMemLoc loc) {
+	public BoolExpr get(AbstractMemLoc loc) {
 		return instnLocSet.get(loc);
 	}
 

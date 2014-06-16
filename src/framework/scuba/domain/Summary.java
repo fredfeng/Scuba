@@ -1,10 +1,8 @@
 package framework.scuba.domain;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Array;
@@ -86,7 +84,9 @@ public class Summary {
 
 	// (call site, callee method) --> memory location instantiation
 	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
-	private Map<Pair<Quad, jq_Method>, MemLocInstantiation> methCallToMemLocInstantiation;
+	// private Map<Pair<Quad, jq_Method>, MemLocInstnItem>
+	// methCallToMemLocInstantiation;
+	MemLocInstn4Method memLocInstnResult;
 
 	// finish current summary.
 	private boolean terminated;
@@ -112,6 +112,9 @@ public class Summary {
 	// used for dealing with recursive call
 	protected boolean hasAnalyzed = false;
 
+	// alias query in this method or instantiated in this method
+	protected AliasQueries aliasQueries;
+
 	public boolean isChanged() {
 		return changed;
 	}
@@ -121,9 +124,10 @@ public class Summary {
 	}
 
 	public Summary(jq_Method meth) {
-		method = meth;
-		absHeap = new AbstractHeap(meth);
-		methCallToMemLocInstantiation = new HashMap<Pair<Quad, jq_Method>, MemLocInstantiation>();
+		this.method = meth;
+		this.absHeap = new AbstractHeap(meth, this);
+		this.memLocInstnResult = new MemLocInstn4Method(this);
+		this.aliasQueries = new AliasQueries(meth, this);
 		if (G.dump) {
 			this.dumpSummary4Method(meth);
 		}
@@ -635,7 +639,7 @@ public class Summary {
 				assert (hasTypeCst != null) : "invalid has type constraint!";
 
 				// get the memory location instantiation for the callee
-				MemLocInstantiation memLocInstn = methCallToMemLocInstantiation
+				MemLocInstnItem memLocInstn = memLocInstnResult
 						.get(new Pair<Quad, jq_Method>(stmt, calleeSum
 								.getMethod()));
 				if (G.dbgRet) {
@@ -649,11 +653,10 @@ public class Summary {
 				}
 				// if has not been cached
 				if (memLocInstn == null) {
-					memLocInstn = new MemLocInstantiation(meth, stmt,
+					memLocInstn = new MemLocInstnItem(meth, stmt,
 							calleeSum.getMethod());
-					methCallToMemLocInstantiation.put(
-							new Pair<Quad, jq_Method>(stmt, calleeSum
-									.getMethod()), memLocInstn);
+					memLocInstnResult.put(new Pair<Quad, jq_Method>(stmt,
+							calleeSum.getMethod()), memLocInstn);
 					// fill the formal-to-actual mapping
 					ParamListOperand actuals = Invoke.getParamList(stmt);
 					List<StackObject> actualsMemLoc = new ArrayList<StackObject>();

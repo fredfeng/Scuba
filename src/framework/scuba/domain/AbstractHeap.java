@@ -26,7 +26,8 @@ import framework.scuba.helper.P2SetHelper;
 import framework.scuba.utils.StringUtil;
 
 public class AbstractHeap {
-
+	// the summary this heap belongs to
+	final protected Summary summary;
 	// the method whose heap is represented by this AbstractHeap
 	final protected jq_Method method;
 
@@ -79,7 +80,8 @@ public class AbstractHeap {
 		// currently we are only use the first two
 	}
 
-	public AbstractHeap(jq_Method method) {
+	public AbstractHeap(jq_Method method, Summary summary) {
+		this.summary = summary;
 		this.method = method;
 		heap = new HashSet<AbstractMemLoc>();
 		heapObjectsToP2Set = new HashMap<Pair<AbstractMemLoc, FieldElem>, P2Set>();
@@ -541,12 +543,12 @@ public class AbstractHeap {
 	}
 
 	// this lookup is used for instantiating memory locations
-	public InstantiatedLocSet instnLookup(InstantiatedLocSet instnLocSet,
+	public MemLocInstnSet instnLookup(MemLocInstnSet instnLocSet,
 			FieldElem field) {
-		InstantiatedLocSet ret = new InstantiatedLocSet();
+		MemLocInstnSet ret = new MemLocInstnSet();
 
-		for (AbstractMemLoc loc : instnLocSet.getAbstractMemLocs()) {
-			BoolExpr cst = instnLocSet.getConstraint(loc);
+		for (AbstractMemLoc loc : instnLocSet.keySet()) {
+			BoolExpr cst = instnLocSet.get(loc);
 
 			P2Set tgt = lookup(loc, field);
 			assert (tgt != null) : "get a null p2 set!";
@@ -1147,7 +1149,7 @@ public class AbstractHeap {
 
 	/* Constraint instantiation. */
 	protected BoolExpr instCst(BoolExpr cst, AbstractHeap callerHeap,
-			ProgramPoint point, MemLocInstantiation memLocInstn) {
+			ProgramPoint point, MemLocInstnItem memLocInstn) {
 		long startInstCst = System.nanoTime();
 		if (SummariesEnv.v().disableCst())
 			return cst;
@@ -1176,7 +1178,7 @@ public class AbstractHeap {
 
 	protected boolean instantiateEdgeNoNumberingForRecursiveCall(
 			AbstractMemLoc src, HeapObject dst, FieldElem field,
-			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
+			MemLocInstnItem memLocInstn, AbstractHeap calleeHeap,
 			ProgramPoint point, BoolExpr typeCst,
 			Set<Pair<AbstractMemLoc, P2Set>> toAdd) {
 
@@ -1198,8 +1200,8 @@ public class AbstractHeap {
 		// instantiate the calleeCst
 		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
-		InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this, point);
-		InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this, point);
+		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
+		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
 
 		assert (instnDst != null) : "instantiation of dst cannot be null!";
 		if (instnSrc == null) {
@@ -1211,8 +1213,8 @@ public class AbstractHeap {
 			return ret;
 		}
 
-		for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
-			for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
+		for (AbstractMemLoc newSrc : instnSrc.keySet()) {
+			for (AbstractMemLoc newDst : instnDst.keySet()) {
 
 				assert (newDst instanceof HeapObject) : ""
 						+ "dst should be instantiated as a heap object!";
@@ -1220,8 +1222,8 @@ public class AbstractHeap {
 
 				assert (newDst1 != null) : "null!";
 
-				BoolExpr cst1 = instnSrc.getConstraint(newSrc);
-				BoolExpr cst2 = instnDst.getConstraint(newDst);
+				BoolExpr cst1 = instnSrc.get(newSrc);
+				BoolExpr cst2 = instnDst.get(newDst);
 
 				BoolExpr cst = ConstraintManager.intersect(
 						ConstraintManager.intersect(cst1, cst2),
@@ -1240,7 +1242,7 @@ public class AbstractHeap {
 	}
 
 	protected boolean instantiateEdgeNoNumbering(AbstractMemLoc src,
-			HeapObject dst, FieldElem field, MemLocInstantiation memLocInstn,
+			HeapObject dst, FieldElem field, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
 
 		boolean ret = false;
@@ -1262,8 +1264,8 @@ public class AbstractHeap {
 		// instantiate the calleeCst
 		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
-		InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this, point);
-		InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this, point);
+		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
+		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
 
 		assert (instnDst != null) : "instantiation of dst cannot be null!";
 		if (instnSrc == null) {
@@ -1275,15 +1277,15 @@ public class AbstractHeap {
 			return ret;
 		}
 
-		for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
-			for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
+		for (AbstractMemLoc newSrc : instnSrc.keySet()) {
+			for (AbstractMemLoc newDst : instnDst.keySet()) {
 				assert (newDst instanceof HeapObject) : ""
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
 
 				assert (newDst1 != null) : "null!";
-				BoolExpr cst1 = instnSrc.getConstraint(newSrc);
-				BoolExpr cst2 = instnDst.getConstraint(newDst);
+				BoolExpr cst1 = instnSrc.get(newSrc);
+				BoolExpr cst2 = instnDst.get(newDst);
 				BoolExpr cst = ConstraintManager.intersect(
 						ConstraintManager.intersect(cst1, cst2),
 						ConstraintManager.intersect(instnCst, typeCst));
@@ -1305,7 +1307,7 @@ public class AbstractHeap {
 	}
 
 	protected Pair<Boolean, Boolean> instantiateEdgesForRecursiveCall(
-			Set<HeapEdge> edges, MemLocInstantiation memLocInstn,
+			Set<HeapEdge> edges, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst,
 			int numToAssign, boolean isInSCC,
 			Map<Numbering, Set<HeapEdge>> toAdd) {
@@ -1331,9 +1333,9 @@ public class AbstractHeap {
 			// instantiate the calleeCst
 			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
-			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
+			MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this,
 					point);
-			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
+			MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this,
 					point);
 
 			assert (instnDst != null) : "instantiation of dst cannot be null!";
@@ -1354,16 +1356,16 @@ public class AbstractHeap {
 			// instantiate to, just think about the native call in the caller
 			// assert (!instnDst.isEmpty()) : "instnDst cannot be empty!";
 
-			for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
-				for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
+			for (AbstractMemLoc newSrc : instnSrc.keySet()) {
+				for (AbstractMemLoc newDst : instnDst.keySet()) {
 					assert (newDst instanceof HeapObject) : ""
 							+ "dst should be instantiated as a heap object!";
 					HeapObject newDst1 = (HeapObject) newDst;
 
 					assert (newDst1 != null) : "null!";
 
-					BoolExpr cst1 = instnSrc.getConstraint(newSrc);
-					BoolExpr cst2 = instnDst.getConstraint(newDst);
+					BoolExpr cst1 = instnSrc.get(newSrc);
+					BoolExpr cst2 = instnDst.get(newDst);
 					BoolExpr cst = ConstraintManager.intersect(
 							ConstraintManager.intersect(cst1, cst2),
 							ConstraintManager.intersect(instnCst, typeCst));
@@ -1388,7 +1390,7 @@ public class AbstractHeap {
 	}
 
 	protected Pair<Boolean, Boolean> instantiateEdges(Set<HeapEdge> edges,
-			MemLocInstantiation memLocInstn, AbstractHeap calleeHeap,
+			MemLocInstnItem memLocInstn, AbstractHeap calleeHeap,
 			ProgramPoint point, BoolExpr typeCst, int numToAssign,
 			boolean isInSCC) {
 		long startInstEdge = System.nanoTime();
@@ -1421,9 +1423,9 @@ public class AbstractHeap {
 			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
 
 			long startInstLoc = System.nanoTime();
-			InstantiatedLocSet instnSrc = memLocInstn.instantiate(src, this,
+			MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this,
 					point);
-			InstantiatedLocSet instnDst = memLocInstn.instantiate(dst, this,
+			MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this,
 					point);
 
 			long endInstLoc = System.nanoTime();
@@ -1441,16 +1443,16 @@ public class AbstractHeap {
 
 			G.instToEdges += (instnSrc.size() * instnDst.size());
 
-			for (AbstractMemLoc newSrc : instnSrc.getAbstractMemLocs()) {
-				for (AbstractMemLoc newDst : instnDst.getAbstractMemLocs()) {
+			for (AbstractMemLoc newSrc : instnSrc.keySet()) {
+				for (AbstractMemLoc newDst : instnDst.keySet()) {
 					assert (newDst instanceof HeapObject) : ""
 							+ "dst should be instantiated as a heap object!";
 					HeapObject newDst1 = (HeapObject) newDst;
 
 					assert (newDst1 != null) : "null!";
 
-					BoolExpr cst1 = instnSrc.getConstraint(newSrc);
-					BoolExpr cst2 = instnDst.getConstraint(newDst);
+					BoolExpr cst1 = instnSrc.get(newSrc);
+					BoolExpr cst2 = instnDst.get(newDst);
 
 					BoolExpr cst = ConstraintManager.intersect(
 							ConstraintManager.intersect(cst1, cst2),
@@ -1485,7 +1487,7 @@ public class AbstractHeap {
 
 	protected boolean handleInvokeStmtNoNumbering(jq_Class clazz,
 			jq_Method method, int line, AbstractHeap calleeHeap,
-			MemLocInstantiation memLocInstn, BoolExpr typeCst, int numToAssign,
+			MemLocInstnItem memLocInstn, BoolExpr typeCst, int numToAssign,
 			boolean isInSCC) {
 
 		boolean ret = false;
@@ -1588,7 +1590,7 @@ public class AbstractHeap {
 
 	// TODO
 	protected boolean handleInvokeStmt(jq_Class clazz, jq_Method method,
-			int line, AbstractHeap calleeHeap, MemLocInstantiation memLocInstn,
+			int line, AbstractHeap calleeHeap, MemLocInstnItem memLocInstn,
 			BoolExpr typeCst, int numToAssign, boolean isInSCC) {
 
 		boolean ret = false;
@@ -1629,12 +1631,12 @@ public class AbstractHeap {
 				.keySet()) {
 			AbstractMemLoc loc = pair.val0;
 			FieldElem field = pair.val1;
-			InstantiatedLocSet instnMemLocSet = memLocInstn.instantiate(loc,
+			MemLocInstnSet instnMemLocSet = memLocInstn.instnMemLoc(loc,
 					this, point);
 
 			assert (instnMemLocSet != null);
 
-			for (AbstractMemLoc loc1 : instnMemLocSet.getAbstractMemLocs()) {
+			for (AbstractMemLoc loc1 : instnMemLocSet.keySet()) {
 				// weakUpdate(new Pair<AbstractMemLoc, FieldElem>(loc1, field),
 				// new P2Set(), -1, false);
 				// to avoid ConcurrentModification exception, we temporally

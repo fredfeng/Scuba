@@ -24,8 +24,8 @@ import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.HeapObject;
-import framework.scuba.domain.InstantiatedLocSet;
-import framework.scuba.domain.MemLocInstantiation;
+import framework.scuba.domain.MemLocInstnSet;
+import framework.scuba.domain.MemLocInstnItem;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.ProgramPoint;
 import framework.scuba.domain.SummariesEnv;
@@ -144,7 +144,7 @@ public class ConstraintManager {
 	
 	//perform unlifting and instantiation. Rule 2 in figure 10.
 	public static BoolExpr instConstaint(BoolExpr expr, AbstractHeap callerHeap,
-			ProgramPoint point, MemLocInstantiation memLocInstn) {
+			ProgramPoint point, MemLocInstnItem memLocInstn) {
 		try {
 			expr = (BoolExpr)expr.Simplify();
 			if(isScala(expr)) 
@@ -165,7 +165,7 @@ public class ConstraintManager {
 				IntNum typeInt = (IntNum) sub.Args()[1];
 				// get points-to set for term
 				assert (ap instanceof AccessPath);
-				InstantiatedLocSet p2Set = memLocInstn.instantiate(ap,
+				MemLocInstnSet p2Set = memLocInstn.instnMemLoc(ap,
 						callerHeap, point);
 				BoolExpr instSub;
 				if (sub.IsEq())
@@ -292,14 +292,14 @@ public class ConstraintManager {
 	}
 	
 	// instantiate subtyping constraint by term.
-	public static BoolExpr instSubTyping(InstantiatedLocSet p2Set, int typeInt) {
+	public static BoolExpr instSubTyping(MemLocInstnSet p2Set, int typeInt) {
 		long startICst = System.nanoTime();
 
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		for (AbstractMemLoc ho : p2Set.getAbstractMemLocs()) {
+		for (AbstractMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
-				BoolExpr orgCst = p2Set.getConstraint(ho);
+				BoolExpr orgCst = p2Set.get(ho);
 				BoolExpr newCst = intersect(orgCst,
 						lift((HeapObject) ho, typeInt, false));
 				if (isTrue(newCst))
@@ -317,14 +317,14 @@ public class ConstraintManager {
 	}
 
 	// instantiate equality typing constraint by term.
-	public static BoolExpr instEqTyping(InstantiatedLocSet p2Set, int typeInt) {
+	public static BoolExpr instEqTyping(MemLocInstnSet p2Set, int typeInt) {
 		long startICst = System.nanoTime();
 
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		for (AbstractMemLoc ho : p2Set.getAbstractMemLocs()) {
+		for (AbstractMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
-				BoolExpr orgCst = p2Set.getConstraint(ho);
+				BoolExpr orgCst = p2Set.get(ho);
 				BoolExpr newCst = intersect(orgCst,
 						lift((HeapObject) ho, typeInt, true));
 				if (isTrue(newCst))
