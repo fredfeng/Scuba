@@ -271,22 +271,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				}
 
 				if (G.dbgQuery) {
-					if (G.countScc == 147) {
-						SummariesEnv.v().getSummary(m).dumpSummaryToFile("147");
-						SummariesEnv.v().getSummary(m)
-								.dumpSummaryMappingToFile("147");
 
-					}
-					if (G.countScc == 350) {
-						SummariesEnv.v().getSummary(m).dumpSummaryToFile("350");
+					if (G.countScc == G.sample) {
 						SummariesEnv.v().getSummary(m)
-								.dumpSummaryMappingToFile("350");
-					}
-
-					if (G.countScc == 352) {
-						SummariesEnv.v().getSummary(m).dumpSummaryToFile("352");
+								.dumpSummaryToFile("" + G.sample);
 						SummariesEnv.v().getSummary(m)
-								.dumpSummaryMappingToFile("352");
+								.dumpSummaryMappingToFile("" + G.sample);
 					}
 				}
 			}

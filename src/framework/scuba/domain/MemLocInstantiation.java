@@ -8,7 +8,6 @@ import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Quad;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.helper.ConstraintManager;
 
@@ -29,7 +28,7 @@ public class MemLocInstantiation {
 	protected jq_Method callee;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useCache = false;
+	protected boolean useCache = true;
 
 	// hasRet = true: there is a location mapped in the caller's heap
 	protected boolean hasRet = false;
