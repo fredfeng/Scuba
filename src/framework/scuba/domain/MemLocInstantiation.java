@@ -28,7 +28,7 @@ public class MemLocInstantiation {
 	protected jq_Method callee;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useCache = true;
+	protected boolean useCache = false;
 
 	// hasRet = true: there is a location mapped in the caller's heap
 	protected boolean hasRet = false;
