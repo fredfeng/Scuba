@@ -1189,6 +1189,11 @@ public class AbstractHeap {
 			MemLocInstnItem memLocInstn, AbstractHeap calleeHeap,
 			ProgramPoint point, BoolExpr typeCst,
 			Set<Pair<AbstractMemLoc, P2Set>> toAdd) {
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: "
+					+ "instantiating callee edge (recurisve): " + "(" + src
+					+ "," + field + ")" + "-->" + dst);
+		}
 
 		boolean ret = false;
 
@@ -1253,6 +1258,11 @@ public class AbstractHeap {
 			HeapObject dst, FieldElem field, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
 
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
+					+ "(" + src + "," + field + ")" + "-->" + dst);
+		}
+
 		boolean ret = false;
 
 		assert (src != null && dst != null && field != null) : "nulls!";
@@ -1303,6 +1313,10 @@ public class AbstractHeap {
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 				Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 						newSrc, field);
+
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: " + "weak updating");
+				}
 
 				Pair<Boolean, Boolean> ret1 = weakUpdateNoNumbering(pair,
 						new P2Set(newDst1, cst));
@@ -1504,11 +1518,19 @@ public class AbstractHeap {
 			isRecursive = true;
 		}
 
+		int iteration = 0;
 		// this is the real updating
 		if (!isRecursive) {
 
 			while (true) {
+				iteration++;
 				boolean go = false;
+
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: "
+							+ "doing fix-point instantiation. [" + iteration
+							+ "-th]");
+				}
 
 				Iterator<Map.Entry<Pair<AbstractMemLoc, FieldElem>, P2Set>> it = calleeHeap.heapObjectsToP2Set
 						.entrySet().iterator();
@@ -1540,7 +1562,15 @@ public class AbstractHeap {
 				}
 			}
 		} else {
+			iteration++;
 			while (true) {
+
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: "
+							+ "doing fix-point instantiation. [" + iteration
+							+ "-th]");
+				}
+
 				boolean go = false;
 				Map<Pair<AbstractMemLoc, FieldElem>, Set<Pair<AbstractMemLoc, P2Set>>> result = new HashMap<Pair<AbstractMemLoc, FieldElem>, Set<Pair<AbstractMemLoc, P2Set>>>();
 
@@ -1566,6 +1596,11 @@ public class AbstractHeap {
 					}
 				}
 
+				if (G.instnInfo) {
+					System.out.println("instnInfo: "
+							+ "weak updating (recursive)");
+				}
+				// weak update outside to avoid ConcurrentModification
 				Iterator<Map.Entry<Pair<AbstractMemLoc, FieldElem>, Set<Pair<AbstractMemLoc, P2Set>>>> it2 = result
 						.entrySet().iterator();
 				while (it2.hasNext()) {
