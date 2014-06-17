@@ -1,5 +1,6 @@
 package framework.scuba.domain;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -123,42 +124,23 @@ public class MemLocInstnItem {
 		cache.put(ret, new MemLocInstnSet(lhs, ConstraintManager.genTrue()));
 	}
 
+	// a wrapper method for memory location instantiation
 	public MemLocInstnSet instnMemLoc(AbstractMemLoc loc,
 			AbstractHeap callerHeap, ProgramPoint point) {
 		MemLocInstnSet ret = null;
 		if (useCache) {
-			ret = instnMemLocUsingCache(loc, callerHeap, point);
+			Set<AccessPath> orgs = new HashSet<AccessPath>();
+			ret = instnMemLocUsingCache(orgs, loc, callerHeap, point);
 		} else {
 			ret = instnMemLocNoCache(loc, callerHeap, point);
 		}
 		return ret;
 	}
 
-	public MemLocInstnSet instnAccessPathUsingCache(Set<AccessPath> orgs,
+	// orgs: the callee locations that depend on the instantiated locations
+	// loc: the callee location we want to instantiate
+	protected MemLocInstnSet instnMemLocUsingCache(Set<AccessPath> orgs,
 			AbstractMemLoc loc, AbstractHeap callerHeap, ProgramPoint point) {
-
-		MemLocInstnSet ret = cache.get(loc);
-		if (ret != null) {
-			return ret;
-		}
-
-		AbstractMemLoc base = ((AccessPath) loc).getBase();
-		FieldElem field = ((AccessPath) loc).getField();
-		MemLocInstnSet instnLocSet = instnAccessPathUsingCache(orgs, base,
-				callerHeap, point);
-		for (AbstractMemLoc loc1 : instnLocSet.keySet()) {
-			for (AccessPath ap : orgs) {
-				result.getSum().addToDepMap(loc1,
-						new Pair<MemLocInstnItem, AccessPath>(this, ap));
-			}
-		}
-		ret = callerHeap.instnLookup(instnLocSet, field);
-
-		return ret;
-	}
-
-	public MemLocInstnSet instnMemLocUsingCache(AbstractMemLoc loc,
-			AbstractHeap callerHeap, ProgramPoint point) {
 
 		MemLocInstnSet ret = cache.get(loc);
 
@@ -228,14 +210,29 @@ public class MemLocInstnItem {
 			// put into the map
 			cache.put(loc, ret);
 		} else if (loc instanceof AccessPath) {
+			if (ret != null) {
+				return ret;
+			}
+
 			AbstractMemLoc base = ((AccessPath) loc).getBase();
 			FieldElem field = ((AccessPath) loc).getField();
-			MemLocInstnSet instnLocSet = instnMemLocUsingCache(base,
+			assert (!orgs.contains((AccessPath) loc)) : "Location " + loc
+					+ " should not depend on the instantiation of"
+					+ " location " + base;
+			orgs.add((AccessPath) loc);
+			MemLocInstnSet instnLocSet = instnMemLocUsingCache(orgs, base,
 					callerHeap, point);
+			assert (orgs.contains((AccessPath) loc)) : "orgs should contain "
+					+ loc + " and we can remove it from orgs";
+			orgs.remove((AccessPath) loc);
+			for (AbstractMemLoc loc1 : instnLocSet.keySet()) {
+				for (AccessPath ap : orgs) {
+					result.getSum().addToDepMap(loc1,
+							new Pair<MemLocInstnItem, AccessPath>(this, ap));
+				}
+			}
 			ret = callerHeap.instnLookup(instnLocSet, field);
-			// put into the map
 			cache.put(loc, ret);
-
 		} else {
 			assert false : "wried things happen! Unknow type.";
 		}
@@ -245,7 +242,7 @@ public class MemLocInstnItem {
 
 	// this method implements the inference rules in figure 11 of the paper
 	// loc is the location in the callee's heap
-	public MemLocInstnSet instnMemLocNoCache(AbstractMemLoc loc,
+	protected MemLocInstnSet instnMemLocNoCache(AbstractMemLoc loc,
 			AbstractHeap callerHeap, ProgramPoint point) {
 
 		MemLocInstnSet ret = cache.get(loc);

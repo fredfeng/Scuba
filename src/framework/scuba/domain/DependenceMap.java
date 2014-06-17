@@ -8,7 +8,10 @@ import java.util.Set;
 import chord.util.tuple.object.Pair;
 
 public class DependenceMap {
+
+	// the summary this dependence map belongs to
 	final protected Summary summary;
+
 	// Map<K, Set<Pair<Item, V>>>
 	// K: the location in the caller's heap
 	// V: the location in the callee's heap whose instantiation will be
