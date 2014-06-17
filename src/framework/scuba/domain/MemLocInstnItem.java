@@ -31,9 +31,6 @@ public class MemLocInstnItem {
 	// the callee that this instantiation is for
 	final protected jq_Method callee;
 
-	// whether use cache for instantiating AccessPath
-	protected boolean useCache = false;
-
 	// hasRet = true: there is a location mapped in the caller's heap
 	protected boolean hasRet = false;
 
@@ -43,7 +40,7 @@ public class MemLocInstnItem {
 		this.callsite = callsite;
 		this.callee = callee;
 		this.result = result;
-		cache = new MemLocInstnItemCache();
+		cache = new MemLocInstnItemCache(this);
 	}
 
 	public jq_Method getCaller() {
@@ -87,18 +84,6 @@ public class MemLocInstnItem {
 
 	}
 
-	public void enableCache() {
-		useCache = true;
-	}
-
-	public void disableCache() {
-		useCache = false;
-	}
-
-	public boolean isUsingCache() {
-		return useCache;
-	}
-
 	// initialized the formal-to-actual mapping
 	public void initFormalToActualMapping(List<ParamElem> formals,
 			List<StackObject> actuals) {
@@ -128,7 +113,7 @@ public class MemLocInstnItem {
 	public MemLocInstnSet instnMemLoc(AbstractMemLoc loc,
 			AbstractHeap callerHeap, ProgramPoint point) {
 		MemLocInstnSet ret = null;
-		if (useCache) {
+		if (SummariesEnv.v().useCache) {
 			Set<AccessPath> orgs = new HashSet<AccessPath>();
 			ret = instnMemLocUsingCache(orgs, loc, callerHeap, point);
 		} else {

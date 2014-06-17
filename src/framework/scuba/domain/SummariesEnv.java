@@ -55,6 +55,21 @@ public class SummariesEnv {
 	// disable constraint instantiate.
 	protected boolean disableCst = false;
 
+	// whether use cache for instantiating AccessPath
+	protected boolean useCache = true;
+
+	public void enableCache() {
+		useCache = true;
+	}
+
+	public void disableCache() {
+		useCache = false;
+	}
+
+	public boolean isUsingCache() {
+		return useCache;
+	}
+
 	public boolean disableCst() {
 		return disableCst;
 	}

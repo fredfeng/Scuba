@@ -1159,7 +1159,7 @@ public class AbstractHeap {
 	}
 
 	/* Constraint instantiation. */
-	protected BoolExpr instCst(BoolExpr cst, AbstractHeap callerHeap,
+	protected BoolExpr instnCst(BoolExpr cst, AbstractHeap callerHeap,
 			ProgramPoint point, MemLocInstnItem memLocInstn) {
 		long startInstCst = System.nanoTime();
 		if (SummariesEnv.v().disableCst())
@@ -1168,7 +1168,7 @@ public class AbstractHeap {
 		// return directly.
 		if (ConstraintManager.isScala(cst))
 			return cst;
-		BoolExpr instC = ConstraintManager.instConstaint(cst, callerHeap,
+		BoolExpr instC = ConstraintManager.instnConstaint(cst, callerHeap,
 				point, memLocInstn);
 
 		assert instC != null : "Invalid instantiated Constrait.";
@@ -1180,10 +1180,7 @@ public class AbstractHeap {
 			StringUtil
 					.reportInfo("We are in trouble..." + length + ":" + instC);
 			StringUtil.reportSec("Inst Cst time: ", startInstCst, endInstCst);
-			// assert instC.toString().length() < 2500 : "We are in trouble." +
-			// instC;
 		}
-
 		return instC;
 	}
 
@@ -1209,7 +1206,7 @@ public class AbstractHeap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";
 		// instantiate the calleeCst
-		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
+		BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
 
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
@@ -1273,7 +1270,7 @@ public class AbstractHeap {
 		assert (calleeCst != null) : "constraint is null!";
 
 		// instantiate the calleeCst
-		BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
+		BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
 
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
@@ -1342,7 +1339,7 @@ public class AbstractHeap {
 			assert (calleeCst != null) : "constraint is null!";
 
 			// instantiate the calleeCst
-			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
+			BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
 
 			MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 			MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
@@ -1429,7 +1426,7 @@ public class AbstractHeap {
 			assert (calleeCst != null) : "constraint is null!";
 
 			// instantiate the calleeCst
-			BoolExpr instnCst = instCst(calleeCst, this, point, memLocInstn);
+			BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
 
 			long startInstLoc = System.nanoTime();
 			MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
@@ -2196,16 +2193,29 @@ public class AbstractHeap {
 		}
 		ret.val0 = currentP2Set.join(p2Set);
 
-		if (ret.val0) {
-			clearMemLocInstnItemCache(src);
+		if (SummariesEnv.v().useCache) {
+			if (ret.val0) {
+				clearCache(src);
+			}
 		}
 
 		return ret;
 	}
 
-	protected boolean clearMemLocInstnItemCache(AbstractMemLoc src) {
+	// clear all the related cache including:
+	// 1. memory location instantiation cache
+	// 2. constraint instantiation cache
+	protected boolean clearCache(AbstractMemLoc src) {
 		boolean ret = false;
+		// this check is for the final summary (conclusion)
+		if (summary == null) {
+			return ret;
+		}
 		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.depMap.get(src);
+		// possible that no one currently depends on src
+		if (deps == null) {
+			return ret;
+		}
 		for (Iterator<Map.Entry<MemLocInstnItem, Set<AccessPath>>> it = deps
 				.entrySet().iterator(); it.hasNext();) {
 			Map.Entry<MemLocInstnItem, Set<AccessPath>> entry = it.next();

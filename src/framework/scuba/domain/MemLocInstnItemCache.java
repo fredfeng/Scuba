@@ -6,11 +6,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class MemLocInstnItemCache {
+
+	protected final MemLocInstnItem parent;
 	// this map caches the location instantiation results for some memory
 	// location instantiation item (per call site in a caller, per callee)
-	final protected Map<AbstractMemLoc, MemLocInstnSet> cache;
+	protected final Map<AbstractMemLoc, MemLocInstnSet> cache;
 
-	public MemLocInstnItemCache() {
+	public MemLocInstnItemCache(MemLocInstnItem parent) {
+		this.parent = parent;
 		cache = new HashMap<AbstractMemLoc, MemLocInstnSet>();
 	}
 

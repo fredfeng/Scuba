@@ -1,12 +1,11 @@
 package framework.scuba.helper;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Type;
+import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
@@ -22,10 +21,11 @@ import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
+import framework.scuba.domain.CstInstnCache;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.HeapObject;
-import framework.scuba.domain.MemLocInstnSet;
 import framework.scuba.domain.MemLocInstnItem;
+import framework.scuba.domain.MemLocInstnSet;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.ProgramPoint;
 import framework.scuba.domain.SummariesEnv;
@@ -57,6 +57,9 @@ public class ConstraintManager {
 
 	// map from term to heapObject. for unlifting.
 	static Map<String, AccessPath> term2Ap = new HashMap<String, AccessPath>();
+
+	// this is my little cute cache for constraint instantiation
+	static final CstInstnCache cache = new CstInstnCache();
 
 	public ConstraintManager() {
 		try {
@@ -145,9 +148,16 @@ public class ConstraintManager {
 	}
 
 	// perform unlifting and instantiation. Rule 2 in figure 10.
-	public static BoolExpr instConstaint(BoolExpr expr,
-			AbstractHeap callerHeap, ProgramPoint point,
-			MemLocInstnItem memLocInstn) {
+	public static BoolExpr instnConstaint(BoolExpr expr,
+			AbstractHeap callerHeap, ProgramPoint point, MemLocInstnItem item) {
+		BoolExpr ret = null;
+		if (SummariesEnv.v().isUsingCache()) {
+			ret = cache.getBoolExpr(item, expr);
+			if (ret != null) {
+				return ret;
+			}
+		}
+
 		try {
 			expr = (BoolExpr) expr.Simplify();
 			if (isScala(expr))
@@ -168,8 +178,7 @@ public class ConstraintManager {
 				IntNum typeInt = (IntNum) sub.Args()[1];
 				// get points-to set for term
 				assert (ap instanceof AccessPath);
-				MemLocInstnSet p2Set = memLocInstn.instnMemLoc(ap, callerHeap,
-						point);
+				MemLocInstnSet p2Set = item.instnMemLoc(ap, callerHeap, point);
 				BoolExpr instSub;
 				if (sub.IsEq())
 					instSub = instEqTyping(p2Set, typeInt.Int());
@@ -178,7 +187,12 @@ public class ConstraintManager {
 
 				expr = (BoolExpr) expr.Substitute(sub, instSub);
 			}
-			return (BoolExpr) expr.Simplify();
+			expr = (BoolExpr) expr.Simplify();
+
+			if (SummariesEnv.v().isUsingCache()) {
+				cache.add(item, new Pair<BoolExpr, BoolExpr>(expr, ret));
+			}
+			return expr;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
