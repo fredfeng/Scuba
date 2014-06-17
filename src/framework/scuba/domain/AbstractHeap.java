@@ -1210,8 +1210,19 @@ public class AbstractHeap {
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";
+
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: "
+					+ "instantiating callee constraint (recursive).");
+		}
+
 		// instantiate the calleeCst
 		BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
+
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: "
+					+ "instantiating callee memory location (recursive).");
+		}
 
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
@@ -1237,6 +1248,11 @@ public class AbstractHeap {
 
 				BoolExpr cst1 = instnSrc.get(newSrc);
 				BoolExpr cst2 = instnDst.get(newDst);
+
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: "
+							+ "intersecting constraints (recursive).");
+				}
 
 				BoolExpr cst = ConstraintManager.intersect(
 						ConstraintManager.intersect(cst1, cst2),
@@ -1279,9 +1295,17 @@ public class AbstractHeap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).getConstraint(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: "
+					+ "instantiating callee constraint.");
+		}
 		// instantiate the calleeCst
 		BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
 
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: "
+					+ "instantiating callee memory location.");
+		}
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
 
@@ -1301,6 +1325,10 @@ public class AbstractHeap {
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
 
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: "
+							+ "intersecting constraints.");
+				}
 				assert (newDst1 != null) : "null!";
 				BoolExpr cst1 = instnSrc.get(newSrc);
 				BoolExpr cst2 = instnDst.get(newDst);
