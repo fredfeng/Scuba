@@ -175,6 +175,10 @@ public class ConstraintManager {
 			if (isScala(ret))
 				return ret;
 
+			if (G.instnInfo) {
+				StringUtil.reportInfo("instnInfo: "
+						+ "extracting the constraints.");
+			}
 			HashMap<String, BoolExpr> map = new HashMap<String, BoolExpr>();
 			extractTerm(ret, map);
 
