@@ -26,6 +26,32 @@ public class SumConclusion {
 		this.sumHeap = new AbstractHeap(null);
 		this.clinitHeaps = clinitHeaps;
 		this.mainHeap = mainHeap;
+		validate();
+	}
+
+	public void validate() {
+		// validate that constraints in the main heap are all true
+		for (Pair<AbstractMemLoc, FieldElem> pair : mainHeap.keySet()) {
+			P2Set p2set = mainHeap.get(pair);
+			for (HeapObject hObj : p2set.getHeapObjects()) {
+				BoolExpr cst = p2set.getConstraint(hObj);
+				assert (ConstraintManager.isTrue(cst)) : "constraint is not true: "
+						+ cst;
+				System.out.println("Constraint check PASSED!");
+			}
+		}
+		// validate that constraints in the <clinit>'s heaps are all true
+		for (AbstractHeap clinitHeap : clinitHeaps) {
+			for (Pair<AbstractMemLoc, FieldElem> pair : clinitHeap.keySet()) {
+				P2Set p2set = clinitHeap.get(pair);
+				for (HeapObject hObj : p2set.getHeapObjects()) {
+					BoolExpr cst = p2set.getConstraint(hObj);
+					assert (ConstraintManager.isTrue(cst)) : "constraint is not true: "
+							+ cst;
+					System.out.println("Constraint check PASSED!");
+				}
+			}
+		}
 	}
 
 	public int getHeapSize() {

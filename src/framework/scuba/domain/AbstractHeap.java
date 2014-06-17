@@ -96,6 +96,14 @@ public class AbstractHeap {
 		return this.summary.getMethod();
 	}
 
+	public Set<Pair<AbstractMemLoc, FieldElem>> keySet() {
+		return heapObjectsToP2Set.keySet();
+	}
+
+	public P2Set get(Pair<AbstractMemLoc, FieldElem> pair) {
+		return heapObjectsToP2Set.get(pair);
+	}
+
 	public void validate() {
 
 		for (AbstractMemLoc loc : memLocFactory.keySet()) {
@@ -645,7 +653,8 @@ public class AbstractHeap {
 		boolean ret = ret1.val0;
 		boolean ret2 = ret1.val1;
 
-//		assert (isInSCC || numToAssign > maxNumber) : "we should increment the counter every time!";
+		// assert (isInSCC || numToAssign > maxNumber) :
+		// "we should increment the counter every time!";
 		maxNumber = ret2 ? Math.max(maxNumber, numToAssign) : maxNumber;
 
 		return ret;
