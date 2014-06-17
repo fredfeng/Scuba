@@ -149,12 +149,13 @@ public class ConstraintManager {
 			AbstractHeap callerHeap, ProgramPoint point,
 			MemLocInstnItem memLocInstn) {
 		try {
-			expr = (BoolExpr) expr.Simplify();
-			if (isScala(expr))
-				return expr;
+			//generate a new instance!
+			BoolExpr ret = (BoolExpr) expr.Simplify();
+			if (isScala(ret))
+				return ret;
 
 			HashMap<String, BoolExpr> map = new HashMap<String, BoolExpr>();
-			extractTerm(expr, map);
+			extractTerm(ret, map);
 
 			for (BoolExpr sub : map.values()) {
 				assert sub.IsEq() || sub.IsLE() : "invalid sub expr" + sub;
@@ -176,9 +177,9 @@ public class ConstraintManager {
 				else
 					instSub = instSubTyping(p2Set, typeInt.Int());
 
-				expr = (BoolExpr) expr.Substitute(sub, instSub);
+				ret = (BoolExpr) ret.Substitute(sub, instSub);
 			}
-			return (BoolExpr) expr.Simplify();
+			return (BoolExpr) ret.Simplify();
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
