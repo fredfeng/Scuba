@@ -1168,6 +1168,11 @@ public class AbstractHeap {
 		// return directly.
 		if (ConstraintManager.isScala(cst))
 			return cst;
+
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: "
+					+ "begin the real instantiation for constraints.");
+		}
 		BoolExpr instC = ConstraintManager.instnConstaint(cst, callerHeap,
 				point, memLocInstn);
 

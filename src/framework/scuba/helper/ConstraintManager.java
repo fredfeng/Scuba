@@ -30,6 +30,7 @@ import framework.scuba.domain.MemLocInstnSet;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.ProgramPoint;
 import framework.scuba.domain.SummariesEnv;
+import framework.scuba.utils.StringUtil;
 
 /**
  * Class for generating/solving constraints, since right now our system can only
@@ -166,6 +167,10 @@ public class ConstraintManager {
 
 		try {
 			// generate a new instance!
+			if (G.instnInfo) {
+				StringUtil.reportInfo("instnInfo: "
+						+ "simplifying the constraints.");
+			}
 			ret = (BoolExpr) expr.Simplify();
 			if (isScala(ret))
 				return ret;
@@ -173,6 +178,10 @@ public class ConstraintManager {
 			HashMap<String, BoolExpr> map = new HashMap<String, BoolExpr>();
 			extractTerm(ret, map);
 
+			if (G.instnInfo) {
+				StringUtil.reportInfo("instnInfo: "
+						+ "substituting constraints.");
+			}
 			for (BoolExpr sub : map.values()) {
 				assert sub.IsEq() || sub.IsLE() : "invalid sub expr" + sub;
 				Expr term = sub.Args()[0].Args()[0];
@@ -202,6 +211,10 @@ public class ConstraintManager {
 				ret = (BoolExpr) ret.Substitute(sub, instSub);
 			}
 
+			if (G.instnInfo) {
+				StringUtil.reportInfo("instnInfo: "
+						+ "simplifying the constraint result.");
+			}
 			if (SummariesEnv.v().isUsingCstCache()) {
 				cache.add(item, new Pair<BoolExpr, BoolExpr>(expr,
 						(BoolExpr) ret.Simplify()));
