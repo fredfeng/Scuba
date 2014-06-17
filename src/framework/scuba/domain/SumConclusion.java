@@ -145,6 +145,10 @@ public class SumConclusion {
 			if (!go) {
 				break;
 			}
+
+			if (!SummariesEnv.v().useFixPoint) {
+				break;
+			}
 		}
 
 		return ret;

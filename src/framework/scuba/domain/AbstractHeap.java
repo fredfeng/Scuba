@@ -1506,6 +1506,7 @@ public class AbstractHeap {
 
 		// this is the real updating
 		if (!isRecursive) {
+
 			while (true) {
 				boolean go = false;
 
@@ -1531,6 +1532,10 @@ public class AbstractHeap {
 				}
 
 				if (!go) {
+					break;
+				}
+
+				if (!SummariesEnv.v().useFixPoint) {
 					break;
 				}
 			}
@@ -1583,6 +1588,10 @@ public class AbstractHeap {
 				}
 
 				if (!go) {
+					break;
+				}
+
+				if (!SummariesEnv.v().useFixPoint) {
 					break;
 				}
 			}

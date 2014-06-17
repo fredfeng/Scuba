@@ -61,6 +61,9 @@ public class SummariesEnv {
 	// whether use cache for constraint instantiation
 	protected boolean useCstCache = true;
 
+	// fix-point or not
+	protected boolean useFixPoint = false;
+
 	public void enableMemLocCache() {
 		useMemLocCache = true;
 	}
