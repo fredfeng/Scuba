@@ -3,6 +3,7 @@ package framework.scuba.domain;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Array;
@@ -1354,8 +1355,9 @@ public class Summary {
 		return absHeap.size();
 	}
 
-	public Set<Pair<MemLocInstnItem, AccessPath>> addToDepMap(
-			AbstractMemLoc loc, Pair<MemLocInstnItem, AccessPath> pair) {
-		return depMap.add(loc, pair);
+	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(
+			AbstractMemLoc loc, Pair<MemLocInstnItem, Set<AccessPath>> deps) {
+		return depMap.add(loc, deps);
 	}
+
 }

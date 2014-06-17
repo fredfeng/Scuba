@@ -2195,6 +2195,27 @@ public class AbstractHeap {
 			heapObjectsToP2Set.put(pair, currentP2Set);
 		}
 		ret.val0 = currentP2Set.join(p2Set);
+
+		if (ret.val0) {
+			clearMemLocInstnItemCache(src);
+		}
+
+		return ret;
+	}
+
+	protected boolean clearMemLocInstnItemCache(AbstractMemLoc src) {
+		boolean ret = false;
+		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.depMap.get(src);
+		for (Iterator<Map.Entry<MemLocInstnItem, Set<AccessPath>>> it = deps
+				.entrySet().iterator(); it.hasNext();) {
+			Map.Entry<MemLocInstnItem, Set<AccessPath>> entry = it.next();
+			MemLocInstnItem item = entry.getKey();
+			Set<AccessPath> aps = entry.getValue();
+			for (AccessPath ap : aps) {
+				ret = true;
+				item.remove(ap);
+			}
+		}
 		return ret;
 	}
 

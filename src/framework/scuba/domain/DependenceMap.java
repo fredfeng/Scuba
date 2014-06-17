@@ -17,33 +17,39 @@ public class DependenceMap {
 	// V: the location in the callee's heap whose instantiation will be
 	// influenced by the change of the P2Set of K
 	// Item: the instantiation location result for K is cached in Item
-	final protected Map<AbstractMemLoc, Set<Pair<MemLocInstnItem, AccessPath>>> map;
+	final protected Map<AbstractMemLoc, Map<MemLocInstnItem, Set<AccessPath>>> map;
 
 	public DependenceMap(Summary summary) {
 		this.summary = summary;
-		map = new HashMap<AbstractMemLoc, Set<Pair<MemLocInstnItem, AccessPath>>>();
+		map = new HashMap<AbstractMemLoc, Map<MemLocInstnItem, Set<AccessPath>>>();
 	}
 
 	public Summary getSum() {
 		return summary;
 	}
 
-	public Set<Pair<MemLocInstnItem, AccessPath>> add(AbstractMemLoc loc,
-			Pair<MemLocInstnItem, AccessPath> pair) {
-		Set<Pair<MemLocInstnItem, AccessPath>> ret = map.get(loc);
+	public Map<MemLocInstnItem, Set<AccessPath>> add(AbstractMemLoc loc,
+			Pair<MemLocInstnItem, Set<AccessPath>> pair) {
+		Map<MemLocInstnItem, Set<AccessPath>> ret = map.get(loc);
 		if (ret == null) {
-			ret = new HashSet<Pair<MemLocInstnItem, AccessPath>>();
-			ret.add(pair);
+			ret = new HashMap<MemLocInstnItem, Set<AccessPath>>();
+			ret.put(pair.val0, pair.val1);
 		}
+		Set<AccessPath> aps = ret.get(pair.val0);
+		if (aps == null) {
+			aps = new HashSet<AccessPath>();
+			ret.put(pair.val0, aps);
+		}
+		aps.addAll(pair.val1);
 		return ret;
 	}
 
-	public Set<Pair<MemLocInstnItem, AccessPath>> put(AbstractMemLoc loc,
-			Set<Pair<MemLocInstnItem, AccessPath>> set) {
+	public Map<MemLocInstnItem, Set<AccessPath>> put(AbstractMemLoc loc,
+			Map<MemLocInstnItem, Set<AccessPath>> set) {
 		return map.put(loc, set);
 	}
 
-	public Set<Pair<MemLocInstnItem, AccessPath>> get(AbstractMemLoc loc) {
+	public Map<MemLocInstnItem, Set<AccessPath>> get(AbstractMemLoc loc) {
 		return map.get(loc);
 	}
 
@@ -63,7 +69,7 @@ public class DependenceMap {
 		return map.keySet();
 	}
 
-	public Set<Pair<MemLocInstnItem, AccessPath>> remove(AbstractMemLoc loc) {
+	public Map<MemLocInstnItem, Set<AccessPath>> remove(AbstractMemLoc loc) {
 		return map.remove(loc);
 	}
 
