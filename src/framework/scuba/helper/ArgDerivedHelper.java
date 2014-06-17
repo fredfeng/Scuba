@@ -13,7 +13,7 @@ public class ArgDerivedHelper {
 
 	public static ArgDerivedType markArgDerived(AbstractMemLoc loc) {
 
-		assert (loc.unknowArgDerived());
+		// assert (loc.unknowArgDerived());
 		// if root has been analyzed for arg-derived
 		if (loc.knownArgDerived()) {
 			return loc.getArgDerivedMarker();

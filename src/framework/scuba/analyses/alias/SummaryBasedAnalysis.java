@@ -85,7 +85,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
-		
+
 		conclude();
 
 		// dump interesting stats
@@ -101,8 +101,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("[Scuba] Summaries: " + meth);
 
 	}
-	
-	//summarize all heaps.
+
+	// summarize all heaps.
 	private void conclude() {
 		Set<AbstractHeap> clinitHeaps = new HashSet<AbstractHeap>();
 		for (jq_Method meth : callGraph.getRoots()) {
