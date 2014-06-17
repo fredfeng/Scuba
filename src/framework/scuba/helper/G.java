@@ -26,11 +26,11 @@ public class G {
 
 	public static boolean dbgRet = false;
 
-	public static boolean dbgMatch = true;
+	public static boolean dbgMatch = false;
 
-	public static boolean dbgPermission = true;
+	public static boolean dbgPermission = false;
 
-	public static boolean dbgQuery = true;
+	public static boolean dbgQuery = false;
 
 	public static int sample = 155;
 

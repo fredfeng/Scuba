@@ -22,6 +22,7 @@ import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.CstInstnCache;
+import framework.scuba.domain.CstInstnCacheDepMap;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.HeapObject;
 import framework.scuba.domain.MemLocInstnItem;
@@ -60,6 +61,9 @@ public class ConstraintManager {
 
 	// this is my little cute cache for constraint instantiation
 	static final CstInstnCache cache = new CstInstnCache();
+
+	// the dependence map for cst instantiation
+	static final CstInstnCacheDepMap cstDepMap = new CstInstnCacheDepMap();
 
 	public ConstraintManager() {
 		try {
@@ -150,8 +154,10 @@ public class ConstraintManager {
 	// perform unlifting and instantiation. Rule 2 in figure 10.
 	public static BoolExpr instnConstaint(BoolExpr expr,
 			AbstractHeap callerHeap, ProgramPoint point, MemLocInstnItem item) {
+
 		BoolExpr ret = null;
-		if (SummariesEnv.v().isUsingCache()) {
+
+		if (SummariesEnv.v().isUsingCstCache()) {
 			ret = cache.getBoolExpr(item, expr);
 			if (ret != null) {
 				return ret;
@@ -180,6 +186,13 @@ public class ConstraintManager {
 				// get points-to set for term
 				assert (ap instanceof AccessPath);
 				MemLocInstnSet p2Set = item.instnMemLoc(ap, callerHeap, point);
+
+				// update the dependence relation
+				if (SummariesEnv.v().isUsingCstCache()) {
+					cstDepMap.add(ap, new Pair<MemLocInstnItem, BoolExpr>(item,
+							expr));
+				}
+
 				BoolExpr instSub;
 				if (sub.IsEq())
 					instSub = instEqTyping(p2Set, typeInt.Int());
@@ -189,8 +202,9 @@ public class ConstraintManager {
 				ret = (BoolExpr) ret.Substitute(sub, instSub);
 			}
 
-			if (SummariesEnv.v().isUsingCache()) {
-				cache.add(item, new Pair<BoolExpr, BoolExpr>(expr, ret));
+			if (SummariesEnv.v().isUsingCstCache()) {
+				cache.add(item, new Pair<BoolExpr, BoolExpr>(expr,
+						(BoolExpr) ret.Simplify()));
 			}
 
 			return (BoolExpr) ret.Simplify();
@@ -436,5 +450,13 @@ public class ConstraintManager {
 			e.printStackTrace();
 		}
 		return false;
+	}
+
+	public static CstInstnCacheDepMap getCstDepMap() {
+		return instance.cstDepMap;
+	}
+
+	public static CstInstnCache getCstInstnCache() {
+		return instance.cache;
 	}
 }

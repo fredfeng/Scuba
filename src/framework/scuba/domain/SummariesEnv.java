@@ -56,18 +56,33 @@ public class SummariesEnv {
 	protected boolean disableCst = false;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useCache = true;
+	protected boolean useMemLocCache = true;
 
-	public void enableCache() {
-		useCache = true;
+	// whether use cache for constraint instantiation
+	protected boolean useCstCache = true;
+
+	public void enableMemLocCache() {
+		useMemLocCache = true;
 	}
 
-	public void disableCache() {
-		useCache = false;
+	public void disableMemLocCache() {
+		useMemLocCache = false;
 	}
 
-	public boolean isUsingCache() {
-		return useCache;
+	public boolean isUsingMemLocCache() {
+		return useMemLocCache;
+	}
+
+	public void enableCstCache() {
+		useCstCache = true;
+	}
+
+	public void disableCstCache() {
+		useCstCache = false;
+	}
+
+	public boolean isUsingCstCache() {
+		return useCstCache;
 	}
 
 	public boolean disableCst() {

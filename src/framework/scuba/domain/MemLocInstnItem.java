@@ -113,7 +113,7 @@ public class MemLocInstnItem {
 	public MemLocInstnSet instnMemLoc(AbstractMemLoc loc,
 			AbstractHeap callerHeap, ProgramPoint point) {
 		MemLocInstnSet ret = null;
-		if (SummariesEnv.v().useCache) {
+		if (SummariesEnv.v().useMemLocCache) {
 			Set<AccessPath> orgs = new HashSet<AccessPath>();
 			ret = instnMemLocUsingCache(orgs, loc, callerHeap, point);
 		} else {

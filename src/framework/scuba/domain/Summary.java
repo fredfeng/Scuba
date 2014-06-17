@@ -85,7 +85,7 @@ public class Summary {
 	final protected MemLocInstn4Method memLocInstnResult;
 
 	// used for efficient caching
-	final protected DependenceMap depMap;
+	final protected MemLocInstnCacheDepMap locDepMap;
 
 	// finish current summary.
 	private boolean terminated;
@@ -126,7 +126,7 @@ public class Summary {
 		this.method = meth;
 		this.absHeap = new AbstractHeap(this);
 		this.memLocInstnResult = new MemLocInstn4Method(this);
-		this.depMap = new DependenceMap(this);
+		this.locDepMap = new MemLocInstnCacheDepMap(this);
 		this.aliasQueries = new AliasQueries(meth, this);
 		if (G.dump) {
 			this.dumpSummary4Method(meth);
@@ -1357,7 +1357,7 @@ public class Summary {
 
 	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(
 			AbstractMemLoc loc, Pair<MemLocInstnItem, Set<AccessPath>> deps) {
-		return depMap.add(loc, deps);
+		return locDepMap.add(loc, deps);
 	}
 
 }

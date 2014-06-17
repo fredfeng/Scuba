@@ -2193,7 +2193,7 @@ public class AbstractHeap {
 		}
 		ret.val0 = currentP2Set.join(p2Set);
 
-		if (SummariesEnv.v().useCache) {
+		if (SummariesEnv.v().useMemLocCache) {
 			if (ret.val0) {
 				clearCache(src);
 			}
@@ -2205,16 +2205,18 @@ public class AbstractHeap {
 	// clear all the related cache including:
 	// 1. memory location instantiation cache
 	// 2. constraint instantiation cache
-	protected boolean clearCache(AbstractMemLoc src) {
-		boolean ret = false;
+	protected Pair<Boolean, Boolean> clearCache(AbstractMemLoc src) {
+		boolean ret1 = false;
+		boolean ret2 = false;
 		// this check is for the final summary (conclusion)
 		if (summary == null) {
-			return ret;
+			return new Pair<Boolean, Boolean>(ret1, ret2);
 		}
-		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.depMap.get(src);
+		// clear the memory location instantiation cache
+		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.locDepMap.get(src);
 		// possible that no one currently depends on src
 		if (deps == null) {
-			return ret;
+			return new Pair<Boolean, Boolean>(ret1, ret2);
 		}
 		for (Iterator<Map.Entry<MemLocInstnItem, Set<AccessPath>>> it = deps
 				.entrySet().iterator(); it.hasNext();) {
@@ -2222,10 +2224,26 @@ public class AbstractHeap {
 			MemLocInstnItem item = entry.getKey();
 			Set<AccessPath> aps = entry.getValue();
 			for (AccessPath ap : aps) {
-				ret = true;
+				ret1 = true;
 				item.remove(ap);
+				// clear the constraint instantiation cache
+				if (SummariesEnv.v().isUsingCstCache()) {
+					ret2 = clearCstCache(ap, item) | ret2;
+				}
 			}
 		}
+		return new Pair<Boolean, Boolean>(ret1, ret2);
+	}
+
+	protected boolean clearCstCache(AccessPath ap, MemLocInstnItem item) {
+		boolean ret = false;
+		Set<BoolExpr> exprs = ConstraintManager.getCstDepMap().getExprs(ap,
+				item);
+		for (BoolExpr expr : exprs) {
+			ret = true;
+			ConstraintManager.getCstInstnCache().removeExpr(item, expr);
+		}
+
 		return ret;
 	}
 
