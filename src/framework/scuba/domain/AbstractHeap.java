@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -14,6 +15,7 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
+import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 
@@ -1017,14 +1019,14 @@ public class AbstractHeap {
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
 	// v = new T
 	protected boolean handleNewStmt(jq_Class clazz, jq_Method method,
-			Register left, VariableType leftVType, jq_Type right, int line,
-			int numToAssign, boolean isInSCC) {
+			Register left, VariableType leftVType, jq_Type right,
+			Quad allocSite, int line, int numToAssign, boolean isInSCC) {
 
 		boolean ret = false;
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "LHS of a new stmt must be a local variable!";
 
 		// generate the allocElem for RHS
-		AllocElem allocT = getAllocElem(clazz, method, right, line);
+		AllocElem allocT = getAllocElem(clazz, method, allocSite, right, line);
 		assert (allocT != null) : "allocT is null!";
 
 		LocalVarElem v = null;
@@ -1056,17 +1058,17 @@ public class AbstractHeap {
 	// X x1 = new X[10] by just calling the handleMultiNewArrayStmt method with
 	// dim = 1
 	protected boolean handleNewArrayStmt(jq_Class clazz, jq_Method method,
-			Register left, VariableType leftVType, jq_Type right, int line,
-			int numToAssign, boolean isInSCC) {
+			Register left, VariableType leftVType, jq_Type right,
+			Quad allocSite, int line, int numToAssign, boolean isInSCC) {
 		return handleMultiNewArrayStmt(clazz, method, left, leftVType, right,
-				1, line, numToAssign, isInSCC);
+				1, allocSite, line, numToAssign, isInSCC);
 	}
 
 	// handle multi-new stmt, e.g. X x1 = new X[1][2][3]
 	// dim is the dimension of this array, dim >= 2
 	protected boolean handleMultiNewArrayStmt(jq_Class clazz, jq_Method method,
 			Register left, VariableType leftVType, jq_Type right, int dim,
-			int line, int numToAssign, boolean isInSCC) {
+			Quad allocSite, int line, int numToAssign, boolean isInSCC) {
 
 		boolean ret = false;
 
@@ -1081,8 +1083,8 @@ public class AbstractHeap {
 		}
 		assert (v != null) : "v is null!";
 		// generate the ArrayAllocElem for RHS
-		ArrayAllocElem allocT = getArrayAllocElem(clazz, method, right, dim,
-				line);
+		ArrayAllocElem allocT = getArrayAllocElem(clazz, method, right,
+				allocSite, dim, line);
 
 		assert allocT.knownArgDerived() : "we should set the arg-derived marker when creating allocT";
 		assert v.knownArgDerived() : "we should set the arg-derived marker when creating v";
@@ -1098,9 +1100,9 @@ public class AbstractHeap {
 		// handling fields of the ArrayAllocElem for multi-array with dim > 1
 		for (int i = dim; i >= 2; i--) {
 			ArrayAllocElem leftAllocT = getArrayAllocElem(clazz, method, right,
-					i, line);
+					allocSite, i, line);
 			ArrayAllocElem rightAllocT = getArrayAllocElem(clazz, method,
-					right, i - 1, line);
+					right, allocSite, i - 1, line);
 			ret = handleArrayLoad(leftAllocT,
 					IndexFieldElem.getIndexFieldElem(), rightAllocT,
 					numToAssign, isInSCC) | ret;
@@ -1861,10 +1863,10 @@ public class AbstractHeap {
 	// get the AllocElem given the declaring class, declaring method and the
 	// corresponding type and the line number
 	protected AllocElem getAllocElem(jq_Class clazz, jq_Method method,
-			jq_Type type, int line) {
+			Quad allocSite, jq_Type type, int line) {
 		Context context = new Context(Env.getProgramPoint(clazz, method, line));
 		// create an AllocElem wrapper
-		AllocElem ret = new AllocElem(new Alloc(type), context);
+		AllocElem ret = new AllocElem(new Alloc(type, allocSite), context);
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (AllocElem) memLocFactory.get(ret);
@@ -1909,10 +1911,11 @@ public class AbstractHeap {
 	}
 
 	protected ArrayAllocElem getArrayAllocElem(jq_Class clazz,
-			jq_Method method, jq_Type type, int dim, int line) {
+			jq_Method method, jq_Type type, Quad allocSite, int dim, int line) {
 		Context context = new Context(Env.getProgramPoint(clazz, method, line));
 		// create an AllocElem wrapper
-		ArrayAllocElem ret = new ArrayAllocElem(new Alloc(type), context, dim);
+		ArrayAllocElem ret = new ArrayAllocElem(new Alloc(type, allocSite),
+				context, dim);
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (ArrayAllocElem) memLocFactory.get(ret);
@@ -2279,7 +2282,30 @@ public class AbstractHeap {
 			assert false : "null";
 			return null;
 		}
-
 	}
 
+	public void resolve(AccessPath ap, Set<AllocElem> ret) {
+		StackObject root = ap.findRoot();
+		assert (root instanceof StaticElem) : "root should be a static element!";
+		LinkedList<FieldElem> fieldSeq = AccessPath.fieldSeq(ap);
+		System.out.println(fieldSeq);
+		resolve(root, fieldSeq, 0, ret);
+	}
+
+	public void resolve(AbstractMemLoc loc, LinkedList<FieldElem> fieldSeq,
+			int index, Set<AllocElem> ret) {
+		P2Set p2set = lookup(loc, fieldSeq.get(index));
+
+		if (index == fieldSeq.size() - 1) {
+			for (HeapObject hObj : p2set.getHeapObjects()) {
+				if (hObj instanceof AllocElem) {
+					ret.add((AllocElem) hObj);
+				}
+			}
+		} else {
+			for (HeapObject hObj : p2set.getHeapObjects()) {
+				resolve(hObj, fieldSeq, index + 1, ret);
+			}
+		}
+	}
 }

@@ -27,10 +27,8 @@ import joeq.Compiler.Quad.Operator.Getstatic;
 import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_A;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_A;
-import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_V;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKEVIRTUAL_A;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeInterface;
-import joeq.Compiler.Quad.Operator.Invoke.InvokeStatic;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeVirtual;
 import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.Move.MOVE_A;
@@ -49,7 +47,6 @@ import chord.program.Program;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.analyses.alias.SummaryBasedAnalysis;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
@@ -823,8 +820,8 @@ public class Summary {
 
 			boolean flag = false;
 			flag = absHeap.handleNewStmt(stmt.getMethod().getDeclaringClass(),
-					meth, rop.getRegister(), vt, to.getType(), stmt.getID(),
-					numToAssign, isInSCC);
+					meth, rop.getRegister(), vt, to.getType(), stmt,
+					stmt.getID(), numToAssign, isInSCC);
 
 			absHeap.markChanged(flag);
 		}
@@ -841,7 +838,7 @@ public class Summary {
 			boolean flag = false;
 			flag = absHeap.handleMultiNewArrayStmt(meth.getDeclaringClass(),
 					meth, rop.getRegister(), vt, to.getType(), plo.length(),
-					stmt.getID(), numToAssign, isInSCC);
+					stmt, stmt.getID(), numToAssign, isInSCC);
 
 			absHeap.markChanged(flag);
 		}
@@ -864,7 +861,7 @@ public class Summary {
 			boolean flag = false;
 
 			flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(), meth,
-					rop.getRegister(), vt, to.getType(), stmt.getID(),
+					rop.getRegister(), vt, to.getType(), stmt, stmt.getID(),
 					numToAssign, isInSCC);
 
 			absHeap.markChanged(flag);
@@ -1073,11 +1070,12 @@ public class Summary {
 		if (tgtSet.size() == 1) {
 			jq_Method callee = tgtSet.iterator().next();
 			Summary calleeSum = SummariesEnv.v().getSummary(callee);
-			if(calleeSum == null) {
+			if (calleeSum == null) {
 				StringUtil.reportInfo("Missing model for " + callee);
 				return ret;
 			}
-//			assert calleeSum != null : "CalleeSum can not be null" + callsite;
+			// assert calleeSum != null : "CalleeSum can not be null" +
+			// callsite;
 			if (calleeSum.hasAnalyzed()) {
 				ret.add(new Pair<Summary, BoolExpr>(calleeSum, cst));
 				return ret;
@@ -1330,16 +1328,25 @@ public class Summary {
 		return absHeap.getLocalVarElem(clazz, method, variable);
 	}
 
-	public P2Set getP2Set(LocalVarElem local) {
+	public Set<AllocElem> getP2Set(LocalVarElem local) {
+		Set<AllocElem> ret = new HashSet<AllocElem>();
 		assert (local != null);
-		// assert (absHeap.heapObjectsToP2Set
-		// .containsKey(new Pair<AbstractMemLoc, FieldElem>(local,
-		// EpsilonFieldElem.getEpsilonFieldElem()))) : ""
-		// + "the entry method does not contain this local!";
-		P2Set ret = absHeap.heapObjectsToP2Set
+		P2Set p2set = absHeap.heapObjectsToP2Set
 				.get(new Pair<AbstractMemLoc, FieldElem>(local,
 						EpsilonFieldElem.getEpsilonFieldElem()));
-		// assert (ret != null);
+		if (p2set == null) {
+			return ret;
+		}
+		for (HeapObject hObj : p2set.getHeapObjects()) {
+			if (hObj instanceof AllocElem) {
+				ret.add((AllocElem) hObj);
+			} else {
+				assert (hObj instanceof AccessPath)
+						&& (hObj.findRoot() instanceof StaticElem) : ""
+						+ "only StaticElem AccessPath allowed in the entry!";
+				absHeap.resolve((AccessPath) hObj, ret);
+			}
+		}
 		return ret;
 	}
 

@@ -1,5 +1,7 @@
 package framework.scuba.domain;
 
+import java.util.LinkedList;
+
 public class AccessPath extends HeapObject {
 
 	// base can be an AccessPath, a ParamElem or a StaticElem
@@ -118,5 +120,18 @@ public class AccessPath extends HeapObject {
 		}
 
 		return null;
+	}
+
+	public static LinkedList<FieldElem> fieldSeq(AccessPath ap) {
+		LinkedList<FieldElem> ret = new LinkedList<FieldElem>();
+		while (true) {
+			AbstractMemLoc base = ap.getBase();
+			ret.addLast(ap.getField());
+			if (!(base instanceof AccessPath)) {
+				break;
+			}
+			ap = (AccessPath) base;
+		}
+		return ret;
 	}
 }

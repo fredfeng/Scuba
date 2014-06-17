@@ -13,7 +13,6 @@ import java.util.TreeMap;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
-import joeq.Compiler.Quad.CodeCache;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
@@ -35,6 +34,7 @@ import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractMemLoc;
+import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.EpsilonFieldElem;
 import framework.scuba.domain.FieldElem;
@@ -568,7 +568,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	public static int count = 0;
 	public static int me = 0;
 
-	public P2Set query(jq_Class clazz, jq_Method method, Register variable) {
+	public Set<AllocElem> query(jq_Class clazz, jq_Method method,
+			Register variable) {
+		Set<AllocElem> ret = new HashSet<AllocElem>();
 		jq_Method entry = Program.g().getMainMethod();
 		Summary sum = SummariesEnv.v().getSummary(entry);
 		if (G.dbgQuery) {
@@ -586,7 +588,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						+ "[we cannot get the summary for the method!] "
 						+ method);
 			}
-			return null;
+			return ret;
 		}
 		assert (sum1 != null) : "the method of the variable should have a summary!";
 		if (G.dbgQuery) {
@@ -604,28 +606,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			if (G.dbgQuery) {
 				StringUtil.reportInfo("Query: "
 						+ "[we can get the location in the heap!]");
-				// for (jq_Method m : SummariesEnv.v().getSums().keySet()) {
-				// Summary sum2 = SummariesEnv.v().getSummary(m);
-				// if (sum2.getAbsHeap()
-				// .getHeap()
-				// .containsKey(
-				// new Pair<AbstractMemLoc, FieldElem>(
-				// new LocalVarElem(clazz, method,
-				// variable), EpsilonFieldElem
-				// .getEpsilonFieldElem()))) {
-				// P2Set p2set = sum2
-				// .getAbsHeap()
-				// .getHeap()
-				// .get(new Pair<AbstractMemLoc, FieldElem>(
-				// new LocalVarElem(clazz, method,
-				// variable), EpsilonFieldElem
-				// .getEpsilonFieldElem()));
-				//
-				// for (HeapObject hObj : p2set.getHeapObjects()) {
-				// StringUtil.reportInfo("Query: " + "[Heap Object:]");
-				// }
-				// }
-				// }
+
 				StringUtil.reportInfo("Query: "
 						+ "[P2Set in the declearing method]"
 						+ sum1.getAbsHeap()
@@ -641,10 +622,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						+ "[we cannot get the location in the heap!]");
 				sum1.dumpSummaryToFile("" + me++);
 			}
-			return null;
+			return ret;
 		}
 		LocalVarElem local = sum1.getLocalVarElem(clazz, method, variable);
-		P2Set ret = sum.getP2Set(local);
+		ret = sum.getP2Set(local);
 		return ret;
 	}
 
@@ -665,9 +646,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			jq_Method meth = trio.val0;
 			Register r = trio.val1;
 			// System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
-			P2Set p2Set = query(meth.getDeclaringClass(), meth, r);
+			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
+
+			Set<Quad> sites = new HashSet<Quad>();
+			for (AllocElem alloc : p2Set) {
+				sites.add(alloc.getAlloc().getAllocSite());
+			}
+
 			StringUtil.reportInfo("[Scuba] method: " + meth);
-			StringUtil.reportInfo("[Scuba] p2Set of " + r + ":" + p2Set);
+			StringUtil.reportInfo("[Scuba] p2Set of " + r + ":" + sites);
 
 			// p2set of r in chord.
 			RelView viewChord = relDVH.getView();
