@@ -20,7 +20,7 @@ public class SummariesEnv {
 
 	final protected Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
 
-	final protected SumConclusion finalSum = new SumConclusion();
+	protected SumConclusion finalSum;
 
 	String[] blklist = {
 			"fixAfterDeletion:(Ljava/util/TreeMap$Entry;)V@java.util.TreeMap",
@@ -100,7 +100,8 @@ public class SummariesEnv {
 	}
 
 	public void sumAll(Set<AbstractHeap> clinitHeaps, AbstractHeap mainHeap) {
-		finalSum.sumAllHeaps(clinitHeaps, mainHeap);
+		finalSum = new SumConclusion(clinitHeaps, mainHeap);
+		finalSum.sumAllHeaps();
 	}
 
 	public SumConclusion getFinalSum() {

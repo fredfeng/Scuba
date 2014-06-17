@@ -13,14 +13,27 @@ import framework.scuba.helper.ConstraintManager;
 
 public class SumConclusion {
 
+	// the final heap that summarizes all top-level heaps
 	final protected AbstractHeap sumHeap;
 
-	public SumConclusion() {
+	// the heaps of <clinit>'s methods
+	final protected Set<AbstractHeap> clinitHeaps;
+
+	// the heap of the main method
+	final protected AbstractHeap mainHeap;
+
+	public SumConclusion(Set<AbstractHeap> clinitHeaps, AbstractHeap mainHeap) {
 		this.sumHeap = new AbstractHeap(null);
+		this.clinitHeaps = clinitHeaps;
+		this.mainHeap = mainHeap;
 	}
 
 	public int getHeapSize() {
 		return sumHeap.size();
+	}
+
+	public int size() {
+		return clinitHeaps.size() + 1;
 	}
 
 	public Set<AllocElem> getP2Set(LocalVarElem local) {
@@ -45,8 +58,7 @@ public class SumConclusion {
 		return ret;
 	}
 
-	public AbstractHeap sumAllHeaps(Set<AbstractHeap> clinitHeaps,
-			AbstractHeap mainHeap) {
+	public AbstractHeap sumAllHeaps() {
 		// a worklist algorithm to conclude all heaps of <clinit>'s
 		Set<AbstractHeap> wl = new HashSet<AbstractHeap>();
 		Set<AbstractHeap> analyzed = new HashSet<AbstractHeap>();
@@ -81,6 +93,7 @@ public class SumConclusion {
 	protected boolean instnHeap(AbstractHeap worker) {
 		// a fix-point algorithm to conclude the heap of a method
 		boolean ret = false;
+
 		while (true) {
 			boolean go = false;
 
@@ -113,7 +126,9 @@ public class SumConclusion {
 
 	protected boolean instnEdge(AbstractMemLoc src, HeapObject tgt,
 			FieldElem field, AbstractHeap worker) {
+		// given an edge in the heap of a method, move it to the final heap
 		boolean ret = false;
+
 		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
 				src, field);
 
