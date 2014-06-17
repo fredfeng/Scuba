@@ -41,6 +41,7 @@ import framework.scuba.domain.FieldElem;
 import framework.scuba.domain.HeapObject;
 import framework.scuba.domain.LocalVarElem;
 import framework.scuba.domain.P2Set;
+import framework.scuba.domain.SumConclusion;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.ConstraintManager;
@@ -572,7 +573,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			Register variable) {
 		Set<AllocElem> ret = new HashSet<AllocElem>();
 		jq_Method entry = Program.g().getMainMethod();
-		Summary sum = SummariesEnv.v().getSummary(entry);
+		SumConclusion sum = SummariesEnv.v().getFinalSum();
+		// Summary sum = SummariesEnv.v().getSummary(entry);
 		if (G.dbgQuery) {
 			StringUtil.reportInfo("Query: "
 					+ "---------------------------------------------");

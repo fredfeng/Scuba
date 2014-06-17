@@ -32,7 +32,7 @@ public class G {
 
 	public static boolean dbgQuery = true;
 
-	public static int sample = 385;
+	public static int sample = 155;
 
 	// flag to tune performance.
 	public static boolean tuning = true;

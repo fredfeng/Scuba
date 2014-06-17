@@ -3,6 +3,7 @@ package framework.scuba.domain;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import joeq.Class.jq_Method;
 
@@ -17,7 +18,9 @@ public class SummariesEnv {
 
 	private static SummariesEnv instance = new SummariesEnv();
 
-	Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
+	final protected Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
+
+	final protected SumConclusion finalSum = new SumConclusion();
 
 	String[] blklist = {
 			"fixAfterDeletion:(Ljava/util/TreeMap$Entry;)V@java.util.TreeMap",
@@ -94,6 +97,14 @@ public class SummariesEnv {
 
 	public static void reset() {
 		instance = new SummariesEnv();
+	}
+
+	public void sumAll(Set<AbstractHeap> clinitHeaps, AbstractHeap mainHeap) {
+		finalSum.sumAllHeaps(clinitHeaps, mainHeap);
+	}
+
+	public SumConclusion getFinalSum() {
+		return finalSum;
 	}
 
 	public Summary getSummary(jq_Method meth) {
