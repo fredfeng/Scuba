@@ -33,6 +33,7 @@ import chord.util.tuple.object.Trio;
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
+import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.Env;
@@ -84,6 +85,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
+		
+		conclude();
 
 		// dump interesting stats
 		dumpStatistics();
@@ -97,6 +100,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (jq_Method meth : SummariesEnv.v().getSums().keySet())
 			StringUtil.reportInfo("[Scuba] Summaries: " + meth);
 
+	}
+	
+	//summarize all heaps.
+	private void conclude() {
+		Set<AbstractHeap> clinitHeaps = new HashSet<AbstractHeap>();
+		for (jq_Method meth : callGraph.getRoots()) {
+			if (!Program.g().getMainMethod().equals(meth)) {
+				Summary clinitSum = SummariesEnv.v().getSummary(meth);
+				clinitHeaps.add(clinitSum.getAbsHeap());
+			}
+		}
+
+		Summary mainSum = SummariesEnv.v().getSummary(
+				Program.g().getMainMethod());
+		SummariesEnv.v().sumAll(clinitHeaps, mainSum.getAbsHeap());
 	}
 
 	private void sumAnalyze() {
