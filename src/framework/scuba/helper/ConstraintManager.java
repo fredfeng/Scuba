@@ -180,13 +180,19 @@ public class ConstraintManager {
 						+ "extracting the constraints." + "[size]"
 						+ ret.toString().length() + " " + ret);
 			}
-			HashMap<String, BoolExpr> map = new HashMap<String, BoolExpr>();
-			extractTerm(ret, map);
+			Map<String, BoolExpr> map;
+			if (SummariesEnv.v().isUsingExtractCache()) {
+				map = extractTermUsingCache(ret);
+			} else {
+				map = new HashMap<String, BoolExpr>();
+				extractTerm(ret, map);
+			}
 
 			if (G.instnInfo) {
 				StringUtil.reportInfo("instnInfo: "
 						+ "substituting constraints.");
 			}
+
 			for (BoolExpr sub : map.values()) {
 				assert sub.IsEq() || sub.IsLE() : "invalid sub expr" + sub;
 				Expr term = sub.Args()[0].Args()[0];
@@ -233,8 +239,46 @@ public class ConstraintManager {
 		return null;
 	}
 
+	public static final Map<String, Map<String, BoolExpr>> extractCache = new HashMap<String, Map<String, BoolExpr>>();
+
+	public static Map<String, BoolExpr> extractTermUsingCache(Expr expr)
+			throws Z3Exception {
+		Map<String, BoolExpr> ret = extractCache.get(expr.toString());
+		if (ret != null) {
+			return ret;
+		}
+		ret = new HashMap<String, BoolExpr>();
+
+		// using toString as the key to map the same expr, buggy.
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: "
+					+ "extracting the terms in constraint: " + expr);
+		}
+		if (expr.IsEq() || expr.IsLE()) {
+			if (G.instnInfo) {
+				StringUtil.reportInfo("instnInfo: " + "base case: " + expr);
+			}
+			ret.put(expr.toString(), (BoolExpr) expr);
+		} else if (expr.IsAnd() || expr.IsOr()) {
+			if (G.instnInfo) {
+				StringUtil.reportInfo("instnInfo: " + "[recursive case:] "
+						+ expr);
+			}
+			for (int i = 0; i < expr.NumArgs(); i++) {
+				assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:"
+						+ expr.Args()[i];
+				BoolExpr sub = (BoolExpr) expr.Args()[i];
+				Map<String, BoolExpr> map = extractTermUsingCache(sub);
+				ret.putAll(map);
+			}
+		}
+
+		extractCache.put(expr.toString(), ret);
+		return ret;
+	}
+
 	// given an expr, extract all its sub terms for instantiating.
-	public static void extractTerm(Expr expr, HashMap<String, BoolExpr> map) {
+	public static void extractTerm(Expr expr, Map<String, BoolExpr> map) {
 		try {
 			// using toString as the key to map the same expr, buggy.
 			if (G.instnInfo) {

@@ -61,6 +61,9 @@ public class SummariesEnv {
 	// whether use cache for constraint instantiation
 	protected boolean useCstCache = true;
 
+	// whether use cache for extracting terms
+	protected boolean useExtractCache = true;
+
 	// fix-point or not
 	protected boolean useFixPoint = false;
 
@@ -86,6 +89,18 @@ public class SummariesEnv {
 
 	public boolean isUsingCstCache() {
 		return useCstCache;
+	}
+
+	public void enableExtractCache() {
+		useExtractCache = true;
+	}
+
+	public void disableExtractCache() {
+		useExtractCache = false;
+	}
+
+	public boolean isUsingExtractCache() {
+		return useExtractCache;
 	}
 
 	public boolean disableCst() {
