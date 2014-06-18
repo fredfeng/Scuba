@@ -119,7 +119,8 @@ public class ConstraintManager {
 				// return the number of its class.
 				AllocElem ae = (AllocElem) ho;
 				jq_Type jType = ae.getAlloc().getType();
-				assert jType instanceof jq_Class : "alloc object should be a jq_class.";
+				assert jType instanceof jq_Class : "alloc object should be a jq_class. "
+						+ "[type]: " + jType + " [AllocElem]: " + ae;
 				cur = ctx.MkInt(Env.getConstTerm4Class((jq_Class) jType));
 
 			} else if (ho instanceof AccessPath) {

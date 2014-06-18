@@ -24,7 +24,7 @@ public class Alloc {
 	public jq_Type getType() {
 		return this.type;
 	}
-	
+
 	public Quad getAllocSite() {
 		return allocSite;
 	}
