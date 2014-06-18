@@ -43,11 +43,11 @@ public class P2Set {
 	// about modifying the other p2set by modifying this p2set
 	public boolean join(P2Set other) {
 		boolean ret = false;
-		for (HeapObject obj : other.getHeapObjects()) {
+		for (HeapObject obj : other.keySet()) {
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets
 				// directly get the other p2set's constraints
-				BoolExpr otherCst = other.getConstraint(obj);
+				BoolExpr otherCst = other.get(obj);
 
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)
@@ -72,7 +72,7 @@ public class P2Set {
 				// AVOID directly get the constraint instance of the other
 				// p2set!!!! only get the shallow copy of the other constraints
 
-				BoolExpr otherCst = other.getConstraint(obj);
+				BoolExpr otherCst = other.get(obj);
 				// TODO
 				// remove the edges with false constraints
 				if (ConstraintManager.isFalse(otherCst)) {
@@ -80,8 +80,7 @@ public class P2Set {
 				}
 
 				// for this case, we should add a new edge
-				p2Set.put(obj,
-						ConstraintManager.clone(other.getConstraint(obj)));
+				p2Set.put(obj, ConstraintManager.clone(other.get(obj)));
 				ret = true;
 			}
 		}
@@ -112,16 +111,16 @@ public class P2Set {
 		return p2Set.put(obj, constraint);
 	}
 
-	public boolean containsHeapObject(HeapObject obj) {
+	public boolean contains(HeapObject obj) {
 		return p2Set.containsKey(obj);
 	}
 
-	public Set<HeapObject> getHeapObjects() {
+	public Set<HeapObject> keySet() {
 		return p2Set.keySet();
 	}
 
 	// return null or return true constraint?
-	public BoolExpr getConstraint(HeapObject obj) {
+	public BoolExpr get(HeapObject obj) {
 		// if ptSet contains obj then return that obj, otherwise return null
 		return p2Set.get(obj);
 	}
@@ -152,8 +151,8 @@ public class P2Set {
 			return false;
 
 		for (HeapObject hObj : p2Set.keySet()) {
-			if (otherPT.containsHeapObject(hObj)) {
-				BoolExpr otherCst = otherPT.getConstraint(hObj);
+			if (otherPT.contains(hObj)) {
+				BoolExpr otherCst = otherPT.get(hObj);
 				BoolExpr thisCst = p2Set.get(hObj);
 				if (!thisCst.equals(otherCst))
 					return false;

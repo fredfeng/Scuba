@@ -713,8 +713,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				P2Set p2set = absHeap.get(pair);
 				total += p2set.size();
 				total_all += p2set.size();
-				for (HeapObject hObj : p2set.getHeapObjects()) {
-					BoolExpr cst = p2set.getConstraint(hObj);
+				for (HeapObject hObj : p2set.keySet()) {
+					BoolExpr cst = p2set.get(hObj);
 					if (ConstraintManager.isTrue(cst)) {
 						t++;
 						t_all++;

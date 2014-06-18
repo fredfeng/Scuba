@@ -34,6 +34,8 @@ public class G {
 
 	public static boolean instnInfo = true;
 
+	public static boolean dbgRef = false;
+
 	public static int sample = 155;
 
 	// flag to tune performance.

@@ -26,8 +26,9 @@ public class SCCHelper4CG {
 	protected ICICG g;
 
 	/**
-	 * @param g: a Callgraph for which we want to compute the strongly connected
-	 * components.
+	 * @param g
+	 *            : a Callgraph for which we want to compute the strongly
+	 *            connected components.
 	 */
 	public SCCHelper4CG(ICICG g, Set roots) {
 		this.g = g;

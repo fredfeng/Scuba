@@ -10,6 +10,7 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Z3Exception;
 
+import framework.scuba.helper.AccessPathHelper;
 import framework.scuba.helper.ConstraintManager;
 
 public class SumConclusion {
@@ -35,8 +36,8 @@ public class SumConclusion {
 		// validate that constraints in the main heap are all true
 		for (Pair<AbsMemLoc, FieldElem> pair : mainHeap.keySet()) {
 			P2Set p2set = mainHeap.get(pair);
-			for (HeapObject hObj : p2set.getHeapObjects()) {
-				BoolExpr cst = p2set.getConstraint(hObj);
+			for (HeapObject hObj : p2set.keySet()) {
+				BoolExpr cst = p2set.get(hObj);
 				try {
 					assert (ConstraintManager.isTrue((BoolExpr) cst.Simplify())) : ""
 							+ "constraint is not true: " + cst;
@@ -51,8 +52,8 @@ public class SumConclusion {
 		for (AbstractHeap clinitHeap : clinitHeaps) {
 			for (Pair<AbsMemLoc, FieldElem> pair : clinitHeap.keySet()) {
 				P2Set p2set = clinitHeap.get(pair);
-				for (HeapObject hObj : p2set.getHeapObjects()) {
-					BoolExpr cst = p2set.getConstraint(hObj);
+				for (HeapObject hObj : p2set.keySet()) {
+					BoolExpr cst = p2set.get(hObj);
 					// validate the constraints to be true
 					try {
 						assert (ConstraintManager.isTrue((BoolExpr) cst
@@ -79,20 +80,19 @@ public class SumConclusion {
 	public Set<AllocElem> getP2Set(LocalVarElem local) {
 		Set<AllocElem> ret = new HashSet<AllocElem>();
 		assert (local != null);
-		P2Set p2set = sumHeap.locToP2Set
-				.get(new Pair<AbsMemLoc, FieldElem>(local,
-						EpsilonFieldElem.getEpsilonFieldElem()));
+		P2Set p2set = sumHeap.locToP2Set.get(new Pair<AbsMemLoc, FieldElem>(
+				local, EpsilonFieldElem.getEpsilonFieldElem()));
 		if (p2set == null) {
 			return ret;
 		}
-		for (HeapObject hObj : p2set.getHeapObjects()) {
+		for (HeapObject hObj : p2set.keySet()) {
 			if (hObj instanceof AllocElem) {
 				ret.add((AllocElem) hObj);
 			} else {
-				assert (hObj instanceof AccessPath)
+				assert (hObj instanceof StaticAccessPath)
 						&& (hObj.findRoot() instanceof StaticElem) : ""
 						+ "only StaticElem AccessPath allowed in the entry!";
-				sumHeap.resolve((AccessPath) hObj, ret);
+				AccessPathHelper.resolve(sumHeap, (StaticAccessPath) hObj, ret);
 			}
 		}
 		return ret;
@@ -141,8 +141,7 @@ public class SumConclusion {
 			Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = worker.locToP2Set
 					.entrySet().iterator();
 			while (it.hasNext()) {
-				Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it
-						.next();
+				Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it.next();
 				Pair<AbsMemLoc, FieldElem> key = entry.getKey();
 				P2Set tgts = entry.getValue();
 				AbsMemLoc src = key.val0;
@@ -169,13 +168,13 @@ public class SumConclusion {
 		return ret;
 	}
 
-	protected boolean instnEdge(AbsMemLoc src, HeapObject tgt,
-			FieldElem field, AbstractHeap worker) {
+	protected boolean instnEdge(AbsMemLoc src, HeapObject tgt, FieldElem field,
+			AbstractHeap worker) {
 		// given an edge in the heap of a method, move it to the final heap
 		boolean ret = false;
 
-		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
-				src, field);
+		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(src,
+				field);
 
 		ret = sumHeap.weakUpdate(pair,
 				new P2Set(tgt, ConstraintManager.genTrue()));

@@ -17,11 +17,14 @@ import framework.scuba.helper.ArgDerivedHelper;
 public class Env {
 
 	// this is the global fields factory (StaticElem, e.g. A.f)
-	public static Map<StaticElem, StaticElem> staticElemFactory = new HashMap<StaticElem, StaticElem>();
+	public final static Map<StaticElem, StaticElem> staticElemFactory = new HashMap<StaticElem, StaticElem>();
 
-	public static Map<ProgramPoint, ProgramPoint> progPointFactory = new HashMap<ProgramPoint, ProgramPoint>();
+	// global fields factory (NormalFieldElem, e.g. f/g)
+	public final static Map<NormalFieldElem, NormalFieldElem> normalFieldElemFactory = new HashMap<NormalFieldElem, NormalFieldElem>();
 
-	public static Map<Numbering, Numbering> numberingFactory = new HashMap<Numbering, Numbering>();
+	public final static Map<StaticAccessPath, StaticAccessPath> staticAPFactory = new HashMap<StaticAccessPath, StaticAccessPath>();
+
+	public final static Map<ProgramPoint, ProgramPoint> progPointFactory = new HashMap<ProgramPoint, ProgramPoint>();
 
 	public static int countAccessPath = 0;
 
@@ -34,10 +37,10 @@ public class Env {
 	 * relationships given by the getSuperclass and getInterfaces methods of
 	 * SootClass.
 	 */
-	protected static Map<jq_Class, List<jq_Class>> classToSubclasses = new HashMap<jq_Class, List<jq_Class>>();
+	protected final static Map<jq_Class, List<jq_Class>> classToSubclasses = new HashMap<jq_Class, List<jq_Class>>();
 
 	// TODO: we still need to consider invokeinterface!
-	public static Map<jq_Class, Integer> class2Term = new HashMap<jq_Class, Integer>();
+	public final static Map<jq_Class, Integer> class2Term = new HashMap<jq_Class, Integer>();
 
 	// get the StaticElem given the declaring class and the corresponding field
 	// in the IR
@@ -56,20 +59,6 @@ public class Env {
 		return ret;
 	}
 
-	// get the StaticElem in the mem loc factory by an StaticElem with the
-	// same content (we want to use exactly the same instance)
-	public static StaticElem getStaticElem(StaticElem other) {
-
-		if (staticElemFactory.containsKey(other)) {
-			return (StaticElem) staticElemFactory.get(other);
-		}
-
-		ArgDerivedHelper.markArgDerived(other);
-		staticElemFactory.put(other, other);
-
-		return other;
-	}
-
 	public static ProgramPoint getProgramPoint(jq_Class clazz,
 			jq_Method method, int line) {
 		ProgramPoint ret = new ProgramPoint(clazz, method, line);
@@ -81,13 +70,55 @@ public class Env {
 		return ret;
 	}
 
-	public static Numbering getNumbering(int num, boolean isInSCC) {
-		Numbering ret = new Numbering(num, isInSCC);
-		if (numberingFactory.containsKey(ret)) {
-			return numberingFactory.get(ret);
+	public static NormalFieldElem getNormalFieldElem(jq_Field field) {
+		NormalFieldElem ret = new NormalFieldElem(field);
+		if (normalFieldElemFactory.containsKey(ret)) {
+			return normalFieldElemFactory.get(ret);
 		}
-		numberingFactory.put(ret, ret);
+		normalFieldElemFactory.put(ret, ret);
 		return ret;
+	}
+
+	// get the AccessPath whose base is StaticElem
+	public static StaticAccessPath getStaticAccessPath(StaticElem base,
+			FieldElem field) {
+
+		StaticAccessPath ret = new StaticAccessPath(base, field,
+				Env.countAccessPath++);
+		if (staticAPFactory.containsKey(ret)) {
+			return (StaticAccessPath) staticAPFactory.get(ret);
+		}
+
+		ArgDerivedHelper.markArgDerived(ret);
+		staticAPFactory.put(ret, ret);
+
+		return ret;
+	}
+
+	// get the AccessPath whose base is HeapObject
+	public static StaticAccessPath getStaticAccessPath(StaticAccessPath base,
+			FieldElem field) {
+		StaticAccessPath ret = new StaticAccessPath(base, field,
+				Env.countAccessPath++);
+		if (staticAPFactory.containsKey(ret)) {
+			return (StaticAccessPath) staticAPFactory.get(ret);
+		}
+
+		ArgDerivedHelper.markArgDerived(ret);
+		staticAPFactory.put(ret, ret);
+
+		return ret;
+	}
+
+	public static StaticAccessPath getStaticAccessPath(StaticAccessPath other) {
+		if (staticAPFactory.containsKey(other)) {
+			return (StaticAccessPath) staticAPFactory.get(other);
+		}
+
+		ArgDerivedHelper.markArgDerived(other);
+		staticAPFactory.put(other, other);
+
+		return other;
 	}
 
 	/**

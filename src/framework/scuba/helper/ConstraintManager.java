@@ -450,8 +450,8 @@ public class ConstraintManager {
 		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		for (HeapObject ho : p2Set.getHeapObjects()) {
-			BoolExpr orgCst = p2Set.getConstraint(ho);
+		for (HeapObject ho : p2Set.keySet()) {
+			BoolExpr orgCst = p2Set.get(ho);
 			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, false));
 			if (isTrue(newCst))
 				return trueExpr;
@@ -466,8 +466,8 @@ public class ConstraintManager {
 		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		for (HeapObject ho : p2Set.getHeapObjects()) {
-			BoolExpr orgCst = p2Set.getConstraint(ho);
+		for (HeapObject ho : p2Set.keySet()) {
+			BoolExpr orgCst = p2Set.get(ho);
 			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, true));
 			if (isTrue(newCst))
 				return trueExpr;

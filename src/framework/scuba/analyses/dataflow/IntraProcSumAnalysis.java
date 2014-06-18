@@ -231,6 +231,9 @@ public class IntraProcSumAnalysis {
 			}
 
 			boolean flagStmt = summary.handleStmt(q);
+			if (G.dbgRef) {
+				System.out.println("dbgRef: " + "stmt result: " + flagStmt);
+			}
 
 			if (G.dbgMatch) {
 				StringUtil.reportInfo("Sunny -- BB progress: [ CG: "
@@ -248,6 +251,9 @@ public class IntraProcSumAnalysis {
 			}
 			flag = flag || flagStmt;
 
+		}
+		if (G.dbgRef) {
+			System.out.println("dbgRef: " + "basic block result: " + flag);
 		}
 		return flag;
 	}

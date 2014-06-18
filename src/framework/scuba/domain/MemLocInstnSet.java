@@ -50,11 +50,11 @@ public class MemLocInstnSet {
 
 	public boolean join(P2Set other) {
 		boolean ret = false;
-		for (HeapObject hObj : other.getHeapObjects()) {
+		for (HeapObject hObj : other.keySet()) {
 			if (instnLocSet.containsKey(hObj)) {
 				// loc is in both sets
 				// directly get the other set's constraints
-				BoolExpr otherCst = other.getConstraint(hObj);
+				BoolExpr otherCst = other.get(hObj);
 
 				// check whether we need to union the constraint
 				// TODO maybe we can comment the following
@@ -75,7 +75,7 @@ public class MemLocInstnSet {
 
 				// for this case, we should add a new edge
 				instnLocSet.put(hObj,
-						ConstraintManager.clone(other.getConstraint(hObj)));
+						ConstraintManager.clone(other.get(hObj)));
 				ret = true;
 			}
 		}

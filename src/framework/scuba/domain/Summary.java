@@ -52,6 +52,7 @@ import com.microsoft.z3.BoolExpr;
 import framework.scuba.analyses.alias.SummaryBasedAnalysis;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractHeap.VariableType;
+import framework.scuba.helper.AccessPathHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
 import framework.scuba.utils.StringUtil;
@@ -590,8 +591,7 @@ public class Summary {
 					printCalleeHeapInfo("dbgPermission");
 					num = 0;
 					for (Pair p : calleeSum.absHeap.locToP2Set.keySet()) {
-						num += calleeSum.absHeap.locToP2Set.get(p)
-								.size();
+						num += calleeSum.absHeap.locToP2Set.get(p).size();
 					}
 					StringUtil.reportInfo("dbgPermission: "
 							+ " edges in the current callee: " + num);
@@ -1208,11 +1208,10 @@ public class Summary {
 		int alloc2AP = 0;
 		int total = 0;
 
-		for (Pair<AbsMemLoc, FieldElem> pair : absHeap.locToP2Set
-				.keySet()) {
+		for (Pair<AbsMemLoc, FieldElem> pair : absHeap.locToP2Set.keySet()) {
 			AbsMemLoc src = pair.val0;
 			P2Set tgts = absHeap.locToP2Set.get(pair);
-			for (HeapObject tgt : tgts.getHeapObjects()) {
+			for (HeapObject tgt : tgts.keySet()) {
 				if (src instanceof ParamElem && tgt instanceof AllocElem) {
 					param2Alloc++;
 				} else if (src instanceof ParamElem
@@ -1290,20 +1289,19 @@ public class Summary {
 	public Set<AllocElem> getP2Set(LocalVarElem local) {
 		Set<AllocElem> ret = new HashSet<AllocElem>();
 		assert (local != null);
-		P2Set p2set = absHeap.locToP2Set
-				.get(new Pair<AbsMemLoc, FieldElem>(local,
-						EpsilonFieldElem.getEpsilonFieldElem()));
+		P2Set p2set = absHeap.locToP2Set.get(new Pair<AbsMemLoc, FieldElem>(
+				local, EpsilonFieldElem.getEpsilonFieldElem()));
 		if (p2set == null) {
 			return ret;
 		}
-		for (HeapObject hObj : p2set.getHeapObjects()) {
+		for (HeapObject hObj : p2set.keySet()) {
 			if (hObj instanceof AllocElem) {
 				ret.add((AllocElem) hObj);
 			} else {
-				assert (hObj instanceof AccessPath)
+				assert (hObj instanceof StaticAccessPath)
 						&& (hObj.findRoot() instanceof StaticElem) : ""
 						+ "only StaticElem AccessPath allowed in the entry!";
-				absHeap.resolve((AccessPath) hObj, ret);
+				AccessPathHelper.resolve(absHeap, (StaticAccessPath) hObj, ret);
 			}
 		}
 		return ret;
@@ -1313,8 +1311,8 @@ public class Summary {
 		return absHeap.size();
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(
-			AbsMemLoc loc, Pair<MemLocInstnItem, Set<AccessPath>> deps) {
+	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(AbsMemLoc loc,
+			Pair<MemLocInstnItem, Set<AccessPath>> deps) {
 		return locDepMap.add(loc, deps);
 	}
 
