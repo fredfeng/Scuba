@@ -64,8 +64,29 @@ public class SummariesEnv {
 	// whether use cache for extracting terms
 	protected boolean useExtractCache = true;
 
+	// whether use cache for constraint simplification
+	protected boolean useSimplifyCache = true;
+
+	// whether use cache for constraint union operation
+	protected boolean unionCache = true;
+
+	// whether use cache for constraint intersection operation
+	protected boolean interCache = true;
+
 	// fix-point or not
 	protected boolean useFixPoint = false;
+
+	public void enableSimplifyCache() {
+		useSimplifyCache = true;
+	}
+
+	public void disableSimplifyCache() {
+		useSimplifyCache = false;
+	}
+
+	public boolean isUsingSimplifyCache() {
+		return useSimplifyCache;
+	}
 
 	public void enableMemLocCache() {
 		useMemLocCache = true;

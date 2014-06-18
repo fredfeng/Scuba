@@ -63,6 +63,10 @@ public class ConstraintManager {
 	// this is my little cute cache for constraint instantiation
 	static final CstInstnCache cache = new CstInstnCache();
 
+	static final Map<String, Map<String, BoolExpr>> extractCache = new HashMap<String, Map<String, BoolExpr>>();
+
+	static final Map<String, BoolExpr> simplifyCache = new HashMap<String, BoolExpr>();
+
 	// the dependence map for cst instantiation
 	static final CstInstnCacheDepMap cstDepMap = new CstInstnCacheDepMap();
 
@@ -171,7 +175,17 @@ public class ConstraintManager {
 				StringUtil.reportInfo("instnInfo: "
 						+ "simplifying the constraints.");
 			}
-			ret = (BoolExpr) expr.Simplify();
+
+			if (SummariesEnv.v().isUsingSimplifyCache()) {
+				ret = simplifyCache.get(expr.toString());
+				if (ret == null) {
+					ret = (BoolExpr) expr.Simplify();
+					simplifyCache.put(expr.toString(), ret);
+				}
+			} else {
+				ret = (BoolExpr) expr.Simplify();
+			}
+
 			if (isScala(ret))
 				return ret;
 
@@ -180,6 +194,7 @@ public class ConstraintManager {
 						+ "extracting the constraints." + "[size]"
 						+ ret.toString().length() + " " + ret);
 			}
+
 			Map<String, BoolExpr> map;
 			if (SummariesEnv.v().isUsingExtractCache()) {
 				map = extractTermUsingCache(ret);
@@ -226,20 +241,30 @@ public class ConstraintManager {
 				StringUtil.reportInfo("instnInfo: "
 						+ "simplifying the constraint result.");
 			}
-			if (SummariesEnv.v().isUsingCstCache()) {
-				cache.add(item, new Pair<BoolExpr, BoolExpr>(expr,
-						(BoolExpr) ret.Simplify()));
+
+			BoolExpr result = null;
+			if (SummariesEnv.v().isUsingSimplifyCache()) {
+				result = simplifyCache.get(ret.toString());
+				if (result == null) {
+					result = (BoolExpr) ret.Simplify();
+					simplifyCache.put(ret.toString(), result);
+				}
+			} else {
+				result = (BoolExpr) ret.Simplify();
 			}
 
-			return (BoolExpr) ret.Simplify();
+			if (SummariesEnv.v().isUsingCstCache()) {
+				cache.add(item, new Pair<BoolExpr, BoolExpr>(expr,
+						(BoolExpr) result));
+			}
+
+			return result;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
 	}
-
-	public static final Map<String, Map<String, BoolExpr>> extractCache = new HashMap<String, Map<String, BoolExpr>>();
 
 	public static Map<String, BoolExpr> extractTermUsingCache(Expr expr)
 			throws Z3Exception {
