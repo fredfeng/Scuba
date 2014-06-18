@@ -68,13 +68,37 @@ public class SummariesEnv {
 	protected boolean useSimplifyCache = true;
 
 	// whether use cache for constraint union operation
-	protected boolean unionCache = true;
+	protected boolean useUnionCache = true;
 
 	// whether use cache for constraint intersection operation
-	protected boolean interCache = true;
+	protected boolean useInterCache = true;
 
 	// fix-point or not
 	protected boolean useFixPoint = false;
+
+	public void enableUnionCache() {
+		useUnionCache = true;
+	}
+
+	public void disableUnionCache() {
+		useUnionCache = false;
+	}
+
+	public boolean isUsingUnionCache() {
+		return useUnionCache;
+	}
+
+	public void enableInterCache() {
+		useInterCache = true;
+	}
+
+	public void disableInterCache() {
+		useInterCache = false;
+	}
+
+	public boolean isUsingInterCache() {
+		return useInterCache;
+	}
 
 	public void enableSimplifyCache() {
 		useSimplifyCache = true;

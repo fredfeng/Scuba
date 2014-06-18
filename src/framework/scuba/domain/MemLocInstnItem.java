@@ -18,7 +18,7 @@ public class MemLocInstnItem {
 	// this maps from the abstract memory locations in the heap of the callee to
 	// the abstract memory locations in the heap of the caller
 	// callee locations --> caller locations
-	final protected MemLocInstnItemCache cache;
+	final protected MemLocInstnItemCache memLocInstnCache;
 
 	final protected MemLocInstn4Method result;
 
@@ -40,7 +40,7 @@ public class MemLocInstnItem {
 		this.callsite = callsite;
 		this.callee = callee;
 		this.result = result;
-		cache = new MemLocInstnItemCache(this);
+		memLocInstnCache = new MemLocInstnItemCache(this);
 	}
 
 	public jq_Method getCaller() {
@@ -56,12 +56,12 @@ public class MemLocInstnItem {
 	}
 
 	public int size() {
-		return cache.size();
+		return memLocInstnCache.size();
 	}
 
 	// given a location in the callee's heap, remove the cache item in the cache
 	public MemLocInstnSet remove(AbstractMemLoc loc) {
-		return cache.remove(loc);
+		return memLocInstnCache.remove(loc);
 	}
 
 	public void print() {
@@ -70,10 +70,10 @@ public class MemLocInstnItem {
 		System.out.println("Caller: " + caller);
 		System.out.println("Callee: " + callee);
 		System.out.println("Call site: " + callsite);
-		for (AbstractMemLoc loc : cache.keySet()) {
+		for (AbstractMemLoc loc : memLocInstnCache.keySet()) {
 			System.out.println("*****************************");
 			System.out.println("Location: " + loc + " is instantiated to:");
-			Map<AbstractMemLoc, BoolExpr> ret = cache.get(loc).getInstnLocSet();
+			Map<AbstractMemLoc, BoolExpr> ret = memLocInstnCache.get(loc).getInstnLocSet();
 			for (AbstractMemLoc loc1 : ret.keySet()) {
 				System.out.println("Location: " + loc1);
 				System.out.println("Constraint: " + ret.get(loc1));
@@ -97,7 +97,7 @@ public class MemLocInstnItem {
 				continue;
 			} else {
 				ParamElem formal = formals.get(i);
-				cache.put(formal,
+				memLocInstnCache.put(formal,
 						new MemLocInstnSet(actual, ConstraintManager.genTrue()));
 			}
 		}
@@ -106,7 +106,7 @@ public class MemLocInstnItem {
 	// initialize the return value and lhs mapping
 	public void initReturnToLHS(RetElem ret, StackObject lhs) {
 		hasRet = true;
-		cache.put(ret, new MemLocInstnSet(lhs, ConstraintManager.genTrue()));
+		memLocInstnCache.put(ret, new MemLocInstnSet(lhs, ConstraintManager.genTrue()));
 	}
 
 	// a wrapper method for memory location instantiation
@@ -127,7 +127,7 @@ public class MemLocInstnItem {
 	protected MemLocInstnSet instnMemLocUsingCache(Set<AccessPath> orgs,
 			AbstractMemLoc loc, AbstractHeap callerHeap, ProgramPoint point) {
 
-		MemLocInstnSet ret = cache.get(loc);
+		MemLocInstnSet ret = memLocInstnCache.get(loc);
 
 		if (loc instanceof ParamElem) {
 			assert (ret != null) : "parameters should have been instantiated"
@@ -153,7 +153,7 @@ public class MemLocInstnItem {
 			// not hitting cache
 			ret = new MemLocInstnSet(loc, ConstraintManager.genTrue());
 			// put into the map
-			cache.put(loc, ret);
+			memLocInstnCache.put(loc, ret);
 		} else if (loc instanceof RetElem) {
 			if (hasRet) {
 				assert (ret != null) : "return value should be mapped"
@@ -193,7 +193,7 @@ public class MemLocInstnItem {
 				assert false : "wrong!";
 			}
 			// put into the map
-			cache.put(loc, ret);
+			memLocInstnCache.put(loc, ret);
 		} else if (loc instanceof AccessPath) {
 			if (ret != null) {
 				return ret;
@@ -216,7 +216,7 @@ public class MemLocInstnItem {
 
 			}
 			ret = callerHeap.instnLookup(instnLocSet, field);
-			cache.put(loc, ret);
+			memLocInstnCache.put(loc, ret);
 		} else {
 			assert false : "wried things happen! Unknow type.";
 		}
@@ -229,7 +229,7 @@ public class MemLocInstnItem {
 	protected MemLocInstnSet instnMemLocNoCache(AbstractMemLoc loc,
 			AbstractHeap callerHeap, ProgramPoint point) {
 
-		MemLocInstnSet ret = cache.get(loc);
+		MemLocInstnSet ret = memLocInstnCache.get(loc);
 
 		if (loc instanceof ParamElem) {
 			assert (ret != null) : "parameters should have been instantiated"
@@ -255,7 +255,7 @@ public class MemLocInstnItem {
 			// not hitting cache
 			ret = new MemLocInstnSet(loc, ConstraintManager.genTrue());
 			// put into the map
-			cache.put(loc, ret);
+			memLocInstnCache.put(loc, ret);
 		} else if (loc instanceof RetElem) {
 			if (hasRet) {
 				assert (ret != null) : "return value should be mapped"
@@ -295,7 +295,7 @@ public class MemLocInstnItem {
 				assert false : "wrong!";
 			}
 			// put into the map
-			cache.put(loc, ret);
+			memLocInstnCache.put(loc, ret);
 		} else if (loc instanceof AccessPath) {
 			AbstractMemLoc base = ((AccessPath) loc).getBase();
 			FieldElem field = ((AccessPath) loc).getField();
@@ -303,7 +303,7 @@ public class MemLocInstnItem {
 					point);
 			ret = callerHeap.instnLookup(instnLocSet, field);
 			// put into the map
-			cache.put(loc, ret);
+			memLocInstnCache.put(loc, ret);
 
 		} else {
 			assert false : "wried things happen! Unknow type.";

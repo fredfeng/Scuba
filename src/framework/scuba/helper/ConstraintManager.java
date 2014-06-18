@@ -61,11 +61,15 @@ public class ConstraintManager {
 	static Map<String, AccessPath> term2Ap = new HashMap<String, AccessPath>();
 
 	// this is my little cute cache for constraint instantiation
-	static final CstInstnCache cache = new CstInstnCache();
+	static final CstInstnCache instnCache = new CstInstnCache();
 
 	static final Map<String, Map<String, BoolExpr>> extractCache = new HashMap<String, Map<String, BoolExpr>>();
 
 	static final Map<String, BoolExpr> simplifyCache = new HashMap<String, BoolExpr>();
+
+	static final Map<Pair<String, String>, BoolExpr> unionCache = new HashMap<Pair<String, String>, BoolExpr>();
+
+	static final Map<Pair<String, String>, BoolExpr> interCache = new HashMap<Pair<String, String>, BoolExpr>();
 
 	// the dependence map for cst instantiation
 	static final CstInstnCacheDepMap cstDepMap = new CstInstnCacheDepMap();
@@ -163,7 +167,7 @@ public class ConstraintManager {
 		BoolExpr ret = null;
 
 		if (SummariesEnv.v().isUsingCstCache()) {
-			ret = cache.getBoolExpr(item, expr);
+			ret = instnCache.getBoolExpr(item, expr);
 			if (ret != null) {
 				return ret;
 			}
@@ -208,6 +212,7 @@ public class ConstraintManager {
 						+ "substituting constraints.");
 			}
 
+			BoolExpr ret1 = ret;
 			for (BoolExpr sub : map.values()) {
 				assert sub.IsEq() || sub.IsLE() : "invalid sub expr" + sub;
 				Expr term = sub.Args()[0].Args()[0];
@@ -234,7 +239,7 @@ public class ConstraintManager {
 				else
 					instSub = instSubTyping(p2Set, typeInt.Int());
 
-				ret = (BoolExpr) ret.Substitute(sub, instSub);
+				ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
 			}
 
 			if (G.instnInfo) {
@@ -244,18 +249,18 @@ public class ConstraintManager {
 
 			BoolExpr result = null;
 			if (SummariesEnv.v().isUsingSimplifyCache()) {
-				result = simplifyCache.get(ret.toString());
+				result = simplifyCache.get(ret1.toString());
 				if (result == null) {
-					result = (BoolExpr) ret.Simplify();
-					simplifyCache.put(ret.toString(), result);
+					result = (BoolExpr) ret1.Simplify();
+					simplifyCache.put(ret1.toString(), result);
 				}
 			} else {
-				result = (BoolExpr) ret.Simplify();
+				result = (BoolExpr) ret1.Simplify();
 			}
 
 			if (SummariesEnv.v().isUsingCstCache()) {
-				cache.add(item, new Pair<BoolExpr, BoolExpr>(expr,
-						(BoolExpr) result));
+				instnCache
+						.add(item, new Pair<BoolExpr, BoolExpr>(expr, result));
 			}
 
 			return result;
@@ -338,26 +343,40 @@ public class ConstraintManager {
 
 	// A and B.
 	public static BoolExpr intersect(BoolExpr first, BoolExpr second) {
+
+		BoolExpr ret = null;
+		if (SummariesEnv.v().isUsingInterCache()) {
+			ret = interCache.get(new Pair<String, String>(first.toString(),
+					second.toString()));
+			if (ret != null) {
+				return ret;
+			}
+		}
+
 		if (SummariesEnv.v().disableCst())
 			return trueExpr;
 		try {
 			assert first != null : "Invalid constrait";
 			assert second != null : "Invalid constrait";
-			if (isFalse(first) || isFalse(second))
-				return falseExpr;
+			if (isFalse(first) || isFalse(second)) {
+				ret = falseExpr;
+			} else if (isTrue(first)) {
+				ret = second;
+			} else if (isTrue(second)) {
+				ret = first;
+			} else {
+				ret = ctx.MkAnd(new BoolExpr[] { first, second });
+			}
 
-			if (isTrue(first))
-				return second;
-
-			if (isTrue(second))
-				return first;
-
-			BoolExpr inter = ctx.MkAnd(new BoolExpr[] { first, second });
+			if (SummariesEnv.v().isUsingInterCache()) {
+				interCache.put(new Pair<String, String>(first.toString(),
+						second.toString()), ret);
+			}
 			// try to simplify.
 			// Expr sim = inter.Simplify();
 			// assert inter instanceof BoolExpr :
 			// "Unknown constraints in intersection!";
-			return inter;
+			return ret;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -367,26 +386,40 @@ public class ConstraintManager {
 
 	// A or B
 	public static BoolExpr union(BoolExpr first, BoolExpr second) {
+		BoolExpr ret = null;
+		if (SummariesEnv.v().isUsingUnionCache()) {
+			ret = unionCache.get(new Pair<String, String>(first.toString(),
+					second.toString()));
+			if (ret != null) {
+				return ret;
+			}
+		}
+
 		if (SummariesEnv.v().disableCst())
 			return trueExpr;
+
 		try {
 			assert first != null : "Invalid constrait";
 			assert second != null : "Invalid constrait";
 
-			if (isTrue(first) || isTrue(second))
-				return trueExpr;
+			if (isTrue(first) || isTrue(second)) {
+				ret = trueExpr;
+			} else if (isFalse(first)) {
+				ret = second;
+			} else if (isFalse(second)) {
+				ret = first;
+			} else {
+				ret = ctx.MkOr(new BoolExpr[] { first, second });
+			}
 
-			if (isFalse(first))
-				return second;
-
-			if (isFalse(second))
-				return first;
-
-			BoolExpr union = ctx.MkOr(new BoolExpr[] { first, second });
+			if (SummariesEnv.v().isUsingUnionCache()) {
+				unionCache.put(new Pair<String, String>(first.toString(),
+						second.toString()), ret);
+			}
 			// try to simplify.
 			// Expr sim = union.Simplify();
 			// assert sim instanceof BoolExpr : "Unknown constraints in union!";
-			return union;
+			return ret;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -558,6 +591,6 @@ public class ConstraintManager {
 	}
 
 	public static CstInstnCache getCstInstnCache() {
-		return instance.cache;
+		return instance.instnCache;
 	}
 }

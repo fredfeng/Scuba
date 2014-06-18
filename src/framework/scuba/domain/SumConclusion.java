@@ -8,6 +8,7 @@ import java.util.Set;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.helper.ConstraintManager;
 
@@ -26,6 +27,7 @@ public class SumConclusion {
 		this.sumHeap = new AbstractHeap(null);
 		this.clinitHeaps = clinitHeaps;
 		this.mainHeap = mainHeap;
+		// validate the <clinit>'s heaps and the main heap
 		validate();
 	}
 
@@ -35,8 +37,13 @@ public class SumConclusion {
 			P2Set p2set = mainHeap.get(pair);
 			for (HeapObject hObj : p2set.getHeapObjects()) {
 				BoolExpr cst = p2set.getConstraint(hObj);
-				assert (ConstraintManager.isTrue(cst)) : "constraint is not true: "
-						+ cst;
+				try {
+					assert (ConstraintManager.isTrue((BoolExpr) cst.Simplify())) : ""
+							+ "constraint is not true: " + cst;
+				} catch (Z3Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				System.out.println("Constraint check PASSED!");
 			}
 		}
@@ -46,8 +53,15 @@ public class SumConclusion {
 				P2Set p2set = clinitHeap.get(pair);
 				for (HeapObject hObj : p2set.getHeapObjects()) {
 					BoolExpr cst = p2set.getConstraint(hObj);
-					assert (ConstraintManager.isTrue(cst)) : "constraint is not true: "
-							+ cst;
+					// validate the constraints to be true
+					try {
+						assert (ConstraintManager.isTrue((BoolExpr) cst
+								.Simplify())) : "constraint is not true: "
+								+ cst;
+					} catch (Z3Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					System.out.println("Constraint check PASSED!");
 				}
 			}
@@ -85,6 +99,7 @@ public class SumConclusion {
 	}
 
 	public AbstractHeap sumAllHeaps() {
+
 		// a worklist algorithm to conclude all heaps of <clinit>'s
 		Set<AbstractHeap> wl = new HashSet<AbstractHeap>();
 		Set<AbstractHeap> analyzed = new HashSet<AbstractHeap>();
