@@ -237,6 +237,10 @@ public class ConstraintManager {
 	public static void extractTerm(Expr expr, HashMap<String, BoolExpr> map) {
 		try {
 			// using toString as the key to map the same expr, buggy.
+			if (G.instnInfo) {
+				StringUtil.reportInfo("instnInfo: "
+						+ "extracting the terms in constraint: " + expr);
+			}
 			if (expr.IsEq() || expr.IsLE())
 				map.put(expr.toString(), (BoolExpr) expr);
 
