@@ -74,7 +74,7 @@ public class SummariesEnv {
 	protected boolean useInterCache = true;
 
 	// fix-point or not
-	protected boolean useFixPoint = false;
+	protected boolean useFixPoint = true;
 
 	public void enableUnionCache() {
 		useUnionCache = true;
