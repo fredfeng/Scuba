@@ -177,7 +177,7 @@ public class ConstraintManager {
 
 			if (G.instnInfo) {
 				StringUtil.reportInfo("instnInfo: "
-						+ "extracting the constraints.");
+						+ "extracting the constraints." + ret);
 			}
 			HashMap<String, BoolExpr> map = new HashMap<String, BoolExpr>();
 			extractTerm(ret, map);
