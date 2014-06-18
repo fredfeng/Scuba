@@ -6,6 +6,7 @@ import java.util.Map;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Type;
 import chord.util.tuple.object.Pair;
+import chord.util.tuple.object.Trio;
 
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
@@ -70,6 +71,8 @@ public class ConstraintManager {
 	static final Map<Pair<String, String>, BoolExpr> unionCache = new HashMap<Pair<String, String>, BoolExpr>();
 
 	static final Map<Pair<String, String>, BoolExpr> interCache = new HashMap<Pair<String, String>, BoolExpr>();
+
+	static final Map<Trio<String, String, String>, BoolExpr> subCache = new HashMap<Trio<String, String, String>, BoolExpr>();
 
 	// the dependence map for cst instantiation
 	static final CstInstnCacheDepMap cstDepMap = new CstInstnCacheDepMap();
@@ -239,7 +242,21 @@ public class ConstraintManager {
 				else
 					instSub = instSubTyping(p2Set, typeInt.Int());
 
-				ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
+				if (SummariesEnv.v().isUsingSubCache()) {
+					BoolExpr tmp = subCache
+							.get(new Trio<String, String, String>(ret1
+									.toString(), sub.toString(), instSub
+									.toString()));
+					if (tmp == null) {
+						tmp = (BoolExpr) ret1.Substitute(sub, instSub);
+					}
+					subCache.put(
+							new Trio<String, String, String>(ret1.toString(),
+									sub.toString(), instSub.toString()), tmp);
+					ret1 = tmp;
+				} else {
+					ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
+				}
 			}
 
 			if (G.instnInfo) {
@@ -587,10 +604,10 @@ public class ConstraintManager {
 	}
 
 	public static CstInstnCacheDepMap getCstDepMap() {
-		return instance.cstDepMap;
+		return ConstraintManager.cstDepMap;
 	}
 
 	public static CstInstnCache getCstInstnCache() {
-		return instance.instnCache;
+		return ConstraintManager.instnCache;
 	}
 }
