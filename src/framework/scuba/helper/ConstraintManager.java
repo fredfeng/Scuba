@@ -241,16 +241,25 @@ public class ConstraintManager {
 				StringUtil.reportInfo("instnInfo: "
 						+ "extracting the terms in constraint: " + expr);
 			}
-			if (expr.IsEq() || expr.IsLE())
+			if (expr.IsEq() || expr.IsLE()) {
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: " + "base case: " + expr);
+				}
 				map.put(expr.toString(), (BoolExpr) expr);
+			}
 
-			if (expr.IsAnd() || expr.IsOr())
+			if (expr.IsAnd() || expr.IsOr()) {
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: " + "recursive case: "
+							+ expr);
+				}
 				for (int i = 0; i < expr.NumArgs(); i++) {
 					assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:"
 							+ expr.Args()[i];
 					BoolExpr sub = (BoolExpr) expr.Args()[i];
 					extractTerm(sub, map);
 				}
+			}
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
