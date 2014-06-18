@@ -35,7 +35,7 @@ public class SummariesEnv {
 	protected int allocDepth = 1;
 
 	// prop locals or not
-	protected boolean propLocals = true;
+	protected boolean propLocals = false;
 
 	// ignore string
 	protected boolean openBlklist = false;
@@ -53,25 +53,25 @@ public class SummariesEnv {
 	protected boolean disableCst = false;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useMemLocCache = true;
+	protected boolean useMemLocCache = false;
 
 	// whether use cache for constraint instantiation
-	protected boolean useCstCache = true;
+	protected boolean useCstCache = false;
 
 	// whether use cache for extracting terms
-	protected boolean useExtractCache = true;
+	protected boolean useExtractCache = false;
 
 	// whether use cache for constraint simplification
-	protected boolean useSimplifyCache = true;
+	protected boolean useSimplifyCache = false;
 
 	// whether use cache for constraint union operation
-	protected boolean useUnionCache = true;
+	protected boolean useUnionCache = false;
 
 	// whether use cache for constraint intersection operation
-	protected boolean useInterCache = true;
+	protected boolean useInterCache = false;
 
 	// whether use cache for substitution operation of constraints
-	protected boolean useSubCache = true;
+	protected boolean useSubCache = false;
 
 	// fix-point or not
 	protected boolean useFixPoint = true;
