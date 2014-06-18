@@ -10,18 +10,18 @@ public class MemLocInstnItemCache {
 	protected final MemLocInstnItem parent;
 	// this map caches the location instantiation results for some memory
 	// location instantiation item (per call site in a caller, per callee)
-	protected final Map<AbstractMemLoc, MemLocInstnSet> cache;
+	protected final Map<AbsMemLoc, MemLocInstnSet> cache;
 
 	public MemLocInstnItemCache(MemLocInstnItem parent) {
 		this.parent = parent;
-		cache = new HashMap<AbstractMemLoc, MemLocInstnSet>();
+		cache = new HashMap<AbsMemLoc, MemLocInstnSet>();
 	}
 
-	public MemLocInstnSet put(AbstractMemLoc loc, MemLocInstnSet set) {
+	public MemLocInstnSet put(AbsMemLoc loc, MemLocInstnSet set) {
 		return cache.put(loc, set);
 	}
 
-	public MemLocInstnSet get(AbstractMemLoc loc) {
+	public MemLocInstnSet get(AbsMemLoc loc) {
 		return cache.get(loc);
 	}
 
@@ -35,14 +35,14 @@ public class MemLocInstnItemCache {
 
 	public int instnLocSize() {
 		int ret = 0;
-		for (Iterator<Map.Entry<AbstractMemLoc, MemLocInstnSet>> it = cache
+		for (Iterator<Map.Entry<AbsMemLoc, MemLocInstnSet>> it = cache
 				.entrySet().iterator(); it.hasNext();) {
 			ret += it.next().getValue().size();
 		}
 		return ret;
 	}
 
-	public MemLocInstnSet remove(AbstractMemLoc loc) {
+	public MemLocInstnSet remove(AbsMemLoc loc) {
 		return cache.remove(loc);
 	}
 
@@ -50,11 +50,11 @@ public class MemLocInstnItemCache {
 		cache.clear();
 	}
 
-	public Set<AbstractMemLoc> keySet() {
+	public Set<AbsMemLoc> keySet() {
 		return cache.keySet();
 	}
 
-	public boolean containsKey(AbstractMemLoc loc) {
+	public boolean containsKey(AbsMemLoc loc) {
 		return cache.containsKey(loc);
 	}
 

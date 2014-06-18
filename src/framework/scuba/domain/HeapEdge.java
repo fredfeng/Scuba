@@ -2,19 +2,19 @@ package framework.scuba.domain;
 
 public class HeapEdge {
 
-	protected AbstractMemLoc src;
+	protected AbsMemLoc src;
 
 	protected HeapObject dst;
 
 	protected FieldElem field;
 
-	public HeapEdge(AbstractMemLoc src, HeapObject dst, FieldElem field) {
+	public HeapEdge(AbsMemLoc src, HeapObject dst, FieldElem field) {
 		this.src = src;
 		this.dst = dst;
 		this.field = field;
 	}
 
-	public AbstractMemLoc getSrc() {
+	public AbsMemLoc getSrc() {
 		return src;
 	}
 

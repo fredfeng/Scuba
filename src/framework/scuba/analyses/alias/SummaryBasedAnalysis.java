@@ -34,7 +34,7 @@ import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractHeap;
-import framework.scuba.domain.AbstractMemLoc;
+import framework.scuba.domain.AbsMemLoc;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.EpsilonFieldElem;
@@ -619,7 +619,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (sum1.getAbsHeap()
 				.getHeap()
 				.containsKey(
-						new Pair<AbstractMemLoc, FieldElem>(new LocalVarElem(
+						new Pair<AbsMemLoc, FieldElem>(new LocalVarElem(
 								clazz, method, variable), EpsilonFieldElem
 								.getEpsilonFieldElem()))) {
 			count++;
@@ -631,7 +631,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						+ "[P2Set in the declearing method]"
 						+ sum1.getAbsHeap()
 								.getHeap()
-								.get(new Pair<AbstractMemLoc, FieldElem>(
+								.get(new Pair<AbsMemLoc, FieldElem>(
 										new LocalVarElem(clazz, method,
 												variable), EpsilonFieldElem
 												.getEpsilonFieldElem())));
@@ -707,9 +707,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			int t = 0;
 			int f = 0;
 			int other = 0;
-			Map<Pair<AbstractMemLoc, FieldElem>, P2Set> absHeap = sums.get(m)
+			Map<Pair<AbsMemLoc, FieldElem>, P2Set> absHeap = sums.get(m)
 					.getAbsHeap().getHeap();
-			for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.keySet()) {
+			for (Pair<AbsMemLoc, FieldElem> pair : absHeap.keySet()) {
 				P2Set p2set = absHeap.get(pair);
 				total += p2set.size();
 				total_all += p2set.size();

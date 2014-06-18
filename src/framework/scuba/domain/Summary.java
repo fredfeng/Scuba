@@ -90,14 +90,6 @@ public class Summary {
 	// finish current summary.
 	private boolean terminated;
 
-	// numbering counter
-	protected int currNumCounter = 0;
-
-	protected int numToAssign = 0;
-
-	// used for numbering
-	protected boolean isInSCC = false;
-
 	// parameter list used for instantiating
 	// once initialized, never changed
 	protected List<ParamElem> formals;
@@ -271,10 +263,6 @@ public class Summary {
 		absHeap.dumpAllMemLocsHeapToFile(count);
 	}
 
-	public void dumpNumberingHeap(String count) {
-		absHeap.dumpHeapNumberingToFile(count);
-	}
-
 	public void validate() {
 		absHeap.validate();
 	}
@@ -287,29 +275,18 @@ public class Summary {
 		this.terminated = terminated;
 	}
 
-	public AbstractHeap getAbstractHeap() {
-		return absHeap;
-	}
-
 	public jq_Method getMethod() {
 		return method;
 	}
 
-	public boolean handleStmt(Quad quad, int numToAssign, boolean isInSCC) {
+	public boolean handleStmt(Quad quad) {
 
 		if (G.dbgPermission) {
 			StringUtil.reportInfo("dbgPermission: " + "handling stmt: " + quad);
 
 		}
-
 		absHeap.markChanged(false);
-		this.numToAssign = numToAssign;
-		this.isInSCC = isInSCC;
-		if (G.dbgSCC) {
-			StringUtil.reportInfo("weak update size: " + quad);
-		}
 		quad.accept(qv);
-		this.currNumCounter = absHeap.getMaxNumber();
 		return absHeap.isChanged();
 	}
 
@@ -353,8 +330,7 @@ public class Summary {
 				boolean flag = false;
 
 				flag = absHeap.handleALoadStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhs.getRegister(), rvt,
-						numToAssign, isInSCC);
+						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 
 				absHeap.markChanged(flag);
 
@@ -389,8 +365,7 @@ public class Summary {
 				boolean flag = false;
 
 				flag = absHeap.handleAStoreStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhs.getRegister(), rvt,
-						numToAssign, isInSCC);
+						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 
 				absHeap.markChanged(flag);
 
@@ -443,7 +418,7 @@ public class Summary {
 					VariableType rvt = getVarType(stmt.getMethod(), r);
 					boolean flag = false;
 					flag = absHeap.handleAssignStmt(meth.getDeclaringClass(),
-							meth, l, lvt, r, rvt, numToAssign, isInSCC);
+							meth, l, lvt, r, rvt);
 					absHeap.markChanged(flag);
 				}
 			}
@@ -475,7 +450,7 @@ public class Summary {
 				boolean flag = false;
 				flag = absHeap.handleLoadStmt(meth.getDeclaringClass(), meth,
 						lhs.getRegister(), lvt, rhsBase.getRegister(),
-						field.getField(), rvt, numToAssign, isInSCC);
+						field.getField(), rvt);
 
 				absHeap.markChanged(flag);
 
@@ -508,7 +483,7 @@ public class Summary {
 				boolean flag = false;
 				flag = absHeap.handleStatLoadStmt(meth.getDeclaringClass(),
 						meth, lhs.getRegister(), lvt, encloseClass,
-						field.getField(), numToAssign, isInSCC);
+						field.getField());
 
 				absHeap.markChanged(flag);
 
@@ -601,8 +576,8 @@ public class Summary {
 							+ count + "-th callee" + " out of "
 							+ calleeSumCstPairs.size());
 					int num = 0;
-					for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
-						num += absHeap.heapObjectsToP2Set.get(p).size();
+					for (Pair p : absHeap.locToP2Set.keySet()) {
+						num += absHeap.locToP2Set.get(p).size();
 					}
 					StringUtil.reportInfo("dbgPermission: "
 							+ " edges in the current caller: " + num);
@@ -614,8 +589,8 @@ public class Summary {
 									+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
 					printCalleeHeapInfo("dbgPermission");
 					num = 0;
-					for (Pair p : calleeSum.absHeap.heapObjectsToP2Set.keySet()) {
-						num += calleeSum.absHeap.heapObjectsToP2Set.get(p)
+					for (Pair p : calleeSum.absHeap.locToP2Set.keySet()) {
+						num += calleeSum.absHeap.locToP2Set.get(p)
 								.size();
 					}
 					StringUtil.reportInfo("dbgPermission: "
@@ -711,22 +686,14 @@ public class Summary {
 
 				boolean flag = false;
 
-				if (SummariesEnv.v().useNumbering()) {
-					flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(),
-							meth, stmt.getID(), calleeSum.getAbsHeap(), item,
-							hasTypeCst, numToAssign, isInSCC);
-				} else {
-					flag = absHeap.handleInvokeStmtNoNumbering(
-							meth.getDeclaringClass(), meth, stmt.getID(),
-							calleeSum.getAbsHeap(), item, hasTypeCst,
-							numToAssign, isInSCC);
-				}
+				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
+						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
 
 				absHeap.markChanged(flag);
 				if (G.dbgPermission) {
 					int num = 0;
-					for (Pair p : absHeap.heapObjectsToP2Set.keySet()) {
-						num += absHeap.heapObjectsToP2Set.get(p).size();
+					for (Pair p : absHeap.locToP2Set.keySet()) {
+						num += absHeap.locToP2Set.get(p).size();
 					}
 					StringUtil.reportInfo("dbgPermission: "
 							+ " edges in the current caller: " + num);
@@ -798,8 +765,7 @@ public class Summary {
 						rhs.getRegister());
 				boolean flag = false;
 				flag = absHeap.handleAssignStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhs.getRegister(), rvt,
-						numToAssign, isInSCC);
+						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 
 				absHeap.markChanged(flag);
 			} else {
@@ -822,7 +788,7 @@ public class Summary {
 			boolean flag = false;
 			flag = absHeap.handleNewStmt(stmt.getMethod().getDeclaringClass(),
 					meth, rop.getRegister(), vt, to.getType(), stmt,
-					stmt.getID(), numToAssign, isInSCC);
+					stmt.getID());
 
 			absHeap.markChanged(flag);
 		}
@@ -839,7 +805,7 @@ public class Summary {
 			boolean flag = false;
 			flag = absHeap.handleMultiNewArrayStmt(meth.getDeclaringClass(),
 					meth, rop.getRegister(), vt, to.getType(), plo.length(),
-					stmt, stmt.getID(), numToAssign, isInSCC);
+					stmt, stmt.getID());
 
 			absHeap.markChanged(flag);
 		}
@@ -862,8 +828,7 @@ public class Summary {
 			boolean flag = false;
 
 			flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(), meth,
-					rop.getRegister(), vt, to.getType(), stmt, stmt.getID(),
-					numToAssign, isInSCC);
+					rop.getRegister(), vt, to.getType(), stmt, stmt.getID());
 
 			absHeap.markChanged(flag);
 		}
@@ -897,7 +862,7 @@ public class Summary {
 					boolean flag = false;
 					flag = absHeap.handleAssignStmt(meth.getDeclaringClass(),
 							meth, lhs.getRegister(), lvt, rhs.getRegister(),
-							rvt, numToAssign, isInSCC);
+							rvt);
 					sig = flag | sig;
 				}
 
@@ -939,7 +904,7 @@ public class Summary {
 
 					flag = absHeap.handleStoreStmt(meth.getDeclaringClass(),
 							meth, lhs.getRegister(), lvt, field.getField(),
-							rhs.getRegister(), rvt, numToAssign, isInSCC);
+							rhs.getRegister(), rvt);
 
 					absHeap.markChanged(flag);
 				}
@@ -974,9 +939,7 @@ public class Summary {
 
 					flag = absHeap.handleStaticStoreStmt(
 							meth.getDeclaringClass(), meth, encloseClass,
-							field.getField(), rhs.getRegister(), rvt,
-							numToAssign, isInSCC);
-
+							field.getField(), rhs.getRegister(), rvt);
 					absHeap.markChanged(flag);
 				}
 			} else {
@@ -999,8 +962,7 @@ public class Summary {
 			jq_Class clazz = meth.getDeclaringClass();
 			VariableType type = getVarType(meth, ret);
 
-			flag = absHeap.handleRetStmt(clazz, meth, ret, type, numToAssign,
-					isInSCC);
+			flag = absHeap.handleRetStmt(clazz, meth, ret, type);
 
 			absHeap.markChanged(flag);
 
@@ -1044,10 +1006,6 @@ public class Summary {
 		}
 
 	};
-
-	public int getCurrNumCounter() {
-		return currNumCounter;
-	}
 
 	// given a call site in the caller, return all the possible callee's
 	// summaries and the corresponding constraints as a list of pairs
@@ -1250,10 +1208,10 @@ public class Summary {
 		int alloc2AP = 0;
 		int total = 0;
 
-		for (Pair<AbstractMemLoc, FieldElem> pair : absHeap.heapObjectsToP2Set
+		for (Pair<AbsMemLoc, FieldElem> pair : absHeap.locToP2Set
 				.keySet()) {
-			AbstractMemLoc src = pair.val0;
-			P2Set tgts = absHeap.heapObjectsToP2Set.get(pair);
+			AbsMemLoc src = pair.val0;
+			P2Set tgts = absHeap.locToP2Set.get(pair);
 			for (HeapObject tgt : tgts.getHeapObjects()) {
 				if (src instanceof ParamElem && tgt instanceof AllocElem) {
 					param2Alloc++;
@@ -1332,8 +1290,8 @@ public class Summary {
 	public Set<AllocElem> getP2Set(LocalVarElem local) {
 		Set<AllocElem> ret = new HashSet<AllocElem>();
 		assert (local != null);
-		P2Set p2set = absHeap.heapObjectsToP2Set
-				.get(new Pair<AbstractMemLoc, FieldElem>(local,
+		P2Set p2set = absHeap.locToP2Set
+				.get(new Pair<AbsMemLoc, FieldElem>(local,
 						EpsilonFieldElem.getEpsilonFieldElem()));
 		if (p2set == null) {
 			return ret;
@@ -1356,7 +1314,7 @@ public class Summary {
 	}
 
 	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(
-			AbstractMemLoc loc, Pair<MemLocInstnItem, Set<AccessPath>> deps) {
+			AbsMemLoc loc, Pair<MemLocInstnItem, Set<AccessPath>> deps) {
 		return locDepMap.add(loc, deps);
 	}
 

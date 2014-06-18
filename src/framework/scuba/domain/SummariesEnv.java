@@ -30,9 +30,6 @@ public class SummariesEnv {
 		return instance;
 	}
 
-	// use numbering to produce the heap and do the instantiation
-	protected boolean useNumbering = false;
-
 	// the number of contexts in an AllocElem
 	// 0 means infinity
 	protected int allocDepth = 1;
@@ -189,18 +186,6 @@ public class SummariesEnv {
 
 	public void setAllocDepth(int depth) {
 		allocDepth = depth;
-	}
-
-	public boolean useNumbering() {
-		return useNumbering;
-	}
-
-	public void setUseNumbering() {
-		useNumbering = true;
-	}
-
-	public void resetUseNumbering() {
-		useNumbering = false;
 	}
 
 	public static void reset() {

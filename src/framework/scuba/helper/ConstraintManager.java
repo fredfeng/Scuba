@@ -18,8 +18,8 @@ import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Z3Exception;
 
+import framework.scuba.domain.AbsMemLoc;
 import framework.scuba.domain.AbstractHeap;
-import framework.scuba.domain.AbstractMemLoc;
 import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.CstInstnCache;
@@ -481,7 +481,7 @@ public class ConstraintManager {
 
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		for (AbstractMemLoc ho : p2Set.keySet()) {
+		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
 				BoolExpr newCst = intersect(orgCst,
@@ -506,7 +506,7 @@ public class ConstraintManager {
 
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		for (AbstractMemLoc ho : p2Set.keySet()) {
+		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
 				BoolExpr newCst = intersect(orgCst,

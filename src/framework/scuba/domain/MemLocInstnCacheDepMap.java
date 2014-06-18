@@ -17,18 +17,18 @@ public class MemLocInstnCacheDepMap extends DependenceMap {
 	// V: the location in the callee's heap whose instantiation will be
 	// influenced by the change of the P2Set of K
 	// Item: the instantiation location result for K is cached in Item
-	final protected Map<AbstractMemLoc, Map<MemLocInstnItem, Set<AccessPath>>> depMap;
+	final protected Map<AbsMemLoc, Map<MemLocInstnItem, Set<AccessPath>>> depMap;
 
 	public MemLocInstnCacheDepMap(Summary summary) {
 		this.summary = summary;
-		depMap = new HashMap<AbstractMemLoc, Map<MemLocInstnItem, Set<AccessPath>>>();
+		depMap = new HashMap<AbsMemLoc, Map<MemLocInstnItem, Set<AccessPath>>>();
 	}
 
 	public Summary getSum() {
 		return summary;
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> add(AbstractMemLoc loc,
+	public Map<MemLocInstnItem, Set<AccessPath>> add(AbsMemLoc loc,
 			Pair<MemLocInstnItem, Set<AccessPath>> pair) {
 		Map<MemLocInstnItem, Set<AccessPath>> ret = depMap.get(loc);
 		if (ret == null) {
@@ -44,12 +44,12 @@ public class MemLocInstnCacheDepMap extends DependenceMap {
 		return ret;
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> put(AbstractMemLoc loc,
+	public Map<MemLocInstnItem, Set<AccessPath>> put(AbsMemLoc loc,
 			Map<MemLocInstnItem, Set<AccessPath>> toAdd) {
 		return depMap.put(loc, toAdd);
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> get(AbstractMemLoc loc) {
+	public Map<MemLocInstnItem, Set<AccessPath>> get(AbsMemLoc loc) {
 		return depMap.get(loc);
 	}
 
@@ -61,15 +61,15 @@ public class MemLocInstnCacheDepMap extends DependenceMap {
 		return depMap.size();
 	}
 
-	public boolean containsKey(AbstractMemLoc loc) {
+	public boolean containsKey(AbsMemLoc loc) {
 		return depMap.containsKey(loc);
 	}
 
-	public Set<AbstractMemLoc> keySet() {
+	public Set<AbsMemLoc> keySet() {
 		return depMap.keySet();
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> remove(AbstractMemLoc loc) {
+	public Map<MemLocInstnItem, Set<AccessPath>> remove(AbsMemLoc loc) {
 		return depMap.remove(loc);
 	}
 

@@ -5,7 +5,7 @@ public class PrimitiveElem extends StackObject {
 	private static PrimitiveElem primitive = new PrimitiveElem();
 
 	@Override
-	public AbstractMemLoc findRoot() {
+	public AbsMemLoc findRoot() {
 		assert false : "we cannot do find root for primitive elements!";
 		return null;
 	}

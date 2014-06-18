@@ -33,8 +33,6 @@ public class IntraProcSumAnalysis {
 
 	protected List<BasicBlock> accessBlocksList = new ArrayList<BasicBlock>();
 
-	protected int numToAssign;
-
 	// analyze one method based on the cfg of this method
 	public void analyze(ControlFlowGraph g) {
 
@@ -43,14 +41,6 @@ public class IntraProcSumAnalysis {
 			StringUtil.reportInfo("dbgPermission: " + " analyzing method: "
 					+ g.getMethod());
 		}
-
-		// before analyzing the CFG g of some method
-		// first retrieve the numbering counter of that summary that was
-		// maintained last time
-		// getNumberCounter gets the number counter that is used last time
-
-		this.numToAssign = summary.getCurrNumCounter() + 1;
-		// for dbg
 
 		// create the memory locations for the parameters first if has not
 		// this should be done ONLY once! (the first time we analyze this
@@ -126,7 +116,6 @@ public class IntraProcSumAnalysis {
 					boolean flag = handleSCC(scc);
 					summary.setChanged(flag || summary.isChanged());
 
-					numToAssign = summary.getCurrNumCounter() + 1;
 				} else {
 					if (G.dbgSCC) {
 						StringUtil.reportInfo("I am here: 2");
@@ -140,7 +129,6 @@ public class IntraProcSumAnalysis {
 				}
 				boolean flag = handleSCC(scc);
 				summary.setChanged(flag || summary.isChanged());
-				numToAssign = summary.getCurrNumCounter() + 1;
 			}
 		}
 
@@ -242,7 +230,7 @@ public class IntraProcSumAnalysis {
 						+ "handling stmt: " + q);
 			}
 
-			boolean flagStmt = summary.handleStmt(q, numToAssign, isInSCC);
+			boolean flagStmt = summary.handleStmt(q);
 
 			if (G.dbgMatch) {
 				StringUtil.reportInfo("Sunny -- BB progress: [ CG: "
@@ -260,12 +248,6 @@ public class IntraProcSumAnalysis {
 			}
 			flag = flag || flagStmt;
 
-			// increment the numbering counter properly:
-			// we only increment the counter here for basic blocks that are not
-			// in some SCC, for basic blocks in an SCC we increment outside
-			if (!isInSCC) {
-				numToAssign = summary.getCurrNumCounter() + 1;
-			}
 		}
 		return flag;
 	}

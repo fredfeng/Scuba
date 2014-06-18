@@ -10,33 +10,33 @@ import framework.scuba.helper.ConstraintManager;
 
 public class MemLocInstnSet {
 
-	protected Map<AbstractMemLoc, BoolExpr> instnLocSet = new HashMap<AbstractMemLoc, BoolExpr>();
+	protected Map<AbsMemLoc, BoolExpr> instnLocSet = new HashMap<AbsMemLoc, BoolExpr>();
 
 	public MemLocInstnSet() {
 
 	}
 
-	public MemLocInstnSet(AbstractMemLoc loc, BoolExpr constraint) {
+	public MemLocInstnSet(AbsMemLoc loc, BoolExpr constraint) {
 		instnLocSet.put(loc, constraint);
 	}
 
-	public void put(AbstractMemLoc loc, BoolExpr constraint) {
+	public void put(AbsMemLoc loc, BoolExpr constraint) {
 		instnLocSet.put(loc, constraint);
 	}
 
-	public boolean containsKey(AbstractMemLoc loc) {
+	public boolean containsKey(AbsMemLoc loc) {
 		return instnLocSet.containsKey(loc);
 	}
 
-	public Set<AbstractMemLoc> keySet() {
+	public Set<AbsMemLoc> keySet() {
 		return instnLocSet.keySet();
 	}
 
-	public BoolExpr get(AbstractMemLoc loc) {
+	public BoolExpr get(AbsMemLoc loc) {
 		return instnLocSet.get(loc);
 	}
 
-	public Map<AbstractMemLoc, BoolExpr> getInstnLocSet() {
+	public Map<AbsMemLoc, BoolExpr> getInstnLocSet() {
 		return instnLocSet;
 	}
 

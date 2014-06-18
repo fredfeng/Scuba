@@ -33,7 +33,7 @@ public class SumConclusion {
 
 	public void validate() {
 		// validate that constraints in the main heap are all true
-		for (Pair<AbstractMemLoc, FieldElem> pair : mainHeap.keySet()) {
+		for (Pair<AbsMemLoc, FieldElem> pair : mainHeap.keySet()) {
 			P2Set p2set = mainHeap.get(pair);
 			for (HeapObject hObj : p2set.getHeapObjects()) {
 				BoolExpr cst = p2set.getConstraint(hObj);
@@ -49,7 +49,7 @@ public class SumConclusion {
 		}
 		// validate that constraints in the <clinit>'s heaps are all true
 		for (AbstractHeap clinitHeap : clinitHeaps) {
-			for (Pair<AbstractMemLoc, FieldElem> pair : clinitHeap.keySet()) {
+			for (Pair<AbsMemLoc, FieldElem> pair : clinitHeap.keySet()) {
 				P2Set p2set = clinitHeap.get(pair);
 				for (HeapObject hObj : p2set.getHeapObjects()) {
 					BoolExpr cst = p2set.getConstraint(hObj);
@@ -79,8 +79,8 @@ public class SumConclusion {
 	public Set<AllocElem> getP2Set(LocalVarElem local) {
 		Set<AllocElem> ret = new HashSet<AllocElem>();
 		assert (local != null);
-		P2Set p2set = sumHeap.heapObjectsToP2Set
-				.get(new Pair<AbstractMemLoc, FieldElem>(local,
+		P2Set p2set = sumHeap.locToP2Set
+				.get(new Pair<AbsMemLoc, FieldElem>(local,
 						EpsilonFieldElem.getEpsilonFieldElem()));
 		if (p2set == null) {
 			return ret;
@@ -138,14 +138,14 @@ public class SumConclusion {
 		while (true) {
 			boolean go = false;
 
-			Iterator<Map.Entry<Pair<AbstractMemLoc, FieldElem>, P2Set>> it = worker.heapObjectsToP2Set
+			Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = worker.locToP2Set
 					.entrySet().iterator();
 			while (it.hasNext()) {
-				Map.Entry<Pair<AbstractMemLoc, FieldElem>, P2Set> entry = it
+				Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it
 						.next();
-				Pair<AbstractMemLoc, FieldElem> key = entry.getKey();
+				Pair<AbsMemLoc, FieldElem> key = entry.getKey();
 				P2Set tgts = entry.getValue();
-				AbstractMemLoc src = key.val0;
+				AbsMemLoc src = key.val0;
 				FieldElem f = key.val1;
 
 				Iterator<Map.Entry<HeapObject, BoolExpr>> it1 = tgts.iterator();
@@ -169,18 +169,17 @@ public class SumConclusion {
 		return ret;
 	}
 
-	protected boolean instnEdge(AbstractMemLoc src, HeapObject tgt,
+	protected boolean instnEdge(AbsMemLoc src, HeapObject tgt,
 			FieldElem field, AbstractHeap worker) {
 		// given an edge in the heap of a method, move it to the final heap
 		boolean ret = false;
 
-		Pair<AbstractMemLoc, FieldElem> pair = new Pair<AbstractMemLoc, FieldElem>(
+		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 				src, field);
 
-		Pair<Boolean, Boolean> ret1 = sumHeap.weakUpdateNoNumbering(pair,
+		ret = sumHeap.weakUpdate(pair,
 				new P2Set(tgt, ConstraintManager.genTrue()));
 
-		ret = ret1.val0;
 		return ret;
 	}
 }

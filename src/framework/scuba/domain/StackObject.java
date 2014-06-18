@@ -1,7 +1,7 @@
 package framework.scuba.domain;
 
-public abstract class StackObject extends AbstractMemLoc {
+public abstract class StackObject extends AbsMemLoc {
 
-	abstract public AbstractMemLoc findRoot();
+	abstract public AbsMemLoc findRoot();
 
 }

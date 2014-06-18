@@ -4,11 +4,11 @@ import chord.util.tuple.object.Pair;
 
 public class AliasQueryElem {
 	// the local variable that MAY alias
-	protected AbstractMemLoc loc1, loc2;
+	protected AbsMemLoc loc1, loc2;
 	// the program point the alias query is inserted in
 	protected ProgramPoint point;
 
-	public AliasQueryElem(AbstractMemLoc loc1, AbstractMemLoc loc2,
+	public AliasQueryElem(AbsMemLoc loc1, AbsMemLoc loc2,
 			ProgramPoint point) {
 		this.loc1 = loc1;
 		this.loc2 = loc2;
@@ -19,16 +19,16 @@ public class AliasQueryElem {
 		return point;
 	}
 
-	public AbstractMemLoc getLoc1() {
+	public AbsMemLoc getLoc1() {
 		return loc1;
 	}
 
-	public AbstractMemLoc getloc2() {
+	public AbsMemLoc getloc2() {
 		return loc2;
 	}
 
-	public Pair<AbstractMemLoc, AbstractMemLoc> getLocs() {
-		return new Pair<AbstractMemLoc, AbstractMemLoc>(loc1, loc2);
+	public Pair<AbsMemLoc, AbsMemLoc> getLocs() {
+		return new Pair<AbsMemLoc, AbsMemLoc>(loc1, loc2);
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package framework.scuba.helper;
 
-import framework.scuba.domain.AbstractMemLoc;
-import framework.scuba.domain.AbstractMemLoc.ArgDerivedType;
+import framework.scuba.domain.AbsMemLoc;
+import framework.scuba.domain.AbsMemLoc.ArgDerivedType;
 import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.LocalVarElem;
@@ -11,7 +11,7 @@ import framework.scuba.domain.StaticElem;
 
 public class ArgDerivedHelper {
 
-	public static ArgDerivedType markArgDerived(AbstractMemLoc loc) {
+	public static ArgDerivedType markArgDerived(AbsMemLoc loc) {
 
 		// assert (loc.unknowArgDerived());
 		// if root has been analyzed for arg-derived

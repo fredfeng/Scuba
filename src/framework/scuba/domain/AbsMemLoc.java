@@ -3,7 +3,7 @@ package framework.scuba.domain;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class AbstractMemLoc {
+public abstract class AbsMemLoc {
 
 	protected Set<FieldElem> fields = new HashSet<FieldElem>();
 
@@ -14,7 +14,7 @@ public abstract class AbstractMemLoc {
 	ArgDerivedType argDerived = ArgDerivedType.UN_KNOWN;
 
 	// abstract methods
-	abstract public AbstractMemLoc findRoot();
+	abstract public AbsMemLoc findRoot();
 
 	public void setArgDerived() {
 		this.argDerived = ArgDerivedType.IS_ARG_DERIVED;

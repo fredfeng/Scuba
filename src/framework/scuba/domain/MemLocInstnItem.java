@@ -60,7 +60,7 @@ public class MemLocInstnItem {
 	}
 
 	// given a location in the callee's heap, remove the cache item in the cache
-	public MemLocInstnSet remove(AbstractMemLoc loc) {
+	public MemLocInstnSet remove(AbsMemLoc loc) {
 		return memLocInstnCache.remove(loc);
 	}
 
@@ -70,11 +70,12 @@ public class MemLocInstnItem {
 		System.out.println("Caller: " + caller);
 		System.out.println("Callee: " + callee);
 		System.out.println("Call site: " + callsite);
-		for (AbstractMemLoc loc : memLocInstnCache.keySet()) {
+		for (AbsMemLoc loc : memLocInstnCache.keySet()) {
 			System.out.println("*****************************");
 			System.out.println("Location: " + loc + " is instantiated to:");
-			Map<AbstractMemLoc, BoolExpr> ret = memLocInstnCache.get(loc).getInstnLocSet();
-			for (AbstractMemLoc loc1 : ret.keySet()) {
+			Map<AbsMemLoc, BoolExpr> ret = memLocInstnCache.get(loc)
+					.getInstnLocSet();
+			for (AbsMemLoc loc1 : ret.keySet()) {
 				System.out.println("Location: " + loc1);
 				System.out.println("Constraint: " + ret.get(loc1));
 			}
@@ -97,8 +98,8 @@ public class MemLocInstnItem {
 				continue;
 			} else {
 				ParamElem formal = formals.get(i);
-				memLocInstnCache.put(formal,
-						new MemLocInstnSet(actual, ConstraintManager.genTrue()));
+				memLocInstnCache.put(formal, new MemLocInstnSet(actual,
+						ConstraintManager.genTrue()));
 			}
 		}
 	}
@@ -106,12 +107,13 @@ public class MemLocInstnItem {
 	// initialize the return value and lhs mapping
 	public void initReturnToLHS(RetElem ret, StackObject lhs) {
 		hasRet = true;
-		memLocInstnCache.put(ret, new MemLocInstnSet(lhs, ConstraintManager.genTrue()));
+		memLocInstnCache.put(ret,
+				new MemLocInstnSet(lhs, ConstraintManager.genTrue()));
 	}
 
 	// a wrapper method for memory location instantiation
-	public MemLocInstnSet instnMemLoc(AbstractMemLoc loc,
-			AbstractHeap callerHeap, ProgramPoint point) {
+	public MemLocInstnSet instnMemLoc(AbsMemLoc loc, AbstractHeap callerHeap,
+			ProgramPoint point) {
 		MemLocInstnSet ret = null;
 		if (SummariesEnv.v().useMemLocCache) {
 			Set<AccessPath> orgs = new HashSet<AccessPath>();
@@ -125,7 +127,7 @@ public class MemLocInstnItem {
 	// orgs: the callee locations that depend on the instantiated locations
 	// loc: the callee location we want to instantiate
 	protected MemLocInstnSet instnMemLocUsingCache(Set<AccessPath> orgs,
-			AbstractMemLoc loc, AbstractHeap callerHeap, ProgramPoint point) {
+			AbsMemLoc loc, AbstractHeap callerHeap, ProgramPoint point) {
 
 		MemLocInstnSet ret = memLocInstnCache.get(loc);
 
@@ -199,7 +201,7 @@ public class MemLocInstnItem {
 				return ret;
 			}
 
-			AbstractMemLoc base = ((AccessPath) loc).getBase();
+			AbsMemLoc base = ((AccessPath) loc).getBase();
 			FieldElem field = ((AccessPath) loc).getField();
 			assert (!orgs.contains((AccessPath) loc)) : "Location " + loc
 					+ " should not depend on the instantiation of"
@@ -210,7 +212,7 @@ public class MemLocInstnItem {
 			assert (orgs.contains((AccessPath) loc)) : "orgs should contain "
 					+ loc + " and we can remove it from orgs";
 			orgs.remove((AccessPath) loc);
-			for (AbstractMemLoc loc1 : instnLocSet.keySet()) {
+			for (AbsMemLoc loc1 : instnLocSet.keySet()) {
 				result.getSum().addToDepMap(loc1,
 						new Pair<MemLocInstnItem, Set<AccessPath>>(this, orgs));
 
@@ -226,7 +228,7 @@ public class MemLocInstnItem {
 
 	// this method implements the inference rules in figure 11 of the paper
 	// loc is the location in the callee's heap
-	protected MemLocInstnSet instnMemLocNoCache(AbstractMemLoc loc,
+	protected MemLocInstnSet instnMemLocNoCache(AbsMemLoc loc,
 			AbstractHeap callerHeap, ProgramPoint point) {
 
 		MemLocInstnSet ret = memLocInstnCache.get(loc);
@@ -297,7 +299,7 @@ public class MemLocInstnItem {
 			// put into the map
 			memLocInstnCache.put(loc, ret);
 		} else if (loc instanceof AccessPath) {
-			AbstractMemLoc base = ((AccessPath) loc).getBase();
+			AbsMemLoc base = ((AccessPath) loc).getBase();
 			FieldElem field = ((AccessPath) loc).getField();
 			MemLocInstnSet instnLocSet = instnMemLocNoCache(base, callerHeap,
 					point);

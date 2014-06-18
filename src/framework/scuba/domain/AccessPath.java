@@ -6,13 +6,13 @@ public class AccessPath extends HeapObject {
 
 	// base can be an AccessPath, a ParamElem or a StaticElem
 	// i.e., AccessPath is a recursive data structure
-	final protected AbstractMemLoc base;
+	final protected AbsMemLoc base;
 
 	final protected FieldElem field;
 
 	protected int Id;
 
-	public AccessPath(AbstractMemLoc base, FieldElem field, int Id) {
+	public AccessPath(AbsMemLoc base, FieldElem field, int Id) {
 		this.base = base;
 		this.field = field;
 		this.Id = Id;
@@ -21,7 +21,7 @@ public class AccessPath extends HeapObject {
 		base.addField(field);
 	}
 
-	public AbstractMemLoc getBase() {
+	public AbsMemLoc getBase() {
 		return this.base;
 	}
 
@@ -125,7 +125,7 @@ public class AccessPath extends HeapObject {
 	public static LinkedList<FieldElem> fieldSeq(AccessPath ap) {
 		LinkedList<FieldElem> ret = new LinkedList<FieldElem>();
 		while (true) {
-			AbstractMemLoc base = ap.getBase();
+			AbsMemLoc base = ap.getBase();
 			ret.addLast(ap.getField());
 			if (!(base instanceof AccessPath)) {
 				break;
