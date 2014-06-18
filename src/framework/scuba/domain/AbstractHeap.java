@@ -339,10 +339,13 @@ public class AbstractHeap {
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
 
-		this.dumpHeapToFile("before");
+		if (G.dbgRef) {
+			this.dumpHeapToFile("before");
+		}
 		ret = weakUpdate(pair, p2Setv2);
-		this.dumpHeapToFile("after");
-
+		if (G.dbgRef) {
+			this.dumpHeapToFile("after");
+		}
 		return ret;
 	}
 
