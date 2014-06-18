@@ -246,11 +246,12 @@ public class ConstraintManager {
 					StringUtil.reportInfo("instnInfo: " + "base case: " + expr);
 				}
 				map.put(expr.toString(), (BoolExpr) expr);
+				return;
 			}
 
 			if (expr.IsAnd() || expr.IsOr()) {
 				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: " + "recursive case: "
+					StringUtil.reportInfo("instnInfo: " + "[recursive case:] "
 							+ expr);
 				}
 				for (int i = 0; i < expr.NumArgs(); i++) {
