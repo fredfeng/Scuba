@@ -53,25 +53,25 @@ public class SummariesEnv {
 	protected boolean disableCst = false;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useMemLocCache = false;
+	protected boolean useMemLocCache = true;
 
 	// whether use cache for constraint instantiation
-	protected boolean useCstCache = false;
+	protected boolean useCstCache = true;
 
 	// whether use cache for extracting terms
-	protected boolean useExtractCache = false;
+	protected boolean useExtractCache = true;
 
 	// whether use cache for constraint simplification
-	protected boolean useSimplifyCache = false;
+	protected boolean useSimplifyCache = true;
 
 	// whether use cache for constraint union operation
-	protected boolean useUnionCache = false;
+	protected boolean useUnionCache = true;
 
 	// whether use cache for constraint intersection operation
-	protected boolean useInterCache = false;
+	protected boolean useInterCache = true;
 
 	// whether use cache for substitution operation of constraints
-	protected boolean useSubCache = false;
+	protected boolean useSubCache = true;
 
 	// fix-point or not
 	protected boolean useFixPoint = true;
