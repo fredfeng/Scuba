@@ -38,7 +38,7 @@ public class SummariesEnv {
 	protected int allocDepth = 1;
 
 	// prop locals or not
-	protected boolean propLocals = true;
+	protected boolean propLocals = false;
 
 	// ignore string
 	protected boolean openBlklist = false;
