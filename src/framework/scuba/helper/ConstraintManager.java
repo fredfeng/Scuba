@@ -559,7 +559,12 @@ public class ConstraintManager {
 		assert expr1 != null : "Constraint can not be null!";
 		assert expr2 != null : "Constraint can not be null!";
 
+		if (G.dbgIsil) {
+			System.out.println("dbgIsil: " + "expr1: " + expr1 + " expr2: "
+					+ expr2);
+		}
 		try {
+			solver.Reset();
 			BoolExpr e1;
 			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
