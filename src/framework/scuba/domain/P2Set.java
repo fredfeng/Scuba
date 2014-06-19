@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import chord.util.tuple.object.Pair;
+
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.helper.ConstraintManager;
@@ -41,8 +43,9 @@ public class P2Set {
 	// of the paper, in which it only reads other and write this.p2Set
 	// this method will never get the pointer to the other p2set so do not worry
 	// about modifying the other p2set by modifying this p2set
-	public boolean join(P2Set other) {
-		boolean ret = false;
+	public Pair<Boolean, Boolean> join(P2Set other) {
+		boolean changeHeap = false;
+		boolean changeSum = false;
 		for (HeapObject obj : other.keySet()) {
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets
@@ -67,7 +70,10 @@ public class P2Set {
 
 				p2Set.put(obj, newCst);
 				// TODO
-				ret = true;
+				changeHeap = true;
+				if (obj.isArgDerived()) {
+					changeSum = true;
+				}
 			} else {
 				// obj is only in other's p2set
 				// AVOID directly get the constraint instance of the other
@@ -82,10 +88,13 @@ public class P2Set {
 
 				// for this case, we should add a new edge
 				p2Set.put(obj, ConstraintManager.clone(other.get(obj)));
-				ret = true;
+				changeHeap = true;
+				if (obj.isArgDerived()) {
+					changeSum = true;
+				}
 			}
 		}
-		return ret;
+		return new Pair<Boolean, Boolean>(changeHeap, changeSum);
 	}
 
 	// this project method implements the projection operation described in

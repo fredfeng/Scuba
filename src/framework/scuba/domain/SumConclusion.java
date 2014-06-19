@@ -112,8 +112,10 @@ public class SumConclusion {
 				continue;
 			}
 
-			boolean changed = instnHeap(worker);
-			if (changed) {
+			Pair<Boolean, Boolean> changed = instnHeap(worker);
+			// TODO
+			// currently we do this again only when the summary is changed
+			if (changed.val1) {
 				analyzed.clear();
 			} else {
 				analyzed.add(worker);
@@ -131,9 +133,9 @@ public class SumConclusion {
 		return sumHeap;
 	}
 
-	protected boolean instnHeap(AbstractHeap worker) {
+	protected Pair<Boolean, Boolean> instnHeap(AbstractHeap worker) {
 		// a fix-point algorithm to conclude the heap of a method
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		while (true) {
 			boolean go = false;
@@ -151,8 +153,11 @@ public class SumConclusion {
 				while (it1.hasNext()) {
 					Map.Entry<HeapObject, BoolExpr> entry1 = it1.next();
 					HeapObject tgt = entry1.getKey();
-					go = instnEdge(src, tgt, f, worker) | go;
-					ret = ret | go;
+					Pair<Boolean, Boolean> res = instnEdge(src, tgt, f, worker);
+					ret.val0 = res.val0 | ret.val0;
+					ret.val1 = res.val1 | ret.val1;
+					// if changing the heap then go (conservative)
+					go = res.val0 | go;
 				}
 			}
 
@@ -168,10 +173,10 @@ public class SumConclusion {
 		return ret;
 	}
 
-	protected boolean instnEdge(AbsMemLoc src, HeapObject tgt, FieldElem field,
-			AbstractHeap worker) {
+	protected Pair<Boolean, Boolean> instnEdge(AbsMemLoc src, HeapObject tgt,
+			FieldElem field, AbstractHeap worker) {
 		// given an edge in the heap of a method, move it to the final heap
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(src,
 				field);

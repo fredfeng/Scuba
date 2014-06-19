@@ -13,6 +13,7 @@ import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.util.tuple.object.Pair;
 import framework.scuba.analyses.alias.SummaryBasedAnalysis;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
@@ -110,25 +111,21 @@ public class IntraProcSumAnalysis {
 				BasicBlock sccB = scc.iterator().next();
 				// self loop in current block.
 				if (sccB.getSuccessors().contains(sccB)) {
-					if (G.dbgSCC) {
-						StringUtil.reportInfo("I am here: 1");
-					}
-					boolean flag = handleSCC(scc);
-					summary.setChanged(flag || summary.isChanged());
-
+					Pair<Boolean, Boolean> flag = handleSCC(scc);
+					Pair<Boolean, Boolean> res = summary.isChanged();
+					summary.setChanged(new Pair<Boolean, Boolean>(flag.val0
+							| res.val0, flag.val1 | res.val1));
 				} else {
-					if (G.dbgSCC) {
-						StringUtil.reportInfo("I am here: 2");
-					}
-					boolean flag = handleBasicBlock(sccB, false);
-					summary.setChanged(flag || summary.isChanged());
+					Pair<Boolean, Boolean> flag = handleBasicBlock(sccB, false);
+					Pair<Boolean, Boolean> res = summary.isChanged();
+					summary.setChanged(new Pair<Boolean, Boolean>(flag.val0
+							| res.val0, flag.val1 | res.val1));
 				}
 			} else {
-				if (G.dbgSCC) {
-					StringUtil.reportInfo("I am here: 3");
-				}
-				boolean flag = handleSCC(scc);
-				summary.setChanged(flag || summary.isChanged());
+				Pair<Boolean, Boolean> flag = handleSCC(scc);
+				Pair<Boolean, Boolean> res = summary.isChanged();
+				summary.setChanged(new Pair<Boolean, Boolean>(flag.val0
+						| res.val0, flag.val1 | res.val1));
 			}
 		}
 
@@ -141,9 +138,10 @@ public class IntraProcSumAnalysis {
 	public static int sccProgress = 0;
 
 	// compute the fixed-point for this scc.
-	public boolean handleSCC(Set<BasicBlock> scc) {
+	public Pair<Boolean, Boolean> handleSCC(Set<BasicBlock> scc) {
 		LinkedList<BasicBlock> wl = new LinkedList<BasicBlock>();
-		boolean flagScc = false;
+		Pair<Boolean, Boolean> flagScc = new Pair<Boolean, Boolean>(false,
+				false);
 		// add all nodes that have preds outside the scc as entry.
 		for (BasicBlock mb : scc)
 			if (!scc.containsAll(mb.getPredecessors()))
@@ -174,7 +172,7 @@ public class IntraProcSumAnalysis {
 						+ "handling BB: " + bb);
 			}
 
-			boolean flag = handleBasicBlock(bb, true);
+			Pair<Boolean, Boolean> flag = handleBasicBlock(bb, true);
 
 			if (G.dbgMatch) {
 				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
@@ -182,9 +180,14 @@ public class IntraProcSumAnalysis {
 						+ "finish BB: " + bb + " result: " + flag);
 			}
 
-			flagScc = flagScc || flag;
+			flagScc.val0 = flag.val0 | flagScc.val0;
+			flagScc.val1 = flag.val1 | flagScc.val1;
 			assert scc.contains(bb) : "You can't analyze the node that is out of current scc.";
-			if (flag)
+
+			// TODO
+			// if changing the heap, we analyze all basic blocks in the scc
+			// again (conservative)
+			if (flag.val0)
 				set.clear();
 			else
 				set.add(bb);
@@ -205,9 +208,10 @@ public class IntraProcSumAnalysis {
 	public static int tmp1 = 0;
 	public static boolean opt = false;
 
-	public boolean handleBasicBlock(BasicBlock bb, boolean isInSCC) {
+	public Pair<Boolean, Boolean> handleBasicBlock(BasicBlock bb,
+			boolean isInSCC) {
 		accessBlocksList.add(bb);
-		boolean flag = false;
+		Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false, false);
 		// handle each quad in the basicblock.
 		bbProgress = 0;
 		for (Quad q : bb.getQuads()) {
@@ -230,7 +234,7 @@ public class IntraProcSumAnalysis {
 						+ "handling stmt: " + q);
 			}
 
-			boolean flagStmt = summary.handleStmt(q);
+			Pair<Boolean, Boolean> flagStmt = summary.handleStmt(q);
 			if (G.dbgRef) {
 				System.out.println("dbgRef: " + "stmt result: " + flagStmt);
 			}
@@ -241,15 +245,8 @@ public class IntraProcSumAnalysis {
 						+ "finish stmt: " + q + " result: " + flagStmt);
 			}
 
-			opt = flagStmt;
-			if (G.dbgSCC) {
-				if (flagStmt) {
-					StringUtil.reportInfo("Rain: [" + G.countScc
-							+ "] this is the stmt: " + bbProgress + "-th");
-					bb.fullDump();
-				}
-			}
-			flag = flag || flagStmt;
+			flag.val0 = flagStmt.val0 | flag.val0;
+			flag.val1 = flagStmt.val1 | flag.val1;
 
 		}
 		if (G.dbgRef) {

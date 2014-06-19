@@ -48,6 +48,7 @@ public class MemLocInstnSet {
 		return instnLocSet.size();
 	}
 
+	// the boolean return is the constraint, not the same for P2Set's join
 	public boolean join(P2Set other) {
 		boolean ret = false;
 		for (HeapObject hObj : other.keySet()) {
@@ -74,8 +75,7 @@ public class MemLocInstnSet {
 				// set!!!! only get the shallow copy of the other constraints
 
 				// for this case, we should add a new edge
-				instnLocSet.put(hObj,
-						ConstraintManager.clone(other.get(hObj)));
+				instnLocSet.put(hObj, ConstraintManager.clone(other.get(hObj)));
 				ret = true;
 			}
 		}

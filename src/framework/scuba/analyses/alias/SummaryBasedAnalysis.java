@@ -16,7 +16,6 @@ import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
-import chord.analyses.alias.CICG;
 import chord.analyses.alias.ICICG;
 import chord.analyses.method.DomM;
 import chord.bddbddb.Rel.RelView;
@@ -71,7 +70,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relDcm;
 	protected ProgramRel relDVH;
 	protected ProgramRel relPMM;
-
 
 	protected CallGraph callGraph;
 
@@ -366,31 +364,19 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		return flag;
 	}
 
-	private boolean analyze(jq_Method m) {
+	private Pair<Boolean, Boolean> analyze(jq_Method m) {
 		accessSeq.add(m);
 
-		// if (m.getBytecode() == null) {
-		// if (G.info) {
-		// System.err.println("ERROR: the method: " + m
-		// + " is lacking models");
-		// }
-		// return false;
-		// }
-
 		Summary summary = SummariesEnv.v().initSummary(m);
-		summary.setChanged(false);
+		summary.setChanged(new Pair<Boolean, Boolean>(false, false));
 		intrapro.setSummary(summary);
 
 		// check blacklist methods.
 		if (SummariesEnv.v().openBlklist()
 				&& SummariesEnv.v().isInBlacklist(m.toString())) {
 			StringUtil.reportInfo("add to blacklist: " + m.toString());
-			return false;
+			return new Pair<Boolean, Boolean>(false, false);
 		}
-
-		// set intrapro's number counter to be the counter of the last time the
-		// summary is concluded, so that it will continue numbering from the
-		// last time, to keep the numbers increasing
 
 		// ControlFlowGraph cfg = CodeCache.getCode(m);
 		ControlFlowGraph cfg = m.getCFG();
@@ -495,9 +481,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				StringUtil.reportInfo("SCC counter: " + wl.size() + ":"
 						+ worker);
 
-			boolean changed = analyze(worker);
+			Pair<Boolean, Boolean> changed = analyze(worker);
 
-			if (changed) {
+			// only when changing the summary, we add all the callers
+			if (changed.val1) {
 				for (jq_Method pred : callGraph.getPreds(worker))
 					if (scc.contains(pred))
 						wl.add(pred);
@@ -532,7 +519,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	 */
 	public ICICG getCallGraph() {
 		if (callGraph == null) {
-			callGraph = new CallGraph(domM, relRootM, relReachableM, relIM, relPMM);
+			callGraph = new CallGraph(domM, relRootM, relReachableM, relIM,
+					relPMM);
 		}
 		Env.cg = callGraph;
 		return callGraph;
@@ -623,8 +611,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (sum1.getAbsHeap()
 				.getHeap()
 				.containsKey(
-						new Pair<AbsMemLoc, FieldElem>(new LocalVarElem(
-								clazz, method, variable), EpsilonFieldElem
+						new Pair<AbsMemLoc, FieldElem>(new LocalVarElem(clazz,
+								method, variable), EpsilonFieldElem
 								.getEpsilonFieldElem()))) {
 			count++;
 			if (G.dbgQuery) {

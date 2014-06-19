@@ -10,7 +10,6 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Reference;
-import chord.analyses.alias.CICG;
 import chord.program.Program;
 import framework.scuba.helper.ArgDerivedHelper;
 

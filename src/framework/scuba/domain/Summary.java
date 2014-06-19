@@ -99,7 +99,8 @@ public class Summary {
 	protected RetElem retValue;
 
 	// heap for the whole summary has changed?
-	protected boolean changed = false;
+	protected Pair<Boolean, Boolean> changed = new Pair<Boolean, Boolean>(
+			false, false);
 
 	// used for dealing with recursive call
 	protected boolean hasAnalyzed = false;
@@ -107,12 +108,21 @@ public class Summary {
 	// alias query in this method or instantiated in this method
 	protected AliasQueries aliasQueries;
 
-	public boolean isChanged() {
+	public boolean heapIsChanged() {
+		return changed.val0;
+	}
+
+	public boolean sumIsChanged() {
+		return changed.val1;
+	}
+
+	public Pair<Boolean, Boolean> isChanged() {
 		return changed;
 	}
 
-	public void setChanged(boolean isChanged) {
-		this.changed = isChanged;
+	public void setChanged(Pair<Boolean, Boolean> isChanged) {
+		this.changed.val0 = isChanged.val0;
+		this.changed.val1 = isChanged.val1;
 	}
 
 	public Summary(jq_Method meth) {
@@ -280,13 +290,13 @@ public class Summary {
 		return method;
 	}
 
-	public boolean handleStmt(Quad quad) {
+	public Pair<Boolean, Boolean> handleStmt(Quad quad) {
 
 		if (G.dbgPermission) {
 			StringUtil.reportInfo("dbgPermission: " + "handling stmt: " + quad);
 
 		}
-		absHeap.markChanged(false);
+		absHeap.markChanged(new Pair<Boolean, Boolean>(false, false));
 		quad.accept(qv);
 		return absHeap.isChanged();
 	}
@@ -328,7 +338,8 @@ public class Summary {
 				VariableType rvt = getVarType(stmt.getMethod(),
 						rhs.getRegister());
 
-				boolean flag = false;
+				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+						false);
 
 				flag = absHeap.handleALoadStmt(meth.getDeclaringClass(), meth,
 						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
@@ -363,7 +374,8 @@ public class Summary {
 				VariableType rvt = getVarType(stmt.getMethod(),
 						rhs.getRegister());
 
-				boolean flag = false;
+				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+						false);
 
 				flag = absHeap.handleAStoreStmt(meth.getDeclaringClass(), meth,
 						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
@@ -417,7 +429,8 @@ public class Summary {
 
 					VariableType lvt = getVarType(stmt.getMethod(), l);
 					VariableType rvt = getVarType(stmt.getMethod(), r);
-					boolean flag = false;
+					Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(
+							false, false);
 					flag = absHeap.handleAssignStmt(meth.getDeclaringClass(),
 							meth, l, lvt, r, rvt);
 					absHeap.markChanged(flag);
@@ -448,7 +461,8 @@ public class Summary {
 				VariableType rvt = getVarType(stmt.getMethod(),
 						rhsBase.getRegister());
 
-				boolean flag = false;
+				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+						false);
 				flag = absHeap.handleLoadStmt(meth.getDeclaringClass(), meth,
 						lhs.getRegister(), lvt, rhsBase.getRegister(),
 						field.getField(), rvt);
@@ -481,7 +495,8 @@ public class Summary {
 				VariableType lvt = getVarType(stmt.getMethod(),
 						lhs.getRegister());
 
-				boolean flag = false;
+				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+						false);
 				flag = absHeap.handleStatLoadStmt(meth.getDeclaringClass(),
 						meth, lhs.getRegister(), lvt, encloseClass,
 						field.getField());
@@ -684,8 +699,8 @@ public class Summary {
 							.reportInfo("[before handling invoke] weak update size: ");
 				}
 
-				boolean flag = false;
-
+				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+						false);
 				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
 						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
 
@@ -763,7 +778,9 @@ public class Summary {
 						lhs.getRegister());
 				VariableType rvt = getVarType(stmt.getMethod(),
 						rhs.getRegister());
-				boolean flag = false;
+
+				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+						false);
 				flag = absHeap.handleAssignStmt(meth.getDeclaringClass(), meth,
 						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
 
@@ -785,7 +802,8 @@ public class Summary {
 			RegisterOperand rop = New.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 
-			boolean flag = false;
+			Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+					false);
 			flag = absHeap.handleNewStmt(stmt.getMethod().getDeclaringClass(),
 					meth, rop.getRegister(), vt, to.getType(), stmt,
 					stmt.getID());
@@ -802,7 +820,9 @@ public class Summary {
 			RegisterOperand rop = MultiNewArray.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 			ParamListOperand plo = MultiNewArray.getParamList(stmt);
-			boolean flag = false;
+
+			Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+					false);
 			flag = absHeap.handleMultiNewArrayStmt(meth.getDeclaringClass(),
 					meth, rop.getRegister(), vt, to.getType(), plo.length(),
 					stmt, stmt.getID());
@@ -825,8 +845,8 @@ public class Summary {
 			RegisterOperand rop = NewArray.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 
-			boolean flag = false;
-
+			Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+					false);
 			flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(), meth,
 					rop.getRegister(), vt, to.getType(), stmt, stmt.getID());
 
@@ -847,7 +867,8 @@ public class Summary {
 
 			boolean tmp = false; // just for dbg
 			if (Phi.getDest(stmt) instanceof RegisterOperand) {
-				boolean sig = false;
+				Pair<Boolean, Boolean> sig = new Pair<Boolean, Boolean>(false,
+						false);
 				RegisterOperand lhs = Phi.getDest(stmt);
 				VariableType lvt = getVarType(meth, lhs.getRegister());
 
@@ -859,11 +880,13 @@ public class Summary {
 
 					tmp = true;
 					VariableType rvt = getVarType(meth, rhs.getRegister());
-					boolean flag = false;
+					Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(
+							false, false);
 					flag = absHeap.handleAssignStmt(meth.getDeclaringClass(),
 							meth, lhs.getRegister(), lvt, rhs.getRegister(),
 							rvt);
-					sig = flag | sig;
+					sig.val0 = flag.val0 | sig.val0;
+					sig.val1 = flag.val1 | sig.val1;
 				}
 
 				absHeap.markChanged(sig);
@@ -884,7 +907,7 @@ public class Summary {
 			if (field.getField().getType() instanceof jq_Reference) {
 				assert (stmt.getOperator() instanceof Putfield);
 				jq_Method meth = stmt.getMethod();
-				boolean flag = false;
+
 				Operand rhso = Putfield.getSrc(stmt);
 				if (rhso instanceof RegisterOperand) {
 					RegisterOperand rhs = (RegisterOperand) rhso;
@@ -902,6 +925,8 @@ public class Summary {
 					VariableType rvt = getVarType(stmt.getMethod(),
 							rhs.getRegister());
 
+					Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(
+							false, false);
 					flag = absHeap.handleStoreStmt(meth.getDeclaringClass(),
 							meth, lhs.getRegister(), lvt, field.getField(),
 							rhs.getRegister(), rvt);
@@ -923,7 +948,6 @@ public class Summary {
 				jq_Method meth = stmt.getMethod();
 				Operand rhso = Putstatic.getSrc(stmt);
 				jq_Class encloseClass = field.getField().getDeclaringClass();
-				boolean flag = false;
 
 				if (rhso instanceof RegisterOperand) {
 					RegisterOperand rhs = (RegisterOperand) rhso;
@@ -937,6 +961,8 @@ public class Summary {
 					VariableType rvt = getVarType(stmt.getMethod(),
 							rhs.getRegister());
 
+					Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(
+							false, false);
 					flag = absHeap.handleStaticStoreStmt(
 							meth.getDeclaringClass(), meth, encloseClass,
 							field.getField(), rhs.getRegister(), rvt);
@@ -952,7 +978,6 @@ public class Summary {
 		}
 
 		public void visitReturn(Quad stmt) {
-			boolean flag = false;
 			// if (stmt.getOperator() instanceof RETURN_A) {
 			Operand operand = Return.getSrc(stmt);
 			if (!(operand instanceof RegisterOperand))
@@ -962,8 +987,9 @@ public class Summary {
 			jq_Class clazz = meth.getDeclaringClass();
 			VariableType type = getVarType(meth, ret);
 
+			Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
+					false);
 			flag = absHeap.handleRetStmt(clazz, meth, ret, type);
-
 			absHeap.markChanged(flag);
 
 			// if (retValue == null) {

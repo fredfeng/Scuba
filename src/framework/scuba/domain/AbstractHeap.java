@@ -47,7 +47,8 @@ public class AbstractHeap {
 	// 5. <AccessPath> that
 	private final Map<AbsMemLoc, AbsMemLoc> memLocFactory;
 
-	private boolean isChanged = false;
+	private Pair<Boolean, Boolean> isChanged = new Pair<Boolean, Boolean>(
+			false, false);
 
 	public static enum VariableType {
 		PARAMEMTER, LOCAL_VARIABLE;
@@ -147,11 +148,11 @@ public class AbstractHeap {
 	// v1: parameter / local
 	// v2: parameter / local (for SSA, only local is possible)
 	// TODO we loose the constraint to allow LHS to be ParamElem (Not SSA)
-	public boolean handleAssignStmt(jq_Class clazz, jq_Method method,
-			Register left, VariableType leftVType, Register right,
-			VariableType rightVType) {
+	public Pair<Boolean, Boolean> handleAssignStmt(jq_Class clazz,
+			jq_Method method, Register left, VariableType leftVType,
+			Register right, VariableType rightVType) {
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
 				+ "for Assign stmt, LHS must be LocalElem (or ParamElem, we HAVE NOT fully fixed SSA";
@@ -190,20 +191,24 @@ public class AbstractHeap {
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
 
-		ret = weakUpdate(pair, p2Setv2);
+		Pair<Boolean, Boolean> res = weakUpdate(pair, p2Setv2);
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
 
 		return ret;
 	}
 
 	// this method is just a helper method for handling array allocations
-	private boolean handleArrayLoad(ArrayAllocElem left, IndexFieldElem index,
-			AllocElem right) {
-		boolean ret = false;
+	private Pair<Boolean, Boolean> handleArrayLoad(ArrayAllocElem left,
+			IndexFieldElem index, AllocElem right) {
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(left,
 				index);
 		P2Set p2Set = new P2Set(right, ConstraintManager.genTrue());
 		assert p2Set != null : "p2 set can not be null!";
-		ret = weakUpdate(pair, p2Set);
+		Pair<Boolean, Boolean> res = weakUpdate(pair, p2Set);
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
 		return ret;
 	}
 
@@ -212,10 +217,10 @@ public class AbstractHeap {
 	// v1: parameter / local (for SSA, only local)
 	// v2: parameter / local
 	// f: non-static field
-	public boolean handleLoadStmt(jq_Class clazz, jq_Method method,
-			Register left, VariableType leftVType, Register rightBase,
-			jq_Field rightField, VariableType rightBaseVType) {
-		boolean ret = false;
+	public Pair<Boolean, Boolean> handleLoadStmt(jq_Class clazz,
+			jq_Method method, Register left, VariableType leftVType,
+			Register rightBase, jq_Field rightField, VariableType rightBaseVType) {
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for non-static load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -258,18 +263,19 @@ public class AbstractHeap {
 
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
-		ret = weakUpdate(pair, p2Setv2f);
-
+		Pair<Boolean, Boolean> res = weakUpdate(pair, p2Setv2f);
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
 		return ret;
 	}
 
 	// v1 = v2[0] where v2 is an array, e.g. v2 = new X[10][10]
 	// treat it just like a load stmt: v1 = v2.\i where \i is the index field
-	public boolean handleALoadStmt(jq_Class clazz, jq_Method method,
-			Register left, VariableType leftVType, Register rightBase,
-			VariableType rightBaseVType) {
+	public Pair<Boolean, Boolean> handleALoadStmt(jq_Class clazz,
+			jq_Method method, Register left, VariableType leftVType,
+			Register rightBase, VariableType rightBaseVType) {
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for array load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
 				|| (rightBaseVType == VariableType.PARAMEMTER) : ""
@@ -294,8 +300,9 @@ public class AbstractHeap {
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
 
-		ret = weakUpdate(pair, p2Setv2i);
-
+		Pair<Boolean, Boolean> res = weakUpdate(pair, p2Setv2i);
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
 		return ret;
 	}
 
@@ -306,11 +313,11 @@ public class AbstractHeap {
 	// f: a static field declared in class A
 	// although this is a load stmt, we regard it as an Assign stmt by following
 	// v1 = (A.f) where A.f is just a stack object
-	public boolean handleStatLoadStmt(jq_Class clazz, jq_Method method,
-			Register left, VariableType leftVType, jq_Class rightBase,
-			jq_Field rightField) {
+	public Pair<Boolean, Boolean> handleStatLoadStmt(jq_Class clazz,
+			jq_Method method, Register left, VariableType leftVType,
+			jq_Class rightBase, jq_Field rightField) {
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for static load stmt, LHS must be a local!";
 
 		StackObject v1 = null;
@@ -339,24 +346,20 @@ public class AbstractHeap {
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
 
-		if (G.dbgRef) {
-			this.dumpHeapToFile("before");
-		}
-		ret = weakUpdate(pair, p2Setv2);
-		if (G.dbgRef) {
-			this.dumpHeapToFile("after");
-		}
+		Pair<Boolean, Boolean> res = weakUpdate(pair, p2Setv2);
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
 		return ret;
 	}
 
 	// v1[0] = v2 where v1 = new V[10][10]
 	// treat it just as a store stmt like: v1.\i = v2 where \i is the index
 	// field (all array base shares the same \i)
-	public boolean handleAStoreStmt(jq_Class clazz, jq_Method method,
-			Register leftBase, VariableType leftBaseVType, Register right,
-			VariableType rightVType) {
+	public Pair<Boolean, Boolean> handleAStoreStmt(jq_Class clazz,
+			jq_Method method, Register leftBase, VariableType leftBaseVType,
+			Register right, VariableType rightVType) {
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (rightVType == VariableType.PARAMEMTER)
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
 				+ " variables and parameters as rhs";
@@ -401,7 +404,10 @@ public class AbstractHeap {
 			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
 			Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 					hObj, index);
-			ret = weakUpdate(pair, projP2Set) | ret;
+
+			Pair<Boolean, Boolean> res = weakUpdate(pair, projP2Set);
+			ret.val0 = res.val0 | ret.val0;
+			ret.val1 = res.val1 | ret.val1;
 		}
 
 		return ret;
@@ -409,11 +415,11 @@ public class AbstractHeap {
 
 	// handleStoreStmt implements rule (3) in Figure 8 of the paper
 	// v1.f = v2
-	public boolean handleStoreStmt(jq_Class clazz, jq_Method method,
-			Register leftBase, VariableType leftBaseVType, jq_Field leftField,
-			Register right, VariableType rightVType) {
+	public Pair<Boolean, Boolean> handleStoreStmt(jq_Class clazz,
+			jq_Method method, Register leftBase, VariableType leftBaseVType,
+			jq_Field leftField, Register right, VariableType rightVType) {
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (rightVType == VariableType.PARAMEMTER)
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
 				+ " variables and parameters as rhs Base";
@@ -458,7 +464,10 @@ public class AbstractHeap {
 			P2Set projP2Set = P2SetHelper.project(p2Setv2, cst);
 			Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 					obj, f);
-			ret = weakUpdate(pair, projP2Set) | ret;
+
+			Pair<Boolean, Boolean> res = weakUpdate(pair, projP2Set);
+			ret.val0 = res.val0 | ret.val0;
+			ret.val1 = res.val1 | ret.val1;
 		}
 
 		return ret;
@@ -471,11 +480,11 @@ public class AbstractHeap {
 	// v2: local / parameter
 	// although this is a store stmt, we regard it as an Assign stmt by
 	// (A.f) = v2 where (A.f) is just a stack object (StaticElem)
-	public boolean handleStaticStoreStmt(jq_Class clazz, jq_Method method,
-			jq_Class leftBase, jq_Field leftField, Register right,
-			VariableType rightVType) {
+	public Pair<Boolean, Boolean> handleStaticStoreStmt(jq_Class clazz,
+			jq_Method method, jq_Class leftBase, jq_Field leftField,
+			Register right, VariableType rightVType) {
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (rightVType == VariableType.PARAMEMTER)
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
 				+ " variables and parameters as rhs in static store stmt";
@@ -506,18 +515,19 @@ public class AbstractHeap {
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
 
-		ret = weakUpdate(pair, p2Setv2);
-
+		Pair<Boolean, Boolean> res = weakUpdate(pair, p2Setv2);
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
 		return ret;
 	}
 
 	// handleNewStmt implements rule (4) in Figure 8 of the paper
 	// v = new T
-	public boolean handleNewStmt(jq_Class clazz, jq_Method method,
-			Register left, VariableType leftVType, jq_Type right,
-			Quad allocSite, int line) {
+	public Pair<Boolean, Boolean> handleNewStmt(jq_Class clazz,
+			jq_Method method, Register left, VariableType leftVType,
+			jq_Type right, Quad allocSite, int line) {
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "LHS of a new stmt must be a local variable!";
 
 		// generate the allocElem for rhs
@@ -539,27 +549,29 @@ public class AbstractHeap {
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v,
 				EpsilonFieldElem.getEpsilonFieldElem());
 
-		ret = weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()));
-
+		Pair<Boolean, Boolean> res = weakUpdate(pair, new P2Set(allocT,
+				ConstraintManager.genTrue()));
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
 		return ret;
 	}
 
 	// X x1 = new X[10] by just calling the handleMultiNewArrayStmt method with
 	// dim = 1
-	public boolean handleNewArrayStmt(jq_Class clazz, jq_Method method,
-			Register left, VariableType leftVType, jq_Type right,
-			Quad allocSite, int line) {
+	public Pair<Boolean, Boolean> handleNewArrayStmt(jq_Class clazz,
+			jq_Method method, Register left, VariableType leftVType,
+			jq_Type right, Quad allocSite, int line) {
 		return handleMultiNewArrayStmt(clazz, method, left, leftVType, right,
 				1, allocSite, line);
 	}
 
 	// handle multi-new stmt, e.g. X x1 = new X[1][2][3]
 	// dim is the dimension of this array, dim >= 2
-	public boolean handleMultiNewArrayStmt(jq_Class clazz, jq_Method method,
-			Register left, VariableType leftVType, jq_Type right, int dim,
-			Quad allocSite, int line) {
+	public Pair<Boolean, Boolean> handleMultiNewArrayStmt(jq_Class clazz,
+			jq_Method method, Register left, VariableType leftVType,
+			jq_Type right, int dim, Quad allocSite, int line) {
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "LHS of a new stmt must be a local variable!";
 
@@ -589,19 +601,20 @@ public class AbstractHeap {
 					allocSite, i, line);
 			ArrayAllocElem rightAllocT = getArrayAllocElem(clazz, method,
 					right, allocSite, i - 1, line);
-			ret = handleArrayLoad(leftAllocT,
-					IndexFieldElem.getIndexFieldElem(), rightAllocT)
-					| ret;
+			Pair<Boolean, Boolean> res = handleArrayLoad(leftAllocT,
+					IndexFieldElem.getIndexFieldElem(), rightAllocT);
+			ret.val0 = res.val0 | ret.val0;
+			ret.val1 = res.val1 | ret.val1;
 		}
 
 		return ret;
 	}
 
 	// return v;
-	public boolean handleRetStmt(jq_Class clazz, jq_Method method,
-			Register retValue, VariableType type) {
+	public Pair<Boolean, Boolean> handleRetStmt(jq_Class clazz,
+			jq_Method method, Register retValue, VariableType type) {
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		// first try to find the corresponding local or parameter that has been
 		// declared before returning
 		StackObject v = null;
@@ -620,15 +633,17 @@ public class AbstractHeap {
 				retElem, EpsilonFieldElem.getEpsilonFieldElem());
 		P2Set p2Set = lookup(v, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Set != null) : "get a null p2set!";
-		ret = weakUpdate(pair, p2Set);
 
+		Pair<Boolean, Boolean> res = weakUpdate(pair, p2Set);
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
 		return ret;
 	}
 
-	public boolean handleInvokeStmt(jq_Class clazz, jq_Method method, int line,
-			AbstractHeap calleeHeap, MemLocInstnItem memLocInstn,
-			BoolExpr typeCst) {
-		boolean ret = false;
+	public Pair<Boolean, Boolean> handleInvokeStmt(jq_Class clazz,
+			jq_Method method, int line, AbstractHeap calleeHeap,
+			MemLocInstnItem memLocInstn, BoolExpr typeCst) {
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		ProgramPoint point = Env.getProgramPoint(clazz, method, line);
 		// this is used for recursive call
 		boolean isRecursive = false;
@@ -660,9 +675,12 @@ public class AbstractHeap {
 					while (it1.hasNext()) {
 						Map.Entry<HeapObject, BoolExpr> entry1 = it1.next();
 						HeapObject tgt = entry1.getKey();
-						go = instnEdge(src, tgt, f, memLocInstn, calleeHeap,
-								point, typeCst) | go;
-						ret = ret | go;
+						Pair<Boolean, Boolean> res = instnEdge(src, tgt, f,
+								memLocInstn, calleeHeap, point, typeCst);
+						ret.val0 = res.val0 | ret.val0;
+						ret.val1 = res.val1 | ret.val1;
+						// changing the heap means we need go (conservative)
+						go = res.val0 | go;
 					}
 				}
 				if (!go) {
@@ -724,8 +742,11 @@ public class AbstractHeap {
 						P2Set newP2Set = pair.val1;
 						Pair<AbsMemLoc, FieldElem> pair1 = new Pair<AbsMemLoc, FieldElem>(
 								newSrc, f);
-						go = weakUpdate(pair1, newP2Set) | go;
-						ret = ret | go;
+						Pair<Boolean, Boolean> res = weakUpdate(pair1, newP2Set);
+						ret.val0 = res.val0 | ret.val0;
+						ret.val1 = res.val1 | ret.val1;
+						// changing the heap means we should go (conservative)
+						go = res.val0 | go;
 					}
 				}
 				if (!go) {
@@ -739,16 +760,16 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	private boolean instnEdge(AbsMemLoc src, HeapObject dst, FieldElem field,
-			MemLocInstnItem memLocInstn, AbstractHeap calleeHeap,
-			ProgramPoint point, BoolExpr typeCst) {
+	private Pair<Boolean, Boolean> instnEdge(AbsMemLoc src, HeapObject dst,
+			FieldElem field, MemLocInstnItem memLocInstn,
+			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
 
 		if (G.instnInfo) {
 			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
 					+ "(" + src + "," + field + ")" + "-->" + dst);
 		}
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (src != null && dst != null && field != null) : "nulls!";
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
@@ -756,7 +777,7 @@ public class AbstractHeap {
 				+ "the p2 set should contain the destination of the edge!";
 
 		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived() || src instanceof RetElem) {
+			if (src.isNotArgDerived()) {
 				return ret;
 			}
 		}
@@ -813,14 +834,17 @@ public class AbstractHeap {
 				if (G.instnInfo) {
 					StringUtil.reportInfo("instnInfo: " + "weak updating");
 				}
-				ret = weakUpdate(pair, new P2Set(newDst1, cst)) | ret;
+				Pair<Boolean, Boolean> res = weakUpdate(pair, new P2Set(
+						newDst1, cst));
+				ret.val0 = res.val0 | ret.val0;
+				ret.val1 = res.val1 | ret.val1;
 			}
 		}
 		return ret;
 	}
 
-	private boolean instnEdge4RecurCall(AbsMemLoc src, HeapObject dst,
-			FieldElem field, MemLocInstnItem memLocInstn,
+	private Pair<Boolean, Boolean> instnEdge4RecurCall(AbsMemLoc src,
+			HeapObject dst, FieldElem field, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst,
 			Set<Pair<AbsMemLoc, P2Set>> toAdd) {
 		if (G.instnInfo) {
@@ -829,7 +853,7 @@ public class AbstractHeap {
 					+ "," + field + ")" + "-->" + dst);
 		}
 
-		boolean ret = false;
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (src != null && dst != null && field != null) : "nulls!";
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
@@ -837,7 +861,7 @@ public class AbstractHeap {
 				+ "the p2 set should contain the destination of the edge!";
 
 		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived() || src instanceof RetElem) {
+			if (src.isNotArgDerived()) {
 				return ret;
 			}
 		}
@@ -1146,8 +1170,9 @@ public class AbstractHeap {
 		return ret;
 	}
 
-	protected boolean weakUpdate(Pair<AbsMemLoc, FieldElem> pair, P2Set p2Set) {
-		boolean ret = false;
+	protected Pair<Boolean, Boolean> weakUpdate(
+			Pair<AbsMemLoc, FieldElem> pair, P2Set p2Set) {
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		// first clean up the default targets in the p2set given the pair
 		cleanup(p2Set, pair);
@@ -1166,10 +1191,13 @@ public class AbstractHeap {
 			currentP2Set = new P2Set();
 			locToP2Set.put(pair, currentP2Set);
 		}
-		ret = currentP2Set.join(p2Set);
+		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set);
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
 
+		// this is a conservatively way to clear the cache
 		if (SummariesEnv.v().useMemLocCache) {
-			if (ret) {
+			if (ret.val0) {
 				clearCache(src);
 			}
 		}
@@ -1258,12 +1286,21 @@ public class AbstractHeap {
 	}
 
 	// mark whether the heap has changed.
-	public void markChanged(boolean flag) {
-		this.isChanged = flag;
+	public void markChanged(Pair<Boolean, Boolean> flag) {
+		isChanged.val0 = flag.val0;
+		isChanged.val1 = flag.val1;
 	}
 
-	public boolean isChanged() {
-		return isChanged;
+	public boolean heapIsChanged() {
+		return isChanged.val0;
+	}
+
+	public boolean sumIsChange() {
+		return isChanged.val1;
+	}
+
+	public Pair<Boolean, Boolean> isChanged() {
+		return new Pair<Boolean, Boolean>(isChanged.val0, isChanged.val1);
 	}
 
 	public int size() {

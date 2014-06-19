@@ -20,6 +20,10 @@ public class ArgDerivedHelper {
 		if (loc instanceof AccessPath) {
 			loc.setArgDerived();
 		} else if (loc instanceof AllocElem) {
+			// TODO
+			// we have bugs here, we cannot simply independently mark AllocElem
+			// as non-arg-derived because it depends on who can point to it
+			// solution: dynamically checking this and them mark
 			loc.resetArgDerived();
 		} else if (loc instanceof ParamElem) {
 			loc.setArgDerived();
