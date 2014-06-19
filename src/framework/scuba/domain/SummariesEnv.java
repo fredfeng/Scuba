@@ -38,7 +38,7 @@ public class SummariesEnv {
 	protected boolean propLocals = false;
 
 	// prop statics or not
-	protected boolean propStatics = false;
+	protected boolean propStatics = true;
 
 	// ignore string
 	protected boolean openBlklist = false;
@@ -79,7 +79,7 @@ public class SummariesEnv {
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
-	protected boolean smartSkip = false;
+	protected boolean smartSkip = true;
 
 	// a fine-grained smart skip for instantiating edges
 	protected boolean moreSmartSkip = true;

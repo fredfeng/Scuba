@@ -86,7 +86,6 @@ public class LocalAccessPath extends AccessPath {
 
 	@Override
 	public boolean hasFieldSelector(FieldElem f) {
-
 		return field.equals(f) || base.hasFieldSelector(f);
 	}
 
