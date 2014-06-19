@@ -78,7 +78,7 @@ public class G {
 
 	// public static String dotOutputPath =
 	// "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
-	public static String dotOutputPath = "/home/yufeng/research/Scuba/output";
+	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 
 	public static long instCstSubTime;
 }
