@@ -47,6 +47,7 @@ public class AbstractHeap {
 	// 5. <AccessPath> that
 	private final Map<AbsMemLoc, AbsMemLoc> memLocFactory;
 
+	// whether the heap and summary has been changed: (heap, summary)
 	private Pair<Boolean, Boolean> isChanged = new Pair<Boolean, Boolean>(
 			false, false);
 
@@ -769,6 +770,11 @@ public class AbstractHeap {
 					+ "(" + src + "," + field + ")" + "-->" + dst);
 		}
 
+		// more smart skip for instantiating edges
+		if (SummariesEnv.v().moreSmartSkip) {
+
+		}
+
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (src != null && dst != null && field != null) : "nulls!";
@@ -1229,6 +1235,14 @@ public class AbstractHeap {
 			for (AccessPath ap : aps) {
 				ret1 = true;
 				item.remove(ap);
+
+				// reset the boolean flag in smartSkip to let the caller
+				// instantiate the callee corresponding to the item
+				if (SummariesEnv.v().smartSkip) {
+					assert (summary.smartSkip.containsKey(item)) : "wrong!";
+					summary.smartSkip.put(item, Boolean.FALSE);
+				}
+
 				// clear the constraint instantiation cache
 				if (SummariesEnv.v().isUsingCstCache()) {
 					ret2 = clearCstCache(ap, item) | ret2;

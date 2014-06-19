@@ -35,7 +35,7 @@ public class SummariesEnv {
 	protected int allocDepth = 1;
 
 	// prop locals or not
-	protected boolean propLocals = false;
+	protected boolean propLocals = true;
 
 	// ignore string
 	protected boolean openBlklist = false;
@@ -73,8 +73,28 @@ public class SummariesEnv {
 	// whether use cache for substitution operation of constraints
 	protected boolean useSubCache = true;
 
+	// this is a fantastic way to efficiently skip the instantiation for those
+	// callees that we can magically predict that they will not change the
+	// caller's heap
+	protected boolean smartSkip = true;
+
+	// a fine-grained smart skip for instantiating edges
+	protected boolean moreSmartSkip = true;
+
 	// fix-point or not
 	protected boolean useFixPoint = true;
+
+	public void enableSmartSkip() {
+		smartSkip = true;
+	}
+
+	public void disableSmartSkip() {
+		smartSkip = false;
+	}
+
+	public boolean isUsingSmartSkip() {
+		return smartSkip;
+	}
 
 	public void enableUnionCache() {
 		useUnionCache = true;

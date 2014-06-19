@@ -1,6 +1,7 @@
 package framework.scuba.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,9 @@ public class Summary {
 
 	// used for efficient caching
 	final protected MemLocInstnCacheDepMap locDepMap;
+
+	// smart skip for instantiating the callees
+	protected Map<MemLocInstnItem, Boolean> smartSkip = new HashMap<MemLocInstnItem, Boolean>();
 
 	// finish current summary.
 	private boolean terminated;
@@ -645,6 +649,11 @@ public class Summary {
 							calleeSum.getMethod(), memLocInstnResult);
 					memLocInstnResult.put(new Pair<Quad, jq_Method>(stmt,
 							calleeSum.getMethod()), item);
+
+					if (SummariesEnv.v().smartSkip) {
+						smartSkip.put(item, false);
+					}
+
 					// fill the formal-to-actual mapping
 					ParamListOperand actuals = Invoke.getParamList(stmt);
 					List<StackObject> actualsMemLoc = new ArrayList<StackObject>();
@@ -701,8 +710,23 @@ public class Summary {
 
 				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
 						false);
+
+				// using smart skip for callee instantiation
+				if (SummariesEnv.v().smartSkip) {
+					Boolean skip = smartSkip.get(item);
+					assert (skip != null) : "wrong!";
+					if (skip.equals(Boolean.TRUE)) {
+						continue;
+					}
+				}
+
 				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
 						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
+
+				if (SummariesEnv.v().smartSkip) {
+					assert (smartSkip.containsKey(item)) : "wrong!";
+					smartSkip.put(item, Boolean.TRUE);
+				}
 
 				absHeap.markChanged(flag);
 				if (G.dbgPermission) {
