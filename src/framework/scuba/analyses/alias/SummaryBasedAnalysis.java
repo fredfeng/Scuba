@@ -404,6 +404,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		summary.setHasAnalyzed();
+
+		if (G.seePerf) {
+			if (m.toString().equals("hashCode:()I@java.util.Hashtable$Entry")) {
+				summary.dumpSummaryToFile("$hashCode");
+			}
+		}
+
 		return summary.isChanged();
 	}
 

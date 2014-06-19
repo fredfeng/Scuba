@@ -35,6 +35,8 @@ public class G {
 	public static boolean instnInfo = true;
 
 	public static boolean dbgRef = false;
+	
+	public static boolean seePerf = true;
 
 	public static int sample = 155;
 
