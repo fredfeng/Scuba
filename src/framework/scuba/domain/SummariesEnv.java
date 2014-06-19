@@ -76,6 +76,9 @@ public class SummariesEnv {
 	// whether use cache for substitution operation of constraints
 	protected boolean useSubCache = true;
 
+	// whether use equivalence checking cache
+	protected boolean useEqCache = true;
+
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
@@ -86,6 +89,18 @@ public class SummariesEnv {
 
 	// fix-point or not
 	protected boolean useFixPoint = true;
+
+	public void enableEqCache() {
+		useEqCache = true;
+	}
+
+	public void disableEqCache() {
+		useEqCache = false;
+	}
+
+	public boolean isUsingEqCache() {
+		return useEqCache;
+	}
 
 	public void enableSmartSkip() {
 		smartSkip = true;

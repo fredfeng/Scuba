@@ -71,7 +71,7 @@ public class P2Set {
 				if (ConstraintManager.isFalse(newCst)) {
 					// TODO
 					// need to check this dangerous operation
-					p2Set.remove(obj);
+					// p2Set.remove(obj);
 					continue;
 				}
 				// check whether we need to update the p2set of this heap object
@@ -109,7 +109,7 @@ public class P2Set {
 				// TODO
 				// remove the edges with false constraint
 				if (ConstraintManager.isFalse(otherCst)) {
-					p2Set.remove(obj);
+					// p2Set.remove(obj);
 					continue;
 				}
 
