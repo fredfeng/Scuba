@@ -770,12 +770,15 @@ public class AbstractHeap {
 					+ "(" + src + "," + field + ")" + "-->" + dst);
 		}
 
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
+
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
-
+			if (memLocInstn.memLocInstnCache.containsKey(src)
+					&& memLocInstn.memLocInstnCache.containsKey(dst)) {
+				return ret;
+			}
 		}
-
-		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (src != null && dst != null && field != null) : "nulls!";
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
@@ -860,6 +863,14 @@ public class AbstractHeap {
 		}
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
+
+		// more smart skip for instantiating edges
+		if (SummariesEnv.v().moreSmartSkip) {
+			if (memLocInstn.memLocInstnCache.containsKey(src)
+					&& memLocInstn.memLocInstnCache.containsKey(dst)) {
+				return ret;
+			}
+		}
 
 		assert (src != null && dst != null && field != null) : "nulls!";
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";

@@ -76,7 +76,7 @@ public class SummariesEnv {
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
-	protected boolean smartSkip = true;
+	protected boolean smartSkip = false;
 
 	// a fine-grained smart skip for instantiating edges
 	protected boolean moreSmartSkip = true;
