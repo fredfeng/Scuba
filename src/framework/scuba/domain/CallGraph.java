@@ -97,28 +97,12 @@ public class CallGraph extends AbstractGraph<jq_Method> implements ICICG {
         return SetUtils.iterableToSet(res, view.size());
     }
     
-//    String[] bklist = {"equals", "toString", "run", "next", "getOffset", "hashCode"};
-    String[] bklist = {""};
-
-    
-    public boolean checkBklist(String bk) {
-    	for(String s : Arrays.asList(bklist))
-    		if(bk.contains(s))
-    			return true;
-    	return false;
-    }
-    
     public Set<jq_Method> getSuccs(jq_Method meth) {
         if (!relPMM.isOpen())
             relPMM.load();
         RelView view = relPMM.getView();
         view.selectAndDelete(0, meth);
         Iterable<jq_Method> res = view.getAry1ValTuples();
-		jq_Method strM = Program.g().getMethod("toString:()Ljava/lang/String;@java.lang.Object");
-//		if (meth.equals(strM) || checkBklist(meth.getName().toString())) {
-//			System.out.println("Go back!");
-//			return new HashSet<jq_Method>();
-//		}
         return SetUtils.iterableToSet(res, view.size());
     }
     
