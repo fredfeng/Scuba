@@ -483,6 +483,10 @@ public class Summary {
 
 		// v = A.f.
 		public void visitGetstatic(Quad stmt) {
+			if (!SummariesEnv.v().propStatics) {
+				return;
+			}
+
 			// TODO
 			FieldOperand field = Getstatic.getField(stmt);
 
@@ -967,6 +971,11 @@ public class Summary {
 
 		// A.f = b;
 		public void visitPutstatic(Quad stmt) {
+
+			if (!SummariesEnv.v().propStatics) {
+				return;
+			}
+
 			FieldOperand field = Putstatic.getField(stmt);
 			if (field.getField().getType() instanceof jq_Reference) {
 				jq_Method meth = stmt.getMethod();
