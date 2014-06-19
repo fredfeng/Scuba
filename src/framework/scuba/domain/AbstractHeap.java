@@ -791,6 +791,12 @@ public class AbstractHeap {
 			}
 		}
 
+		if (!SummariesEnv.v().propStatics) {
+			if (src instanceof StaticElem || src instanceof StaticAccessPath) {
+				return ret;
+			}
+		}
+
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
@@ -879,6 +885,12 @@ public class AbstractHeap {
 
 		if (!SummariesEnv.v().propLocals) {
 			if (src.isNotArgDerived()) {
+				return ret;
+			}
+		}
+
+		if (!SummariesEnv.v().propStatics) {
+			if (src instanceof StaticElem || src instanceof StaticAccessPath) {
 				return ret;
 			}
 		}

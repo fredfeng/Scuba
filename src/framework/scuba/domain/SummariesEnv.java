@@ -37,6 +37,9 @@ public class SummariesEnv {
 	// prop locals or not
 	protected boolean propLocals = false;
 
+	// prop statics or not
+	protected boolean propStatics = false;
+
 	// ignore string
 	protected boolean openBlklist = false;
 
