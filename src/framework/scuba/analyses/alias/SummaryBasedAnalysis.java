@@ -33,9 +33,10 @@ import chord.util.tuple.object.Trio;
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
-import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.AbsMemLoc;
+import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.AllocElem;
+import framework.scuba.domain.CallGraph;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.EpsilonFieldElem;
 import framework.scuba.domain.FieldElem;
@@ -69,8 +70,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relCHA;
 	protected ProgramRel relDcm;
 	protected ProgramRel relDVH;
+	protected ProgramRel relPMM;
 
-	protected CICG callGraph;
+
+	protected CallGraph callGraph;
 
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
 	HashMap<Set<jq_Method>, Node> sccToNode = new HashMap<Set<jq_Method>, Node>();
@@ -513,6 +516,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relCHA = (ProgramRel) ClassicProject.g().getTrgt("cha");
 		relDcm = (ProgramRel) ClassicProject.g().getTrgt("dcm");
 		relDVH = (ProgramRel) ClassicProject.g().getTrgt("dcmVH");
+		relPMM = (ProgramRel) ClassicProject.g().getTrgt("PMM");
 
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
@@ -528,7 +532,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	 */
 	public ICICG getCallGraph() {
 		if (callGraph == null) {
-			callGraph = new CICG(domM, relRootM, relReachableM, relIM, relMM);
+			callGraph = new CallGraph(domM, relRootM, relReachableM, relIM, relPMM);
 		}
 		Env.cg = callGraph;
 		return callGraph;
