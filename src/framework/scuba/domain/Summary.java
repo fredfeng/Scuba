@@ -22,6 +22,7 @@ import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
 import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Operator.ALoad;
+import joeq.Compiler.Quad.Operator.ALoad.ALOAD_A;
 import joeq.Compiler.Quad.Operator.AStore;
 import joeq.Compiler.Quad.Operator.CheckCast;
 import joeq.Compiler.Quad.Operator.Getfield;
@@ -337,6 +338,10 @@ public class Summary {
 		public void visitALoad(Quad stmt) {
 			// TODO
 			Summary.aloadCnt++;
+			
+			//only handle ALOAD_A only.
+			if(!(stmt.getOperator() instanceof ALOAD_A))
+				return;
 
 			jq_Method meth = stmt.getMethod();
 			if (ALoad.getDest(stmt) instanceof RegisterOperand) {
