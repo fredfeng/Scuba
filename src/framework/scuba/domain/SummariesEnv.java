@@ -36,75 +36,67 @@ public class SummariesEnv {
 	// 0 means infinity
 	protected int allocDepth = 1;
 
-	// prop locals or not
-	protected boolean propLocals = false;
+	// prop locals or not (if using filter, set this)
+	protected boolean propLocals = true;
 
-	protected Set<Register> toProp = new HashSet<Register>();
-
-	// prop statics or not
+	// prop statics or not (we normally set this)
 	protected boolean propStatics = true;
+
+	// customize what to propagate
+	protected boolean propFilter = true;
+	// the locals that we care about
+	protected Set<Register> toProp = new HashSet<Register>();
 
 	// ignore string
 	protected boolean openBlklist = false;
-
 	// cheating
 	protected boolean cheating = false;
-
 	// ignore string
 	protected boolean ignoreString = false;
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
-
 	// disable constraint instantiate.
 	protected boolean disableCst = false;
+	// we mark it as bad scc if its size greater than this number.
+	public final int sccLimit = 30;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useMemLocCache = true;
-
+	protected boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
-	protected boolean useCstCache = true;
-
+	protected boolean useCstInstnCache = true;
 	// whether use cache for extracting terms
 	protected boolean useExtractCache = true;
-
 	// whether use cache for constraint simplification
 	protected boolean useSimplifyCache = true;
-
 	// whether use cache for constraint union operation
 	protected boolean useUnionCache = true;
-
 	// whether use cache for constraint intersection operation
 	protected boolean useInterCache = true;
-
 	// whether use cache for substitution operation of constraints
 	protected boolean useSubCache = true;
-
 	// whether use equivalence checking cache
 	protected boolean useEqCache = true;
-
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
 	protected boolean smartSkip = true;
-
 	// a fine-grained smart skip for instantiating edges
 	protected boolean moreSmartSkip = true;
 
-	// we mark it as bad scc if its size greater than this number.
-	public final int sccLimit = 30;
-
-	// type smashing for fields (imprecise)
+	// type smashing for fields (imprecise) [DO NOT use this!]
 	protected boolean typeSmashing = false;
-
 	// clear locals in the summary
 	protected boolean clearLocals = false;
 
 	// fix-point or not
 	protected boolean useFixPoint = true;
-
 	// when concluding the clinit's and main, use fix-point or not
 	protected boolean topFixPoint = false;
+
+	public boolean usePropFilter() {
+		return propFilter;
+	}
 
 	public boolean useClearLocals() {
 		return clearLocals;
@@ -135,11 +127,11 @@ public class SummariesEnv {
 	}
 
 	public boolean isUsingMemLocCache() {
-		return useMemLocCache;
+		return useMemLocInstnCache;
 	}
 
 	public boolean isUsingCstCache() {
-		return useCstCache;
+		return useCstInstnCache;
 	}
 
 	public boolean isUsingExtractCache() {

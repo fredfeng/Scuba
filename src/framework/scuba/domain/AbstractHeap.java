@@ -778,8 +778,14 @@ public class AbstractHeap {
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
+		if (SummariesEnv.v().usePropFilter()) {
+			if (!summary.toProp(src)) {
+				return ret;
+			}
+		}
+
 		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived()) {
+			if (src instanceof LocalVarElem) {
 				return ret;
 			}
 		}
@@ -886,8 +892,14 @@ public class AbstractHeap {
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
+		if (SummariesEnv.v().usePropFilter()) {
+			if (!summary.toProp(src)) {
+				return ret;
+			}
+		}
+
 		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived()) {
+			if (src instanceof LocalVarElem) {
 				return ret;
 			}
 		}
@@ -1287,7 +1299,7 @@ public class AbstractHeap {
 		ret.val1 = res.val1;
 
 		// this is a conservatively way to clear the cache
-		if (SummariesEnv.v().useMemLocCache) {
+		if (SummariesEnv.v().useMemLocInstnCache) {
 			if (ret.val0) {
 				clearCache(src);
 			}

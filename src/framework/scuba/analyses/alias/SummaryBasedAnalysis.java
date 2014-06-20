@@ -73,7 +73,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relPIM;
 	protected ProgramRel relAppLocal;
 
-
 	protected CallGraph callGraph;
 
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
@@ -86,9 +85,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void init() {
 		getCallGraph();
-		//app locals from haiyan's analysis.
+		// app locals from haiyan's analysis.
 		extractAppLocals();
-		
+
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
 
@@ -107,7 +106,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("[Scuba] Summaries: " + meth);
 
 	}
-	
+
 	// pre-analysis to extract all locals in application. This will decide which
 	// part of locals we need to propagate to the root level.
 	private void extractAppLocals() {
@@ -351,6 +350,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private void terminateAndDoGC(Node node) {
 		node.setTerminated(true);
 
+		// when terminating, decide what locations in the summary to propagate
+		if (SummariesEnv.v().usePropFilter()) {
+			Set<jq_Method> scc = nodeToScc.get(node);
+			for (jq_Method m : scc) {
+				Summary sum = SummariesEnv.v().getSummary(m);
+				if (m != null) {
+					sum.fillPropSet();
+				}
+			}
+		}
+
 		// when terminating, clean up locals in the summary
 		if (SummariesEnv.v().useClearLocals()) {
 			Set<jq_Method> scc = nodeToScc.get(node);
@@ -364,6 +374,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		if (!SummariesEnv.v().forceGc())
 			return;
+
 		for (Node succ : node.getSuccessors()) {
 			// for each successor, if all its preds are terminated, we can gc
 			// this successor.

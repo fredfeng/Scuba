@@ -1408,32 +1408,66 @@ public class Summary {
 		}
 	}
 
+	// fill the toProp set which determines what kinds of locations to propagate
+	// upwards to the callers, and this is done after terminating some method
 	public void fillPropSet() {
+		Set<AllocElem> wl = new HashSet<AllocElem>();
 		// add all locations that are guaranteed to be propagated to the caller
 		for (Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = absHeap.locToP2Set
 				.entrySet().iterator(); it.hasNext();) {
 			Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it.next();
+			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
 			AbsMemLoc loc = entry.getKey().val0;
 
 			if (loc instanceof AccessPath || loc instanceof ParamElem
 					|| loc instanceof StaticElem || loc instanceof RetElem) {
 				toProp.add(loc);
+				// add all potential allocs into wl
+				P2Set p2set = absHeap.locToP2Set.get(pair);
+				for (HeapObject hObj : p2set.keySet()) {
+					if (hObj instanceof AllocElem) {
+						wl.add((AllocElem) hObj);
+					}
+				}
 			} else if (loc instanceof LocalVarElem) {
 				Register v = ((LocalVarElem) loc).getLocal();
 				if (SummariesEnv.v().toProp(v)) {
 					toProp.add(loc);
+					// add all potential allocs into wl
+					P2Set p2set = absHeap.locToP2Set.get(pair);
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem) {
+							wl.add((AllocElem) hObj);
+						}
+					}
 				}
 			} else {
 				assert (loc instanceof AllocElem) : "wrong!";
 			}
 		}
 		// use a worklist algorithm to find all allocs to propagate
-		Set<AbsMemLoc> wl = new HashSet<AbsMemLoc>();
-		wl.addAll(toProp);
+		Set<AllocElem> set = new HashSet<AllocElem>();
 		while (!wl.isEmpty()) {
-			Set<AllocElem> set = new HashSet<AllocElem>();
-			
+			toProp.addAll(wl);
+			for (AllocElem alloc : wl) {
+				Set<FieldElem> fields = alloc.getFields();
+				for (FieldElem f : fields) {
+					P2Set p2set = absHeap.locToP2Set
+							.get(new Pair<AbsMemLoc, FieldElem>(alloc, f));
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem && !toProp.contains(hObj)) {
+							set.add((AllocElem) hObj);
+						}
+					}
+				}
+			}
+			wl.clear();
+			wl.addAll(set);
+			set.clear();
 		}
+	}
 
+	public boolean toProp(AbsMemLoc loc) {
+		return toProp.contains(loc);
 	}
 }
