@@ -35,7 +35,7 @@ public class SummariesEnv {
 	protected int allocDepth = 1;
 
 	// prop locals or not
-	protected boolean propLocals = false;
+	protected boolean propLocals = true;
 
 	// prop statics or not
 	protected boolean propStatics = true;
