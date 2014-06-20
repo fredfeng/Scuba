@@ -90,12 +90,17 @@ public class SummariesEnv {
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
-	protected boolean typeSmashing = true;
+	// type smashing for fields (imprecise)
+	protected boolean typeSmashing = false;
 
+	// clear locals in the summary
 	protected boolean clearLocals = false;
 
 	// fix-point or not
 	protected boolean useFixPoint = true;
+
+	// when concluding the clinit's and main, use fix-point or not
+	protected boolean topFixPoint = false;
 
 	public boolean clearLocals() {
 		return clearLocals;

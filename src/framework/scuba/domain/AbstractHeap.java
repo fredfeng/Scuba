@@ -1274,7 +1274,15 @@ public class AbstractHeap {
 			currentP2Set = new P2Set();
 			locToP2Set.put(pair, currentP2Set);
 		}
+		if (G.dbgSmashing) {
+			System.out.println("dbgSmashing: " + "current p2set: "
+					+ currentP2Set);
+			System.out.println("dbgSmashing: " + "to update: " + p2Set);
+		}
 		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set);
+		if (G.dbgSmashing) {
+			System.out.println("dbgSmashing: " + "weakupdate result: " + res);
+		}
 		ret.val0 = res.val0;
 		ret.val1 = res.val1;
 

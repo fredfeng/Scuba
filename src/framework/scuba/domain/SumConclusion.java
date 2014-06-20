@@ -108,27 +108,35 @@ public class SumConclusion {
 		Set<AbstractHeap> analyzed = new HashSet<AbstractHeap>();
 		wl.addAll(clinitHeaps);
 
-		while (true) {
-			AbstractHeap worker = wl.iterator().next();
-			wl.remove(worker);
-			if (analyzed.contains(worker)) {
-				continue;
-			}
+		if (SummariesEnv.v().topFixPoint) {
+			while (true) {
+				AbstractHeap worker = wl.iterator().next();
+				wl.remove(worker);
+				if (analyzed.contains(worker)) {
+					continue;
+				}
 
-			Pair<Boolean, Boolean> changed = instnHeap(worker);
-			// TODO
-			// currently we do this again only when the summary is changed
-			if (changed.val1) {
-				analyzed.clear();
-			} else {
-				analyzed.add(worker);
-			}
+				Pair<Boolean, Boolean> changed = instnHeap(worker);
+				// TODO
+				// currently we do this again only when the summary is changed
+				if (changed.val1) {
+					analyzed.clear();
+				} else {
+					analyzed.add(worker);
+				}
 
-			if (analyzed.size() == clinitHeaps.size()) {
-				break;
-			}
+				if (analyzed.size() == clinitHeaps.size()) {
+					break;
+				}
 
-			wl.addAll(clinitHeaps);
+				wl.addAll(clinitHeaps);
+			}
+		} else {
+			for (Iterator<AbstractHeap> it = clinitHeaps.iterator(); it
+					.hasNext();) {
+				AbstractHeap worker = it.next();
+				instnHeap(worker);
+			}
 		}
 		// then conclude the heap of the main method
 		instnHeap(mainHeap);

@@ -572,8 +572,7 @@ public class ConstraintManager {
 			Pair<String, String> pair = new Pair<String, String>(
 					expr1.toString(), expr2.toString());
 			if (eqCache.containsKey(pair)) {
-				ret = eqCache.get(pair);
-				return ret;
+				return eqCache.get(pair);
 			}
 		}
 
@@ -596,7 +595,6 @@ public class ConstraintManager {
 			e.printStackTrace();
 		}
 		ret = false;
-
 		if (SummariesEnv.v().isUsingEqCache()) {
 			eqCache.put(
 					new Pair<String, String>(expr1.toString(), expr2.toString()),

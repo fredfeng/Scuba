@@ -30,16 +30,14 @@ public class G {
 
 	public static boolean dbgPermission = true;
 
-	public static boolean dbgIsil = false;
-
 	public static boolean dbgQuery = false;
 
 	public static boolean instnInfo = true;
 
 	public static boolean dbgRef = false;
 
-	public static boolean seePerf = true;
-	
+	public static boolean seePerf = false;
+
 	public static boolean dbgSmashing = false;
 
 	public static int sample = 155;
@@ -80,7 +78,7 @@ public class G {
 	// number of edges that are instantiated into in the caller
 	public static int instToEdges = 0;
 
-	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
+	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
 	// public static String dotOutputPath =
 	// "/home/yufeng/research/Scuba/output/";
 
