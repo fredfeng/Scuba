@@ -68,7 +68,7 @@ public class Summary {
 
 	public int times = 0;
 
-	protected jq_Method method;
+	private jq_Method method;
 
 	private AbstractHeap absHeap;
 
@@ -727,17 +727,6 @@ public class Summary {
 				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
 						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
 
-				if (G.dbgIsil) {
-					System.out.println("dbgIsil: "
-							+ "dumping the heap for callee " + meth
-							+ " with id " + ++isil);
-					calleeSum.dumpSummaryToFile("$" + isil);
-					System.out.println("dbgIsil: "
-							+ "dumping the heap for caller " + method
-							+ " with id " + ++isil);
-					absHeap.dumpHeapToFile("$" + isil);
-				}
-
 				if (SummariesEnv.v().smartSkip) {
 					assert (smartSkip.containsKey(item)) : "wrong!";
 					smartSkip.put(item, Boolean.TRUE);
@@ -1385,7 +1374,5 @@ public class Summary {
 			Pair<MemLocInstnItem, Set<AccessPath>> deps) {
 		return locDepMap.add(loc, deps);
 	}
-
-	public static int isil = 0;
 
 }

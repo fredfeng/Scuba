@@ -644,9 +644,6 @@ public class AbstractHeap {
 	public Pair<Boolean, Boolean> handleInvokeStmt(jq_Class clazz,
 			jq_Method method, int line, AbstractHeap calleeHeap,
 			MemLocInstnItem memLocInstn, BoolExpr typeCst) {
-		if (G.dbgIsil) {
-			System.out.println("dbgIsil: " + "type constraint: " + typeCst);
-		}
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		ProgramPoint point = Env.getProgramPoint(clazz, method, line);
 		// this is used for recursive call
@@ -768,10 +765,6 @@ public class AbstractHeap {
 			FieldElem field, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
 
-		if (G.dbgIsil) {
-			System.out.println("dbgIsil: " + "in instnEdge method: "
-					+ " type cst: " + typeCst);
-		}
 		if (G.instnInfo) {
 			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
 					+ "(" + src + "," + field + ")" + "-->" + dst);
@@ -849,11 +842,6 @@ public class AbstractHeap {
 				BoolExpr cst = ConstraintManager.intersect(
 						ConstraintManager.intersect(cst1, cst2),
 						ConstraintManager.intersect(instnCst, typeCst));
-
-				if (G.dbgIsil) {
-					System.out.println("dbgIsil: " + "weakupdating the edge: "
-							+ "constraint: " + cst);
-				}
 
 				assert (cst != null) : "null cst!";
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";

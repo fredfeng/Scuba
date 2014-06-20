@@ -10,7 +10,6 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.helper.ConstraintManager;
-import framework.scuba.helper.G;
 
 public class P2Set {
 
@@ -53,46 +52,21 @@ public class P2Set {
 				// directly get the other p2set's constraints
 				BoolExpr otherCst = other.get(obj);
 
-				if (G.dbgIsil) {
-					System.out.println("dbgIsil: " + "in join method: "
-							+ "has type cst: " + otherCst);
-				}
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)
 				BoolExpr newCst = ConstraintManager.union(p2Set.get(obj),
 						otherCst);
 
-				if (G.dbgIsil) {
-					System.out.println("dbgIsil: " + "after union: " + "cst: "
-							+ newCst);
-				}
 				// TODO
 				// remove the edges with false constraints
 				if (ConstraintManager.isFalse(newCst)) {
-					// TODO
-					// need to check this dangerous operation
-					// p2Set.remove(obj);
 					continue;
 				}
 				// check whether we need to update the p2set of this heap object
 				// TODO check the return value
 				// we should use the equivalence checking
-				if (G.dbgIsil) {
-					System.out.println("dbgIsil: before equivalence checking: "
-							+ p2Set.get(obj) + " is equal to " + newCst);
-				}
-				if (ConstraintManager.isEqual(p2Set.get(obj), newCst)) {
-					if (G.dbgIsil) {
-						System.out.println("dbgIsil: " + p2Set.get(obj)
-								+ " is equal to " + newCst);
-					}
+				if (ConstraintManager.isEqual(p2Set.get(obj), newCst))
 					continue;
-				}
-
-				if (G.dbgIsil) {
-					System.out.println("dbgIsil: " + "updating the p2set: "
-							+ "constraints: " + newCst);
-				}
 
 				p2Set.put(obj, newCst);
 				// TODO
@@ -107,9 +81,8 @@ public class P2Set {
 
 				BoolExpr otherCst = other.get(obj);
 				// TODO
-				// remove the edges with false constraint
+				// remove the edges with false constraints
 				if (ConstraintManager.isFalse(otherCst)) {
-					// p2Set.remove(obj);
 					continue;
 				}
 

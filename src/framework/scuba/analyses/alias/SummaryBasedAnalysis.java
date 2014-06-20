@@ -83,7 +83,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void init() {
 		getCallGraph();
-
+		
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
 
@@ -381,7 +381,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// ControlFlowGraph cfg = CodeCache.getCode(m);
 		ControlFlowGraph cfg = m.getCFG();
 
-		if (G.dbgIsil) {
+		if (G.dump) {
 			System.out.println("*****************************************");
 			System.out.println(cfg.fullDump());
 			System.out.println("*****************************************");
@@ -410,9 +410,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				summary.dumpSummaryToFile("$hashCode");
 			}
 		}
+		
+		cnt++;
+		System.out.println("mysum: " + cnt + " " + m);
+		SummariesEnv.v().getSummary(m).dumpSummaryToFile("Sum" + cnt);
 
 		return summary.isChanged();
 	}
+	
+	private int cnt = 0;
 
 	public static int cgProgress = 0;
 	public static boolean inS = false;
