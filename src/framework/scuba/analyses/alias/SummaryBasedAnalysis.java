@@ -70,6 +70,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relDcm;
 	protected ProgramRel relDVH;
 	protected ProgramRel relPMM;
+	protected ProgramRel relPIM;
+
 
 	protected CallGraph callGraph;
 
@@ -528,6 +530,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relDcm = (ProgramRel) ClassicProject.g().getTrgt("dcm");
 		relDVH = (ProgramRel) ClassicProject.g().getTrgt("dcmVH");
 		relPMM = (ProgramRel) ClassicProject.g().getTrgt("PMM");
+		relPIM = (ProgramRel) ClassicProject.g().getTrgt("PIM");
+
 
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
@@ -543,7 +547,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	 */
 	public ICICG getCallGraph() {
 		if (callGraph == null) {
-			callGraph = new CallGraph(domM, relRootM, relReachableM, relIM,
+			callGraph = new CallGraph(domM, relRootM, relReachableM, relPIM,
 					relPMM);
 		}
 		Env.cg = callGraph;

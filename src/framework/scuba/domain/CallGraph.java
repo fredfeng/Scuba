@@ -25,22 +25,22 @@ public class CallGraph extends AbstractGraph<jq_Method> implements ICICG {
 	private DomM domM;
 	private ProgramRel relRootM;
 	private ProgramRel relReachableM;
-	private ProgramRel relIM;
+	private ProgramRel relPIM;
 	private ProgramRel relPMM;
 
 	public CallGraph(DomM domM, ProgramRel relRootM, ProgramRel relReachableM,
-			ProgramRel relIM, ProgramRel relPMM) {
+			ProgramRel relPIM, ProgramRel relPMM) {
 		this.domM = domM;
 		this.relRootM = relRootM;
 		this.relReachableM = relReachableM;
-		this.relIM = relIM;
+		this.relPIM = relPIM;
 		this.relPMM = relPMM;
 	}
 
 	public Set<Quad> getCallers(jq_Method meth) {
-		if (!relIM.isOpen())
-			relIM.load();
-		RelView view = relIM.getView();
+		if (!relPIM.isOpen())
+			relPIM.load();
+		RelView view = relPIM.getView();
 		view.selectAndDelete(1, meth);
 		Iterable<Quad> res = view.getAry1ValTuples();
 		Set<Quad> invks = SetUtils.newSet(view.size());
@@ -50,9 +50,9 @@ public class CallGraph extends AbstractGraph<jq_Method> implements ICICG {
 	}
 
 	public Set<jq_Method> getTargets(Quad invk) {
-		if (!relIM.isOpen())
-			relIM.load();
-		RelView view = relIM.getView();
+		if (!relPIM.isOpen())
+			relPIM.load();
+		RelView view = relPIM.getView();
 		view.selectAndDelete(0, invk);
 		Iterable<jq_Method> res = view.getAry1ValTuples();
 		Set<jq_Method> meths = SetUtils.newSet(view.size());
@@ -127,9 +127,9 @@ public class CallGraph extends AbstractGraph<jq_Method> implements ICICG {
 	}
 
 	public boolean calls(Quad invk, jq_Method meth) {
-		if (!relIM.isOpen())
-			relIM.load();
-		return relIM.contains(invk, meth);
+		if (!relPIM.isOpen())
+			relPIM.load();
+		return relPIM.contains(invk, meth);
 	}
 
 	public boolean hasRoot(jq_Method meth) {
@@ -159,8 +159,8 @@ public class CallGraph extends AbstractGraph<jq_Method> implements ICICG {
 			relRootM.close();
 		if (relReachableM.isOpen())
 			relReachableM.close();
-		if (relIM.isOpen())
-			relIM.close();
+		if (relPIM.isOpen())
+			relPIM.close();
 		if (relPMM.isOpen())
 			relPMM.close();
 	}
