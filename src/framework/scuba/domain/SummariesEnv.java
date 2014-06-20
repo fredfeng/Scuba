@@ -110,6 +110,10 @@ public class SummariesEnv {
 		return smartSkip;
 	}
 
+	public boolean isUsingEqCache() {
+		return useEqCache;
+	}
+
 	public void enableUnionCache() {
 		useUnionCache = true;
 	}

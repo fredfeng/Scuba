@@ -1226,7 +1226,7 @@ public class AbstractHeap {
 						}
 					}
 				} else if (loc instanceof ParamElem) {
-					ret = getLocalAccessPath((LocalAccessPath) loc, field);
+					ret = getLocalAccessPath((ParamElem) loc, field);
 				} else if (loc instanceof StaticElem) {
 					ret = Env.getStaticAccessPath((StaticElem) loc, field);
 				} else {
