@@ -3,6 +3,7 @@ package framework.scuba.helper;
 import java.util.HashMap;
 import java.util.Map;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Type;
 import chord.util.tuple.object.Pair;
@@ -119,6 +120,9 @@ public class ConstraintManager {
 				// return the number of its class.
 				AllocElem ae = (AllocElem) ho;
 				jq_Type jType = ae.getAlloc().getType();
+				//always true for jq_array.
+				if(jType instanceof jq_Array) 
+					return (BoolExpr)cur;
 				// assert jType instanceof jq_Class :
 				// "alloc object should be a jq_class. "
 				// + "[type]: " + jType + " [AllocElem]: " + ae;
