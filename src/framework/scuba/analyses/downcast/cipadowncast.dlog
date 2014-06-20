@@ -1,0 +1,57 @@
+# Copyright (c) 2008-2010, Intel Corporation.
+# Copyright (c) 2006-2007, The Trustees of Stanford University.
+# All rights reserved.
+# Licensed under the terms of the New BSD License.
+
+
+# name=cipa-downcast-dlog
+
+.include "H.dom"
+.include "M.dom"
+.include "T.dom"
+.include "V.dom"
+
+
+.bddvarorder M0_T0_V0xV1_T1_H0
+
+###
+# Relations
+###
+
+MobjVarAsgnInst(m:M,l:V,r:V) input
+reachableM(m:M)input
+
+#used to exclude library methods
+librariesM(m:M0)input
+
+reachableappsM(m:M0)output
+
+
+
+cipareachableLR(l:V,r:V)
+
+VH(v:V0,h:H0)input
+sub(s:T1,t:T0) input
+VT(v:V0,t:T0) input
+HT(h:H0,t:T1) input
+cipaptsVH(v:V,h:H) output
+cipaptsVT(v:V,t:T) output
+cipadowncast(v:V,t:T) output
+cipaunsafeDowncast(v:V,t:T) output
+cipasafeDowncast(v:V,t:T) output
+
+reachableappsM(m) :- reachableM(m), !librariesM(m).
+
+#cipareachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableM(m).
+
+##only care about application level downcast
+cipareachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableappsM(m).
+
+
+cipaptsVH(v,h) :- VH(v,h).
+cipaptsVT(v,t) :- cipaptsVH(v,h), HT(h,t).
+
+cipadowncast(r,t) :- cipareachableLR(l,r), VT(l,t), VT(r,t2), !sub(t2,t).
+
+cipaunsafeDowncast(v,t) :- cipadowncast(v,t), cipaptsVT(v,t2), !sub(t2,t).
+cipasafeDowncast(v,t) :- cipadowncast(v,t), !cipaunsafeDowncast(v,t).
