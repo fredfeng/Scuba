@@ -44,6 +44,7 @@ import framework.scuba.domain.LocalVarElem;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.SumConclusion;
 import framework.scuba.domain.SummariesEnv;
+import framework.scuba.domain.SummariesEnv.PropType;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
@@ -72,6 +73,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relPMM;
 	protected ProgramRel relPIM;
 	protected ProgramRel relAppLocal;
+	protected ProgramRel relDcLocal;
 
 	protected CallGraph callGraph;
 
@@ -110,12 +112,23 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	// pre-analysis to extract all locals in application. This will decide which
 	// part of locals we need to propagate to the root level.
 	private void extractAppLocals() {
-		if (!relAppLocal.isOpen())
-			relAppLocal.load();
-		Iterable<Register> res = relAppLocal.getAry1ValTuples();
-		Set<Register> propSet = SetUtils.iterableToSet(res, relAppLocal.size());
+		if (SummariesEnv.v().getLocalType() == PropType.APPLOCAL) {
+			if (!relAppLocal.isOpen())
+				relAppLocal.load();
 
-		SummariesEnv.v().addAllPropSet(propSet);
+			Iterable<Register> res = relAppLocal.getAry1ValTuples();
+			Set<Register> propSet = SetUtils.iterableToSet(res,
+					relAppLocal.size());
+			SummariesEnv.v().addAllPropSet(propSet);
+		} else if (SummariesEnv.v().getLocalType() == PropType.DOWNCAST) {
+			if (!relDcLocal.isOpen())
+				relDcLocal.load();
+
+			Iterable<Register> res = relDcLocal.getAry1ValTuples();
+			Set<Register> propSet = SetUtils.iterableToSet(res,
+					relDcLocal.size());
+			SummariesEnv.v().addAllPropSet(propSet);
+		}
 	}
 
 	// summarize all heaps.
@@ -557,6 +570,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relPMM = (ProgramRel) ClassicProject.g().getTrgt("PMM");
 		relPIM = (ProgramRel) ClassicProject.g().getTrgt("PIM");
 		relAppLocal = (ProgramRel) ClassicProject.g().getTrgt("AppLocal");
+		relDcLocal = (ProgramRel) ClassicProject.g().getTrgt("DcLocal");
 
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();

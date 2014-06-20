@@ -23,6 +23,10 @@ public class SummariesEnv {
 	final protected Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
 
 	protected SumConclusion finalSum;
+	
+	public static enum PropType {
+		DOWNCAST, APPLOCAL;
+	}
 
 	String[] blklist = {
 			"fixAfterDeletion:(Ljava/util/TreeMap$Entry;)V@java.util.TreeMap",
@@ -93,6 +97,14 @@ public class SummariesEnv {
 	protected boolean useFixPoint = true;
 	// when concluding the clinit's and main, use fix-point or not
 	protected boolean topFixPoint = false;
+	
+	// which kind of local need to be propagated, e.g. downcast, all locals in
+	// app, etc.
+	protected PropType localType = PropType.APPLOCAL;
+
+	public PropType getLocalType () {
+		return localType;
+	}
 
 	public boolean usePropFilter() {
 		return propFilter;
