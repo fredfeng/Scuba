@@ -35,7 +35,7 @@ public class SummariesEnv {
 	protected int allocDepth = 1;
 
 	// prop locals or not
-	protected boolean propLocals = true;
+	protected boolean propLocals = false;
 
 	// prop statics or not
 	protected boolean propStatics = true;
@@ -86,6 +86,9 @@ public class SummariesEnv {
 
 	// a fine-grained smart skip for instantiating edges
 	protected boolean moreSmartSkip = true;
+	
+	// we mark it as bad scc if its size greater than this number.
+	public final int sccLimit = 30;
 
 	// type smashing for fields (imprecise)
 	protected boolean typeSmashing = false;
@@ -110,7 +113,7 @@ public class SummariesEnv {
 	public void disableSmartSkip() {
 		smartSkip = false;
 	}
-
+	
 	public boolean isUsingSmartSkip() {
 		return smartSkip;
 	}
@@ -234,7 +237,7 @@ public class SummariesEnv {
 	public static void reset() {
 		instance = new SummariesEnv();
 	}
-
+	
 	public void sumAll(Set<AbstractHeap> clinitHeaps, AbstractHeap mainHeap) {
 		finalSum = new SumConclusion(clinitHeaps, mainHeap);
 		finalSum.sumAllHeaps();

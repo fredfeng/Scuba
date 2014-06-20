@@ -26,20 +26,34 @@ CH(c:C,h:H) input
 sub(s:T1,t:T0) input
 VT(v:V0,t:T0) input
 HT(h:H0,t:T1) input
+
 #v is declared in method m.
 MV(m:M0,v:V0) input
+## v is downcast to type t in method m.
+dcm(m:M,v:V,t:T) output
+## dump out the points-to set related to downcast.
+dcmVH(v:V,h:H) output
+
+## used to filter library methods
+librariesM(m:M0)input
+
+
+reachableappsCM(m:M0)output
+
 ptsVH(v:V,h:H) output
 ptsVT(v:V,t:T) output
 downcast(v:V,t:T) output
 unsafeDowncast(v:V,t:T) output
 safeDowncast(v:V,t:T) output
 
-## v is downcast to type t in method m.
-dcm(m:M,v:V,t:T) output
-## dump out the points-to set related to downcast.
-dcmVH(v:V,h:H) output
 
-reachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableCM(_,m).
+#reachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableCM(_,m).
+
+
+reachableappsCM(m) :- reachableCM(_,m), !librariesM(m).
+
+##only care about application level downcast
+reachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableappsCM(m).
 
 ptsVH(v,h) :- CVC(_,v,o), CH(o,h).
 ptsVT(v,t) :- ptsVH(v,h), HT(h,t).
@@ -48,7 +62,6 @@ downcast(r,t) :- reachableLR(l,r), \
 	VT(l,t), VT(r,t2), !sub(t2,t).
 	
 dcm(m,v,t) :- MV(m,v), downcast(v,t). 
-
 dcmVH(v,h) :- ptsVH(v,h), downcast(v,_).
 
 unsafeDowncast(v,t) :- downcast(v,t), ptsVT(v,t2), !sub(t2,t).

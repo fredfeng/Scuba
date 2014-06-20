@@ -22,6 +22,7 @@ import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
 import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Operator.ALoad;
+import joeq.Compiler.Quad.Operator.ALoad.ALOAD_A;
 import joeq.Compiler.Quad.Operator.AStore;
 import joeq.Compiler.Quad.Operator.CheckCast;
 import joeq.Compiler.Quad.Operator.Getfield;
@@ -111,6 +112,17 @@ public class Summary {
 
 	// alias query in this method or instantiated in this method
 	protected AliasQueries aliasQueries;
+	
+	// whether current method is in a bad scc.
+	protected boolean inBadScc = false;
+
+	public boolean isInBadScc() {
+		return inBadScc;
+	}
+
+	public void setInBadScc(boolean inBadScc) {
+		this.inBadScc = inBadScc;
+	}
 
 	public boolean heapIsChanged() {
 		return changed.val0;
@@ -330,6 +342,10 @@ public class Summary {
 			}
 
 			Summary.aloadCnt++;
+			
+			//only handle ALOAD_A only.
+			if(!(stmt.getOperator() instanceof ALOAD_A))
+				return;
 
 			jq_Method meth = stmt.getMethod();
 			if (ALoad.getDest(stmt) instanceof RegisterOperand) {
@@ -1129,7 +1145,7 @@ public class Summary {
 				// generate constraint for each potential target.
 				jq_Class tgtType = tgt.getDeclaringClass();
 
-				if (SummariesEnv.v().disableCst)
+				if (SummariesEnv.v().disableCst || inBadScc)
 					cst = ConstraintManager.genTrue();
 				else
 					cst = genCst(p2Set, tgt, tgtType, tgtSet);

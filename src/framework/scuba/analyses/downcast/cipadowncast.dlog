@@ -20,6 +20,14 @@
 
 MobjVarAsgnInst(m:M,l:V,r:V) input
 reachableM(m:M)input
+
+#used to exclude library methods
+librariesM(m:M0)input
+
+reachableappsM(m:M0)output
+
+
+
 cipareachableLR(l:V,r:V)
 
 VH(v:V0,h:H0)input
@@ -32,7 +40,13 @@ cipadowncast(v:V,t:T) output
 cipaunsafeDowncast(v:V,t:T) output
 cipasafeDowncast(v:V,t:T) output
 
-cipareachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableM(m).
+reachableappsM(m) :- reachableM(m), !librariesM(m).
+
+#cipareachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableM(m).
+
+##only care about application level downcast
+cipareachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableappsM(m).
+
 
 cipaptsVH(v,h) :- VH(v,h).
 cipaptsVT(v,t) :- cipaptsVH(v,h), HT(h,t).

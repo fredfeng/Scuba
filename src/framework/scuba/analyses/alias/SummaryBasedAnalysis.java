@@ -278,7 +278,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				analyzeSCC(node);
 			} else {
 				jq_Method m = scc.iterator().next();
-				analyze(m);
+				analyze(m, false);
 				if (G.dbgPermission) {
 					StringUtil.reportInfo("Evils:[" + G.countScc
 							+ "] begin regular node");
@@ -379,10 +379,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		return flag;
 	}
 
-	private Pair<Boolean, Boolean> analyze(jq_Method m) {
+	private Pair<Boolean, Boolean> analyze(jq_Method m, boolean isBadScc) {
 		accessSeq.add(m);
 
 		Summary summary = SummariesEnv.v().initSummary(m);
+		summary.setInBadScc(isBadScc);
 		summary.setChanged(new Pair<Boolean, Boolean>(false, false));
 		intrapro.setSummary(summary);
 
@@ -425,7 +426,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				summary.dumpSummaryToFile("$hashCode");
 			}
 		}
-
+		
 		return summary.isChanged();
 	}
 
@@ -503,7 +504,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				StringUtil.reportInfo("SCC counter: " + wl.size() + ":"
 						+ worker);
 
-			Pair<Boolean, Boolean> changed = analyze(worker);
+			Pair<Boolean, Boolean> changed = analyze(worker,
+					(scc.size() > SummariesEnv.v().sccLimit));
 
 			// only when changing the summary, we add all the callers
 			if (changed.val1) {

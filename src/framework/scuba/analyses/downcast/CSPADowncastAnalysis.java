@@ -37,19 +37,23 @@ import chord.util.tuple.object.Pair;
  */
 @Chord(
 	name = "cspa-downcast-java",
-	consumes = {"reachableCM","reachableM", "downcast", "unsafeDowncast", "safeDowncast"}
+	consumes = {"reachableCM","reachableM", "downcast", "unsafeDowncast", "safeDowncast", "reachableappsCM"}
 )
 public class CSPADowncastAnalysis extends JavaAnalysis {
 		private ProgramRel relreachableM;
 		private ProgramRel relreachableCM;
 		private ProgramRel reldowncast;
+		
+		private ProgramRel relreachableappsCM;
 
 		private ProgramRel relunsafeDowncast;
 		private ProgramRel relsafeDowncasst;
 		
-		//private ProgramRel relMcheckCastInst;
+//		private ProgramRel relMcheckCastInst;
+//		
+//		private ProgramRel relMobjVarAsgnInst;
 		
-		//private ProgramRel relMobjVarAsgnInst;
+		
 
 	public void run() {
 		System.out.println("Running Ctxts task is  "
@@ -62,10 +66,12 @@ public class CSPADowncastAnalysis extends JavaAnalysis {
 
 		relreachableCM = (ProgramRel) ClassicProject.g().getTrgt("reachableCM");
 		
+		relreachableappsCM = (ProgramRel)ClassicProject.g().getTrgt("reachableappsCM");
 		
-		//relMcheckCastInst = (ProgramRel)ClassicProject.g().getTrgt("McheckCastInst");
 		
-		//relMobjVarAsgnInst = (ProgramRel)ClassicProject.g().getTrgt("MobjVarAsgnInst");
+//		relMcheckCastInst = (ProgramRel)ClassicProject.g().getTrgt("McheckCastInst");
+//		
+//		relMobjVarAsgnInst = (ProgramRel)ClassicProject.g().getTrgt("MobjVarAsgnInst");
 
 		reldowncast = (ProgramRel) ClassicProject.g().getTrgt("downcast");
 
@@ -79,6 +85,10 @@ public class CSPADowncastAnalysis extends JavaAnalysis {
 
 		if (!relreachableCM.isOpen())
 			relreachableCM.load();
+		
+		
+		if(!relreachableappsCM.isOpen())
+			relreachableappsCM.load();
 
 		if (!reldowncast.isOpen())
 			reldowncast.load();
@@ -89,11 +99,11 @@ public class CSPADowncastAnalysis extends JavaAnalysis {
 		if (!relsafeDowncasst.isOpen())
 			relsafeDowncasst.load();
 		
-		//if(!relMcheckCastInst.isOpen())
-		//	relMcheckCastInst.load();
-		
-		//if(!relMobjVarAsgnInst.isOpen())
-		//	relMobjVarAsgnInst.load();
+//		if(!relMcheckCastInst.isOpen())
+//			relMcheckCastInst.load();
+//		
+//		if(!relMobjVarAsgnInst.isOpen())
+//			relMobjVarAsgnInst.load();
 
 		print_result();
 	}
@@ -114,13 +124,15 @@ public class CSPADowncastAnalysis extends JavaAnalysis {
 		System.out.println("Total Reachable Method ::" + relreachableM.size());
 		System.out.println("Total Reachable Methods inside CM :: " + ms.size());
 		
+		System.out.println("Total Reachable AppsM inside CM :: " + relreachableappsCM.size());
 		
-		//System.out.println("Total checkcast instruction ::" + relMcheckCastInst.size());
-        
-        
-        
-               //System.out.println("Total objVarAssignment " + relMobjVarAsgnInst.size());
 		
+//		System.out.println("Total checkcast instruction ::" + relMcheckCastInst.size());
+//        
+//        
+//        
+//        System.out.println("Total objVarAssignment " + relMobjVarAsgnInst.size());
+//		
 		
 
 		assert ((size_of_unsafety + size_of_safety) == reldowncast.size());
