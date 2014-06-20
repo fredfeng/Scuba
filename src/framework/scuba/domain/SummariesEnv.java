@@ -77,7 +77,7 @@ public class SummariesEnv {
 	protected boolean useSubCache = true;
 
 	// whether use equivalence checking cache
-	protected boolean useEqCache = false;
+	protected boolean useEqCache = true;
 
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
@@ -87,12 +87,17 @@ public class SummariesEnv {
 	// a fine-grained smart skip for instantiating edges
 	protected boolean moreSmartSkip = true;
 
-	protected boolean typeSmashing = true;
+	// type smashing for fields (imprecise)
+	protected boolean typeSmashing = false;
 
+	// clear locals in the summary
 	protected boolean clearLocals = false;
 
 	// fix-point or not
 	protected boolean useFixPoint = true;
+
+	// when concluding the clinit's and main, use fix-point or not
+	protected boolean topFixPoint = false;
 
 	public boolean clearLocals() {
 		return clearLocals;

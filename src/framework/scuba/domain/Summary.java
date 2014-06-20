@@ -325,6 +325,10 @@ public class Summary {
 		// y = x[1];
 		public void visitALoad(Quad stmt) {
 			// TODO
+			if (G.dbgSmashing) {
+				System.out.println("dbgSmashing: " + " exec stmt: " + stmt);
+			}
+
 			Summary.aloadCnt++;
 
 			jq_Method meth = stmt.getMethod();
