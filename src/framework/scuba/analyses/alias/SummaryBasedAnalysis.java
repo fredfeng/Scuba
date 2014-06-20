@@ -336,7 +336,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		node.setTerminated(true);
 
 		// when terminating, clean up locals in the summary
-		if (SummariesEnv.v().clearLocals()) {
+		if (SummariesEnv.v().useClearLocals()) {
 			Set<jq_Method> scc = nodeToScc.get(node);
 			for (jq_Method m : scc) {
 				Summary sum = SummariesEnv.v().getSummary(m);
@@ -426,7 +426,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				summary.dumpSummaryToFile("$hashCode");
 			}
 		}
-		
+
 		return summary.isChanged();
 	}
 
