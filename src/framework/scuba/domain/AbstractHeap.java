@@ -1203,20 +1203,23 @@ public class AbstractHeap {
 			}
 		} else {
 			if (loc.isArgDerived()) {
-				if (loc.hasFieldSelector(field)) {
-					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
-					// only AccessPath has field selectors
-					AccessPath path = ((AccessPath) loc).getPrefix(field);
-					if (path instanceof LocalAccessPath) {
-						ret = getLocalAccessPath((LocalAccessPath) path);
-					} else if (path instanceof StaticAccessPath) {
-						ret = Env.getStaticAccessPath((StaticAccessPath) path);
-					} else {
-						assert false : "only access path is allowed!";
-					}
-				} else if (loc instanceof AccessPath) {
+				if (loc instanceof AccessPath) {
 					FieldElem field1 = ((AccessPath) loc).getField();
-					if (TypeHelper.typeCompatible(field1, field)) {
+
+					if (field instanceof IndexFieldElem) {
+						if (loc.hasFieldSelector(field)) {
+							AccessPath path = ((AccessPath) loc)
+									.getPrefix(field);
+							if (path instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) path);
+							} else if (path instanceof StaticAccessPath) {
+								ret = Env
+										.getStaticAccessPath((StaticAccessPath) path);
+							} else {
+								assert false : "only access path is allowed!";
+							}
+						}
+					} else if (TypeHelper.typeCompatible(field1, field)) {
 						if (loc instanceof LocalAccessPath) {
 							ret = getLocalAccessPath((LocalAccessPath) loc);
 						} else if (loc instanceof StaticAccessPath) {
