@@ -13,4 +13,5 @@ public abstract class AccessPath extends HeapObject {
 	abstract public AccessPath getPrefix(FieldElem f);
 
 	abstract public AccessPath findPrefix(FieldElem f);
+
 }
