@@ -23,7 +23,7 @@ public class SummariesEnv {
 	final protected Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
 
 	protected SumConclusion finalSum;
-	
+
 	public static enum PropType {
 		DOWNCAST, APPLOCAL;
 	}
@@ -42,10 +42,8 @@ public class SummariesEnv {
 
 	// prop locals or not (if using filter, set this)
 	protected boolean propLocals = true;
-
 	// prop statics or not (we normally set this)
 	protected boolean propStatics = true;
-
 	// customize what to propagate
 	protected boolean propFilter = true;
 	// the locals that we care about
@@ -96,13 +94,14 @@ public class SummariesEnv {
 	// fix-point or not
 	protected boolean useFixPoint = true;
 	// when concluding the clinit's and main, use fix-point or not
-	protected boolean topFixPoint = false;
-	
+	protected boolean topFixPoint = true;
+
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
-	protected PropType localType = PropType.APPLOCAL;
+	// protected PropType localType = PropType.APPLOCAL;
+	protected PropType localType = PropType.DOWNCAST;
 
-	public PropType getLocalType () {
+	public PropType getLocalType() {
 		return localType;
 	}
 
