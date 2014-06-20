@@ -22,6 +22,7 @@ import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
 import framework.scuba.helper.P2SetHelper;
+import framework.scuba.helper.TypeHelper;
 import framework.scuba.utils.StringUtil;
 
 public class AbstractHeap {
@@ -1164,39 +1165,78 @@ public class AbstractHeap {
 		assert loc.isArgDerived() : "you can ONLY get the default target for an arg derived mem loc!";
 
 		AccessPath ret = null;
-		if (loc.isArgDerived()) {
-			if (loc.hasFieldSelector(field)) {
-				assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
-				// only AccessPath has field selectors
-				AccessPath path = ((AccessPath) loc).getPrefix(field);
-				if (path instanceof LocalAccessPath) {
-					ret = getLocalAccessPath((LocalAccessPath) path);
-				} else if (path instanceof StaticAccessPath) {
-					ret = Env.getStaticAccessPath((StaticAccessPath) path);
+
+		if (!SummariesEnv.v().typeSmashing) {
+			if (loc.isArgDerived()) {
+				if (loc.hasFieldSelector(field)) {
+					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+					// only AccessPath has field selectors
+					AccessPath path = ((AccessPath) loc).getPrefix(field);
+					if (path instanceof LocalAccessPath) {
+						ret = getLocalAccessPath((LocalAccessPath) path);
+					} else if (path instanceof StaticAccessPath) {
+						ret = Env.getStaticAccessPath((StaticAccessPath) path);
+					} else {
+						assert false : "only access path is allowed!";
+					}
+				} else {
+					if (loc instanceof StaticElem) {
+						ret = Env.getStaticAccessPath((StaticElem) loc, field);
+					} else if (loc instanceof ParamElem) {
+						ret = getLocalAccessPath((ParamElem) loc, field);
+					} else if (loc instanceof AccessPath) {
+						if (loc instanceof StaticAccessPath) {
+							ret = Env.getStaticAccessPath(
+									(StaticAccessPath) loc, field);
+						} else if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc,
+									field);
+						} else {
+							assert false : "only two kinds of access path!";
+						}
+					} else {
+						assert false : "only three kinds of things can have default targets!";
+					}
+				}
+			} else {
+				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
+			}
+		} else {
+			if (loc.isArgDerived()) {
+				if (loc instanceof AccessPath) {
+					FieldElem field1 = ((AccessPath) loc).getField();
+					if (TypeHelper.typeCompatible(field1, field)) {
+						if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc);
+						} else if (loc instanceof StaticAccessPath) {
+							ret = Env
+									.getStaticAccessPath((StaticAccessPath) loc);
+						} else {
+							assert false : "only access path is allowed!";
+						}
+					} else {
+						if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc,
+									field);
+						} else if (loc instanceof StaticAccessPath) {
+							ret = Env.getStaticAccessPath(
+									(StaticAccessPath) loc, field);
+						} else {
+							assert false : "only access path is allowed!";
+						}
+					}
+				} else if (loc instanceof ParamElem) {
+					ret = getLocalAccessPath((LocalAccessPath) loc, field);
+				} else if (loc instanceof StaticElem) {
+					ret = Env.getStaticAccessPath((StaticElem) loc, field);
 				} else {
 					assert false : "only access path is allowed!";
 				}
 			} else {
-				if (loc instanceof StaticElem) {
-					ret = Env.getStaticAccessPath((StaticElem) loc, field);
-				} else if (loc instanceof ParamElem) {
-					ret = getLocalAccessPath((ParamElem) loc, field);
-				} else if (loc instanceof AccessPath) {
-					if (loc instanceof StaticAccessPath) {
-						ret = Env.getStaticAccessPath((StaticAccessPath) loc,
-								field);
-					} else if (loc instanceof LocalAccessPath) {
-						ret = getLocalAccessPath((LocalAccessPath) loc, field);
-					} else {
-						assert false : "only two kinds of access path!";
-					}
-				} else {
-					assert false : "only three kinds of things can have default targets!";
-				}
+				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 			}
-		} else {
-			assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 		}
+
 		assert (ret != null) : "you can NOT get the default target for a non-arg derived mem loc!";
 		return ret;
 	}
@@ -1264,8 +1304,7 @@ public class AbstractHeap {
 				// reset the boolean flag in smartSkip to let the caller
 				// instantiate the callee corresponding to the item
 				if (SummariesEnv.v().smartSkip) {
-					assert (summary.smartSkip.containsKey(item)) : "wrong!";
-					summary.smartSkip.put(item, Boolean.FALSE);
+					summary.smartSkip.remove(item);
 				}
 
 				// clear the constraint instantiation cache

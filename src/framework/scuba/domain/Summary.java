@@ -1,8 +1,8 @@
 package framework.scuba.domain;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,7 +90,7 @@ public class Summary {
 	final protected MemLocInstnCacheDepMap locDepMap;
 
 	// smart skip for instantiating the callees
-	protected Map<MemLocInstnItem, Boolean> smartSkip = new HashMap<MemLocInstnItem, Boolean>();
+	protected Set<MemLocInstnItem> smartSkip = new HashSet<MemLocInstnItem>();
 
 	// finish current summary.
 	private boolean terminated;
@@ -654,10 +654,6 @@ public class Summary {
 					memLocInstnResult.put(new Pair<Quad, jq_Method>(stmt,
 							calleeSum.getMethod()), item);
 
-					if (SummariesEnv.v().smartSkip) {
-						smartSkip.put(item, false);
-					}
-
 					// fill the formal-to-actual mapping
 					ParamListOperand actuals = Invoke.getParamList(stmt);
 					List<StackObject> actualsMemLoc = new ArrayList<StackObject>();
@@ -717,9 +713,7 @@ public class Summary {
 
 				// using smart skip for callee instantiation
 				if (SummariesEnv.v().smartSkip) {
-					Boolean skip = smartSkip.get(item);
-					assert (skip != null) : "wrong!";
-					if (skip.equals(Boolean.TRUE)) {
+					if (smartSkip.contains(item)) {
 						continue;
 					}
 				}
@@ -728,8 +722,7 @@ public class Summary {
 						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
 
 				if (SummariesEnv.v().smartSkip) {
-					assert (smartSkip.containsKey(item)) : "wrong!";
-					smartSkip.put(item, Boolean.TRUE);
+					smartSkip.add(item);
 				}
 
 				absHeap.markChanged(flag);
@@ -1373,6 +1366,19 @@ public class Summary {
 	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(AbsMemLoc loc,
 			Pair<MemLocInstnItem, Set<AccessPath>> deps) {
 		return locDepMap.add(loc, deps);
+	}
+
+	public void removeLocals() {
+		Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = absHeap.locToP2Set
+				.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it.next();
+			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
+			AbsMemLoc loc = pair.val0;
+			if (loc instanceof LocalVarElem) {
+				absHeap.locToP2Set.remove(pair);
+			}
+		}
 	}
 
 }
