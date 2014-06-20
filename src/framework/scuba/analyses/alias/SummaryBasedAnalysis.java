@@ -83,7 +83,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void init() {
 		getCallGraph();
-		
+
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
 
@@ -152,16 +152,19 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				continue;
 			// now just analyze once.
 			assert worker != null : "Worker can not be null";
+
 			if (allTerminated(worker.getSuccessors())) {
-				if (G.tuning)
+				if (G.tuning) {
 					StringUtil.reportInfo("Before work on " + worker);
+				}
+
 				workOn(worker);
 
 				visited.add(worker);
-			}
-			// append worker to the end of the List.class
-			else
+			} else {
+				// append worker to the end of the List.class
 				worklist.add(worker);
+			}
 
 			// add m's pred to worklist
 			worklist.addAll(worker.getPreds());
@@ -331,6 +334,18 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	// possible.
 	private void terminateAndDoGC(Node node) {
 		node.setTerminated(true);
+
+		// when terminating, clean up locals in the summary
+		if (SummariesEnv.v().clearLocals()) {
+			Set<jq_Method> scc = nodeToScc.get(node);
+			for (jq_Method m : scc) {
+				Summary sum = SummariesEnv.v().getSummary(m);
+				if (m != null) {
+					sum.removeLocals();
+				}
+			}
+		}
+
 		if (!SummariesEnv.v().forceGc())
 			return;
 		for (Node succ : node.getSuccessors()) {
@@ -382,7 +397,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// ControlFlowGraph cfg = CodeCache.getCode(m);
 		ControlFlowGraph cfg = m.getCFG();
 
-		if (G.dump) {
+		if (G.dbgSmashing) {
 			System.out.println("*****************************************");
 			System.out.println(cfg.fullDump());
 			System.out.println("*****************************************");
@@ -414,7 +429,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		
 		return summary.isChanged();
 	}
-	
+
 	public static int cgProgress = 0;
 	public static boolean inS = false;
 

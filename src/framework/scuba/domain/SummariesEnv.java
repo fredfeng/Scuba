@@ -35,7 +35,7 @@ public class SummariesEnv {
 	protected int allocDepth = 1;
 
 	// prop locals or not
-	protected boolean propLocals = false;
+	protected boolean propLocals = true;
 
 	// prop statics or not
 	protected boolean propStatics = true;
@@ -76,6 +76,9 @@ public class SummariesEnv {
 	// whether use cache for substitution operation of constraints
 	protected boolean useSubCache = true;
 
+	// whether use equivalence checking cache
+	protected boolean useEqCache = false;
+
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
@@ -87,8 +90,16 @@ public class SummariesEnv {
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
+	protected boolean typeSmashing = true;
+
+	protected boolean clearLocals = false;
+
 	// fix-point or not
 	protected boolean useFixPoint = true;
+
+	public boolean clearLocals() {
+		return clearLocals;
+	}
 
 	public void enableSmartSkip() {
 		smartSkip = true;
@@ -100,6 +111,10 @@ public class SummariesEnv {
 	
 	public boolean isUsingSmartSkip() {
 		return smartSkip;
+	}
+
+	public boolean isUsingEqCache() {
+		return useEqCache;
 	}
 
 	public void enableUnionCache() {

@@ -12,6 +12,7 @@ import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.helper.AccessPathHelper;
 import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.G;
 
 public class SumConclusion {
 
@@ -29,7 +30,9 @@ public class SumConclusion {
 		this.clinitHeaps = clinitHeaps;
 		this.mainHeap = mainHeap;
 		// validate the <clinit>'s heaps and the main heap
-		validate();
+		if (G.validate) {
+			validate();
+		}
 	}
 
 	public void validate() {

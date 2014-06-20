@@ -1,0 +1,13 @@
+# name=LibrariesM-dlog
+
+.include "T.dom"
+.include "M.dom"
+
+.bddvarorder M0_T0
+
+librariesT(t:T0) input
+TM(t:T0,m:M0) input
+librariesM(m:M0) output
+
+
+librariesM(m) :- TM(t,m), librariesT(t).
