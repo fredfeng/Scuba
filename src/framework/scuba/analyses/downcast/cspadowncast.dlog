@@ -46,11 +46,15 @@ downcast(v:V,t:T) output
 unsafeDowncast(v:V,t:T) output
 safeDowncast(v:V,t:T) output
 
+## locals that belong to application.
+AppLocal(v:V) output
+
 
 #reachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableCM(_,m).
 
 
 reachableappsCM(m) :- reachableCM(_,m), !librariesM(m).
+AppLocal(v) :- reachableappsCM(m), MV(m,v).
 
 ##only care about application level downcast
 reachableLR(l,r) :- MobjVarAsgnInst(m,l,r), reachableappsCM(m).

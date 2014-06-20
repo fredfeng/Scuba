@@ -71,6 +71,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relDVH;
 	protected ProgramRel relPMM;
 	protected ProgramRel relPIM;
+	protected ProgramRel relAppLocal;
 
 
 	protected CallGraph callGraph;
@@ -85,7 +86,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void init() {
 		getCallGraph();
-
+		//app locals from haiyan's analysis.
+		extractAppLocals();
+		
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
 
@@ -103,6 +106,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (jq_Method meth : SummariesEnv.v().getSums().keySet())
 			StringUtil.reportInfo("[Scuba] Summaries: " + meth);
 
+	}
+	
+	// pre-analysis to extract all locals in application. This will decide which
+	// part of locals we need to propagate to the root level.
+	private void extractAppLocals() {
+		if (!relAppLocal.isOpen())
+			relAppLocal.load();
+		Iterable<Register> res = relAppLocal.getAry1ValTuples();
+		Set<Register> propSet = SetUtils.iterableToSet(res, relAppLocal.size());
+
+		SummariesEnv.v().addAllPropSet(propSet);
 	}
 
 	// summarize all heaps.
@@ -531,7 +545,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relDVH = (ProgramRel) ClassicProject.g().getTrgt("dcmVH");
 		relPMM = (ProgramRel) ClassicProject.g().getTrgt("PMM");
 		relPIM = (ProgramRel) ClassicProject.g().getTrgt("PIM");
-
+		relAppLocal = (ProgramRel) ClassicProject.g().getTrgt("AppLocal");
 
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
