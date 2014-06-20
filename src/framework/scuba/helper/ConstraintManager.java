@@ -274,7 +274,7 @@ public class ConstraintManager {
 					simplifyCache.put(ret1.toString(), result);
 				}
 			} else {
-                result = (BoolExpr) ret1.Simplify();
+				result = (BoolExpr) ret1.Simplify();
 			}
 
 			if (SummariesEnv.v().isUsingCstCache()) {
@@ -560,7 +560,7 @@ public class ConstraintManager {
 		assert expr2 != null : "Constraint can not be null!";
 
 		try {
-			solver.Reset();
+            solver.Reset();
 			BoolExpr e1;
 			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
