@@ -381,7 +381,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// ControlFlowGraph cfg = CodeCache.getCode(m);
 		ControlFlowGraph cfg = m.getCFG();
 
-		if (G.dump) {
+		if (G.dbgIsil) {
 			System.out.println("*****************************************");
 			System.out.println(cfg.fullDump());
 			System.out.println("*****************************************");

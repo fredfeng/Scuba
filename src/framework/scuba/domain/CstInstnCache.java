@@ -68,4 +68,13 @@ public class CstInstnCache {
 		return cache.keySet();
 	}
 
+	public boolean contains(MemLocInstnItem item, BoolExpr expr) {
+		Map<BoolExpr, BoolExpr> map = cache.get(item);
+		if (map == null) {
+			return false;
+		}
+		BoolExpr res = map.get(expr);
+		return res == null ? false : true;
+	}
+
 }

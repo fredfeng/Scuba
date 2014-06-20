@@ -62,7 +62,7 @@ public class ConstraintManager {
 	static Map<String, AccessPath> term2Ap = new HashMap<String, AccessPath>();
 
 	// this is my little cute cache for constraint instantiation
-	static final CstInstnCache instnCache = new CstInstnCache();
+	public static final CstInstnCache instnCache = new CstInstnCache();
 
 	static final Map<String, Map<String, BoolExpr>> extractCache = new HashMap<String, Map<String, BoolExpr>>();
 
@@ -119,8 +119,9 @@ public class ConstraintManager {
 				// return the number of its class.
 				AllocElem ae = (AllocElem) ho;
 				jq_Type jType = ae.getAlloc().getType();
-				assert jType instanceof jq_Class : "alloc object should be a jq_class. "
-						+ "[type]: " + jType + " [AllocElem]: " + ae;
+				// assert jType instanceof jq_Class :
+				// "alloc object should be a jq_class. "
+				// + "[type]: " + jType + " [AllocElem]: " + ae;
 				cur = ctx.MkInt(Env.getConstTerm4Class((jq_Class) jType));
 
 			} else if (ho instanceof AccessPath) {
@@ -559,7 +560,7 @@ public class ConstraintManager {
 		assert expr2 != null : "Constraint can not be null!";
 
 		try {
-            solver.Reset();
+			solver.Reset();
 			BoolExpr e1;
 			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
