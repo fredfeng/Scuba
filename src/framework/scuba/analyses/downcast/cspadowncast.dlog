@@ -70,7 +70,7 @@ downcast(r,t) :- reachableLR(l,r), \
 	
 dcm(m,v,t) :- MV(m,v), downcast(v,t). 
 dcmVH(v,h) :- ptsVH(v,h), downcast(v,_).
-DcLocal(v) :- AppLocal(v), downcast(v,_)
+DcLocal(v) :- AppLocal(v), downcast(v,_).
 
 unsafeDowncast(v,t) :- downcast(v,t), ptsVT(v,t2), !sub(t2,t).
 safeDowncast(v,t) :- downcast(v,t), !unsafeDowncast(v,t).
