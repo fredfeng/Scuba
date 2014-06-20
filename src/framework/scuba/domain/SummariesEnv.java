@@ -86,7 +86,7 @@ public class SummariesEnv {
 
 	// a fine-grained smart skip for instantiating edges
 	protected boolean moreSmartSkip = true;
-	
+
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
@@ -102,18 +102,10 @@ public class SummariesEnv {
 	// when concluding the clinit's and main, use fix-point or not
 	protected boolean topFixPoint = false;
 
-	public boolean clearLocals() {
+	public boolean useClearLocals() {
 		return clearLocals;
 	}
 
-	public void enableSmartSkip() {
-		smartSkip = true;
-	}
-
-	public void disableSmartSkip() {
-		smartSkip = false;
-	}
-	
 	public boolean isUsingSmartSkip() {
 		return smartSkip;
 	}
@@ -122,84 +114,28 @@ public class SummariesEnv {
 		return useEqCache;
 	}
 
-	public void enableUnionCache() {
-		useUnionCache = true;
-	}
-
-	public void disableUnionCache() {
-		useUnionCache = false;
-	}
-
 	public boolean isUsingUnionCache() {
 		return useUnionCache;
-	}
-
-	public void enableSubCache() {
-		useSubCache = true;
-	}
-
-	public void disableSubCache() {
-		useSubCache = false;
 	}
 
 	public boolean isUsingSubCache() {
 		return useSubCache;
 	}
 
-	public void enableInterCache() {
-		useInterCache = true;
-	}
-
-	public void disableInterCache() {
-		useInterCache = false;
-	}
-
 	public boolean isUsingInterCache() {
 		return useInterCache;
-	}
-
-	public void enableSimplifyCache() {
-		useSimplifyCache = true;
-	}
-
-	public void disableSimplifyCache() {
-		useSimplifyCache = false;
 	}
 
 	public boolean isUsingSimplifyCache() {
 		return useSimplifyCache;
 	}
 
-	public void enableMemLocCache() {
-		useMemLocCache = true;
-	}
-
-	public void disableMemLocCache() {
-		useMemLocCache = false;
-	}
-
 	public boolean isUsingMemLocCache() {
 		return useMemLocCache;
 	}
 
-	public void enableCstCache() {
-		useCstCache = true;
-	}
-
-	public void disableCstCache() {
-		useCstCache = false;
-	}
-
 	public boolean isUsingCstCache() {
 		return useCstCache;
-	}
-
-	public void enableExtractCache() {
-		useExtractCache = true;
-	}
-
-	public void disableExtractCache() {
-		useExtractCache = false;
 	}
 
 	public boolean isUsingExtractCache() {
@@ -226,18 +162,10 @@ public class SummariesEnv {
 		return cheating;
 	}
 
-	public int getAllocDepth() {
-		return allocDepth;
-	}
-
-	public void setAllocDepth(int depth) {
-		allocDepth = depth;
-	}
-
 	public static void reset() {
 		instance = new SummariesEnv();
 	}
-	
+
 	public void sumAll(Set<AbstractHeap> clinitHeaps, AbstractHeap mainHeap) {
 		finalSum = new SumConclusion(clinitHeaps, mainHeap);
 		finalSum.sumAllHeaps();
