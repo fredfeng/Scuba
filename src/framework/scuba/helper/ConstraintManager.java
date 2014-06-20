@@ -74,6 +74,8 @@ public class ConstraintManager {
 
 	static final Map<Trio<String, String, String>, BoolExpr> subCache = new HashMap<Trio<String, String, String>, BoolExpr>();
 
+	static final Map<Pair<String, String>, Boolean> eqCache = new HashMap<Pair<String, String>, Boolean>();
+
 	// the dependence map for cst instantiation
 	static final CstInstnCacheDepMap cstDepMap = new CstInstnCacheDepMap();
 
@@ -556,8 +558,20 @@ public class ConstraintManager {
 	 * @return
 	 */
 	public static boolean isEqual(BoolExpr expr1, BoolExpr expr2) {
+
+		boolean ret = false;
+
 		assert expr1 != null : "Constraint can not be null!";
 		assert expr2 != null : "Constraint can not be null!";
+
+		if (SummariesEnv.v().isUsingEqCache()) {
+			Pair<String, String> pair = new Pair<String, String>(
+					expr1.toString(), expr2.toString());
+			if (eqCache.containsKey(pair)) {
+				ret = eqCache.get(pair);
+				return ret;
+			}
+		}
 
 		try {
             solver.Reset();
@@ -566,12 +580,20 @@ public class ConstraintManager {
 			BoolExpr e2 = ctx.MkNot(e1);
 			solver.Assert(e2);
 			if (solver.Check() == Status.UNSATISFIABLE)
-				return true;
+				ret = true;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return false;
+		ret = false;
+
+		if (SummariesEnv.v().isUsingEqCache()) {
+			eqCache.put(
+					new Pair<String, String>(expr1.toString(), expr2.toString()),
+					ret);
+		}
+
+		return ret;
 	}
 
 	// check if cst is a scala constraint, e.g, true, false
