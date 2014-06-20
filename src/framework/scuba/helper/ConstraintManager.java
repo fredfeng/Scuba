@@ -274,7 +274,7 @@ public class ConstraintManager {
 					simplifyCache.put(ret1.toString(), result);
 				}
 			} else {
-                result = (BoolExpr) ret1.Simplify();
+				result = (BoolExpr) ret1.Simplify();
 			}
 
 			if (SummariesEnv.v().isUsingCstCache()) {

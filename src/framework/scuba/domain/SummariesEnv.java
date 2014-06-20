@@ -84,8 +84,6 @@ public class SummariesEnv {
 	// a fine-grained smart skip for instantiating edges
 	protected boolean moreSmartSkip = true;
 
-	protected boolean typeSmashing = true;
-
 	// fix-point or not
 	protected boolean useFixPoint = true;
 

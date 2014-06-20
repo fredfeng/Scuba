@@ -411,14 +411,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			}
 		}
 
-		cnt++;
-		System.out.println("mysum: " + cnt + " " + m);
-		// SummariesEnv.v().getSummary(m).dumpSummaryToFile("Sum" + cnt);
-
 		return summary.isChanged();
 	}
-
-	private int cnt = 0;
 
 	public static int cgProgress = 0;
 	public static boolean inS = false;
