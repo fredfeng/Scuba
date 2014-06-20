@@ -583,8 +583,14 @@ public class ConstraintManager {
 			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
 			solver.Assert(e2);
-			if (solver.Check() == Status.UNSATISFIABLE)
+			if (solver.Check() == Status.UNSATISFIABLE) {
 				ret = true;
+				if (SummariesEnv.v().isUsingEqCache()) {
+					eqCache.put(new Pair<String, String>(expr1.toString(),
+							expr2.toString()), ret);
+				}
+				return ret;
+			}
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

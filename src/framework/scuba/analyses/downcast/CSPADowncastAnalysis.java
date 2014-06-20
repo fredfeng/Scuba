@@ -4,7 +4,7 @@
  * All rights reserved.
  * Licensed under the terms of the New BSD License.
  */
-package chord.analyses.downcast;
+package framework.scuba.analyses.downcast;
 
 import java.util.HashSet;
 import java.util.Set;

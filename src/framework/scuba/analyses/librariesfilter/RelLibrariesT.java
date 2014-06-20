@@ -1,4 +1,4 @@
-package chord.analyses.librariesfilter;
+package framework.scuba.analyses.librariesfilter;
 
 import joeq.Class.jq_Class;
 import chord.program.visitors.IClassVisitor;
@@ -57,25 +57,25 @@ public class RelLibrariesT extends ProgramRel implements IClassVisitor {
     	 if(Config.userClassPathName.contains("fop")){
     		 //System.out.println("Filter for fop !!");
          	if(Utils.prefixMatch(c.getName(), fopExcludeAry)){
-         		System.out.println("Exclude for fop's included jar ... " + c.getName());
+//         		System.out.println("Exclude for fop's included jar ... " + c.getName());
          		add(c);
          	}else if(Utils.prefixMatch(c.getName(), ExcludeAryForShare)){
-         		System.out.println("Exclude for share... " + c.getName());
+//         		System.out.println("Exclude for share... " + c.getName());
          		add(c);
          	}else if(Utils.prefixMatch(c.getName(), ExcludeStdLibs)){
-         		System.out.println("Exclude for standard libaries " + c.getName());
+//         		System.out.println("Exclude for standard libaries " + c.getName());
          		add(c);
          	}
 		} else {
 			//System.out.println("Filter not for fop !!");
 			if (Utils.prefixMatch(c.getName(), ExcludeAry)){
-				System.out.println("Exclude for included jar ... " + c.getName());
+//				System.out.println("Exclude for included jar ... " + c.getName());
 				add(c);
 			}else if(Utils.prefixMatch(c.getName(), ExcludeAryForShare)){
-				System.out.println("Exclude for Share... " + c.getName());
+//				System.out.println("Exclude for Share... " + c.getName());
 				add(c);
 			}else if(Utils.prefixMatch(c.getName(), ExcludeStdLibs)){
-         		System.out.println("Exclude for standard libaries " + c.getName());
+//         		System.out.println("Exclude for standard libaries " + c.getName());
          		add(c);
          	}
 		}

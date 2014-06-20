@@ -1,11 +1,10 @@
-package chord.analyses.downcast;
+package framework.scuba.analyses.downcast;
 
 import joeq.Class.jq_Method;
 import chord.project.Chord;
 import chord.project.ClassicProject;
 import chord.project.analyses.JavaAnalysis;
 import chord.project.analyses.ProgramRel;
-import chord.analyses.alias.CtxtsAnalysis;
 
 @Chord(
         name = "cipa-downcast-java",

@@ -35,7 +35,7 @@ public class SummariesEnv {
 	protected int allocDepth = 1;
 
 	// prop locals or not
-	protected boolean propLocals = true;
+	protected boolean propLocals = false;
 
 	// prop statics or not
 	protected boolean propStatics = true;
@@ -77,7 +77,7 @@ public class SummariesEnv {
 	protected boolean useSubCache = true;
 
 	// whether use equivalence checking cache
-	protected boolean useEqCache = false;
+	protected boolean useEqCache = true;
 
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
