@@ -15,6 +15,7 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 import framework.scuba.analyses.alias.SummaryBasedAnalysis;
+import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper;
@@ -153,7 +154,15 @@ public class IntraProcSumAnalysis {
 
 		Set<BasicBlock> set = new HashSet<BasicBlock>();
 		sccProgress = 0;
+		int smash = 0;
 		while (true) {
+			if (G.dbgSmashing) {
+				smash++;
+				if (summary != null && smash >= 30) {
+					summary.dumpSummaryToFile("$equals");
+					assert false;
+				}
+			}
 			if (G.dbgMatch) {
 				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
 						+ SummaryBasedAnalysis.cgProgress + " ]" + set.size()
