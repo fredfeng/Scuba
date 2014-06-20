@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import joeq.Class.jq_Array;
@@ -83,6 +84,12 @@ public class Summary {
 
 	public static int castCnt = 0;
 
+	// the locations in this set will be propagated to the caller
+	// 1. <AccessPath> 2. <ParamElem> 3. <StaticElem> 4. <RetElem>
+	// 5. <AllocElem> that are connected by 1-4 will be propagated
+	// 6. others will not be propagated
+	protected Set<AbsMemLoc> toProp = new HashSet<AbsMemLoc>();
+
 	// (call site, callee method) --> memory location instantiation
 	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
 	final protected MemLocInstn4Method memLocInstnResult;
@@ -112,7 +119,7 @@ public class Summary {
 
 	// alias query in this method or instantiated in this method
 	protected AliasQueries aliasQueries;
-	
+
 	// whether current method is in a bad scc.
 	protected boolean inBadScc = false;
 
@@ -342,9 +349,9 @@ public class Summary {
 			}
 
 			Summary.aloadCnt++;
-			
-			//only handle ALOAD_A only.
-			if(!(stmt.getOperator() instanceof ALOAD_A))
+
+			// only handle ALOAD_A only.
+			if (!(stmt.getOperator() instanceof ALOAD_A))
 				return;
 
 			jq_Method meth = stmt.getMethod();
@@ -1401,4 +1408,32 @@ public class Summary {
 		}
 	}
 
+	public void fillPropSet() {
+		// add all locations that are guaranteed to be propagated to the caller
+		for (Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = absHeap.locToP2Set
+				.entrySet().iterator(); it.hasNext();) {
+			Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it.next();
+			AbsMemLoc loc = entry.getKey().val0;
+
+			if (loc instanceof AccessPath || loc instanceof ParamElem
+					|| loc instanceof StaticElem || loc instanceof RetElem) {
+				toProp.add(loc);
+			} else if (loc instanceof LocalVarElem) {
+				Register v = ((LocalVarElem) loc).getLocal();
+				if (SummariesEnv.v().toProp(v)) {
+					toProp.add(loc);
+				}
+			} else {
+				assert (loc instanceof AllocElem) : "wrong!";
+			}
+		}
+		// use a worklist algorithm to find all allocs to propagate
+		Set<AbsMemLoc> wl = new HashSet<AbsMemLoc>();
+		wl.addAll(toProp);
+		while (!wl.isEmpty()) {
+			Set<AllocElem> set = new HashSet<AllocElem>();
+			
+		}
+
+	}
 }

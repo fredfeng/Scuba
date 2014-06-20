@@ -2,10 +2,12 @@ package framework.scuba.domain;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.RegisterFactory.Register;
 
 /**
  * Global env to store all summaries of their methods. Singleton pattern.
@@ -36,6 +38,8 @@ public class SummariesEnv {
 
 	// prop locals or not
 	protected boolean propLocals = false;
+
+	protected Set<Register> toProp = new HashSet<Register>();
 
 	// prop statics or not
 	protected boolean propStatics = true;
@@ -205,4 +209,15 @@ public class SummariesEnv {
 		return Arrays.asList(blklist).contains(blk);
 	}
 
+	public void addPropSet(Register v) {
+		toProp.add(v);
+	}
+
+	public void addAllPropSet(Set<Register> v) {
+		toProp.addAll(v);
+	}
+
+	public boolean toProp(Register v) {
+		return toProp.contains(v);
+	}
 }
