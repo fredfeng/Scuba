@@ -773,7 +773,7 @@ public class AbstractHeap extends Heap {
 
 		if (G.instnInfo) {
 			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
-					+ "(" + src + "," + field + ")" + "-->" + dst);
+					+ "(" + src + "  ,  " + field + ")" + "-->" + dst);
 		}
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
