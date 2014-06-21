@@ -825,7 +825,8 @@ public class AbstractHeap extends Heap {
 		if (G.instnInfo) {
 			StringUtil.reportInfo("instnInfo: "
 					+ "the callee edge is instantiated into: "
-					+ instnSrc.size() * instnDst.size() + " edges");
+					+ instnSrc.size() + "src locations " + "and "
+					+ instnDst.size() + " dst locations");
 		}
 
 		for (AbsMemLoc newSrc : instnSrc.keySet()) {
@@ -858,6 +859,11 @@ public class AbstractHeap extends Heap {
 				ret.val0 = res.val0 | ret.val0;
 				ret.val1 = res.val1 | ret.val1;
 			}
+		}
+
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: " + "caller heap becomes: "
+					+ size() + " edges");
 		}
 		return ret;
 	}
