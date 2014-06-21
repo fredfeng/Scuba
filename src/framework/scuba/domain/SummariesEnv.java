@@ -44,8 +44,8 @@ public class SummariesEnv {
 	// protected boolean propFilter = false;
 	// the locals that we care about
 	protected Set<Register> toProp = new HashSet<Register>();
-	
-	//all reachable methods
+
+	// all reachable methods
 	protected Set<jq_Method> reachableMethods = new HashSet<jq_Method>();
 
 	// ignore string
@@ -84,6 +84,8 @@ public class SummariesEnv {
 	protected boolean smartSkip = true;
 	// a fine-grained smart skip for instantiating edges
 	protected boolean moreSmartSkip = true;
+	// a trick to avoid hanging in gigantic SCC (the remove() method)
+	protected boolean badMethodSkip = true;
 
 	// type smashing for fields (imprecise) [DO NOT use this!]
 	protected boolean typeSmashing = false;
@@ -224,7 +226,6 @@ public class SummariesEnv {
 	public Set<Register> getProps() {
 		return toProp;
 	}
-	
 
 	public Set<jq_Method> getReachableMethods() {
 		return reachableMethods;
