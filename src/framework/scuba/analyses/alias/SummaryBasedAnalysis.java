@@ -478,10 +478,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				summary.dumpSummaryToFile("$hashCode");
 			}
 		}
-		
+
 		return summary.isChanged();
 	}
-	
+
 	public static int cgProgress = 0;
 	public static boolean inS = false;
 

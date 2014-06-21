@@ -122,9 +122,9 @@ public class ConstraintManager {
 				// return the number of its class.
 				AllocElem ae = (AllocElem) ho;
 				jq_Type jType = ae.getAlloc().getType();
-				//always true for jq_array.
-				if(jType instanceof jq_Array) 
-					return (BoolExpr)cur;
+				// always true for jq_array.
+				if (jType instanceof jq_Array)
+					return (BoolExpr) cur;
 				// assert jType instanceof jq_Class :
 				// "alloc object should be a jq_class. "
 				// + "[type]: " + jType + " [AllocElem]: " + ae;
@@ -577,7 +577,7 @@ public class ConstraintManager {
 		}
 
 		try {
-            solver.Reset();
+			solver.Reset();
 			BoolExpr e1;
 			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
