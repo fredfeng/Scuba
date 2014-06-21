@@ -115,7 +115,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("[Scuba] Summaries: " + meth);
 
 	}
-	
+
 	// pre-analysis to extract all locals in application. This will decide which
 	// part of locals we need to propagate to the root level.
 	private void extractAppLocals() {
@@ -379,35 +379,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				System.out.println("byte code FOR: " + m + "\n" + " [Id] "
 						+ ++dcount);
 				System.out.println(m.getCFG().fullDump());
-
-				if (sum != null) {
-					if (m.toString()
-							.equals("addSubCategories:(Lcck/util/ClassMap;)V@avrora.Defaults")) {
-						sum.dumpSummaryToFile("$" + dcount);
-					}
-					if (m.toString()
-							.equals("getAllCategories:()Ljava/util/List;V@avrora.Defaults")) {
-						sum.dumpSummaryToFile("$" + dcount);
-					}
-					if (m.toString().equals(
-							"parseOptions:([Ljava/lang/String;);V@avrora.Main")) {
-						sum.dumpSummaryToFile("$" + dcount);
-					}
-					if (m.toString()
-							.equals("addOptionValueSection:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;"
-									+ "Lcck/util/ClassMap;)V@cck.help.HelpCategory")) {
-						sum.dumpSummaryToFile("$" + dcount);
-					}
-					if (m.toString()
-							.equals("addSubcategorySection:(Ljava/lang/String;Ljava/lang/String;"
-									+ "Ljava/util/List;)V@cck.help.HelpCategory")) {
-						sum.dumpSummaryToFile("$" + dcount);
-					}
-					if (m.toString().equals(
-							"printHelp:()V@cck.help.HelpCategory")) {
-						sum.dumpSummaryToFile("$" + dcount);
-					}
-				}
 			}
 		}
 
@@ -506,8 +477,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		long endMeth = System.nanoTime();
-		long delta = endMeth -startMeth;
-		if(libMeths.contains(m)) {
+		long delta = endMeth - startMeth;
+		if (libMeths.contains(m)) {
 			libTime += delta;
 		} else {
 			appTime += delta;
@@ -618,10 +589,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relAppLocal = (ProgramRel) ClassicProject.g().getTrgt("AppLocal");
 		relDcLocal = (ProgramRel) ClassicProject.g().getTrgt("DcLocal");
 		relLibM = (ProgramRel) ClassicProject.g().getTrgt("librariesM");
-		
+
 		if (!relDcLocal.isOpen())
 			relDcLocal.load();
-		
+
 		if (!relReachableM.isOpen())
 			relReachableM.load();
 
@@ -629,22 +600,22 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		Set<jq_Method> reaches = SetUtils.iterableToSet(resM,
 				relReachableM.size());
 		SummariesEnv.v().setReachableMethods(reaches);
-		
-		if(!relLibM.isOpen())
+
+		if (!relLibM.isOpen())
 			relLibM.load();
 
 		Iterable<jq_Method> res = relLibM.getAry1ValTuples();
 		libMeths = SetUtils.iterableToSet(res, relLibM.size());
-		
+
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
 
 		// init scuba.
 		init();
 	}
-	
+
 	private Set<jq_Method> libMeths;
-	
+
 	// total time spending on analyzing lib.
 	public long libTime = 0;
 
@@ -884,7 +855,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("Array------------" + Summary.aNewArrayCnt);
 		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
 		System.out.println("Total downcast------------" + Summary.castCnt);
-		
+
 		StringUtil.reportTotalTime("Total Time on Library: ", libTime);
 		StringUtil.reportTotalTime("Total Time on App: ", appTime);
 	}
