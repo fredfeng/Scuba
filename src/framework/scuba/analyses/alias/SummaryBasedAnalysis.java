@@ -44,6 +44,7 @@ import framework.scuba.domain.LocalVarElem;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.SumConclusion;
 import framework.scuba.domain.SummariesEnv;
+import framework.scuba.domain.SummariesEnv.PropType;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
@@ -70,6 +71,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relDcm;
 	protected ProgramRel relDVH;
 	protected ProgramRel relPMM;
+	protected ProgramRel relPIM;
+	protected ProgramRel relAppLocal;
+	protected ProgramRel relDcLocal;
 
 	protected CallGraph callGraph;
 
@@ -83,7 +87,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void init() {
 		getCallGraph();
-		
+
+		// app locals from haiyan's analysis.
+		extractAppLocals();
+
+		if (G.dbgFilter) {
+			System.out.println("dbgFilter: " + SummariesEnv.v().getProps());
+		}
+
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
 
@@ -101,6 +112,28 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (jq_Method meth : SummariesEnv.v().getSums().keySet())
 			StringUtil.reportInfo("[Scuba] Summaries: " + meth);
 
+	}
+
+	// pre-analysis to extract all locals in application. This will decide which
+	// part of locals we need to propagate to the root level.
+	private void extractAppLocals() {
+		if (SummariesEnv.v().getLocalType() == PropType.APPLOCAL) {
+			if (!relAppLocal.isOpen())
+				relAppLocal.load();
+
+			Iterable<Register> res = relAppLocal.getAry1ValTuples();
+			Set<Register> propSet = SetUtils.iterableToSet(res,
+					relAppLocal.size());
+			SummariesEnv.v().addAllPropSet(propSet);
+		} else if (SummariesEnv.v().getLocalType() == PropType.DOWNCAST) {
+			if (!relDcLocal.isOpen())
+				relDcLocal.load();
+
+			Iterable<Register> res = relDcLocal.getAry1ValTuples();
+			Set<Register> propSet = SetUtils.iterableToSet(res,
+					relDcLocal.size());
+			SummariesEnv.v().addAllPropSet(propSet);
+		}
 	}
 
 	// summarize all heaps.
@@ -264,7 +297,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// 1.get its corresponding scc
 		Set<jq_Method> scc = nodeToScc.get(node);
 
-		if (G.dbgQuery) {
+		if (G.dbgFilter) {
 			for (jq_Method m : scc) {
 				StringUtil.reportInfo("Byte code for Method: [" + G.countScc
 						+ "]" + m);
@@ -278,7 +311,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				analyzeSCC(node);
 			} else {
 				jq_Method m = scc.iterator().next();
-				analyze(m);
+				analyze(m, false);
 				if (G.dbgPermission) {
 					StringUtil.reportInfo("Evils:[" + G.countScc
 							+ "] begin regular node");
@@ -335,9 +368,27 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private void terminateAndDoGC(Node node) {
 		node.setTerminated(true);
 
+		// when terminating, decide what locations in the summary to propagate
+		Set<jq_Method> scc = nodeToScc.get(node);
+		for (jq_Method m : scc) {
+			Summary sum = SummariesEnv.v().getSummary(m);
+			if (m != null) {
+				sum.fillPropSet();
+				if (G.dbgFilter) {
+					System.out.println("dbgFilter: " + "toProp: "
+							+ sum.getProps());
+					if (G.countScc == 302) {
+						sum.dumpSummaryToFile("$302");
+					}
+					if (G.countScc == 8) {
+						sum.dumpSummaryToFile("$8");
+					}
+				}
+			}
+		}
+
 		// when terminating, clean up locals in the summary
-		if (SummariesEnv.v().clearLocals()) {
-			Set<jq_Method> scc = nodeToScc.get(node);
+		if (SummariesEnv.v().useClearLocals()) {
 			for (jq_Method m : scc) {
 				Summary sum = SummariesEnv.v().getSummary(m);
 				if (m != null) {
@@ -348,6 +399,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		if (!SummariesEnv.v().forceGc())
 			return;
+
 		for (Node succ : node.getSuccessors()) {
 			// for each successor, if all its preds are terminated, we can gc
 			// this successor.
@@ -379,10 +431,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		return flag;
 	}
 
-	private Pair<Boolean, Boolean> analyze(jq_Method m) {
+	private Pair<Boolean, Boolean> analyze(jq_Method m, boolean isBadScc) {
 		accessSeq.add(m);
 
 		Summary summary = SummariesEnv.v().initSummary(m);
+		summary.setInBadScc(isBadScc);
 		summary.setChanged(new Pair<Boolean, Boolean>(false, false));
 		intrapro.setSummary(summary);
 
@@ -503,7 +556,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				StringUtil.reportInfo("SCC counter: " + wl.size() + ":"
 						+ worker);
 
-			Pair<Boolean, Boolean> changed = analyze(worker);
+			Pair<Boolean, Boolean> changed = analyze(worker,
+					(scc.size() > SummariesEnv.v().sccLimit));
 
 			// only when changing the summary, we add all the callers
 			if (changed.val1) {
@@ -526,6 +580,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relDcm = (ProgramRel) ClassicProject.g().getTrgt("dcm");
 		relDVH = (ProgramRel) ClassicProject.g().getTrgt("dcmVH");
 		relPMM = (ProgramRel) ClassicProject.g().getTrgt("PMM");
+		relPIM = (ProgramRel) ClassicProject.g().getTrgt("PIM");
+		relAppLocal = (ProgramRel) ClassicProject.g().getTrgt("AppLocal");
+		relDcLocal = (ProgramRel) ClassicProject.g().getTrgt("DcLocal");
 
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
@@ -541,7 +598,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	 */
 	public ICICG getCallGraph() {
 		if (callGraph == null) {
-			callGraph = new CallGraph(domM, relRootM, relReachableM, relIM,
+			callGraph = new CallGraph(domM, relRootM, relReachableM, relPIM,
 					relPMM);
 		}
 		Env.cg = callGraph;
@@ -679,6 +736,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (Trio<jq_Method, Register, jq_Type> trio : res) {
 			jq_Method meth = trio.val0;
 			Register r = trio.val1;
+			jq_Type castType = trio.val2;
 			// System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
 			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
 
@@ -688,6 +746,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			}
 
 			StringUtil.reportInfo("[Scuba] method: " + meth);
+			StringUtil.reportInfo("[Scuba] Downcast Type: " + castType);
 			StringUtil.reportInfo("[Scuba] p2Set of " + r + ":" + sites);
 
 			// p2set of r in chord.

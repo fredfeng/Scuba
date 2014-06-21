@@ -2,10 +2,12 @@ package framework.scuba.domain;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
+import joeq.Compiler.Quad.RegisterFactory.Register;
 
 /**
  * Global env to store all summaries of their methods. Singleton pattern.
@@ -22,6 +24,10 @@ public class SummariesEnv {
 
 	protected SumConclusion finalSum;
 
+	public static enum PropType {
+		ALL, DOWNCAST, APPLOCAL;
+	}
+
 	String[] blklist = {
 			"fixAfterDeletion:(Ljava/util/TreeMap$Entry;)V@java.util.TreeMap",
 			"" };
@@ -34,76 +40,71 @@ public class SummariesEnv {
 	// 0 means infinity
 	protected int allocDepth = 1;
 
-	// prop locals or not
-	protected boolean propLocals = true;
-
-	// prop statics or not
-	protected boolean propStatics = true;
+	// customize what to propagate
+	// protected boolean propFilter = false;
+	// the locals that we care about
+	protected Set<Register> toProp = new HashSet<Register>();
 
 	// ignore string
 	protected boolean openBlklist = false;
-
 	// cheating
 	protected boolean cheating = false;
-
 	// ignore string
 	protected boolean ignoreString = false;
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
-
 	// disable constraint instantiate.
 	protected boolean disableCst = false;
+	// we mark it as bad scc if its size greater than this number.
+	public final int sccLimit = 30;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useMemLocCache = true;
-
+	protected boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
-	protected boolean useCstCache = true;
-
+	protected boolean useCstInstnCache = true;
 	// whether use cache for extracting terms
 	protected boolean useExtractCache = true;
-
 	// whether use cache for constraint simplification
 	protected boolean useSimplifyCache = true;
-
 	// whether use cache for constraint union operation
 	protected boolean useUnionCache = true;
-
 	// whether use cache for constraint intersection operation
 	protected boolean useInterCache = true;
-
 	// whether use cache for substitution operation of constraints
 	protected boolean useSubCache = true;
-
 	// whether use equivalence checking cache
-	protected boolean useEqCache = false;
-
+	protected boolean useEqCache = true;
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
 	protected boolean smartSkip = true;
-
 	// a fine-grained smart skip for instantiating edges
 	protected boolean moreSmartSkip = true;
 
-	protected boolean typeSmashing = true;
-
+	// type smashing for fields (imprecise) [DO NOT use this!]
+	protected boolean typeSmashing = false;
+	// clear locals in the summary
 	protected boolean clearLocals = false;
 
 	// fix-point or not
 	protected boolean useFixPoint = true;
+	// when concluding the clinit's and main, use fix-point or not
+	protected boolean topFixPoint = false;
 
-	public boolean clearLocals() {
+	// which kind of local need to be propagated, e.g. downcast, all locals in
+	// app, etc.
+	// protected PropType localType = PropType.APPLOCAL;
+	protected PropType localType = PropType.DOWNCAST;
+
+	// protected PropType localType = PropType.ALL;
+
+	public PropType getLocalType() {
+		return localType;
+	}
+
+	public boolean useClearLocals() {
 		return clearLocals;
-	}
-
-	public void enableSmartSkip() {
-		smartSkip = true;
-	}
-
-	public void disableSmartSkip() {
-		smartSkip = false;
 	}
 
 	public boolean isUsingSmartSkip() {
@@ -114,84 +115,28 @@ public class SummariesEnv {
 		return useEqCache;
 	}
 
-	public void enableUnionCache() {
-		useUnionCache = true;
-	}
-
-	public void disableUnionCache() {
-		useUnionCache = false;
-	}
-
 	public boolean isUsingUnionCache() {
 		return useUnionCache;
-	}
-
-	public void enableSubCache() {
-		useSubCache = true;
-	}
-
-	public void disableSubCache() {
-		useSubCache = false;
 	}
 
 	public boolean isUsingSubCache() {
 		return useSubCache;
 	}
 
-	public void enableInterCache() {
-		useInterCache = true;
-	}
-
-	public void disableInterCache() {
-		useInterCache = false;
-	}
-
 	public boolean isUsingInterCache() {
 		return useInterCache;
-	}
-
-	public void enableSimplifyCache() {
-		useSimplifyCache = true;
-	}
-
-	public void disableSimplifyCache() {
-		useSimplifyCache = false;
 	}
 
 	public boolean isUsingSimplifyCache() {
 		return useSimplifyCache;
 	}
 
-	public void enableMemLocCache() {
-		useMemLocCache = true;
-	}
-
-	public void disableMemLocCache() {
-		useMemLocCache = false;
-	}
-
 	public boolean isUsingMemLocCache() {
-		return useMemLocCache;
-	}
-
-	public void enableCstCache() {
-		useCstCache = true;
-	}
-
-	public void disableCstCache() {
-		useCstCache = false;
+		return useMemLocInstnCache;
 	}
 
 	public boolean isUsingCstCache() {
-		return useCstCache;
-	}
-
-	public void enableExtractCache() {
-		useExtractCache = true;
-	}
-
-	public void disableExtractCache() {
-		useExtractCache = false;
+		return useCstInstnCache;
 	}
 
 	public boolean isUsingExtractCache() {
@@ -216,14 +161,6 @@ public class SummariesEnv {
 
 	public boolean cheating() {
 		return cheating;
-	}
-
-	public int getAllocDepth() {
-		return allocDepth;
-	}
-
-	public void setAllocDepth(int depth) {
-		allocDepth = depth;
 	}
 
 	public static void reset() {
@@ -269,4 +206,19 @@ public class SummariesEnv {
 		return Arrays.asList(blklist).contains(blk);
 	}
 
+	public void addPropSet(Register v) {
+		toProp.add(v);
+	}
+
+	public void addAllPropSet(Set<Register> v) {
+		toProp.addAll(v);
+	}
+
+	public boolean toProp(Register v) {
+		return toProp.contains(v);
+	}
+
+	public Set<Register> getProps() {
+		return toProp;
+	}
 }

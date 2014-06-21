@@ -3,6 +3,7 @@ package framework.scuba.helper;
 import java.util.HashMap;
 import java.util.Map;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Type;
 import chord.util.tuple.object.Pair;
@@ -121,6 +122,9 @@ public class ConstraintManager {
 				// return the number of its class.
 				AllocElem ae = (AllocElem) ho;
 				jq_Type jType = ae.getAlloc().getType();
+				//always true for jq_array.
+				if(jType instanceof jq_Array) 
+					return (BoolExpr)cur;
 				// assert jType instanceof jq_Class :
 				// "alloc object should be a jq_class. "
 				// + "[type]: " + jType + " [AllocElem]: " + ae;
@@ -568,8 +572,7 @@ public class ConstraintManager {
 			Pair<String, String> pair = new Pair<String, String>(
 					expr1.toString(), expr2.toString());
 			if (eqCache.containsKey(pair)) {
-				ret = eqCache.get(pair);
-				return ret;
+				return eqCache.get(pair);
 			}
 		}
 
@@ -579,14 +582,19 @@ public class ConstraintManager {
 			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
 			solver.Assert(e2);
-			if (solver.Check() == Status.UNSATISFIABLE)
+			if (solver.Check() == Status.UNSATISFIABLE) {
 				ret = true;
+				if (SummariesEnv.v().isUsingEqCache()) {
+					eqCache.put(new Pair<String, String>(expr1.toString(),
+							expr2.toString()), ret);
+				}
+				return ret;
+			}
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		ret = false;
-
 		if (SummariesEnv.v().isUsingEqCache()) {
 			eqCache.put(
 					new Pair<String, String>(expr1.toString(), expr2.toString()),

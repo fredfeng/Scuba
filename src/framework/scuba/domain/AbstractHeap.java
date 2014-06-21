@@ -25,7 +25,7 @@ import framework.scuba.helper.P2SetHelper;
 import framework.scuba.helper.TypeHelper;
 import framework.scuba.utils.StringUtil;
 
-public class AbstractHeap {
+public class AbstractHeap extends Heap {
 	// the summary this heap belongs to
 	protected final Summary summary;
 
@@ -154,6 +154,9 @@ public class AbstractHeap {
 			jq_Method method, Register left, VariableType leftVType,
 			Register right, VariableType rightVType) {
 
+		if (G.dbgFilter) {
+			System.out.println("handling the stmt");
+		}
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
@@ -778,16 +781,8 @@ public class AbstractHeap {
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
-		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived()) {
-				return ret;
-			}
-		}
-
-		if (!SummariesEnv.v().propStatics) {
-			if (src instanceof StaticElem || src instanceof StaticAccessPath) {
-				return ret;
-			}
+		if (!calleeHeap.summary.toProp(src)) {
+			return ret;
 		}
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
@@ -886,16 +881,8 @@ public class AbstractHeap {
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
-		if (!SummariesEnv.v().propLocals) {
-			if (src.isNotArgDerived()) {
-				return ret;
-			}
-		}
-
-		if (!SummariesEnv.v().propStatics) {
-			if (src instanceof StaticElem || src instanceof StaticAccessPath) {
-				return ret;
-			}
+		if (!calleeHeap.summary.toProp(src)) {
+			return ret;
 		}
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
@@ -1082,7 +1069,7 @@ public class AbstractHeap {
 		if (memLocFactory.containsKey(other)) {
 			return (LocalAccessPath) memLocFactory.get(other);
 		}
-		assert false : "I think other should have been created!";
+		// assert false : "I think other should have been created!";
 		ArgDerivedHelper.markArgDerived(other);
 		memLocFactory.put(other, other);
 		return other;
@@ -1274,12 +1261,20 @@ public class AbstractHeap {
 			currentP2Set = new P2Set();
 			locToP2Set.put(pair, currentP2Set);
 		}
+		if (G.dbgSmashing) {
+			System.out.println("dbgSmashing: " + "current p2set: "
+					+ currentP2Set);
+			System.out.println("dbgSmashing: " + "to update: " + p2Set);
+		}
 		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set);
+		if (G.dbgSmashing) {
+			System.out.println("dbgSmashing: " + "weakupdate result: " + res);
+		}
 		ret.val0 = res.val0;
 		ret.val1 = res.val1;
 
 		// this is a conservatively way to clear the cache
-		if (SummariesEnv.v().useMemLocCache) {
+		if (SummariesEnv.v().useMemLocInstnCache) {
 			if (ret.val0) {
 				clearCache(src);
 			}

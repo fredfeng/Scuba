@@ -15,6 +15,12 @@
           <exclude name="**/*.java"/>
         </fileset>
     </copy>
+
+    <copy todir="classes/framework/scuba/analyses/librariesfilter/">
+        <fileset dir="src/framework/scuba/analyses/librariesfilter">
+          <exclude name="**/*.java"/>
+        </fileset>
+    </copy>
     <javac debug="true" debuglevel="${debuglevel}"
 		source="${source}" target="${target}" includeAntRuntime="false"
 		srcdir="src" destdir="classes">

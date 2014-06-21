@@ -10,6 +10,7 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.G;
 
 public class P2Set {
 
@@ -67,6 +68,12 @@ public class P2Set {
 				// we should use the equivalence checking
 				if (ConstraintManager.isEqual(p2Set.get(obj), newCst))
 					continue;
+
+				if (G.dbgSmashing) {
+					System.out.println("dbgSmashing: "
+							+ "not equal constraints: " + p2Set.get(obj) + " "
+							+ newCst);
+				}
 
 				p2Set.put(obj, newCst);
 				// TODO

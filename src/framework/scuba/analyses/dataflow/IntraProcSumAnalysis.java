@@ -216,6 +216,7 @@ public class IntraProcSumAnalysis {
 	public static int bbProgress = 0;
 	public static int tmp1 = 0;
 	public static boolean opt = false;
+	public static int sm = 0;
 
 	public Pair<Boolean, Boolean> handleBasicBlock(BasicBlock bb,
 			boolean isInSCC) {
@@ -243,7 +244,32 @@ public class IntraProcSumAnalysis {
 						+ "handling stmt: " + q);
 			}
 
+			sm++;
+			if (G.dbgSmashing) {
+				if (sm == 93) {
+					summary.dumpSummaryToFile("$before$93");
+				}
+				if (sm == 93) {
+					summary.dumpSummaryToFile("$before$94");
+				}
+
+			}
 			Pair<Boolean, Boolean> flagStmt = summary.handleStmt(q);
+
+			if (G.dbgSmashing) {
+				System.out.println("dbgSmashing: " + "flag result: " + flagStmt
+						+ " id: " + sm);
+			}
+			if (G.dbgSmashing) {
+				if (sm == 93) {
+					summary.dumpSummaryToFile("$after$93");
+				}
+				if (sm == 93) {
+					summary.dumpSummaryToFile("$after$94");
+				}
+
+			}
+
 			if (G.dbgRef) {
 				System.out.println("dbgRef: " + "stmt result: " + flagStmt);
 			}

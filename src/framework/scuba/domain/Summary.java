@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import joeq.Class.jq_Array;
@@ -22,6 +23,7 @@ import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operand.TypeOperand;
 import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Operator.ALoad;
+import joeq.Compiler.Quad.Operator.ALoad.ALOAD_A;
 import joeq.Compiler.Quad.Operator.AStore;
 import joeq.Compiler.Quad.Operator.CheckCast;
 import joeq.Compiler.Quad.Operator.Getfield;
@@ -82,6 +84,12 @@ public class Summary {
 
 	public static int castCnt = 0;
 
+	// the locations in this set will be propagated to the caller
+	// 1. <AccessPath> 2. <ParamElem> 3. <StaticElem> 4. <RetElem>
+	// 5. <AllocElem> that are connected by 1-4 will be propagated
+	// 6. others will not be propagated
+	protected Set<AbsMemLoc> toProp = new HashSet<AbsMemLoc>();
+
 	// (call site, callee method) --> memory location instantiation
 	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
 	final protected MemLocInstn4Method memLocInstnResult;
@@ -111,6 +119,17 @@ public class Summary {
 
 	// alias query in this method or instantiated in this method
 	protected AliasQueries aliasQueries;
+
+	// whether current method is in a bad scc.
+	protected boolean inBadScc = false;
+
+	public boolean isInBadScc() {
+		return inBadScc;
+	}
+
+	public void setInBadScc(boolean inBadScc) {
+		this.inBadScc = inBadScc;
+	}
 
 	public boolean heapIsChanged() {
 		return changed.val0;
@@ -325,7 +344,15 @@ public class Summary {
 		// y = x[1];
 		public void visitALoad(Quad stmt) {
 			// TODO
+			if (G.dbgSmashing) {
+				System.out.println("dbgSmashing: " + " exec stmt: " + stmt);
+			}
+
 			Summary.aloadCnt++;
+
+			// only handle ALOAD_A only.
+			if (!(stmt.getOperator() instanceof ALOAD_A))
+				return;
 
 			jq_Method meth = stmt.getMethod();
 			if (ALoad.getDest(stmt) instanceof RegisterOperand) {
@@ -483,9 +510,6 @@ public class Summary {
 
 		// v = A.f.
 		public void visitGetstatic(Quad stmt) {
-			if (!SummariesEnv.v().propStatics) {
-				return;
-			}
 
 			// TODO
 			FieldOperand field = Getstatic.getField(stmt);
@@ -965,10 +989,6 @@ public class Summary {
 		// A.f = b;
 		public void visitPutstatic(Quad stmt) {
 
-			if (!SummariesEnv.v().propStatics) {
-				return;
-			}
-
 			FieldOperand field = Putstatic.getField(stmt);
 			if (field.getField().getType() instanceof jq_Reference) {
 				jq_Method meth = stmt.getMethod();
@@ -1125,7 +1145,7 @@ public class Summary {
 				// generate constraint for each potential target.
 				jq_Class tgtType = tgt.getDeclaringClass();
 
-				if (SummariesEnv.v().disableCst)
+				if (SummariesEnv.v().disableCst || inBadScc)
 					cst = ConstraintManager.genTrue();
 				else
 					cst = genCst(p2Set, tgt, tgtType, tgtSet);
@@ -1381,4 +1401,74 @@ public class Summary {
 		}
 	}
 
+	// fill the toProp set which determines what kinds of locations to propagate
+	// upwards to the callers, and this is done after terminating some method
+	public void fillPropSet() {
+		Set<AllocElem> wl = new HashSet<AllocElem>();
+		Set<AbsMemLoc> locals = new HashSet<AbsMemLoc>();
+		// add all locations that are guaranteed to be propagated to the caller
+		for (Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = absHeap.locToP2Set
+				.entrySet().iterator(); it.hasNext();) {
+			Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it.next();
+			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
+			AbsMemLoc loc = entry.getKey().val0;
+
+			if (loc instanceof AccessPath || loc instanceof ParamElem
+					|| loc instanceof StaticElem || loc instanceof RetElem) {
+				toProp.add(loc);
+				// add all potential allocs into wl
+				P2Set p2set = absHeap.locToP2Set.get(pair);
+				for (HeapObject hObj : p2set.keySet()) {
+					if (hObj instanceof AllocElem) {
+						wl.add((AllocElem) hObj);
+					}
+				}
+			} else if (loc instanceof LocalVarElem) {
+				Register v = ((LocalVarElem) loc).getLocal();
+				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
+					toProp.add(loc);
+				} else if (SummariesEnv.v().toProp(v)) {
+					locals.add(loc);
+					// add all potential allocs into wl
+					P2Set p2set = absHeap.locToP2Set.get(pair);
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem) {
+							locals.add((AllocElem) hObj);
+						}
+					}
+				}
+			} else {
+				assert (loc instanceof AllocElem) : "wrong!";
+			}
+		}
+		// use a worklist algorithm to find all allocs to propagate
+		Set<AllocElem> set = new HashSet<AllocElem>();
+		while (!wl.isEmpty()) {
+			toProp.addAll(wl);
+			for (AllocElem alloc : wl) {
+				Set<FieldElem> fields = alloc.getFields();
+				for (FieldElem f : fields) {
+					P2Set p2set = absHeap.locToP2Set
+							.get(new Pair<AbsMemLoc, FieldElem>(alloc, f));
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem && !toProp.contains(hObj)) {
+							set.add((AllocElem) hObj);
+						}
+					}
+				}
+			}
+			wl.clear();
+			wl.addAll(set);
+			set.clear();
+		}
+		toProp.addAll(locals);
+	}
+
+	public boolean toProp(AbsMemLoc loc) {
+		return toProp.contains(loc);
+	}
+
+	public Set<AbsMemLoc> getProps() {
+		return toProp;
+	}
 }

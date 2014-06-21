@@ -30,15 +30,17 @@ public class G {
 
 	public static boolean dbgPermission = true;
 
-	public static boolean dbgIsil = false;
-
 	public static boolean dbgQuery = false;
 
-	public static boolean instnInfo = true;
+	public static boolean instnInfo = false;
 
 	public static boolean dbgRef = false;
 
-	public static boolean seePerf = true;
+	public static boolean seePerf = false;
+
+	public static boolean dbgSmashing = false;
+
+	public static boolean dbgFilter = false;
 
 	public static int sample = 155;
 
