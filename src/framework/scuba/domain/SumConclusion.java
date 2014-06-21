@@ -13,6 +13,7 @@ import com.microsoft.z3.Z3Exception;
 import framework.scuba.helper.AccessPathHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
+import framework.scuba.utils.StringUtil;
 
 public class SumConclusion {
 
@@ -102,12 +103,15 @@ public class SumConclusion {
 	}
 
 	public AbstractHeap sumAllHeaps() {
-
 		// a worklist algorithm to conclude all heaps of <clinit>'s
 		Set<AbstractHeap> wl = new HashSet<AbstractHeap>();
 		Set<AbstractHeap> analyzed = new HashSet<AbstractHeap>();
 		wl.addAll(clinitHeaps);
 
+		if (G.tuning) {
+			StringUtil
+					.reportInfo("[Concluding] starting to conclude all heaps...");
+		}
 		if (SummariesEnv.v().topFixPoint) {
 			while (true) {
 				AbstractHeap worker = wl.iterator().next();

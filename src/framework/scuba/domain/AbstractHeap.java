@@ -25,7 +25,7 @@ import framework.scuba.helper.P2SetHelper;
 import framework.scuba.helper.TypeHelper;
 import framework.scuba.utils.StringUtil;
 
-public class AbstractHeap {
+public class AbstractHeap extends Heap {
 	// the summary this heap belongs to
 	protected final Summary summary;
 
@@ -1069,7 +1069,7 @@ public class AbstractHeap {
 		if (memLocFactory.containsKey(other)) {
 			return (LocalAccessPath) memLocFactory.get(other);
 		}
-		assert false : "I think other should have been created!";
+		// assert false : "I think other should have been created!";
 		ArgDerivedHelper.markArgDerived(other);
 		memLocFactory.put(other, other);
 		return other;

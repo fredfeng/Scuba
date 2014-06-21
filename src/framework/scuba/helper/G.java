@@ -32,7 +32,7 @@ public class G {
 
 	public static boolean dbgQuery = false;
 
-	public static boolean instnInfo = true;
+	public static boolean instnInfo = false;
 
 	public static boolean dbgRef = false;
 
@@ -40,7 +40,7 @@ public class G {
 
 	public static boolean dbgSmashing = false;
 
-	public static boolean dbgFilter = true;
+	public static boolean dbgFilter = false;
 
 	public static int sample = 155;
 

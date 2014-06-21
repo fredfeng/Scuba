@@ -122,9 +122,9 @@ public class ConstraintManager {
 				// return the number of its class.
 				AllocElem ae = (AllocElem) ho;
 				jq_Type jType = ae.getAlloc().getType();
-				//always true for jq_array.
-				if(jType instanceof jq_Array) 
-					return (BoolExpr)cur;
+				// always true for jq_array.
+				if (jType instanceof jq_Array)
+					return (BoolExpr) cur;
 				// assert jType instanceof jq_Class :
 				// "alloc object should be a jq_class. "
 				// + "[type]: " + jType + " [AllocElem]: " + ae;
