@@ -88,8 +88,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void init() {
 		getCallGraph();
+
 		// app locals from haiyan's analysis.
 		extractAppLocals();
+
+		if (G.dbgFilter) {
+			System.out.println("dbgFilter: " + SummariesEnv.v().getProps());
+		}
 
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
@@ -293,7 +298,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// 1.get its corresponding scc
 		Set<jq_Method> scc = nodeToScc.get(node);
 
-		if (G.dbgQuery) {
+		if (G.dbgFilter) {
 			for (jq_Method m : scc) {
 				StringUtil.reportInfo("Byte code for Method: [" + G.countScc
 						+ "]" + m);
@@ -365,19 +370,26 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		node.setTerminated(true);
 
 		// when terminating, decide what locations in the summary to propagate
-		if (SummariesEnv.v().usePropFilter()) {
-			Set<jq_Method> scc = nodeToScc.get(node);
-			for (jq_Method m : scc) {
-				Summary sum = SummariesEnv.v().getSummary(m);
-				if (m != null) {
-					sum.fillPropSet();
+		Set<jq_Method> scc = nodeToScc.get(node);
+		for (jq_Method m : scc) {
+			Summary sum = SummariesEnv.v().getSummary(m);
+			if (m != null) {
+				sum.fillPropSet();
+				if (G.dbgFilter) {
+					System.out.println("dbgFilter: " + "toProp: "
+							+ sum.getProps());
+					if (G.countScc == 302) {
+						sum.dumpSummaryToFile("$302");
+					}
+					if (G.countScc == 8) {
+						sum.dumpSummaryToFile("$8");
+					}
 				}
 			}
 		}
 
 		// when terminating, clean up locals in the summary
 		if (SummariesEnv.v().useClearLocals()) {
-			Set<jq_Method> scc = nodeToScc.get(node);
 			for (jq_Method m : scc) {
 				Summary sum = SummariesEnv.v().getSummary(m);
 				if (m != null) {
