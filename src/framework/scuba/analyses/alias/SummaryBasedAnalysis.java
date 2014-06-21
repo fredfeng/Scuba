@@ -77,7 +77,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relDcLocal;
 	protected ProgramRel relLibM;
 
-	protected CICG callGraph;
+	protected CallGraph callGraph;
 
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
 	HashMap<Set<jq_Method>, Node> sccToNode = new HashMap<Set<jq_Method>, Node>();
@@ -647,8 +647,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	 */
 	public ICICG getCallGraph() {
 		if (callGraph == null) {
-			callGraph = new CICG(domM, relRootM, relReachableM, relIM,
-					relMM);
+			callGraph = new CallGraph(domM, relRootM, relReachableM, relPIM,
+					relPMM);
 		}
 		Env.cg = callGraph;
 		return callGraph;
