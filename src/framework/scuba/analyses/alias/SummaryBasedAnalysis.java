@@ -736,6 +736,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (Trio<jq_Method, Register, jq_Type> trio : res) {
 			jq_Method meth = trio.val0;
 			Register r = trio.val1;
+			jq_Type castType = trio.val2;
 			// System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
 			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
 
@@ -745,6 +746,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			}
 
 			StringUtil.reportInfo("[Scuba] method: " + meth);
+			StringUtil.reportInfo("[Scuba] Downcast Type: " + castType);
 			StringUtil.reportInfo("[Scuba] p2Set of " + r + ":" + sites);
 
 			// p2set of r in chord.
