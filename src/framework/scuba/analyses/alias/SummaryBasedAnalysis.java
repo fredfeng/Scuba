@@ -355,6 +355,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	// mark current node as terminated and perform GC on its successor, if
 	// possible.
+	public static int dcount = 0;
+
 	private void terminateAndDoGC(Node node) {
 		node.setTerminated(true);
 
@@ -364,14 +366,43 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			Summary sum = SummariesEnv.v().getSummary(m);
 			if (m != null) {
 				sum.fillPropSet();
-				if (G.dbgFilter) {
-					System.out.println("dbgFilter: " + "toProp: "
-							+ sum.getProps());
-					if (G.countScc == 302) {
-						sum.dumpSummaryToFile("$302");
+			}
+		}
+
+		if (G.dbgQuery) {
+			for (jq_Method m : scc) {
+				Summary sum = SummariesEnv.v().getSummary(m);
+
+				System.out.println("byte code FOR: " + m + "\n" + " [Id] "
+						+ ++dcount);
+				System.out.println(m.getCFG().fullDump());
+
+				if (sum != null) {
+					if (m.toString()
+							.equals("addSubCategories:(Lcck/util/ClassMap;)V@avrora.Defaults")) {
+						sum.dumpSummaryToFile("$" + dcount);
 					}
-					if (G.countScc == 8) {
-						sum.dumpSummaryToFile("$8");
+					if (m.toString()
+							.equals("getAllCategories:()Ljava/util/List;V@avrora.Defaults")) {
+						sum.dumpSummaryToFile("$" + dcount);
+					}
+					if (m.toString().equals(
+							"parseOptions:([Ljava/lang/String;);V@avrora.Main")) {
+						sum.dumpSummaryToFile("$" + dcount);
+					}
+					if (m.toString()
+							.equals("addOptionValueSection:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;"
+									+ "Lcck/util/ClassMap;)V@cck.help.HelpCategory")) {
+						sum.dumpSummaryToFile("$" + dcount);
+					}
+					if (m.toString()
+							.equals("addSubcategorySection:(Ljava/lang/String;Ljava/lang/String;"
+									+ "Ljava/util/List;)V@cck.help.HelpCategory")) {
+						sum.dumpSummaryToFile("$" + dcount);
+					}
+					if (m.toString().equals(
+							"printHelp:()V@cck.help.HelpCategory")) {
+						sum.dumpSummaryToFile("$" + dcount);
 					}
 				}
 			}
@@ -663,6 +694,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 		assert (sum != null) : "the entry method should have a summary!";
 		Summary sum1 = SummariesEnv.v().getSummary(method);
+
 		if (sum1 == null) {
 			if (G.dbgQuery) {
 				StringUtil.reportInfo("Query: "
@@ -671,12 +703,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			}
 			return ret;
 		}
+
 		assert (sum1 != null) : "the method of the variable should have a summary!";
+
 		if (G.dbgQuery) {
 			StringUtil.reportInfo("Query: " + " size of sum: "
 					+ sum1.getHeapSize());
 			StringUtil.reportInfo("Query: " + " variable method: " + method);
 		}
+
 		if (sum1.getAbsHeap()
 				.getHeap()
 				.containsKey(
@@ -701,10 +736,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			if (G.dbgQuery) {
 				StringUtil.reportInfo("Query: "
 						+ "[we cannot get the location in the heap!]");
-				sum1.dumpSummaryToFile("" + me++);
 			}
 			return ret;
 		}
+
 		LocalVarElem local = sum1.getLocalVarElem(clazz, method, variable);
 		ret = sum.getP2Set(local);
 		return ret;

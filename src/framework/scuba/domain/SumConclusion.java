@@ -89,6 +89,11 @@ public class SumConclusion {
 		if (p2set == null) {
 			return ret;
 		}
+
+		if (G.dbgQuery) {
+			System.out.println("Query: " + "p2 set in final sum: " + p2set);
+		}
+
 		for (HeapObject hObj : p2set.keySet()) {
 			if (hObj instanceof AllocElem) {
 				ret.add((AllocElem) hObj);
