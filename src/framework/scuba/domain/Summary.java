@@ -842,20 +842,20 @@ public class Summary {
 		// v1 = new A();
 		public void visitNew(Quad stmt) {
 			assert (stmt.getOperator() instanceof New);
-			
+
 			jq_Class exception = (jq_Class) Program.g().getClass(
 					"java.lang.Exception");
 
 			jq_Method meth = stmt.getMethod();
 			TypeOperand to = New.getType(stmt);
-			
-			if(to.getType() instanceof jq_Class) {
+
+			if (to.getType() instanceof jq_Class) {
 				jq_Class clz = (jq_Class) to.getType();
-				//do not handle new exception.
-				if(clz.extendsClass(exception))
+				// do not handle new exception.
+				if (clz.extendsClass(exception))
 					return;
 			}
-			
+
 			RegisterOperand rop = New.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 
@@ -1157,7 +1157,7 @@ public class Summary {
 					cst = ConstraintManager.genTrue();
 				else
 					cst = genCst(p2Set, tgt, tgtType, tgtSet);
-				
+
 				// FIXME: We should assume that v can point to any object.
 				if (p2Set.isEmpty()) {
 					System.err
@@ -1173,8 +1173,8 @@ public class Summary {
 							.println("[WARNING:]Unreachable method because of missing model."
 									+ tgt);
 					
-					if (SummariesEnv.v().getReachableMethods()
-							.contains(tgt))
+//					if (SummariesEnv.v().getReachableMethods()
+//							.contains(tgt))
 //						assert false : "virtual reachable method can not be missed."
 //								+ tgt;
 					
