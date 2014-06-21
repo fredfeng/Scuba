@@ -841,9 +841,20 @@ public class Summary {
 		// v1 = new A();
 		public void visitNew(Quad stmt) {
 			assert (stmt.getOperator() instanceof New);
+			
+			jq_Class exception = (jq_Class) Program.g().getClass(
+					"java.lang.Exception");
 
 			jq_Method meth = stmt.getMethod();
 			TypeOperand to = New.getType(stmt);
+			
+			if(to.getType() instanceof jq_Class) {
+				jq_Class clz = (jq_Class) to.getType();
+				//do not handle new exception.
+				if(clz.extendsClass(exception))
+					return;
+			}
+			
 			RegisterOperand rop = New.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 
