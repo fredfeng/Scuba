@@ -326,16 +326,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 								+ "] no IR" + " method: " + m);
 					}
 				}
-
-				if (G.dbgQuery) {
-
-					if (G.countScc == G.sample) {
-						SummariesEnv.v().getSummary(m)
-								.dumpSummaryToFile("" + G.sample);
-						SummariesEnv.v().getSummary(m)
-								.dumpSummaryMappingToFile("" + G.sample);
-					}
-				}
 			}
 		} else {
 			analyzeSCC(node);
