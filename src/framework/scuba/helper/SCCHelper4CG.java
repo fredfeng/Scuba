@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import joeq.Class.jq_Method;
-import framework.scuba.domain.CallGraph;
+import chord.analyses.alias.CICG;
 
 //TODO we should combine SCCHelper and SCCHelper4CG in the future.
 //Currently it's ugly.
@@ -23,14 +23,14 @@ public class SCCHelper4CG {
 
 	protected Stack<jq_Method> s;
 
-	protected CallGraph g;
+	protected CICG g;
 
 	/**
 	 * @param g
 	 *            : a Callgraph for which we want to compute the strongly
 	 *            connected components.
 	 */
-	public SCCHelper4CG(CallGraph g, Set roots) {
+	public SCCHelper4CG(CICG g, Set roots) {
 		this.g = g;
 		s = new Stack<jq_Method>();
 		Set<Object> heads = roots;

@@ -29,7 +29,7 @@ public class Env {
 	public static int countAccessPath = 0;
 
 	// Callgraph instance.
-	public static CallGraph cg;
+	public static CICG cg;
 
 	/**
 	 * This map holds all key,value pairs such that value.getSuperclass() ==
