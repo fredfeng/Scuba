@@ -30,7 +30,7 @@ public class G {
 
 	public static boolean dbgPermission = true;
 
-	public static boolean dbgQuery = true;
+	public static boolean dbgQuery = false;
 
 	public static boolean instnInfo = false;
 
