@@ -788,8 +788,8 @@ public class AbstractHeap extends Heap {
 		if (G.instnInfo) {
 			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
 					+ "(" + src + "  ,  " + field + ")" + "-->" + dst);
-			StringUtil.reportInfo("instnInfo: " + "the edge cst: \n"
-					+ calleeCst);
+			StringUtil.reportInfo("instnInfo: " + "the edge cst: "
+					+ calleeCst.toString());
 		}
 
 		// more smart skip for instantiating edges
