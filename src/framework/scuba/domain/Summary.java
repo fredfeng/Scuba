@@ -746,7 +746,8 @@ public class Summary {
 				if (G.instnInfo) {
 					StringUtil.reportInfo("instnInfo: " + " there are ["
 							+ calleeSum.getAbsHeap().size()
-							+ "] edges in the callee heap");
+							+ "] edges in the callee heap" + " of method "
+							+ calleeSum.getMethod());
 				}
 
 				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
