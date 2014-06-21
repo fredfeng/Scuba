@@ -771,11 +771,6 @@ public class AbstractHeap extends Heap {
 
 		long start = System.nanoTime();
 
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
-					+ "(" + src + "  ,  " + field + ")" + "-->" + dst);
-		}
-
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (src != null && dst != null && field != null) : "nulls!";
@@ -789,6 +784,13 @@ public class AbstractHeap extends Heap {
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
+
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
+					+ "(" + src + "  ,  " + field + ")" + "-->" + dst);
+			StringUtil.reportInfo("instnInfo: " + "the edge cst: \n"
+					+ calleeCst);
+		}
 
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
