@@ -619,6 +619,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relDcLocal = (ProgramRel) ClassicProject.g().getTrgt("DcLocal");
 		relLibM = (ProgramRel) ClassicProject.g().getTrgt("librariesM");
 		
+		if (!relDcLocal.isOpen())
+			relDcLocal.load();
+		
+		if (!relReachableM.isOpen())
+			relReachableM.load();
+
+		Iterable<jq_Method> resM = relReachableM.getAry1ValTuples();
+		Set<jq_Method> reaches = SetUtils.iterableToSet(resM,
+				relReachableM.size());
+		SummariesEnv.v().setReachableMethods(reaches);
+		
 		if(!relLibM.isOpen())
 			relLibM.load();
 

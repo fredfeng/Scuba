@@ -33,6 +33,7 @@ import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_A;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_A;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKEVIRTUAL_A;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeInterface;
+import joeq.Compiler.Quad.Operator.Invoke.InvokeStatic;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeVirtual;
 import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.Move.MOVE_A;
@@ -1114,6 +1115,11 @@ public class Summary {
 			Summary calleeSum = SummariesEnv.v().getSummary(callee);
 			if (calleeSum == null) {
 				StringUtil.reportInfo("Missing model for " + callee);
+				if (opr instanceof InvokeStatic)
+					if (SummariesEnv.v().getReachableMethods()
+							.contains(calleeSum))
+						assert false : "static reachable method can not be missed."
+								+ callee;
 				return ret;
 			}
 			// assert calleeSum != null : "CalleeSum can not be null" +

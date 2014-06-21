@@ -44,6 +44,9 @@ public class SummariesEnv {
 	// protected boolean propFilter = false;
 	// the locals that we care about
 	protected Set<Register> toProp = new HashSet<Register>();
+	
+	//all reachable methods
+	protected Set<jq_Method> reachableMethods = new HashSet<jq_Method>();
 
 	// ignore string
 	protected boolean openBlklist = false;
@@ -220,5 +223,14 @@ public class SummariesEnv {
 
 	public Set<Register> getProps() {
 		return toProp;
+	}
+	
+
+	public Set<jq_Method> getReachableMethods() {
+		return reachableMethods;
+	}
+
+	public void setReachableMethods(Set<jq_Method> reachableMethods) {
+		this.reachableMethods = reachableMethods;
 	}
 }
