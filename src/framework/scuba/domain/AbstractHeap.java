@@ -769,6 +769,8 @@ public class AbstractHeap extends Heap {
 			FieldElem field, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
 
+		long start = System.nanoTime();
+
 		if (G.instnInfo) {
 			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
 					+ "(" + src + "," + field + ")" + "-->" + dst);
@@ -861,9 +863,13 @@ public class AbstractHeap extends Heap {
 			}
 		}
 
+		long end = System.nanoTime();
+
 		if (G.instnInfo) {
 			StringUtil.reportInfo("instnInfo: " + "caller heap becomes: "
 					+ size() + " edges");
+			StringUtil.reportSec("instnInfo: "
+					+ "total time to instn this edge: ", start, end);
 		}
 		return ret;
 	}
