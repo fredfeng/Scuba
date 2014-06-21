@@ -386,6 +386,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 					if (G.countScc == 4296) {
 						sum.dumpSummaryToFile("$4296");
 					}
+					if (G.countScc == 2887) {
+						sum.dumpSummaryToFile("$2887");
+					}
 				}
 			}
 		}
