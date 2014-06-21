@@ -379,6 +379,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				System.out.println("byte code FOR: " + m + "\n" + " [Id] "
 						+ ++dcount);
 				System.out.println(m.getCFG().fullDump());
+				if (sum != null) {
+					if (G.countScc == 4330) {
+						sum.dumpSummaryToFile("$4330");
+					}
+				}
 			}
 		}
 
@@ -629,8 +634,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	 */
 	public ICICG getCallGraph() {
 		if (callGraph == null) {
-			callGraph = new CICG(domM, relRootM, relReachableM, relIM,
-					relMM);
+			callGraph = new CICG(domM, relRootM, relReachableM, relIM, relMM);
 		}
 		Env.cg = callGraph;
 		return callGraph;
