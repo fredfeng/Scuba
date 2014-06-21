@@ -28,7 +28,7 @@ public class G {
 
 	public static boolean dbgMatch = false;
 
-	public static boolean dbgPermission = false;
+	public static boolean dbgPermission = true;
 
 	public static boolean dbgQuery = false;
 
