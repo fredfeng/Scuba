@@ -839,10 +839,6 @@ public class AbstractHeap extends Heap {
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
 
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: "
-							+ "intersecting constraints.");
-				}
 				assert (newDst1 != null) : "null!";
 
 				if (SummariesEnv.v().badMethodSkip) {
@@ -853,6 +849,11 @@ public class AbstractHeap extends Heap {
 							continue;
 						}
 					}
+				}
+
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: "
+							+ "intersecting constraints.");
 				}
 
 				BoolExpr cst1 = instnSrc.get(newSrc);
