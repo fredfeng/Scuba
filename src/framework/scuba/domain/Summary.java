@@ -1117,7 +1117,7 @@ public class Summary {
 				StringUtil.reportInfo("Missing model for " + callee);
 				if (opr instanceof InvokeStatic)
 					if (SummariesEnv.v().getReachableMethods()
-							.contains(calleeSum))
+							.contains(callee))
 						assert false : "static reachable method can not be missed."
 								+ callee;
 				return ret;
@@ -1148,15 +1148,6 @@ public class Summary {
 			P2Set p2Set = absHeap.lookup(so,
 					EpsilonFieldElem.getEpsilonFieldElem());
 
-			// assert !p2Set.isEmpty() : "Receiver's p2Set can't be empty.";
-			// FIXME: We should assume that v can point to any object.
-			if (p2Set.isEmpty()) {
-				System.err
-						.println("[WARNING:]Receiver's p2Set can't be empty. Missing models?"
-								+ callsite);
-				return ret;
-			}
-
 			// only one target, resolve it as static call.
 			for (jq_Method tgt : tgtSet) {
 				// generate constraint for each potential target.
@@ -1166,6 +1157,14 @@ public class Summary {
 					cst = ConstraintManager.genTrue();
 				else
 					cst = genCst(p2Set, tgt, tgtType, tgtSet);
+				
+				// FIXME: We should assume that v can point to any object.
+				if (p2Set.isEmpty()) {
+					System.err
+							.println("[WARNING:]Receiver's p2Set can't be empty. Missing models? append True cst."
+									+ callsite);
+					cst = ConstraintManager.genTrue();
+				}
 
 				assert cst != null : "Invalid constaint!";
 				Summary dySum = SummariesEnv.v().getSummary(tgt);
@@ -1173,6 +1172,12 @@ public class Summary {
 					System.err
 							.println("[WARNING:]Unreachable method because of missing model."
 									+ tgt);
+					
+					if (SummariesEnv.v().getReachableMethods()
+							.contains(tgt))
+						assert false : "virtual reachable method can not be missed."
+								+ tgt;
+					
 					continue;
 				}
 				if (G.tuning)
