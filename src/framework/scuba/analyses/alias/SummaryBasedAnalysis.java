@@ -74,6 +74,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relPIM;
 	protected ProgramRel relAppLocal;
 	protected ProgramRel relDcLocal;
+	protected ProgramRel relLibM;
 
 	protected CallGraph callGraph;
 
@@ -108,7 +109,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("[Scuba] Summaries: " + meth);
 
 	}
-
+	
 	// pre-analysis to extract all locals in application. This will decide which
 	// part of locals we need to propagate to the root level.
 	private void extractAppLocals() {
@@ -422,6 +423,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private Pair<Boolean, Boolean> analyze(jq_Method m, boolean isBadScc) {
 		accessSeq.add(m);
 
+		long startMeth = System.nanoTime();
+
 		Summary summary = SummariesEnv.v().initSummary(m);
 		summary.setInBadScc(isBadScc);
 		summary.setChanged(new Pair<Boolean, Boolean>(false, false));
@@ -465,6 +468,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			if (m.toString().equals("hashCode:()I@java.util.Hashtable$Entry")) {
 				summary.dumpSummaryToFile("$hashCode");
 			}
+		}
+
+		long endMeth = System.nanoTime();
+		long delta = endMeth -startMeth;
+		if(libMeths.contains(m)) {
+			libTime += delta;
+		} else {
+			appTime += delta;
 		}
 
 		return summary.isChanged();
@@ -571,13 +582,28 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relPIM = (ProgramRel) ClassicProject.g().getTrgt("PIM");
 		relAppLocal = (ProgramRel) ClassicProject.g().getTrgt("AppLocal");
 		relDcLocal = (ProgramRel) ClassicProject.g().getTrgt("DcLocal");
+		relLibM = (ProgramRel) ClassicProject.g().getTrgt("librariesM");
+		
+		if(!relLibM.isOpen())
+			relLibM.load();
 
+		Iterable<jq_Method> res = relLibM.getAry1ValTuples();
+		libMeths = SetUtils.iterableToSet(res, relLibM.size());
+		
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
 
 		// init scuba.
 		init();
 	}
+	
+	private Set<jq_Method> libMeths;
+	
+	// total time spending on analyzing lib.
+	public long libTime = 0;
+
+	// total time spending on analyzing app.
+	public long appTime = 0;
 
 	/**
 	 * Provides the program's context-insensitive call graph.
@@ -808,6 +834,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("Array------------" + Summary.aNewArrayCnt);
 		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
 		System.out.println("Total downcast------------" + Summary.castCnt);
+		
+		StringUtil.reportTotalTime("Total Time on Library: ", libTime);
+		StringUtil.reportTotalTime("Total Time on App: ", appTime);
 	}
 
 }
