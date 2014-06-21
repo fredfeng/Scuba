@@ -16,6 +16,7 @@ import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.analyses.alias.CICG;
 import chord.analyses.alias.ICICG;
 import chord.analyses.method.DomM;
 import chord.bddbddb.Rel.RelView;
@@ -76,7 +77,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relDcLocal;
 	protected ProgramRel relLibM;
 
-	protected CallGraph callGraph;
+	protected CICG callGraph;
 
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
 	HashMap<Set<jq_Method>, Node> sccToNode = new HashMap<Set<jq_Method>, Node>();
@@ -646,8 +647,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	 */
 	public ICICG getCallGraph() {
 		if (callGraph == null) {
-			callGraph = new CallGraph(domM, relRootM, relReachableM, relPIM,
-					relPMM);
+			callGraph = new CICG(domM, relRootM, relReachableM, relIM,
+					relMM);
 		}
 		Env.cg = callGraph;
 		return callGraph;
