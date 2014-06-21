@@ -169,7 +169,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("Total reachableM: " + relReachableM.size());
 		}
 
-		LinkedList<Node> worklist = new LinkedList<Node>();
+		Set<Node> worklist = new LinkedHashSet<Node>();
 
 		for (Node methNode : repGraph.getNodes())
 			if ((methNode.getSuccessors().size() == 0)) {
@@ -180,7 +180,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// foreach leaf in the callgraph. Add them to the worklist.
 		Set<Node> visited = new HashSet<Node>();
 		while (!worklist.isEmpty()) {
-			Node worker = worklist.poll();
+			Node worker = worklist.iterator().next();
+			worklist.remove(worker);
 			// each node will be visited exactly once.
 			if (visited.contains(worker))
 				continue;
