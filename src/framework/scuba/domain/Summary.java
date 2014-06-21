@@ -1405,6 +1405,7 @@ public class Summary {
 	// upwards to the callers, and this is done after terminating some method
 	public void fillPropSet() {
 		Set<AllocElem> wl = new HashSet<AllocElem>();
+		Set<AbsMemLoc> locals = new HashSet<AbsMemLoc>();
 		// add all locations that are guaranteed to be propagated to the caller
 		for (Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = absHeap.locToP2Set
 				.entrySet().iterator(); it.hasNext();) {
@@ -1412,10 +1413,6 @@ public class Summary {
 			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
 			AbsMemLoc loc = entry.getKey().val0;
 
-			if (G.dbgFilter) {
-				System.out.println("dbgFilter: " + " filtering location: "
-						+ loc);
-			}
 			if (loc instanceof AccessPath || loc instanceof ParamElem
 					|| loc instanceof StaticElem || loc instanceof RetElem) {
 				toProp.add(loc);
@@ -1428,26 +1425,16 @@ public class Summary {
 				}
 			} else if (loc instanceof LocalVarElem) {
 				Register v = ((LocalVarElem) loc).getLocal();
-				if (G.dbgFilter) {
-					System.out.println("dbgFilter: " + " Local: " + v);
-				}
 				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 					toProp.add(loc);
-					if (G.dbgFilter) {
-						System.out.println("dbgFilter: " + "added into");
-					}
 				} else if (SummariesEnv.v().toProp(v)) {
-					toProp.add(loc);
+					locals.add(loc);
 					// add all potential allocs into wl
 					P2Set p2set = absHeap.locToP2Set.get(pair);
 					for (HeapObject hObj : p2set.keySet()) {
 						if (hObj instanceof AllocElem) {
-							wl.add((AllocElem) hObj);
+							locals.add((AllocElem) hObj);
 						}
-					}
-				} else {
-					if (G.dbgFilter) {
-						System.out.println("dbgFilter: " + " NO!!!!");
 					}
 				}
 			} else {
@@ -1474,6 +1461,7 @@ public class Summary {
 			wl.addAll(set);
 			set.clear();
 		}
+		toProp.addAll(locals);
 	}
 
 	public boolean toProp(AbsMemLoc loc) {
