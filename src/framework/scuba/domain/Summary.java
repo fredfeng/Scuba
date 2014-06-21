@@ -743,6 +743,12 @@ public class Summary {
 					}
 				}
 
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: " + " there are ["
+							+ calleeSum.getAbsHeap().size()
+							+ "] edges in the callee heap");
+				}
+
 				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
 						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
 
@@ -1161,7 +1167,8 @@ public class Summary {
 				// FIXME: We should assume that v can point to any object.
 				if (p2Set.isEmpty()) {
 					System.err
-							.println("[WARNING:]Receiver's p2Set can't be empty. Missing models? append True cst."
+							.println("[WARNING:]Receiver's p2Set can't be empty."
+									+ " Missing models? append True cst."
 									+ callsite);
 					cst = ConstraintManager.genTrue();
 				}
