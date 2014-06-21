@@ -312,7 +312,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				analyzeSCC(node);
 			} else {
 				jq_Method m = scc.iterator().next();
-				analyze(m, false);
+				analyze(m, node.getPreds().size() == 0);
 				if (G.dbgPermission) {
 					StringUtil.reportInfo("Evils:[" + G.countScc
 							+ "] begin regular node");
