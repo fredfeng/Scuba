@@ -802,13 +802,6 @@ public class AbstractHeap extends Heap {
 			}
 		}
 
-		if (SummariesEnv.v().badMethodSkip) {
-			if (summary.isInBadScc()
-					&& memLocInstn.memLocInstnCache.containsKey(src)) {
-
-			}
-		}
-
 		if (G.instnInfo) {
 			StringUtil.reportInfo("instnInfo: "
 					+ "instantiating callee constraint.");
@@ -851,6 +844,17 @@ public class AbstractHeap extends Heap {
 							+ "intersecting constraints.");
 				}
 				assert (newDst1 != null) : "null!";
+
+				if (SummariesEnv.v().badMethodSkip) {
+					if (SummariesEnv.v().disableCst
+							&& memLocInstn.memLocInstnCache.containsKey(src)) {
+						P2Set p2set = lookup(newSrc, field);
+						if (p2set.contains(newDst1)) {
+							continue;
+						}
+					}
+				}
+
 				BoolExpr cst1 = instnSrc.get(newSrc);
 				BoolExpr cst2 = instnDst.get(newDst);
 				BoolExpr cst = ConstraintManager.intersect(
