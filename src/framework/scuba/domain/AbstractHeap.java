@@ -812,12 +812,6 @@ public class AbstractHeap extends Heap {
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
 
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: "
-					+ "the callee edge is instantiated into: "
-					+ instnSrc.size() * instnDst.size() + " edges");
-		}
-
 		assert (instnDst != null) : "instantiation of dst cannot be null!";
 		if (instnSrc == null) {
 			assert (src instanceof RetElem) : "only return value in the callee"
@@ -826,6 +820,12 @@ public class AbstractHeap extends Heap {
 
 		if (instnSrc == null) {
 			return ret;
+		}
+
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: "
+					+ "the callee edge is instantiated into: "
+					+ instnSrc.size() * instnDst.size() + " edges");
 		}
 
 		for (AbsMemLoc newSrc : instnSrc.keySet()) {
