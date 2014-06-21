@@ -35,12 +35,12 @@ public class StaticElem extends StackObject {
 
 	@Override
 	public String toString() {
-		return "[SC]" + clazz.getName() + "_" + field.getName();
+		return "[SC]" + clazz + "_" + field;
 	}
 
 	@Override
 	public String dump() {
-		return "[SC]" + clazz.getName() + "_" + field.getName();
+		return "[SC]" + clazz + "_" + field;
 	}
 
 	@Override
