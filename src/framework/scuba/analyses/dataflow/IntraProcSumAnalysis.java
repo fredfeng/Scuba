@@ -42,6 +42,7 @@ public class IntraProcSumAnalysis {
 			StringUtil.reportInfo("dbgPermission");
 			StringUtil.reportInfo("dbgPermission: " + " analyzing method: "
 					+ g.getMethod());
+			StringUtil.reportInfo("dbgPermission: " + g.fullDump());
 		}
 
 		// create the memory locations for the parameters first if has not
