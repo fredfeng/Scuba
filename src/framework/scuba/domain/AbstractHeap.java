@@ -154,6 +154,9 @@ public class AbstractHeap {
 			jq_Method method, Register left, VariableType leftVType,
 			Register right, VariableType rightVType) {
 
+		if (G.dbgFilter) {
+			System.out.println("handling the stmt");
+		}
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
@@ -778,22 +781,8 @@ public class AbstractHeap {
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
-		if (SummariesEnv.v().usePropFilter()) {
-			if (!summary.toProp(src)) {
-				return ret;
-			}
-		}
-
-		if (!SummariesEnv.v().propLocals) {
-			if (src instanceof LocalVarElem) {
-				return ret;
-			}
-		}
-
-		if (!SummariesEnv.v().propStatics) {
-			if (src instanceof StaticElem || src instanceof StaticAccessPath) {
-				return ret;
-			}
+		if (!calleeHeap.summary.toProp(src)) {
+			return ret;
 		}
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
@@ -892,22 +881,8 @@ public class AbstractHeap {
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
-		if (SummariesEnv.v().usePropFilter()) {
-			if (!summary.toProp(src)) {
-				return ret;
-			}
-		}
-
-		if (!SummariesEnv.v().propLocals) {
-			if (src instanceof LocalVarElem) {
-				return ret;
-			}
-		}
-
-		if (!SummariesEnv.v().propStatics) {
-			if (src instanceof StaticElem || src instanceof StaticAccessPath) {
-				return ret;
-			}
+		if (!calleeHeap.summary.toProp(src)) {
+			return ret;
 		}
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);

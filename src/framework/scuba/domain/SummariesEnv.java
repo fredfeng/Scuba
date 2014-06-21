@@ -25,7 +25,7 @@ public class SummariesEnv {
 	protected SumConclusion finalSum;
 
 	public static enum PropType {
-		DOWNCAST, APPLOCAL;
+		ALL, DOWNCAST, APPLOCAL;
 	}
 
 	String[] blklist = {
@@ -40,12 +40,8 @@ public class SummariesEnv {
 	// 0 means infinity
 	protected int allocDepth = 1;
 
-	// prop locals or not (if using filter, set this)
-	protected boolean propLocals = true;
-	// prop statics or not (we normally set this)
-	protected boolean propStatics = true;
 	// customize what to propagate
-	protected boolean propFilter = true;
+	// protected boolean propFilter = false;
 	// the locals that we care about
 	protected Set<Register> toProp = new HashSet<Register>();
 
@@ -101,12 +97,10 @@ public class SummariesEnv {
 	// protected PropType localType = PropType.APPLOCAL;
 	protected PropType localType = PropType.DOWNCAST;
 
+	// protected PropType localType = PropType.ALL;
+
 	public PropType getLocalType() {
 		return localType;
-	}
-
-	public boolean usePropFilter() {
-		return propFilter;
 	}
 
 	public boolean useClearLocals() {
@@ -222,5 +216,9 @@ public class SummariesEnv {
 
 	public boolean toProp(Register v) {
 		return toProp.contains(v);
+	}
+
+	public Set<Register> getProps() {
+		return toProp;
 	}
 }

@@ -40,6 +40,8 @@ public class G {
 
 	public static boolean dbgSmashing = false;
 
+	public static boolean dbgFilter = true;
+
 	public static int sample = 155;
 
 	// flag to tune performance.

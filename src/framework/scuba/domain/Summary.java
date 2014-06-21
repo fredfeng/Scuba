@@ -510,9 +510,6 @@ public class Summary {
 
 		// v = A.f.
 		public void visitGetstatic(Quad stmt) {
-			if (!SummariesEnv.v().propStatics) {
-				return;
-			}
 
 			// TODO
 			FieldOperand field = Getstatic.getField(stmt);
@@ -992,10 +989,6 @@ public class Summary {
 		// A.f = b;
 		public void visitPutstatic(Quad stmt) {
 
-			if (!SummariesEnv.v().propStatics) {
-				return;
-			}
-
 			FieldOperand field = Putstatic.getField(stmt);
 			if (field.getField().getType() instanceof jq_Reference) {
 				jq_Method meth = stmt.getMethod();
@@ -1419,6 +1412,10 @@ public class Summary {
 			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
 			AbsMemLoc loc = entry.getKey().val0;
 
+			if (G.dbgFilter) {
+				System.out.println("dbgFilter: " + " filtering location: "
+						+ loc);
+			}
 			if (loc instanceof AccessPath || loc instanceof ParamElem
 					|| loc instanceof StaticElem || loc instanceof RetElem) {
 				toProp.add(loc);
@@ -1431,7 +1428,15 @@ public class Summary {
 				}
 			} else if (loc instanceof LocalVarElem) {
 				Register v = ((LocalVarElem) loc).getLocal();
-				if (SummariesEnv.v().toProp(v)) {
+				if (G.dbgFilter) {
+					System.out.println("dbgFilter: " + " Local: " + v);
+				}
+				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
+					toProp.add(loc);
+					if (G.dbgFilter) {
+						System.out.println("dbgFilter: " + "added into");
+					}
+				} else if (SummariesEnv.v().toProp(v)) {
 					toProp.add(loc);
 					// add all potential allocs into wl
 					P2Set p2set = absHeap.locToP2Set.get(pair);
@@ -1439,6 +1444,10 @@ public class Summary {
 						if (hObj instanceof AllocElem) {
 							wl.add((AllocElem) hObj);
 						}
+					}
+				} else {
+					if (G.dbgFilter) {
+						System.out.println("dbgFilter: " + " NO!!!!");
 					}
 				}
 			} else {
@@ -1469,5 +1478,9 @@ public class Summary {
 
 	public boolean toProp(AbsMemLoc loc) {
 		return toProp.contains(loc);
+	}
+
+	public Set<AbsMemLoc> getProps() {
+		return toProp;
 	}
 }
