@@ -21,6 +21,7 @@ public class RetElem extends StackObject {
 		this.clazz = clazz;
 		this.method = method;
 		// this.retValue = retValue;
+		this.length = 1;
 	}
 
 	@Override

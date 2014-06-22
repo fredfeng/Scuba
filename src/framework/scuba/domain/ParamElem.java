@@ -19,6 +19,7 @@ public class ParamElem extends StackObject {
 		this.clazz = clazz;
 		this.method = method;
 		this.parameter = parameter;
+		this.length = 1;
 	}
 
 	@Override

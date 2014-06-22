@@ -37,6 +37,10 @@ public class SummariesEnv {
 			"<init>:(Ljava/util/Map;)V@java.util.HashMap",
 			"clone:()Ljava/lang/Object;@java.util.TreeSet" };
 
+	public static enum FieldSmashLevel {
+		LOW, MED, HIGH, CONTROL;
+	}
+
 	public static SummariesEnv v() {
 		return instance;
 	}
@@ -93,7 +97,12 @@ public class SummariesEnv {
 	protected boolean badMethodSkip = true;
 
 	// type smashing for fields (imprecise) [DO NOT use this!]
-	protected boolean typeSmashing = true;
+	// public FieldSmashLevel level = FieldSmashLevel.LOW;
+	// public FieldSmashLevel level = FieldSmashLevel.MED;
+	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
+	public FieldSmashLevel level = FieldSmashLevel.CONTROL;
+	public int smashLength = 3;
+
 	// clear locals in the summary
 	protected boolean clearLocals = false;
 

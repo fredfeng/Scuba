@@ -37,6 +37,31 @@ public class TypeHelper {
 		return ret;
 	}
 
+	public static boolean fieldCompatible(FieldElem f1, FieldElem f2) {
+		boolean ret = false;
+		if (f1 instanceof EpsilonFieldElem && f2 instanceof EpsilonFieldElem) {
+			ret = true;
+		} else if (f1 instanceof EpsilonFieldElem
+				|| f2 instanceof EpsilonFieldElem) {
+			ret = false;
+		} else if (f1 instanceof IndexFieldElem || f2 instanceof IndexFieldElem) {
+			ret = true;
+		} else if (f1 instanceof NormalFieldElem
+				&& f2 instanceof NormalFieldElem) {
+			jq_Field jf1 = ((NormalFieldElem) f1).getField();
+			jq_Field jf2 = ((NormalFieldElem) f2).getField();
+			jq_Type type1 = jf1.getType();
+			jq_Type type2 = jf2.getType();
+			if (type1.isSubtypeOf(type2) || type2.isSubtypeOf(type1)) {
+				ret = true;
+			}
+		} else {
+			assert false : "wrong!";
+		}
+
+		return ret;
+	}
+
 	public static boolean nameCompatible(FieldElem f1, FieldElem f2) {
 		boolean ret = false;
 		if (f1 instanceof EpsilonFieldElem && f2 instanceof EpsilonFieldElem) {

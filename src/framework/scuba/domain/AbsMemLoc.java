@@ -7,6 +7,8 @@ public abstract class AbsMemLoc {
 
 	protected Set<FieldElem> fields = new HashSet<FieldElem>();
 
+	protected int length;
+
 	public static enum ArgDerivedType {
 		IS_ARG_DERIVED, NOT_ARG_DERIVED, UN_KNOWN;
 	}
@@ -52,6 +54,10 @@ public abstract class AbsMemLoc {
 
 	public Set<FieldElem> getFields() {
 		return this.fields;
+	}
+
+	public int length() {
+		return length;
 	}
 
 	@Override

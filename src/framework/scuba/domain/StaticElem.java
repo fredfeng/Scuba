@@ -14,6 +14,7 @@ public class StaticElem extends StackObject {
 	public StaticElem(jq_Class clazz, jq_Field field) {
 		this.clazz = clazz;
 		this.field = field;
+		this.length = 1;
 	}
 
 	@Override

@@ -17,6 +17,7 @@ public class LocalAccessPath extends AccessPath {
 		// when creating an AccessPath, add the field into the fields set of the
 		// base because the base has such a field
 		base.addField(field);
+		length = base.length + 1;
 	}
 
 	public AbsMemLoc getBase() {

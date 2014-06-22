@@ -1223,7 +1223,7 @@ public class AbstractHeap extends Heap {
 
 		AccessPath ret = null;
 
-		if (!SummariesEnv.v().typeSmashing) {
+		if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.MED) {
 			if (loc.isArgDerived()) {
 				if (loc.hasFieldSelector(field)) {
 					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
@@ -1258,7 +1258,7 @@ public class AbstractHeap extends Heap {
 			} else {
 				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 			}
-		} else {
+		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.LOW) {
 			if (loc.isArgDerived()) {
 				if (loc instanceof AccessPath) {
 					FieldElem field1 = ((AccessPath) loc).getField();
@@ -1275,6 +1275,73 @@ public class AbstractHeap extends Heap {
 							assert false : "only access path is allowed!";
 						}
 					} else if (TypeHelper.typeCompatible(field1, field)) {
+						if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc);
+						} else if (loc instanceof StaticAccessPath) {
+							ret = Env
+									.getStaticAccessPath((StaticAccessPath) loc);
+						} else {
+							assert false : "only access path is allowed!";
+						}
+					} else {
+						if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc,
+									field);
+						} else if (loc instanceof StaticAccessPath) {
+							ret = Env.getStaticAccessPath(
+									(StaticAccessPath) loc, field);
+						} else {
+							assert false : "only access path is allowed!";
+						}
+					}
+				} else if (loc instanceof ParamElem) {
+					ret = getLocalAccessPath((ParamElem) loc, field);
+				} else if (loc instanceof StaticElem) {
+					ret = Env.getStaticAccessPath((StaticElem) loc, field);
+				} else {
+					assert false : "only access path is allowed!";
+				}
+			} else {
+				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
+			}
+		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.HIGH) {
+			if (loc.isArgDerived()) {
+				if (loc instanceof AccessPath) {
+					FieldElem field1 = ((AccessPath) loc).getField();
+					if (TypeHelper.fieldCompatible(field1, field)) {
+						if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc);
+						} else if (loc instanceof StaticAccessPath) {
+							ret = Env
+									.getStaticAccessPath((StaticAccessPath) loc);
+						} else {
+							assert false : "only access path is allowed!";
+						}
+					} else {
+						if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc,
+									field);
+						} else if (loc instanceof StaticAccessPath) {
+							ret = Env.getStaticAccessPath(
+									(StaticAccessPath) loc, field);
+						} else {
+							assert false : "only access path is allowed!";
+						}
+					}
+				} else if (loc instanceof ParamElem) {
+					ret = getLocalAccessPath((ParamElem) loc, field);
+				} else if (loc instanceof StaticElem) {
+					ret = Env.getStaticAccessPath((StaticElem) loc, field);
+				} else {
+					assert false : "only access path is allowed!";
+				}
+			} else {
+				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
+			}
+		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.CONTROL) {
+			if (loc.isArgDerived()) {
+				if (loc instanceof AccessPath) {
+					if (loc.length >= SummariesEnv.v().smashLength) {
 						if (loc instanceof LocalAccessPath) {
 							ret = getLocalAccessPath((LocalAccessPath) loc);
 						} else if (loc instanceof StaticAccessPath) {
