@@ -366,12 +366,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// when terminating, decide what locations in the summary to propagate
 		Set<jq_Method> scc = nodeToScc.get(node);
-		for (jq_Method m : scc) {
-			Summary sum = SummariesEnv.v().getSummary(m);
-			if (m != null) {
-				sum.fillPropSet();
-			}
-		}
 
 		if (G.dbgQuery) {
 			for (jq_Method m : scc) {

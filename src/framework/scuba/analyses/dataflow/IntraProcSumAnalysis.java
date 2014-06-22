@@ -15,6 +15,7 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
 import framework.scuba.analyses.alias.SummaryBasedAnalysis;
+import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper;
@@ -134,6 +135,8 @@ public class IntraProcSumAnalysis {
 			System.out.println("[Info] Sequence of visiting basic blocks:\n"
 					+ accessBlocksList);
 		}
+
+		summary.fillPropSet();
 	}
 
 	public static int sccProgress = 0;
