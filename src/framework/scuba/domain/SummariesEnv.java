@@ -65,35 +65,35 @@ public class SummariesEnv {
 	public final int sccLimit = 30;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useMemLocInstnCache = false;
+	protected boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
-	protected boolean useCstInstnCache = false;
+	protected boolean useCstInstnCache = true;
 	// whether use cache for extracting terms
-	protected boolean useExtractCache = false;
+	protected boolean useExtractCache = true;
 	// whether use cache for constraint simplification
-	protected boolean useSimplifyCache = false;
+	protected boolean useSimplifyCache = true;
 	// whether use cache for constraint union operation
-	protected boolean useUnionCache = false;
+	protected boolean useUnionCache = true;
 	// whether use cache for constraint intersection operation
-	protected boolean useInterCache = false;
+	protected boolean useInterCache = true;
 	// whether use cache for substitution operation of constraints
-	protected boolean useSubCache = false;
+	protected boolean useSubCache = true;
 	// whether use equivalence checking cache
-	protected boolean useEqCache = false;
+	protected boolean useEqCache = true;
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
-	protected boolean smartSkip = false;
+	protected boolean smartSkip = true;
 	// a fine-grained smart skip for instantiating edges
-	protected boolean moreSmartSkip = false;
+	protected boolean moreSmartSkip = true;
 	// a trick to avoid hanging in gigantic SCC (the remove() method)
 	protected boolean badMethodSkip = true;
 
 	// type smashing for fields (imprecise) [DO NOT use this!]
-	// public FieldSmashLevel level = FieldSmashLevel.LOW;
+	public FieldSmashLevel level = FieldSmashLevel.LOW;
 	// public FieldSmashLevel level = FieldSmashLevel.MED;
 	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
-	public FieldSmashLevel level = FieldSmashLevel.CONTROL;
+	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
 	public int smashLength = 3;
 
 	// clear locals in the summary

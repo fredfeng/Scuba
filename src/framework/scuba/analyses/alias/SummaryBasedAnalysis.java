@@ -375,24 +375,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						+ ++dcount);
 				System.out.println(m.getCFG().fullDump());
 				if (sum != null) {
-					if (G.countScc == 4330) {
-						sum.dumpSummaryToFile("$4330");
+					if (G.countScc == 8) {
+						sum.dumpSummaryToFile("$8");
 					}
-					if (G.countScc == 4296) {
-						sum.dumpSummaryToFile("$4296");
+					if (G.countScc == 385) {
+						sum.dumpSummaryToFile("$385");
 					}
-					if (m.toString()
-							.equals("<init>:(Ljava/io/OutputStream;)V@java.io.PrintStream")) {
-						sum.dumpSummaryToFile("c");
-					}
-					if (m.toString()
-							.equals("<init>:(Ljava/io/OutputStream;Z)V@java.io.PrintStream")) {
-						sum.dumpSummaryToFile("d");
-					}
-					if (m.toString()
-							.equals("<init>:(ZLjava/io/OutputStream;)V@java.io.PrintStream")) {
-						sum.dumpSummaryToFile("e");
-					}
+
 				}
 			}
 		}
