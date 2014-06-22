@@ -28,11 +28,18 @@ public class SummariesEnv {
 		ALL, NOLOCAL, DOWNCAST, APPLOCAL;
 	}
 
+	String[] blklist = {
+			"remove:(Ljava/lang/Object;)Z@java.util.AbstractCollection",
+			"buildFromSorted:(IIIILjava/util/Iterator;Ljava/io/ObjectInputStream;Ljava/lang/Object;)Ljava/util/TreeMap$Entry;@java.util.TreeMap",
+			"buildFromSorted:(ILjava/util/Iterator;Ljava/io/ObjectInputStream;Ljava/lang/Object;)V@java.util.TreeMap",
+			"<init>:(Ljava/util/SortedMap;)V@java.util.TreeMap",
+			"<init>:()V@sun.security.provider.Sun",
+			"<init>:(Ljava/util/Map;)V@java.util.HashMap",
+			"clone:()Ljava/lang/Object;@java.util.TreeSet" };
+
 	public static enum FieldSmashLevel {
 		LOW, MED, HIGH, CONTROL;
 	}
-
-	String[] blklist = { "remove:(Ljava/lang/Object;)Z@java.util.AbstractCollection" };
 
 	public static SummariesEnv v() {
 		return instance;
@@ -100,9 +107,9 @@ public class SummariesEnv {
 	protected boolean clearLocals = false;
 
 	// fix-point or not
-	protected boolean useFixPoint = true;
+	protected boolean useFixPoint = false;
 	// when concluding the clinit's and main, use fix-point or not
-	protected boolean topFixPoint = true;
+	protected boolean topFixPoint = false;
 
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
