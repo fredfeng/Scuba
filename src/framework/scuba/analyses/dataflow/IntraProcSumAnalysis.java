@@ -137,6 +137,9 @@ public class IntraProcSumAnalysis {
 
 		// TODO
 		summary.getAbsHeap().fillPropSet();
+		if (G.validate) {
+			summary.getAbsHeap().validate();
+		}
 	}
 
 	public static int sccProgress = 0;
