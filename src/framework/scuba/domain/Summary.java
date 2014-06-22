@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import joeq.Class.jq_Array;
@@ -33,7 +32,6 @@ import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_A;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_A;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKEVIRTUAL_A;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeInterface;
-import joeq.Compiler.Quad.Operator.Invoke.InvokeStatic;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeVirtual;
 import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.Move.MOVE_A;
@@ -84,12 +82,6 @@ public class Summary {
 	public static int aNewMulArrayCnt = 0;
 
 	public static int castCnt = 0;
-
-	// the locations in this set will be propagated to the caller
-	// 1. <AccessPath> 2. <ParamElem> 3. <StaticElem> 4. <RetElem>
-	// 5. <AllocElem> that are connected by 1-4 will be propagated
-	// 6. others will not be propagated
-	protected Set<AbsMemLoc> toProp = new HashSet<AbsMemLoc>();
 
 	// (call site, callee method) --> memory location instantiation
 	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
@@ -1428,9 +1420,10 @@ public class Summary {
 		return absHeap.size();
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(AbsMemLoc loc,
+	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(
+			Pair<AbsMemLoc, FieldElem> pair,
 			Pair<MemLocInstnItem, Set<AccessPath>> deps) {
-		return locDepMap.add(loc, deps);
+		return locDepMap.add(pair, deps);
 	}
 
 	public void removeLocals() {
@@ -1444,76 +1437,5 @@ public class Summary {
 				absHeap.locToP2Set.remove(pair);
 			}
 		}
-	}
-
-	// fill the toProp set which determines what kinds of locations to propagate
-	// upwards to the callers, and this is done after terminating some method
-	public void fillPropSet() {
-		Set<AllocElem> wl = new HashSet<AllocElem>();
-		Set<AbsMemLoc> locals = new HashSet<AbsMemLoc>();
-		// add all locations that are guaranteed to be propagated to the caller
-		for (Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = absHeap.locToP2Set
-				.entrySet().iterator(); it.hasNext();) {
-			Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it.next();
-			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
-			AbsMemLoc loc = entry.getKey().val0;
-
-			if (loc instanceof AccessPath || loc instanceof ParamElem
-					|| loc instanceof StaticElem || loc instanceof RetElem) {
-				toProp.add(loc);
-				// add all potential allocs into wl
-				P2Set p2set = absHeap.locToP2Set.get(pair);
-				for (HeapObject hObj : p2set.keySet()) {
-					if (hObj instanceof AllocElem) {
-						wl.add((AllocElem) hObj);
-					}
-				}
-			} else if (loc instanceof LocalVarElem) {
-				Register v = ((LocalVarElem) loc).getLocal();
-				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
-					toProp.add(loc);
-				} else if (SummariesEnv.v().toProp(v)) {
-					locals.add(loc);
-					// add all potential allocs into wl
-					P2Set p2set = absHeap.locToP2Set.get(pair);
-					for (HeapObject hObj : p2set.keySet()) {
-						if (hObj instanceof AllocElem) {
-							locals.add((AllocElem) hObj);
-						}
-					}
-				}
-			} else {
-				assert (loc instanceof AllocElem) : "wrong!";
-			}
-		}
-		// use a worklist algorithm to find all allocs to propagate
-		Set<AllocElem> set = new HashSet<AllocElem>();
-		while (!wl.isEmpty()) {
-			toProp.addAll(wl);
-			for (AllocElem alloc : wl) {
-				Set<FieldElem> fields = alloc.getFields();
-				for (FieldElem f : fields) {
-					P2Set p2set = absHeap.locToP2Set
-							.get(new Pair<AbsMemLoc, FieldElem>(alloc, f));
-					for (HeapObject hObj : p2set.keySet()) {
-						if (hObj instanceof AllocElem && !toProp.contains(hObj)) {
-							set.add((AllocElem) hObj);
-						}
-					}
-				}
-			}
-			wl.clear();
-			wl.addAll(set);
-			set.clear();
-		}
-		toProp.addAll(locals);
-	}
-
-	public boolean toProp(AbsMemLoc loc) {
-		return toProp.contains(loc);
-	}
-
-	public Set<AbsMemLoc> getProps() {
-		return toProp;
 	}
 }

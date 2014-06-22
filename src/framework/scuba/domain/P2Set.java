@@ -132,6 +132,11 @@ public class P2Set {
 		return p2Set.containsKey(obj);
 	}
 
+	public boolean containsAll(Set<AbsMemLoc> objs) {
+		// actually objs is Set<HeapObject>
+		return p2Set.keySet().containsAll(objs);
+	}
+
 	public Set<HeapObject> keySet() {
 		return p2Set.keySet();
 	}

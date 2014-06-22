@@ -213,7 +213,8 @@ public class MemLocInstnItem {
 					+ loc + " and we can remove it from orgs";
 			orgs.remove((AccessPath) loc);
 			for (AbsMemLoc loc1 : instnLocSet.keySet()) {
-				result.getSum().addToDepMap(loc1,
+				result.getSum().addToDepMap(
+						new Pair<AbsMemLoc, FieldElem>(loc1, field),
 						new Pair<MemLocInstnItem, Set<AccessPath>>(this, orgs));
 
 			}

@@ -17,40 +17,43 @@ public class MemLocInstnCacheDepMap extends DependenceMap {
 	// V: the location in the callee's heap whose instantiation will be
 	// influenced by the change of the P2Set of K
 	// Item: the instantiation location result for K is cached in Item
-	final protected Map<AbsMemLoc, Map<MemLocInstnItem, Set<AccessPath>>> depMap;
+	final protected Map<Pair<AbsMemLoc, FieldElem>, Map<MemLocInstnItem, Set<AccessPath>>> depMap;
 
 	public MemLocInstnCacheDepMap(Summary summary) {
 		this.summary = summary;
-		depMap = new HashMap<AbsMemLoc, Map<MemLocInstnItem, Set<AccessPath>>>();
+		depMap = new HashMap<Pair<AbsMemLoc, FieldElem>, Map<MemLocInstnItem, Set<AccessPath>>>();
 	}
 
 	public Summary getSum() {
 		return summary;
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> add(AbsMemLoc loc,
-			Pair<MemLocInstnItem, Set<AccessPath>> pair) {
-		Map<MemLocInstnItem, Set<AccessPath>> ret = depMap.get(loc);
+	public Map<MemLocInstnItem, Set<AccessPath>> add(
+			Pair<AbsMemLoc, FieldElem> pair1,
+			Pair<MemLocInstnItem, Set<AccessPath>> pair2) {
+		Map<MemLocInstnItem, Set<AccessPath>> ret = depMap.get(pair1);
 		if (ret == null) {
 			ret = new HashMap<MemLocInstnItem, Set<AccessPath>>();
-			ret.put(pair.val0, pair.val1);
+			ret.put(pair2.val0, pair2.val1);
 		}
-		Set<AccessPath> aps = ret.get(pair.val0);
+		Set<AccessPath> aps = ret.get(pair2.val0);
 		if (aps == null) {
 			aps = new HashSet<AccessPath>();
-			ret.put(pair.val0, aps);
+			ret.put(pair2.val0, aps);
 		}
-		aps.addAll(pair.val1);
+		aps.addAll(pair2.val1);
 		return ret;
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> put(AbsMemLoc loc,
+	public Map<MemLocInstnItem, Set<AccessPath>> put(
+			Pair<AbsMemLoc, FieldElem> pair,
 			Map<MemLocInstnItem, Set<AccessPath>> toAdd) {
-		return depMap.put(loc, toAdd);
+		return depMap.put(pair, toAdd);
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> get(AbsMemLoc loc) {
-		return depMap.get(loc);
+	public Map<MemLocInstnItem, Set<AccessPath>> get(
+			Pair<AbsMemLoc, FieldElem> pair) {
+		return depMap.get(pair);
 	}
 
 	public boolean isEmpty() {
@@ -65,12 +68,13 @@ public class MemLocInstnCacheDepMap extends DependenceMap {
 		return depMap.containsKey(loc);
 	}
 
-	public Set<AbsMemLoc> keySet() {
+	public Set<Pair<AbsMemLoc, FieldElem>> keySet() {
 		return depMap.keySet();
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> remove(AbsMemLoc loc) {
-		return depMap.remove(loc);
+	public Map<MemLocInstnItem, Set<AccessPath>> remove(
+			Pair<AbsMemLoc, FieldElem> pair) {
+		return depMap.remove(pair);
 	}
 
 }

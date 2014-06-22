@@ -25,7 +25,7 @@ public class SummariesEnv {
 	protected SumConclusion finalSum;
 
 	public static enum PropType {
-		ALL, DOWNCAST, APPLOCAL;
+		ALL, NOLOCAL, DOWNCAST, APPLOCAL;
 	}
 
 	String[] blklist = { "remove:(Ljava/lang/Object;)Z@java.util.AbstractCollection" };
@@ -98,7 +98,8 @@ public class SummariesEnv {
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
 	// protected PropType localType = PropType.APPLOCAL;
-	protected PropType localType = PropType.DOWNCAST;
+	// protected PropType localType = PropType.DOWNCAST;
+	protected PropType localType = PropType.NOLOCAL;
 
 	// protected PropType localType = PropType.ALL;
 
