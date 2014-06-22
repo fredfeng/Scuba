@@ -366,12 +366,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// when terminating, decide what locations in the summary to propagate
 		Set<jq_Method> scc = nodeToScc.get(node);
-		for (jq_Method m : scc) {
-			Summary sum = SummariesEnv.v().getSummary(m);
-			if (m != null) {
-				sum.fillPropSet();
-			}
-		}
 
 		if (G.dbgQuery) {
 			for (jq_Method m : scc) {
@@ -387,8 +381,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 					if (G.countScc == 4296) {
 						sum.dumpSummaryToFile("$4296");
 					}
-					if (G.countScc == 2887) {
-						sum.dumpSummaryToFile("$2887");
+					if (m.toString()
+							.equals("<init>:(Ljava/io/OutputStream;)V@java.io.PrintStream")) {
+						sum.dumpSummaryToFile("c");
+					}
+					if (m.toString()
+							.equals("<init>:(Ljava/io/OutputStream;Z)V@java.io.PrintStream")) {
+						sum.dumpSummaryToFile("d");
+					}
+					if (m.toString()
+							.equals("<init>:(ZLjava/io/OutputStream;)V@java.io.PrintStream")) {
+						sum.dumpSummaryToFile("e");
 					}
 				}
 			}

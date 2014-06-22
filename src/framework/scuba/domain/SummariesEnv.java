@@ -34,6 +34,7 @@ public class SummariesEnv {
 			"buildFromSorted:(ILjava/util/Iterator;Ljava/io/ObjectInputStream;Ljava/lang/Object;)V@java.util.TreeMap",
 			"<init>:(Ljava/util/SortedMap;)V@java.util.TreeMap",
 			"<init>:()V@sun.security.provider.Sun",
+			"<init>:(Ljava/util/Map;)V@java.util.HashMap",
 			"clone:()Ljava/lang/Object;@java.util.TreeSet" };
 
 	public static SummariesEnv v() {
@@ -62,7 +63,7 @@ public class SummariesEnv {
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = false;
+	protected boolean disableCst = true;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
@@ -97,9 +98,9 @@ public class SummariesEnv {
 	protected boolean clearLocals = false;
 
 	// fix-point or not
-	protected boolean useFixPoint = true;
+	protected boolean useFixPoint = false;
 	// when concluding the clinit's and main, use fix-point or not
-	protected boolean topFixPoint = true;
+	protected boolean topFixPoint = false;
 
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.

@@ -680,6 +680,10 @@ public class AbstractHeap extends Heap {
 					while (it1.hasNext()) {
 						Map.Entry<HeapObject, BoolExpr> entry1 = it1.next();
 						HeapObject tgt = entry1.getKey();
+						if (G.dbgQuery) {
+							System.out.println("dbgQuery: "
+									+ "before entering instnEdge method.");
+						}
 						Pair<Boolean, Boolean> res = instnEdge(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst);
 						ret.val0 = res.val0 | ret.val0;

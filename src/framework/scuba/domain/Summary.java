@@ -739,6 +739,10 @@ public class Summary {
 				// using smart skip for callee instantiation
 				if (SummariesEnv.v().smartSkip) {
 					if (smartSkip.contains(item)) {
+						if (G.dbgQuery) {
+							System.out.println("dbgQuery: "
+									+ "hitting the smart skip cache!");
+						}
 						continue;
 					}
 				}
@@ -750,6 +754,10 @@ public class Summary {
 							+ calleeSum.getMethod());
 				}
 
+				if (G.dbgQuery) {
+					StringUtil.reportInfo("dbgQuery: "
+							+ "before entering handle invoke");
+				}
 				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
 						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
 
