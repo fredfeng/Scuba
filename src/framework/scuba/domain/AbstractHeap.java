@@ -791,8 +791,10 @@ public class AbstractHeap extends Heap {
 		if (SummariesEnv.v().localType == SummariesEnv.PropType.NOLOCAL) {
 			if (src instanceof LocalVarElem) {
 				return ret;
-			} else if (!calleeHeap.toProp(src)) {
-				return ret;
+			} else if (src instanceof AllocElem) {
+				if (!calleeHeap.toProp(src)) {
+					return ret;
+				}
 			}
 		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 
