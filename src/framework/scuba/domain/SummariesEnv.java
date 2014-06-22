@@ -29,8 +29,7 @@ public class SummariesEnv {
 	}
 
 	String[] blklist = {
-			"fixAfterDeletion:(Ljava/util/TreeMap$Entry;)V@java.util.TreeMap",
-			"" };
+			"remove:(Ljava/lang/Object;)Z@java.util.AbstractCollection" };
 
 	public static SummariesEnv v() {
 		return instance;
@@ -58,7 +57,7 @@ public class SummariesEnv {
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = true;
+	protected boolean disableCst = false;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 

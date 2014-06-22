@@ -314,7 +314,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				analyzeSCC(node);
 			} else {
 				jq_Method m = scc.iterator().next();
-				analyze(m, node.getPreds().size() == 0);
+				analyze(m, (node.getPreds().size() == 0)
+						|| SummariesEnv.v().isInBlacklist(m.toString()));
 				if (G.dbgPermission) {
 					StringUtil.reportInfo("Evils:[" + G.countScc
 							+ "] begin regular node");

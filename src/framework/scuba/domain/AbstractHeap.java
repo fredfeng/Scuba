@@ -842,7 +842,7 @@ public class AbstractHeap extends Heap {
 				assert (newDst1 != null) : "null!";
 
 				if (SummariesEnv.v().badMethodSkip) {
-					if (SummariesEnv.v().disableCst
+					if (summary.isInBadScc()
 							&& memLocInstn.memLocInstnCache.containsKey(src)) {
 						P2Set p2set = lookup(newSrc, field);
 						if (p2set.contains(newDst1)) {
@@ -979,8 +979,8 @@ public class AbstractHeap extends Heap {
 	private BoolExpr instnCst(BoolExpr cst, AbstractHeap callerHeap,
 			ProgramPoint point, MemLocInstnItem memLocInstn) {
 		long startInstCst = System.nanoTime();
-		if (SummariesEnv.v().disableCst())
-			return cst;
+		if (SummariesEnv.v().disableCst() || summary.isInBadScc())
+			return ConstraintManager.genTrue();
 		assert cst != null : "Invalid Constrait before instantiation.";
 		// return directly.
 		if (ConstraintManager.isScala(cst))
