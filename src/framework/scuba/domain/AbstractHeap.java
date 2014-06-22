@@ -789,8 +789,11 @@ public class AbstractHeap extends Heap {
 				+ "the p2 set should contain the destination of the edge!";
 
 		if (SummariesEnv.v().localType == SummariesEnv.PropType.NOLOCAL) {
-			if (src instanceof LocalVarElem)
+			if (src instanceof LocalVarElem) {
 				return ret;
+			} else if (!calleeHeap.toProp(src)) {
+				return ret;
+			}
 		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 
 		} else {
@@ -934,8 +937,11 @@ public class AbstractHeap extends Heap {
 				+ "the p2 set should contain the destination of the edge!";
 
 		if (SummariesEnv.v().localType == SummariesEnv.PropType.NOLOCAL) {
-			if (src instanceof LocalVarElem)
+			if (src instanceof LocalVarElem) {
 				return ret;
+			} else if (!calleeHeap.toProp(src)) {
+				return ret;
+			}
 		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 
 		} else {
