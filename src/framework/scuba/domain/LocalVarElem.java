@@ -19,6 +19,7 @@ public class LocalVarElem extends StackObject {
 		this.clazz = clazz;
 		this.method = method;
 		this.local = local;
+		this.length = 1;
 	}
 
 	@Override

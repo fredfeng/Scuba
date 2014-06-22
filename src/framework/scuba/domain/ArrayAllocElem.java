@@ -7,6 +7,7 @@ public class ArrayAllocElem extends AllocElem {
 	public ArrayAllocElem(Alloc allocSite, Context context) {
 		super(allocSite, context);
 		this.dim = 1;
+		length = 1;
 	}
 
 	public ArrayAllocElem(Alloc allocSite, Context context, int dim) {

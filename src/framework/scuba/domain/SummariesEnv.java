@@ -28,6 +28,10 @@ public class SummariesEnv {
 		ALL, NOLOCAL, DOWNCAST, APPLOCAL;
 	}
 
+	public static enum FieldSmashLevel {
+		LOW, MED, HIGH, CONTROL;
+	}
+
 	String[] blklist = { "remove:(Ljava/lang/Object;)Z@java.util.AbstractCollection" };
 
 	public static SummariesEnv v() {
@@ -86,7 +90,12 @@ public class SummariesEnv {
 	protected boolean badMethodSkip = true;
 
 	// type smashing for fields (imprecise) [DO NOT use this!]
-	protected boolean typeSmashing = true;
+	// public FieldSmashLevel level = FieldSmashLevel.LOW;
+	// public FieldSmashLevel level = FieldSmashLevel.MED;
+	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
+	public FieldSmashLevel level = FieldSmashLevel.CONTROL;
+	public int smashLength = 3;
+
 	// clear locals in the summary
 	protected boolean clearLocals = false;
 

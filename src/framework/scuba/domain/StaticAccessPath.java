@@ -13,6 +13,7 @@ public class StaticAccessPath extends AccessPath {
 		this.field = field;
 		this.Id = Id;
 		base.addField(field);
+		this.length = base.length + 1;
 	}
 
 	public AbsMemLoc getBase() {
