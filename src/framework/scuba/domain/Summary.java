@@ -991,6 +991,12 @@ public class Summary {
 
 					Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(
 							false, false);
+
+					if (G.instnInfo) {
+						StringUtil
+								.reportInfo("I am handling the static store!");
+					}
+
 					flag = absHeap.handleStoreStmt(meth.getDeclaringClass(),
 							meth, lhs.getRegister(), lvt, field.getField(),
 							rhs.getRegister(), rvt);
