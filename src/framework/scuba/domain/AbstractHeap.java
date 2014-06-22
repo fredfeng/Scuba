@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
@@ -51,6 +52,12 @@ public class AbstractHeap extends Heap {
 	// whether the heap and summary has been changed: (heap, summary)
 	private Pair<Boolean, Boolean> isChanged = new Pair<Boolean, Boolean>(
 			false, false);
+
+	// the locations in this set will be propagated to the caller
+	// 1. <AccessPath> 2. <ParamElem> 3. <StaticElem> 4. <RetElem>
+	// 5. <AllocElem> that are connected by 1-4 will be propagated
+	// 6. others will not be propagated
+	protected Set<AbsMemLoc> toProp = new HashSet<AbsMemLoc>();
 
 	public static enum VariableType {
 		PARAMEMTER, LOCAL_VARIABLE;
@@ -782,8 +789,22 @@ public class AbstractHeap extends Heap {
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
-		if (!calleeHeap.summary.toProp(src)) {
-			return ret;
+		if (SummariesEnv.v().localType == SummariesEnv.PropType.NOLOCAL) {
+			if (src instanceof LocalVarElem) {
+				return ret;
+			} else if (src instanceof AllocElem) {
+				if (!calleeHeap.toProp(src)) {
+					return ret;
+				}
+			}
+		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
+
+		} else {
+			if (src instanceof LocalVarElem || src instanceof AllocElem) {
+				if (!calleeHeap.toProp(src)) {
+					return ret;
+				}
+			}
 		}
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
@@ -838,22 +859,23 @@ public class AbstractHeap extends Heap {
 		}
 
 		for (AbsMemLoc newSrc : instnSrc.keySet()) {
+			// only for bad methods
+			if (SummariesEnv.v().badMethodSkip) {
+				if (summary.isInBadScc()
+						&& memLocInstn.memLocInstnCache.containsKey(src)) {
+					P2Set p2set = lookup(newSrc, field);
+					if (p2set.containsAll(instnDst.keySet())) {
+						continue;
+					}
+				}
+			}
+
 			for (AbsMemLoc newDst : instnDst.keySet()) {
 				assert (newDst instanceof HeapObject) : ""
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
 
 				assert (newDst1 != null) : "null!";
-
-				if (SummariesEnv.v().badMethodSkip) {
-					if (summary.isInBadScc()
-							&& memLocInstn.memLocInstnCache.containsKey(src)) {
-						P2Set p2set = lookup(newSrc, field);
-						if (p2set.contains(newDst1)) {
-							continue;
-						}
-					}
-				}
 
 				if (G.instnInfo) {
 					StringUtil.reportInfo("instnInfo: "
@@ -917,8 +939,20 @@ public class AbstractHeap extends Heap {
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
-		if (!calleeHeap.summary.toProp(src)) {
-			return ret;
+		if (SummariesEnv.v().localType == SummariesEnv.PropType.NOLOCAL) {
+			if (src instanceof LocalVarElem) {
+				return ret;
+			} else if (!calleeHeap.toProp(src)) {
+				return ret;
+			}
+		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
+
+		} else {
+			if (src instanceof LocalVarElem || src instanceof AllocElem) {
+				if (!calleeHeap.toProp(src)) {
+					return ret;
+				}
+			}
 		}
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
@@ -1285,6 +1319,8 @@ public class AbstractHeap extends Heap {
 
 		AbsMemLoc src = pair.val0;
 		FieldElem f = pair.val1;
+		// determine which locals to propagate
+		// fillPropSet(src, p2Set);
 		// src has field f even if the p2set might be empty
 		src.addField(f);
 		// update the locations in the real heap graph
@@ -1317,7 +1353,7 @@ public class AbstractHeap extends Heap {
 							+ "clearing the memory location cache"
 							+ " for location: " + src);
 				}
-				clearCache(src);
+				clearCache(src, f);
 			}
 		}
 
@@ -1327,7 +1363,7 @@ public class AbstractHeap extends Heap {
 	// clear all the related cache including:
 	// 1. memory location instantiation cache
 	// 2. constraint instantiation cache
-	protected Pair<Boolean, Boolean> clearCache(AbsMemLoc src) {
+	protected Pair<Boolean, Boolean> clearCache(AbsMemLoc src, FieldElem f) {
 		boolean ret1 = false;
 		boolean ret2 = false;
 		// this check is for the final summary (conclusion)
@@ -1335,7 +1371,8 @@ public class AbstractHeap extends Heap {
 			return new Pair<Boolean, Boolean>(ret1, ret2);
 		}
 		// clear the memory location instantiation cache
-		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.locDepMap.get(src);
+		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.locDepMap
+				.get(new Pair<AbsMemLoc, FieldElem>(src, f));
 		// possible that no one currently depends on src
 		if (deps == null) {
 			return new Pair<Boolean, Boolean>(ret1, ret2);
@@ -1750,4 +1787,129 @@ public class AbstractHeap extends Heap {
 		return false;
 	}
 
+	public boolean toProp(AbsMemLoc loc) {
+		return toProp.contains(loc);
+	}
+
+	public Set<AbsMemLoc> getProps() {
+		return toProp;
+	}
+
+	// fill the toProp set which determines what kinds of locations to propagate
+	// upwards to the callers, and this is done after terminating some method
+	public void fillPropSet(AbsMemLoc src, P2Set p2Set) {
+		if (src instanceof LocalVarElem) {
+			Register v = ((LocalVarElem) src).getLocal();
+			if (SummariesEnv.v().toProp(v)) {
+				toProp.add(src);
+				Set<AllocElem> wl = new HashSet<AllocElem>();
+				for (HeapObject hObj : p2Set.keySet()) {
+					if (hObj instanceof AllocElem) {
+						wl.add((AllocElem) hObj);
+					}
+				}
+				findPropAllocs(wl);
+			}
+		} else if (src instanceof AccessPath || src instanceof ParamElem
+				|| src instanceof StaticElem || src instanceof RetElem) {
+			for (HeapObject hObj : p2Set.keySet()) {
+				if (hObj instanceof AllocElem) {
+					toProp.add((AllocElem) hObj);
+				}
+			}
+		} else if (src instanceof AllocElem) {
+			if (toProp.contains(src)) {
+				Set<AllocElem> wl = new HashSet<AllocElem>();
+				for (HeapObject hObj : p2Set.keySet()) {
+					if (hObj instanceof AllocElem) {
+						wl.add((AllocElem) hObj);
+					}
+				}
+				findPropAllocs(wl);
+			}
+		}
+	}
+
+	private void findPropAllocs(Set<AllocElem> wl) {
+		Set<AllocElem> set = new HashSet<AllocElem>();
+		while (!wl.isEmpty()) {
+			toProp.addAll(wl);
+			for (AllocElem alloc : wl) {
+				Set<FieldElem> fields = alloc.getFields();
+				for (FieldElem f : fields) {
+					P2Set p2set = locToP2Set
+							.get(new Pair<AbsMemLoc, FieldElem>(alloc, f));
+					if (p2set == null) {
+						return;
+					}
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem && !toProp.contains(hObj)) {
+							set.add((AllocElem) hObj);
+						}
+					}
+				}
+			}
+			wl.clear();
+			wl.addAll(set);
+			set.clear();
+		}
+	}
+
+	public void fillPropSet() {
+		Set<AllocElem> wl = new HashSet<AllocElem>();
+		Set<AbsMemLoc> locals = new HashSet<AbsMemLoc>();
+		// add all locations that are guaranteed to be propagated to the caller
+		for (Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = locToP2Set
+				.entrySet().iterator(); it.hasNext();) {
+			Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it.next();
+			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
+			AbsMemLoc loc = entry.getKey().val0;
+
+			if (loc instanceof AccessPath || loc instanceof ParamElem
+					|| loc instanceof StaticElem || loc instanceof RetElem) {
+				// add all potential allocs into wl
+				P2Set p2set = locToP2Set.get(pair);
+				for (HeapObject hObj : p2set.keySet()) {
+					if (hObj instanceof AllocElem) {
+						wl.add((AllocElem) hObj);
+					}
+				}
+			} else if (loc instanceof LocalVarElem) {
+				Register v = ((LocalVarElem) loc).getLocal();
+				if (SummariesEnv.v().toProp(v)) {
+					locals.add(loc);
+					// add all potential allocs into wl
+					P2Set p2set = locToP2Set.get(pair);
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem) {
+							locals.add((AllocElem) hObj);
+						}
+					}
+				}
+			} else {
+				assert (loc instanceof AllocElem) : "wrong!";
+			}
+		}
+		// use a worklist algorithm to find all allocs to propagate
+		Set<AllocElem> set = new HashSet<AllocElem>();
+		while (!wl.isEmpty()) {
+			toProp.addAll(wl);
+			for (AllocElem alloc : wl) {
+				Set<FieldElem> fields = alloc.getFields();
+				for (FieldElem f : fields) {
+					P2Set p2set = locToP2Set
+							.get(new Pair<AbsMemLoc, FieldElem>(alloc, f));
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem && !toProp.contains(hObj)) {
+							set.add((AllocElem) hObj);
+						}
+					}
+				}
+			}
+			wl.clear();
+			wl.addAll(set);
+			set.clear();
+		}
+		toProp.addAll(locals);
+	}
 }

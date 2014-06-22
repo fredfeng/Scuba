@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import joeq.Class.jq_Array;
@@ -33,7 +32,6 @@ import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_A;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_A;
 import joeq.Compiler.Quad.Operator.Invoke.INVOKEVIRTUAL_A;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeInterface;
-import joeq.Compiler.Quad.Operator.Invoke.InvokeStatic;
 import joeq.Compiler.Quad.Operator.Invoke.InvokeVirtual;
 import joeq.Compiler.Quad.Operator.Move;
 import joeq.Compiler.Quad.Operator.Move.MOVE_A;
@@ -84,12 +82,6 @@ public class Summary {
 	public static int aNewMulArrayCnt = 0;
 
 	public static int castCnt = 0;
-
-	// the locations in this set will be propagated to the caller
-	// 1. <AccessPath> 2. <ParamElem> 3. <StaticElem> 4. <RetElem>
-	// 5. <AllocElem> that are connected by 1-4 will be propagated
-	// 6. others will not be propagated
-	protected Set<AbsMemLoc> toProp = new HashSet<AbsMemLoc>();
 
 	// (call site, callee method) --> memory location instantiation
 	// invoke stmt includes: InvokeVirtual, InvokeStatic, and InvokeInterface
@@ -1440,9 +1432,10 @@ public class Summary {
 		return absHeap.size();
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(AbsMemLoc loc,
+	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(
+			Pair<AbsMemLoc, FieldElem> pair,
 			Pair<MemLocInstnItem, Set<AccessPath>> deps) {
-		return locDepMap.add(loc, deps);
+		return locDepMap.add(pair, deps);
 	}
 
 	public void removeLocals() {

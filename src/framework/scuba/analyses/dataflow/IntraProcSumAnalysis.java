@@ -136,7 +136,8 @@ public class IntraProcSumAnalysis {
 					+ accessBlocksList);
 		}
 
-		summary.fillPropSet();
+		// TODO
+		summary.getAbsHeap().fillPropSet();
 	}
 
 	public static int sccProgress = 0;

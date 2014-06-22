@@ -25,7 +25,7 @@ public class SummariesEnv {
 	protected SumConclusion finalSum;
 
 	public static enum PropType {
-		ALL, DOWNCAST, APPLOCAL;
+		ALL, NOLOCAL, DOWNCAST, APPLOCAL;
 	}
 
 	String[] blklist = {
@@ -93,7 +93,7 @@ public class SummariesEnv {
 	protected boolean badMethodSkip = true;
 
 	// type smashing for fields (imprecise) [DO NOT use this!]
-	protected boolean typeSmashing = false;
+	protected boolean typeSmashing = true;
 	// clear locals in the summary
 	protected boolean clearLocals = false;
 
@@ -106,6 +106,8 @@ public class SummariesEnv {
 	// app, etc.
 	// protected PropType localType = PropType.APPLOCAL;
 	protected PropType localType = PropType.DOWNCAST;
+
+	// protected PropType localType = PropType.NOLOCAL;
 
 	// protected PropType localType = PropType.ALL;
 
