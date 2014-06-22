@@ -788,9 +788,16 @@ public class AbstractHeap extends Heap {
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
 				+ "the p2 set should contain the destination of the edge!";
 
-		if (src instanceof LocalVarElem || src instanceof AllocElem) {
-			if (!calleeHeap.toProp(src)) {
+		if (SummariesEnv.v().localType == SummariesEnv.PropType.NOLOCAL) {
+			if (src instanceof LocalVarElem)
 				return ret;
+		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
+
+		} else {
+			if (src instanceof LocalVarElem || src instanceof AllocElem) {
+				if (!calleeHeap.toProp(src)) {
+					return ret;
+				}
 			}
 		}
 
@@ -927,7 +934,8 @@ public class AbstractHeap extends Heap {
 				+ "the p2 set should contain the destination of the edge!";
 
 		if (SummariesEnv.v().localType == SummariesEnv.PropType.NOLOCAL) {
-			return ret;
+			if (src instanceof LocalVarElem)
+				return ret;
 		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 
 		} else {
