@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
@@ -1319,7 +1320,7 @@ public class AbstractHeap extends Heap {
 		AbsMemLoc src = pair.val0;
 		FieldElem f = pair.val1;
 		// determine which locals to propagate
-		fillPropSet(src, p2Set);
+		// fillPropSet(src, p2Set);
 		// src has field f even if the p2set might be empty
 		src.addField(f);
 		// update the locations in the real heap graph
@@ -1801,11 +1802,13 @@ public class AbstractHeap extends Heap {
 			Register v = ((LocalVarElem) src).getLocal();
 			if (SummariesEnv.v().toProp(v)) {
 				toProp.add(src);
+				Set<AllocElem> wl = new HashSet<AllocElem>();
 				for (HeapObject hObj : p2Set.keySet()) {
 					if (hObj instanceof AllocElem) {
-						toProp.add((AllocElem) hObj);
+						wl.add((AllocElem) hObj);
 					}
 				}
+				findPropAllocs(wl);
 			}
 		} else if (src instanceof AccessPath || src instanceof ParamElem
 				|| src instanceof StaticElem || src instanceof RetElem) {
@@ -1816,12 +1819,97 @@ public class AbstractHeap extends Heap {
 			}
 		} else if (src instanceof AllocElem) {
 			if (toProp.contains(src)) {
+				Set<AllocElem> wl = new HashSet<AllocElem>();
 				for (HeapObject hObj : p2Set.keySet()) {
 					if (hObj instanceof AllocElem) {
-						toProp.add((AllocElem) hObj);
+						wl.add((AllocElem) hObj);
+					}
+				}
+				findPropAllocs(wl);
+			}
+		}
+	}
+
+	private void findPropAllocs(Set<AllocElem> wl) {
+		Set<AllocElem> set = new HashSet<AllocElem>();
+		while (!wl.isEmpty()) {
+			toProp.addAll(wl);
+			for (AllocElem alloc : wl) {
+				Set<FieldElem> fields = alloc.getFields();
+				for (FieldElem f : fields) {
+					P2Set p2set = locToP2Set
+							.get(new Pair<AbsMemLoc, FieldElem>(alloc, f));
+					if (p2set == null) {
+						return;
+					}
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem && !toProp.contains(hObj)) {
+							set.add((AllocElem) hObj);
+						}
 					}
 				}
 			}
+			wl.clear();
+			wl.addAll(set);
+			set.clear();
 		}
+	}
+
+	public void fillPropSet() {
+		Set<AllocElem> wl = new HashSet<AllocElem>();
+		Set<AbsMemLoc> locals = new HashSet<AbsMemLoc>();
+		// add all locations that are guaranteed to be propagated to the caller
+		for (Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = locToP2Set
+				.entrySet().iterator(); it.hasNext();) {
+			Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it.next();
+			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
+			AbsMemLoc loc = entry.getKey().val0;
+
+			if (loc instanceof AccessPath || loc instanceof ParamElem
+					|| loc instanceof StaticElem || loc instanceof RetElem) {
+				// add all potential allocs into wl
+				P2Set p2set = locToP2Set.get(pair);
+				for (HeapObject hObj : p2set.keySet()) {
+					if (hObj instanceof AllocElem) {
+						wl.add((AllocElem) hObj);
+					}
+				}
+			} else if (loc instanceof LocalVarElem) {
+				Register v = ((LocalVarElem) loc).getLocal();
+				if (SummariesEnv.v().toProp(v)) {
+					locals.add(loc);
+					// add all potential allocs into wl
+					P2Set p2set = locToP2Set.get(pair);
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem) {
+							locals.add((AllocElem) hObj);
+						}
+					}
+				}
+			} else {
+				assert (loc instanceof AllocElem) : "wrong!";
+			}
+		}
+		// use a worklist algorithm to find all allocs to propagate
+		Set<AllocElem> set = new HashSet<AllocElem>();
+		while (!wl.isEmpty()) {
+			toProp.addAll(wl);
+			for (AllocElem alloc : wl) {
+				Set<FieldElem> fields = alloc.getFields();
+				for (FieldElem f : fields) {
+					P2Set p2set = locToP2Set
+							.get(new Pair<AbsMemLoc, FieldElem>(alloc, f));
+					for (HeapObject hObj : p2set.keySet()) {
+						if (hObj instanceof AllocElem && !toProp.contains(hObj)) {
+							set.add((AllocElem) hObj);
+						}
+					}
+				}
+			}
+			wl.clear();
+			wl.addAll(set);
+			set.clear();
+		}
+		toProp.addAll(locals);
 	}
 }

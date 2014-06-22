@@ -86,21 +86,21 @@ public class SummariesEnv {
 	protected boolean badMethodSkip = true;
 
 	// type smashing for fields (imprecise) [DO NOT use this!]
-	protected boolean typeSmashing = false;
+	protected boolean typeSmashing = true;
 	// clear locals in the summary
 	protected boolean clearLocals = false;
 
 	// fix-point or not
-	protected boolean useFixPoint = false;
+	protected boolean useFixPoint = true;
 	// when concluding the clinit's and main, use fix-point or not
 	protected boolean topFixPoint = true;
 
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
 	// protected PropType localType = PropType.APPLOCAL;
-	// protected PropType localType = PropType.DOWNCAST;
+	protected PropType localType = PropType.DOWNCAST;
 
-	protected PropType localType = PropType.NOLOCAL;
+	// protected PropType localType = PropType.NOLOCAL;
 
 	// protected PropType localType = PropType.ALL;
 

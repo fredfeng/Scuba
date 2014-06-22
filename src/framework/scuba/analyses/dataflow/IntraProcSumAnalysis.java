@@ -135,6 +135,9 @@ public class IntraProcSumAnalysis {
 			System.out.println("[Info] Sequence of visiting basic blocks:\n"
 					+ accessBlocksList);
 		}
+
+		// TODO
+		summary.getAbsHeap().fillPropSet();
 	}
 
 	public static int sccProgress = 0;
