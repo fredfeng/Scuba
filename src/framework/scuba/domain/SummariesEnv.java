@@ -107,11 +107,10 @@ public class SummariesEnv {
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
 	// protected PropType localType = PropType.APPLOCAL;
-	// protected PropType localType = PropType.DOWNCAST;
+	protected PropType localType = PropType.DOWNCAST;
 
 	// protected PropType localType = PropType.NOLOCAL;
-
-	protected PropType localType = PropType.ALL;
+	// protected PropType localType = PropType.ALL;
 
 	public PropType getLocalType() {
 		return localType;
