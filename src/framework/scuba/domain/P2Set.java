@@ -44,7 +44,7 @@ public class P2Set {
 	// of the paper, in which it only reads other and write this.p2Set
 	// this method will never get the pointer to the other p2set so do not worry
 	// about modifying the other p2set by modifying this p2set
-	public Pair<Boolean, Boolean> join(P2Set other) {
+	public Pair<Boolean, Boolean> join(P2Set other, AbstractHeap absHeap) {
 		boolean changeHeap = false;
 		boolean changeSum = false;
 		for (HeapObject obj : other.keySet()) {
@@ -78,7 +78,9 @@ public class P2Set {
 				p2Set.put(obj, newCst);
 				// TODO
 				changeHeap = true;
-				if (obj.isArgDerived()) {
+				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
+					changeSum = true;
+				} else if (obj.isArgDerived() || absHeap.toProp(obj)) {
 					changeSum = true;
 				}
 			} else {
@@ -96,7 +98,9 @@ public class P2Set {
 				// for this case, we should add a new edge
 				p2Set.put(obj, ConstraintManager.clone(other.get(obj)));
 				changeHeap = true;
-				if (obj.isArgDerived()) {
+				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
+					changeSum = true;
+				} else if (obj.isArgDerived() || absHeap.toProp(obj)) {
 					changeSum = true;
 				}
 			}

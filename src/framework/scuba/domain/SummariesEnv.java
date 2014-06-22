@@ -72,27 +72,27 @@ public class SummariesEnv {
 	public final int sccLimit = 30;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useMemLocInstnCache = true;
+	protected boolean useMemLocInstnCache = false;
 	// whether use cache for constraint instantiation
-	protected boolean useCstInstnCache = true;
+	protected boolean useCstInstnCache = false;
 	// whether use cache for extracting terms
-	protected boolean useExtractCache = true;
+	protected boolean useExtractCache = false;
 	// whether use cache for constraint simplification
-	protected boolean useSimplifyCache = true;
+	protected boolean useSimplifyCache = false;
 	// whether use cache for constraint union operation
-	protected boolean useUnionCache = true;
+	protected boolean useUnionCache = false;
 	// whether use cache for constraint intersection operation
-	protected boolean useInterCache = true;
+	protected boolean useInterCache = false;
 	// whether use cache for substitution operation of constraints
-	protected boolean useSubCache = true;
+	protected boolean useSubCache = false;
 	// whether use equivalence checking cache
-	protected boolean useEqCache = true;
+	protected boolean useEqCache = false;
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
-	protected boolean smartSkip = true;
+	protected boolean smartSkip = false;
 	// a fine-grained smart skip for instantiating edges
-	protected boolean moreSmartSkip = true;
+	protected boolean moreSmartSkip = false;
 	// a trick to avoid hanging in gigantic SCC (the remove() method)
 	protected boolean badMethodSkip = true;
 
@@ -117,7 +117,6 @@ public class SummariesEnv {
 	protected PropType localType = PropType.DOWNCAST;
 
 	// protected PropType localType = PropType.NOLOCAL;
-
 	// protected PropType localType = PropType.ALL;
 
 	public PropType getLocalType() {

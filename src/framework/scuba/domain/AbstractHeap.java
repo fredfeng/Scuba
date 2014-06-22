@@ -129,7 +129,7 @@ public class AbstractHeap extends Heap {
 			P2Set tgt = lookup(obj, field);
 			assert (tgt != null) : "get a null p2 set!";
 			P2Set projP2Set = P2SetHelper.project(tgt, cst);
-			ret.join(projP2Set);
+			ret.join(projP2Set, this);
 		}
 
 		return ret;
@@ -1405,7 +1405,7 @@ public class AbstractHeap extends Heap {
 					+ currentP2Set);
 			System.out.println("dbgSmashing: " + "to update: " + p2Set);
 		}
-		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set);
+		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set, this);
 		if (G.dbgSmashing) {
 			System.out.println("dbgSmashing: " + "weakupdate result: " + res);
 		}
