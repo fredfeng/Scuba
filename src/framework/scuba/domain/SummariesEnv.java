@@ -91,7 +91,7 @@ public class SummariesEnv {
 	protected boolean clearLocals = false;
 
 	// fix-point or not
-	protected boolean useFixPoint = true;
+	protected boolean useFixPoint = false;
 	// when concluding the clinit's and main, use fix-point or not
 	protected boolean topFixPoint = true;
 

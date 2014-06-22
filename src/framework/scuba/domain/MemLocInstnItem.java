@@ -188,8 +188,10 @@ public class MemLocInstnItem {
 							ConstraintManager.genTrue());
 				}
 			} else if (((AllocElem) loc).length() == SummariesEnv.v().allocDepth) {
-
-				AllocElem allocElem = callerHeap.getAllocElem((AllocElem) loc);
+				// TODO
+				AllocElem allocElem = (AllocElem) loc;
+				// AllocElem allocElem = callerHeap.getAllocElem((AllocElem)
+				// loc);
 				ret = new MemLocInstnSet(allocElem, ConstraintManager.genTrue());
 			} else {
 				assert false : "wrong!";
