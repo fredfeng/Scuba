@@ -29,7 +29,12 @@ public class SummariesEnv {
 	}
 
 	String[] blklist = {
-			"remove:(Ljava/lang/Object;)Z@java.util.AbstractCollection" };
+			"remove:(Ljava/lang/Object;)Z@java.util.AbstractCollection",
+			"buildFromSorted:(IIIILjava/util/Iterator;Ljava/io/ObjectInputStream;Ljava/lang/Object;)Ljava/util/TreeMap$Entry;@java.util.TreeMap",
+			"buildFromSorted:(ILjava/util/Iterator;Ljava/io/ObjectInputStream;Ljava/lang/Object;)V@java.util.TreeMap",
+			"<init>:(Ljava/util/SortedMap;)V@java.util.TreeMap",
+			"<init>:()V@sun.security.provider.Sun",
+			"clone:()Ljava/lang/Object;@java.util.TreeSet" };
 
 	public static SummariesEnv v() {
 		return instance;
