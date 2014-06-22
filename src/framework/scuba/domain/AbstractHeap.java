@@ -1223,7 +1223,7 @@ public class AbstractHeap extends Heap {
 
 		AccessPath ret = null;
 
-		if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.MED) {
+		if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.LOW) {
 			if (loc.isArgDerived()) {
 				if (loc.hasFieldSelector(field)) {
 					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
@@ -1258,7 +1258,7 @@ public class AbstractHeap extends Heap {
 			} else {
 				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 			}
-		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.LOW) {
+		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.MED) {
 			if (loc.isArgDerived()) {
 				if (loc instanceof AccessPath) {
 					FieldElem field1 = ((AccessPath) loc).getField();
