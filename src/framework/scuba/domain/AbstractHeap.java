@@ -847,34 +847,8 @@ public class AbstractHeap extends Heap {
 					+ "instantiating callee memory location.");
 		}
 
-		if (calleeHeap.summary.getMethod().toString()
-				.equals("equals:(Ljava/lang/Object;)Z@java.util.AbstractMap")) {
-			SummariesEnv.v().useMemLocInstnCache = false;
-			SummariesEnv.v().smartSkip = false;
-			SummariesEnv.v().moreSmartSkip = false;
-		}
-		if (summary.getMethod().toString()
-				.equals("equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
-			SummariesEnv.v().useMemLocInstnCache = false;
-			SummariesEnv.v().smartSkip = false;
-			SummariesEnv.v().moreSmartSkip = false;
-		}
-
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
-
-		if (calleeHeap.summary.getMethod().toString()
-				.equals("equals:(Ljava/lang/Object;)Z@java.util.AbstractMap")) {
-			SummariesEnv.v().useMemLocInstnCache = true;
-			SummariesEnv.v().smartSkip = true;
-			SummariesEnv.v().moreSmartSkip = true;
-		}
-		if (summary.getMethod().toString()
-				.equals("equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
-			SummariesEnv.v().useMemLocInstnCache = false;
-			SummariesEnv.v().smartSkip = false;
-			SummariesEnv.v().moreSmartSkip = false;
-		}
 
 		assert (instnDst != null) : "instantiation of dst cannot be null!";
 		if (instnSrc == null) {
@@ -1391,9 +1365,11 @@ public class AbstractHeap extends Heap {
 					if (loc.length >= SummariesEnv.v().smashLength) {
 						if (loc instanceof LocalAccessPath) {
 							ret = getLocalAccessPath((LocalAccessPath) loc);
+							ret.smashed = true;
 						} else if (loc instanceof StaticAccessPath) {
 							ret = Env
 									.getStaticAccessPath((StaticAccessPath) loc);
+							ret.smashed = true;
 						} else {
 							assert false : "only access path is allowed!";
 						}

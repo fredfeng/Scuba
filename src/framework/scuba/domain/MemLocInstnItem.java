@@ -204,23 +204,68 @@ public class MemLocInstnItem {
 				return ret;
 			}
 
-			AbsMemLoc base = ((AccessPath) loc).getBase();
-			FieldElem field = ((AccessPath) loc).getField();
-			assert (!orgs.contains((AccessPath) loc)) : "Location " + loc
-					+ " should not depend on the instantiation of"
-					+ " location " + base;
-			orgs.add((AccessPath) loc);
-			MemLocInstnSet instnLocSet = instnMemLocUsingCache(orgs, base,
-					callerHeap, point);
-			assert (orgs.contains((AccessPath) loc)) : "orgs should contain "
-					+ loc + " and we can remove it from orgs";
-			orgs.remove((AccessPath) loc);
-			for (AbsMemLoc loc1 : instnLocSet.keySet()) {
-				result.getSum().addToDepMap(loc1,
-						new Pair<MemLocInstnItem, Set<AccessPath>>(this, orgs));
+			// instantiation for smashed access path
+			if (!((AccessPath) loc).smashed) {
+				AbsMemLoc base = ((AccessPath) loc).getBase();
+				FieldElem field = ((AccessPath) loc).getField();
+				assert (!orgs.contains((AccessPath) loc)) : "Location " + loc
+						+ " should not depend on the instantiation of"
+						+ " location " + base;
+				orgs.add((AccessPath) loc);
+				MemLocInstnSet instnLocSet = instnMemLocUsingCache(orgs, base,
+						callerHeap, point);
+				assert (orgs.contains((AccessPath) loc)) : "orgs should contain "
+						+ loc + " and we can remove it from orgs";
+				orgs.remove((AccessPath) loc);
+				for (AbsMemLoc loc1 : instnLocSet.keySet()) {
+					result.getSum().addToDepMap(
+							loc1,
+							new Pair<MemLocInstnItem, Set<AccessPath>>(this,
+									orgs));
+				}
+				ret = callerHeap.instnLookup(instnLocSet, field);
+				memLocInstnCache.put(loc, ret);
+			} else {
+				AbsMemLoc base = ((AccessPath) loc).getBase();
+				// base must not be smashed
+				FieldElem field = ((AccessPath) loc).getField();
+				assert (!orgs.contains((AccessPath) loc)) : "Location " + loc
+						+ " should not depend on the instantiation of"
+						+ " location " + base;
+				orgs.add((AccessPath) loc);
+				MemLocInstnSet instnLocSet = instnMemLocUsingCache(orgs, base,
+						callerHeap, point);
+				assert (orgs.contains((AccessPath) loc)) : "orgs should contain "
+						+ loc + " and we can remove it from orgs";
+				orgs.remove((AccessPath) loc);
+				for (AbsMemLoc loc1 : instnLocSet.keySet()) {
+					result.getSum().addToDepMap(
+							loc1,
+							new Pair<MemLocInstnItem, Set<AccessPath>>(this,
+									orgs));
+				}
+				ret = callerHeap.instnLookup(instnLocSet, field);
+				Set<AbsMemLoc> set = new HashSet<AbsMemLoc>();
+				Set<AbsMemLoc> wl = new HashSet<AbsMemLoc>();
+				wl.addAll(ret.keySet());
+				while (!wl.isEmpty()) {
+					ret.addAll(wl);
+					for (AbsMemLoc loc2 : wl) {
+						for (FieldElem f : loc2.fields) {
+							P2Set p2set = callerHeap.lookup(loc2, f);
+							for (AbsMemLoc loc3 : p2set.keySet()) {
+								if (!ret.containsKey(loc3)) {
+									set.add(loc3);
+								}
+							}
+						}
+					}
+					wl.clear();
+					wl.addAll(set);
+					set.clear();
+				}
+				memLocInstnCache.put(loc, ret);
 			}
-			ret = callerHeap.instnLookup(instnLocSet, field);
-			memLocInstnCache.put(loc, ret);
 		} else {
 			assert false : "wried things happen! Unknow type.";
 		}

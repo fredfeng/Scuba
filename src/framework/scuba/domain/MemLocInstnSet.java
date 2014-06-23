@@ -20,6 +20,18 @@ public class MemLocInstnSet {
 		instnLocSet.put(loc, constraint);
 	}
 
+	public void add(AbsMemLoc loc) {
+		if (!instnLocSet.containsKey(loc)) {
+			instnLocSet.put(loc, ConstraintManager.genTrue());
+		}
+	}
+
+	public void addAll(Set<AbsMemLoc> locs) {
+		for (AbsMemLoc loc : locs) {
+			add(loc);
+		}
+	}
+
 	public void put(AbsMemLoc loc, BoolExpr constraint) {
 		instnLocSet.put(loc, constraint);
 	}
