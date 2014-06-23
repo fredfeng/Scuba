@@ -101,7 +101,7 @@ public class SummariesEnv {
 	// public FieldSmashLevel level = FieldSmashLevel.MED;
 	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
 	public FieldSmashLevel level = FieldSmashLevel.CONTROL;
-	public int smashLength = 3;
+	public int smashLength = 5;
 
 	// clear locals in the summary
 	protected boolean clearLocals = false;

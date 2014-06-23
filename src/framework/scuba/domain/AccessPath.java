@@ -1,9 +1,14 @@
 package framework.scuba.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public abstract class AccessPath extends HeapObject {
 
 	// we do this for smashing
 	protected boolean smashed = false;
+
+	protected Set<FieldElem> rep = new HashSet<FieldElem>();
 
 	abstract public AbsMemLoc getBase();
 
