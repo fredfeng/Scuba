@@ -30,10 +30,6 @@ public class SumConclusion {
 		this.sumHeap = new AbstractHeap(null);
 		this.clinitHeaps = clinitHeaps;
 		this.mainHeap = mainHeap;
-		// validate the <clinit>'s heaps and the main heap
-		if (G.validate) {
-			validate();
-		}
 	}
 
 	public void validate() {

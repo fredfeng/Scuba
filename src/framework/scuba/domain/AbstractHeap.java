@@ -1582,97 +1582,13 @@ public class AbstractHeap extends Heap {
 	}
 
 	public void validate() {
-
-		for (AbsMemLoc loc : memLocFactory.keySet()) {
-			if (loc instanceof LocalAccessPath) {
-				AbsMemLoc root = loc.findRoot();
-				assert (root instanceof ParamElem) : "Root of " + loc + " : "
-						+ root + " should be a ParamElem";
-				assert (loc.isArgDerived()) : "all AccessPath should be arg-derived";
-			} else if (loc instanceof AllocElem) {
-				AbsMemLoc root = loc.findRoot();
-				assert (loc.equals(root)) : root + " of " + loc
-						+ " should be the same as " + loc;
-				assert (loc.isNotArgDerived()) : "AllocElem should NOT be arg-derived";
-			} else if (loc instanceof LocalVarElem) {
-				AbsMemLoc root = loc.findRoot();
-				assert (loc.equals(root)) : root + " of " + loc
-						+ " should be the same as " + loc;
-				assert (loc.isNotArgDerived()) : "LocalVarElem should NOT be arg-derived";
-			} else if (loc instanceof ParamElem) {
-				AbsMemLoc root = loc.findRoot();
-				assert (loc.equals(root)) : root + " of " + loc
-						+ " should be the same as " + loc;
-				assert (loc.isArgDerived()) : "ParamElem should be arg-derive";
-			} else if (loc instanceof RetElem) {
-				AbsMemLoc root = loc.findRoot();
-				assert (loc.equals(root)) : root + " of " + loc
-						+ " should be the same as " + loc;
-				assert (loc.isNotArgDerived()) : "RetElem should NOT be arg-derived";
-			} else {
-				if (loc instanceof StaticElem) {
-					assert (Env.staticElemFactory.containsKey(loc)) : ""
-							+ "StaticElem should be generated in the global factory!";
-				} else if (loc instanceof StaticAccessPath) {
-					assert (Env.staticAPFactory.containsKey(loc)) : ""
-							+ "StaticElem should be generated in the global factory!";
-				} else {
-					assert false : "wired things! unknown type.";
-				}
-			}
-			// all arg-derived instances must be:
-			// AccessPath, ParamElem, or StaticElem
-			if (loc.isArgDerived()) {
-				assert (loc instanceof LocalAccessPath)
-						|| (loc instanceof ParamElem)
-						|| (loc instanceof StaticElem);
-			}
-
-			// validate all the argument derived marker are properly set
-			assert (loc.knownArgDerived()) : "we should set the argument derived marker of "
-					+ loc
-					+ " before putting it into the abstract memory location facltory";
-		}
 		for (Pair<AbsMemLoc, FieldElem> pair : locToP2Set.keySet()) {
-			AbsMemLoc loc = pair.val0;
+			AbsMemLoc src = pair.val0;
 			FieldElem f = pair.val1;
-			P2Set p2Set = locToP2Set.get(pair);
-			// validate all abstract memory locations appeared in the key set of
-			// heapObjectsToP2Set are either heap objects or stack objects
-			assert (loc instanceof HeapObject || loc instanceof StackObject) : loc
-					+ " is NOT a proper object";
-			// validate the field element is an element of the fields of the
-			// corresponding abstract memory location
-			assert (loc.getFields().contains(f)) : f
-					+ " is NOT in the fields of the abstract memory location "
-					+ loc;
-			// validate the elements in the key set of the P2Set are all heap
-			// objects
-			for (HeapObject hobj : p2Set.keySet()) {
-				assert (hobj instanceof HeapObject) : hobj
-						+ " should be appeared as a heap object!";
-			}
-			// validate that all the elements in the key set of the
-			// heapObjectsToP2Set are appeared in the key set of memLocFacotry
-			// because of instantiating, the locations in the caller's heap
-			// might be produced by the callee's mem loc factory
-			// assert memLocFactory.containsKey(loc) : loc
-			// + " should be contained in the memory location factory!";
-			// validate that all the elements in the key set of the p2Set should
-			// appear in the key set of memLocFactory
-			for (HeapObject hobj : p2Set.keySet()) {
-				if (hobj instanceof StaticAccessPath) {
-
-				} else {
-					assert (memLocFactory.containsKey(hobj)) : hobj
-							+ " should be contained in the memory location factory!";
-				}
-			}
-			// validate there is no default edges in the abstract heap
-			if (loc.isArgDerived()) {
-				AccessPath hObj = getDefaultTarget(loc, f);
-				assert (!p2Set.contains(hObj)) : "A default edge exists from "
-						+ loc + " with field " + f + " to heap object " + hObj;
+			P2Set p2set = locToP2Set.get(pair);
+			if (src.isArgDerived()) {
+				AccessPath dtgt = getDefaultTarget(src, f);
+				assert (!p2set.contains(dtgt)) : "You cannot have default target in the heap!";
 			}
 		}
 	}
@@ -1707,7 +1623,7 @@ public class AbstractHeap extends Heap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					G.dotOutputPath + count + "createdLocations.dot"));
+					G.dotOutputPath + count + ".dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {
@@ -1784,7 +1700,7 @@ public class AbstractHeap extends Heap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					G.dotOutputPath + "abstractHeap" + count + ".dot"));
+					G.dotOutputPath + count + ".dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {

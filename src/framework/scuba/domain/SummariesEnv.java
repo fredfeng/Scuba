@@ -107,9 +107,9 @@ public class SummariesEnv {
 	protected boolean clearLocals = false;
 
 	// fix-point or not
-	protected boolean useFixPoint = false;
+	protected boolean useFixPoint = true;
 	// when concluding the clinit's and main, use fix-point or not
-	protected boolean topFixPoint = false;
+	protected boolean topFixPoint = true;
 
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.

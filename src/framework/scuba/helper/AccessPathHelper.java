@@ -20,7 +20,7 @@ public class AccessPathHelper {
 		LinkedList<FieldElem> ret = new LinkedList<FieldElem>();
 		while (true) {
 			AbsMemLoc base = ap.getBase();
-			ret.addLast(ap.getField());
+			ret.addFirst(ap.getField());
 			if (!(base instanceof AccessPath)) {
 				break;
 			}

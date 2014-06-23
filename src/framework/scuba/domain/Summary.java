@@ -1189,17 +1189,18 @@ public class Summary {
 			for (jq_Method tgt : tgtSet) {
 				// generate constraint for each potential target.
 				jq_Class tgtType = tgt.getDeclaringClass();
-				
-				//can we filter out this target?
-				if(recv.toString().equals("R0") && filterTgt(caller, tgt)) {
+
+				// can we filter out this target?
+				if (recv.toString().equals("R0") && filterTgt(caller, tgt)) {
 					System.out.println("filter out tgt: " + callsite);
 					System.out.println("filter out tgt caller: " + caller);
 					System.out.println("filter out tgt callee: " + tgt);
 					continue;
 				}
-				
-				//this is unsound!
-				if(tgt.getName().toString().contains("toString") || tgt.getName().toString().contains("hashCode"))
+
+				// this is unsound!
+				if (tgt.getName().toString().contains("toString")
+						|| tgt.getName().toString().contains("hashCode"))
 					continue;
 
 				if (SummariesEnv.v().disableCst || inBadScc)

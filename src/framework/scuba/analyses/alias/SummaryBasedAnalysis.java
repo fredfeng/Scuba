@@ -36,7 +36,6 @@ import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbsMemLoc;
 import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.AllocElem;
-import framework.scuba.domain.CallGraph;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.EpsilonFieldElem;
 import framework.scuba.domain.FieldElem;
