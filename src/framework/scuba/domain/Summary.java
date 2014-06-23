@@ -1190,18 +1190,14 @@ public class Summary {
 				// generate constraint for each potential target.
 				jq_Class tgtType = tgt.getDeclaringClass();
 
-				// can we filter out this target?
-				if (recv.toString().equals("R0") && filterTgt(caller, tgt)) {
-					System.out.println("filter out tgt: " + callsite);
-					System.out.println("filter out tgt caller: " + caller);
-					System.out.println("filter out tgt callee: " + tgt);
+				// this is unsound!
+				String signature = tgt.toString();
+				if(signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*") ||
+					signature.matches("^hashCode:\\(\\)I@java.*") ||
+					signature.matches("^hashCode:\\(\\)I@sun.*") ||
+					signature.matches("^toString:\\(\\)Ljava/lang/String;@sun.*")) {
 					continue;
 				}
-
-				// this is unsound!
-				if (tgt.getName().toString().contains("toString")
-						|| tgt.getName().toString().contains("hashCode"))
-					continue;
 
 				if (SummariesEnv.v().disableCst || inBadScc)
 					cst = ConstraintManager.genTrue();
