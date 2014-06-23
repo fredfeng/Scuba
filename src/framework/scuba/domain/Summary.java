@@ -546,7 +546,7 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 
-			StringUtil.reportInfo("my invoke: " + stmt);
+			StringUtil.reportInfo("Handle invoke----- " + stmt);
 			tmp++;
 
 			long startInstCallsite = System.nanoTime();
@@ -775,6 +775,14 @@ public class Summary {
 									+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
 					printCalleeHeapInfo("dbgPermission");
 				}
+				
+				if(G.dbgBlowup && meth.toString().contains("equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
+					int num = 0;
+					for (Pair p : getAbsHeap().keySet()) {
+						num += getAbsHeap().get(p).size();
+					}
+					StringUtil.reportInfo("Current heap size after instantiate: " + num);
+				}
 			}
 			if (G.debug4Sum) {
 				if (calleeSumCstPairs.isEmpty()) {
@@ -788,6 +796,22 @@ public class Summary {
 			if (G.tuning)
 				StringUtil.reportSec("Time to instantiate callsite: " + stmt,
 						startInstCallsite, endInstCallsite);
+			
+			if(G.dbgBlowup && meth.toString().contains("equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
+				int num = 0;
+				for (Pair p : getAbsHeap().keySet()) {
+					num += getAbsHeap().get(p).size();
+				}
+				StringUtil.reportInfo("Current heap size after invoke: " + num);
+				
+				/*if(num < 20) {
+					absHeap.dumpHeapToFile("equals");
+					System.out.println(meth.getCFG().fullDump());
+					
+					assert false;
+				}*/
+			}
+			
 
 		}
 
@@ -1207,8 +1231,6 @@ public class Summary {
 
 					continue;
 				}
-				if (G.tuning)
-					StringUtil.reportInfo("Generate Constraint: " + cst);
 
 				if (dySum.hasAnalyzed())
 					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));
@@ -1451,77 +1473,6 @@ public class Summary {
 		}
 	}
 
-	// fill the toProp set which determines what kinds of locations to propagate
-	// upwards to the callers, and this is done after terminating some method
-	public void fillPropSet() {
-		Set<AllocElem> wl = new HashSet<AllocElem>();
-		Set<AbsMemLoc> locals = new HashSet<AbsMemLoc>();
-		// add all locations that are guaranteed to be propagated to the caller
-		for (Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = absHeap.locToP2Set
-				.entrySet().iterator(); it.hasNext();) {
-			Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it.next();
-			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
-			AbsMemLoc loc = entry.getKey().val0;
-
-			if (loc instanceof AccessPath || loc instanceof ParamElem
-					|| loc instanceof StaticElem || loc instanceof RetElem) {
-				toProp.add(loc);
-				// add all potential allocs into wl
-				P2Set p2set = absHeap.locToP2Set.get(pair);
-				for (HeapObject hObj : p2set.keySet()) {
-					if (hObj instanceof AllocElem) {
-						wl.add((AllocElem) hObj);
-					}
-				}
-			} else if (loc instanceof LocalVarElem) {
-				Register v = ((LocalVarElem) loc).getLocal();
-				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
-					toProp.add(loc);
-				} else if (SummariesEnv.v().toProp(v)) {
-					locals.add(loc);
-					// add all potential allocs into wl
-					P2Set p2set = absHeap.locToP2Set.get(pair);
-					for (HeapObject hObj : p2set.keySet()) {
-						if (hObj instanceof AllocElem) {
-							locals.add((AllocElem) hObj);
-						}
-					}
-				}
-			} else {
-				assert (loc instanceof AllocElem) : "wrong!";
-			}
-		}
-		// use a worklist algorithm to find all allocs to propagate
-		Set<AllocElem> set = new HashSet<AllocElem>();
-		while (!wl.isEmpty()) {
-			toProp.addAll(wl);
-			for (AllocElem alloc : wl) {
-				Set<FieldElem> fields = alloc.getFields();
-				for (FieldElem f : fields) {
-					P2Set p2set = absHeap.locToP2Set
-							.get(new Pair<AbsMemLoc, FieldElem>(alloc, f));
-					for (HeapObject hObj : p2set.keySet()) {
-						if (hObj instanceof AllocElem && !toProp.contains(hObj)) {
-							set.add((AllocElem) hObj);
-						}
-					}
-				}
-			}
-			wl.clear();
-			wl.addAll(set);
-			set.clear();
-		}
-		toProp.addAll(locals);
-	}
-
-	public boolean toProp(AbsMemLoc loc) {
-		return toProp.contains(loc);
-	}
-
-	public Set<AbsMemLoc> getProps() {
-		return toProp;
-	}
-	
 	public boolean filterTgt(jq_Method caller, jq_Method callee) {
 		jq_Class callerClz = caller.getDeclaringClass();
 		jq_Class calleeClz = callee.getDeclaringClass();

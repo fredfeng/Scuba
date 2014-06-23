@@ -838,9 +838,32 @@ public class AbstractHeap extends Heap {
 			StringUtil.reportInfo("instnInfo: "
 					+ "instantiating callee memory location.");
 		}
+		
+		if (calleeHeap.summary.getMethod().toString().equals("equals:(Ljava/lang/Object;)Z@java.util.AbstractMap")) {
+			SummariesEnv.v().useMemLocInstnCache = false;
+			SummariesEnv.v().smartSkip = false;
+			SummariesEnv.v().moreSmartSkip = false;
+		}
+		if (summary.getMethod().toString().equals("equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
+			SummariesEnv.v().useMemLocInstnCache = false;
+			SummariesEnv.v().smartSkip = false;
+			SummariesEnv.v().moreSmartSkip = false;
+		}
+		
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
 
+		if (calleeHeap.summary.getMethod().toString().equals("equals:(Ljava/lang/Object;)Z@java.util.AbstractMap")) {
+			SummariesEnv.v().useMemLocInstnCache = true;
+			SummariesEnv.v().smartSkip = true;
+			SummariesEnv.v().moreSmartSkip = true;
+		}
+		if (summary.getMethod().toString().equals("equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
+			SummariesEnv.v().useMemLocInstnCache = false;
+			SummariesEnv.v().smartSkip = false;
+			SummariesEnv.v().moreSmartSkip = false;
+		}
+		
 		assert (instnDst != null) : "instantiation of dst cannot be null!";
 		if (instnSrc == null) {
 			assert (src instanceof RetElem) : "only return value in the callee"
@@ -874,7 +897,13 @@ public class AbstractHeap extends Heap {
 				assert (newDst instanceof HeapObject) : ""
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
-
+				
+				if (G.instnInfo) {
+					StringUtil.reportInfo("instnInfo: "
+							+ "intantiated location in caller: " + "(" + newSrc
+							+ " , " + newDst + ")");
+				}
+				
 				assert (newDst1 != null) : "null!";
 
 				if (G.instnInfo) {
@@ -1223,7 +1252,7 @@ public class AbstractHeap extends Heap {
 
 		AccessPath ret = null;
 
-		if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.MED) {
+		if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.LOW) {
 			if (loc.isArgDerived()) {
 				if (loc.hasFieldSelector(field)) {
 					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
@@ -1258,7 +1287,7 @@ public class AbstractHeap extends Heap {
 			} else {
 				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 			}
-		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.LOW) {
+		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.MED) {
 			if (loc.isArgDerived()) {
 				if (loc instanceof AccessPath) {
 					FieldElem field1 = ((AccessPath) loc).getField();

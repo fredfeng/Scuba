@@ -72,27 +72,27 @@ public class SummariesEnv {
 	public final int sccLimit = 30;
 
 	// whether use cache for instantiating AccessPath
-	protected boolean useMemLocInstnCache = true;
+	public boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
-	protected boolean useCstInstnCache = true;
+	public boolean useCstInstnCache = true;
 	// whether use cache for extracting terms
-	protected boolean useExtractCache = true;
+	public boolean useExtractCache = true;
 	// whether use cache for constraint simplification
-	protected boolean useSimplifyCache = true;
+	public boolean useSimplifyCache = true;
 	// whether use cache for constraint union operation
-	protected boolean useUnionCache = true;
+	public boolean useUnionCache = true;
 	// whether use cache for constraint intersection operation
-	protected boolean useInterCache = true;
+	public boolean useInterCache = true;
 	// whether use cache for substitution operation of constraints
-	protected boolean useSubCache = true;
+	public boolean useSubCache = true;
 	// whether use equivalence checking cache
-	protected boolean useEqCache = true;
+	public boolean useEqCache = true;
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
-	protected boolean smartSkip = true;
+	public boolean smartSkip = true;
 	// a fine-grained smart skip for instantiating edges
-	protected boolean moreSmartSkip = true;
+	public boolean moreSmartSkip = true;
 	// a trick to avoid hanging in gigantic SCC (the remove() method)
 	protected boolean badMethodSkip = true;
 

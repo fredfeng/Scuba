@@ -458,21 +458,28 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		intrapro.analyze(cfg);
 
-		if (G.tuning) {
-			StringUtil.reportTotalTime("Total Time to generate Constraint: ",
-					G.genCstTime);
-			StringUtil.reportTotalTime("Total Time to Constraint Operation: ",
-					G.cstOpTime);
-			StringUtil.reportInfo("Max Constraint: " + G.maxCst);
-
-			StringUtil.reportInfo("Free memory (MB): "
-					+ Runtime.getRuntime().freeMemory() / (1024 * 1024));
-		}
 		if (G.validate) {
 			summary.validate();
 		}
 
 		summary.setHasAnalyzed();
+		
+		if (G.dbgBlowup) {
+			StringUtil
+					.reportInfo("dbgBlowup: "
+							+ "------------------------------------------------");
+			StringUtil.reportInfo("dbgBlowup: analyzing " + m);
+			int num = 0;
+			for (Pair p : summary.getAbsHeap().keySet()) {
+				num += summary.getAbsHeap().get(p).size();
+			}
+			if(num > 100) System.out.println("BAD..." + m);
+			StringUtil.reportInfo("dbgBlowup: "
+					+ " edges in the current caller: " + num);
+			StringUtil
+					.reportInfo("dbgBlowup: "
+							+ "~~~~~~~~~~~~~~~~dbgBlowup info~~~~~~~~~~~~~~~~~~~~");
+		}
 
 		if (G.seePerf) {
 			if (m.toString().equals("hashCode:()I@java.util.Hashtable$Entry")) {
@@ -488,6 +495,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			appTime += delta;
 		}
 
+		
+		if (G.dbgBlowup
+				&& m.toString()
+						.contains(
+								"equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
+			summary.getAbsHeap().dumpHeapToFile("dateFormat");
+			System.out.println(m.getCFG().fullDump());
+		}
+		
 		return summary.isChanged();
 	}
 
