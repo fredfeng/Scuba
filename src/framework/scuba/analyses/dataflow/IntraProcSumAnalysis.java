@@ -136,12 +136,21 @@ public class IntraProcSumAnalysis {
 		}
 
 		// TODO
+		if (G.dbgQuery) {
+			if (summary
+					.getMethod()
+					.toString()
+					.equals("<init>:(Ljava/util/Enumeration;)V@javax.crypto.SunJCE_j")) {
+				summary.dumpSummaryToFile("" + d++);
+			}
+		}
 		summary.getAbsHeap().fillPropSet();
 		if (G.validate) {
 			summary.getAbsHeap().validate();
 		}
 	}
 
+	public static int d = 0;
 	public static int sccProgress = 0;
 
 	// compute the fixed-point for this scc.

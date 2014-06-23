@@ -1671,7 +1671,7 @@ public class AbstractHeap extends Heap {
 
 		try {
 			BufferedWriter bufw = new BufferedWriter(new FileWriter(
-					G.dotOutputPath + "abstractHeap" + count + ".dot"));
+					G.dotOutputPath + count + ".dot"));
 			bufw.write(b.toString());
 			bufw.close();
 		} catch (Exception e) {
