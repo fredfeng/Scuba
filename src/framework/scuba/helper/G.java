@@ -29,12 +29,12 @@ public class G {
 	public static boolean dbgMatch = false;
 
 	public static boolean dbgPermission = false;
-	
+
 	public static boolean dbgBlowup = true;
 
 	public static boolean dbgQuery = false;
 
-	public static boolean instnInfo = true;
+	public static boolean instnInfo = false;
 
 	public static boolean dbgRef = false;
 
