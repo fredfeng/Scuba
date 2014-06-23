@@ -546,7 +546,7 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 
-			StringUtil.reportInfo("my invoke: " + stmt);
+			StringUtil.reportInfo("Handle invoke----- " + stmt);
 			tmp++;
 
 			long startInstCallsite = System.nanoTime();
@@ -775,6 +775,14 @@ public class Summary {
 									+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
 					printCalleeHeapInfo("dbgPermission");
 				}
+				
+				if(G.dbgBlowup && meth.toString().contains("equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
+					int num = 0;
+					for (Pair p : getAbsHeap().keySet()) {
+						num += getAbsHeap().get(p).size();
+					}
+					StringUtil.reportInfo("Current heap size after instantiate: " + num);
+				}
 			}
 			if (G.debug4Sum) {
 				if (calleeSumCstPairs.isEmpty()) {
@@ -788,6 +796,22 @@ public class Summary {
 			if (G.tuning)
 				StringUtil.reportSec("Time to instantiate callsite: " + stmt,
 						startInstCallsite, endInstCallsite);
+			
+			if(G.dbgBlowup && meth.toString().contains("equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
+				int num = 0;
+				for (Pair p : getAbsHeap().keySet()) {
+					num += getAbsHeap().get(p).size();
+				}
+				StringUtil.reportInfo("Current heap size after invoke: " + num);
+				
+				/*if(num < 20) {
+					absHeap.dumpHeapToFile("equals");
+					System.out.println(meth.getCFG().fullDump());
+					
+					assert false;
+				}*/
+			}
+			
 
 		}
 
@@ -1208,8 +1232,6 @@ public class Summary {
 
 					continue;
 				}
-				if (G.tuning)
-					StringUtil.reportInfo("Generate Constraint: " + cst);
 
 				if (dySum.hasAnalyzed())
 					ret.add(new Pair<Summary, BoolExpr>(dySum, cst));

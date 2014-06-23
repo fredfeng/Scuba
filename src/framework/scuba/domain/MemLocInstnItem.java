@@ -12,6 +12,8 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.G;
+import framework.scuba.utils.StringUtil;
 
 public class MemLocInstnItem {
 
@@ -250,6 +252,22 @@ public class MemLocInstnItem {
 
 		if (loc instanceof LocalVarElem || loc instanceof ParamElem
 				|| loc instanceof StaticElem) {
+			if (G.instnInfo) {
+				if (callee.toString().equals(
+						"equals:(Ljava/lang/Object;)Z@java.util.AbstractMap")) {
+					StringUtil.reportInfo("instnInfo: " + "param: " + loc
+							+ "is instn into \n" + ret.keySet());
+				}
+			}
+			if (G.dbgBlowup
+					&& caller
+							.toString()
+							.contains(
+									"equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
+				StringUtil.reportInfo("instnInfo: " + "param: " + loc
+						+ "is instn into \n" + ret.keySet());
+			}
+
 			// this is my little cute cache
 			if (ret != null) {
 				return ret;
@@ -304,6 +322,24 @@ public class MemLocInstnItem {
 			MemLocInstnSet instnLocSet = instnMemLocNoCache(base, callerHeap,
 					point);
 			ret = callerHeap.instnLookup(instnLocSet, field);
+			if (G.instnInfo) {
+				if (callee.toString().equals(
+						"equals:(Ljava/lang/Object;)Z@java.util.AbstractMap")) {
+					StringUtil.reportInfo("instnInfo: " + "access path: " + loc
+							+ " (" + base + " , " + field + ") "
+							+ "is instn into \n" + ret.keySet());
+				}
+			}
+
+			if (G.dbgBlowup
+					&& caller
+							.toString()
+							.contains(
+									"equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
+				StringUtil.reportInfo("instnInfo: " + "access path: " + loc
+						+ " (" + base + " , " + field + ") "
+						+ "is instn into \n" + ret.keySet());
+			}
 			// put into the map
 			memLocInstnCache.put(loc, ret);
 
