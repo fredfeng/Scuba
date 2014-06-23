@@ -214,10 +214,8 @@ public class MemLocInstnItem {
 					+ loc + " and we can remove it from orgs";
 			orgs.remove((AccessPath) loc);
 			for (AbsMemLoc loc1 : instnLocSet.keySet()) {
-				result.getSum().addToDepMap(
-						new Pair<AbsMemLoc, FieldElem>(loc1, field),
+				result.getSum().addToDepMap(loc1,
 						new Pair<MemLocInstnItem, Set<AccessPath>>(this, orgs));
-
 			}
 			ret = callerHeap.instnLookup(instnLocSet, field);
 			memLocInstnCache.put(loc, ret);

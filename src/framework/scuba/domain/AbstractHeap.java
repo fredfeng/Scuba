@@ -1420,7 +1420,7 @@ public class AbstractHeap extends Heap {
 							+ "clearing the memory location cache"
 							+ " for location: " + src);
 				}
-				clearCache(src, f);
+				clearCache(src);
 			}
 		}
 
@@ -1430,7 +1430,7 @@ public class AbstractHeap extends Heap {
 	// clear all the related cache including:
 	// 1. memory location instantiation cache
 	// 2. constraint instantiation cache
-	protected Pair<Boolean, Boolean> clearCache(AbsMemLoc src, FieldElem f) {
+	protected Pair<Boolean, Boolean> clearCache(AbsMemLoc src) {
 		boolean ret1 = false;
 		boolean ret2 = false;
 		// this check is for the final summary (conclusion)
@@ -1438,8 +1438,7 @@ public class AbstractHeap extends Heap {
 			return new Pair<Boolean, Boolean>(ret1, ret2);
 		}
 		// clear the memory location instantiation cache
-		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.locDepMap
-				.get(new Pair<AbsMemLoc, FieldElem>(src, f));
+		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.locDepMap.get(src);
 		// possible that no one currently depends on src
 		if (deps == null) {
 			return new Pair<Boolean, Boolean>(ret1, ret2);
