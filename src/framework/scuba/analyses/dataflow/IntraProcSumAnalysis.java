@@ -141,7 +141,7 @@ public class IntraProcSumAnalysis {
 					.getMethod()
 					.toString()
 					.equals("<init>:(Ljava/util/Enumeration;)V@javax.crypto.SunJCE_j")) {
-				summary.dumpSummaryToFile("" + d++);
+				summary.dumpSummaryMappingToFile("" + d++);
 			}
 		}
 		summary.getAbsHeap().fillPropSet();
