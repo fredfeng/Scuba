@@ -1365,13 +1365,9 @@ public class AbstractHeap extends Heap {
 					if (loc.length >= SummariesEnv.v().smashLength) {
 						if (loc instanceof LocalAccessPath) {
 							ret = getLocalAccessPath((LocalAccessPath) loc);
-							// ret.rep.add(field);
-							ret.smashed = true;
 						} else if (loc instanceof StaticAccessPath) {
 							ret = Env
 									.getStaticAccessPath((StaticAccessPath) loc);
-							// ret.rep.add(field);
-							ret.smashed = true;
 						} else {
 							assert false : "only access path is allowed!";
 						}
