@@ -569,20 +569,6 @@ public class Summary {
 						+ calleeSumCstPairs.size());
 			}
 
-			if (G.dbgMatch) {
-				StringUtil.reportInfo("Sunny -- Invoke progress: [ CG: "
-						+ SummaryBasedAnalysis.cgProgress + " BB: "
-						+ IntraProcSumAnalysis.bbProgress + " ]");
-				StringUtil.reportInfo("Sunny -- Invoke progress: "
-						+ "potential callee sums size: "
-						+ calleeSumCstPairs.size());
-			}
-
-			if (G.dbgSCC) {
-				StringUtil.reportInfo("in the invoke: " + tmp + " " + stmt
-						+ " " + calleeSumCstPairs.size());
-			}
-
 			if (G.tuning)
 				StringUtil.reportInfo("handle callsite: " + stmt + " In "
 						+ stmt.getMethod() + " Size: "
@@ -1141,13 +1127,13 @@ public class Summary {
 		if (tgtSet.size() == 1) {
 			jq_Method callee = tgtSet.iterator().next();
 			Summary calleeSum = SummariesEnv.v().getSummary(callee);
-			
+
 			if (SummariesEnv.v().cheating()) {
 				String signature = callee.toString();
 				if (SummariesEnv.v().isStubMethod(signature))
 					return ret;
 			}
-			
+
 			if (calleeSum == null) {
 				StringUtil.reportInfo("Missing model for " + callee);
 				return ret;
@@ -1185,7 +1171,7 @@ public class Summary {
 				// this is unsound!
 				if (SummariesEnv.v().cheating()) {
 					String signature = tgt.toString();
-					if(SummariesEnv.v().isStubMethod(signature))
+					if (SummariesEnv.v().isStubMethod(signature))
 						continue;
 				}
 

@@ -35,6 +35,7 @@ import com.microsoft.z3.BoolExpr;
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbsMemLoc;
 import framework.scuba.domain.AbstractHeap;
+import framework.scuba.domain.Alloc;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.EpsilonFieldElem;
@@ -778,9 +779,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			// System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
 			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
 
-			Set<Quad> sites = new HashSet<Quad>();
+			Set<Alloc> sites = new HashSet<Alloc>();
 			for (AllocElem alloc : p2Set) {
-				sites.add(alloc.getAlloc().getAllocSite());
+				sites.add(alloc.getAlloc());
 			}
 
 			StringUtil.reportInfo("[Scuba] method: " + meth);

@@ -668,11 +668,7 @@ public class AbstractHeap extends Heap {
 			while (true) {
 				iteration++;
 				boolean go = false;
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: "
-							+ "doing fix-point instantiation. [" + iteration
-							+ "-th]");
-				}
+
 				Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = calleeHeap.locToP2Set
 						.entrySet().iterator();
 				while (it.hasNext()) {
@@ -706,11 +702,7 @@ public class AbstractHeap extends Heap {
 		} else {
 			iteration++;
 			while (true) {
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: "
-							+ "doing fix-point instantiation. [" + iteration
-							+ "-th]");
-				}
+
 				boolean go = false;
 				// this is used for updating for recursive calls
 				Map<Pair<AbsMemLoc, FieldElem>, Set<Pair<AbsMemLoc, P2Set>>> result = new HashMap<Pair<AbsMemLoc, FieldElem>, Set<Pair<AbsMemLoc, P2Set>>>();
@@ -736,9 +728,6 @@ public class AbstractHeap extends Heap {
 					}
 				}
 
-				if (G.instnInfo) {
-					System.out.println("instnInfo: weak updating (recursive)");
-				}
 				// weak update outside to avoid ConcurrentModification
 				Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, Set<Pair<AbsMemLoc, P2Set>>>> it2 = result
 						.entrySet().iterator();
@@ -818,8 +807,6 @@ public class AbstractHeap extends Heap {
 		if (G.instnInfo) {
 			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
 					+ "(" + src + "  ,  " + field + ")" + "-->" + dst);
-			StringUtil.reportInfo("instnInfo: " + "the edge cst: "
-					+ calleeCst.toString());
 		}
 
 		// more smart skip for instantiating edges
@@ -832,17 +819,8 @@ public class AbstractHeap extends Heap {
 			}
 		}
 
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: "
-					+ "instantiating callee constraint.");
-		}
 		// instantiate the calleeCst
 		BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
-
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: "
-					+ "instantiating callee memory location.");
-		}
 
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
@@ -883,16 +861,11 @@ public class AbstractHeap extends Heap {
 
 				if (G.instnInfo) {
 					StringUtil.reportInfo("instnInfo: "
-							+ "intantiated location in caller: " + "(" + newSrc
-							+ " , " + newDst + ")");
+							+ "instantiated location in caller: " + "("
+							+ newSrc + " , " + newDst + ")");
 				}
 
 				assert (newDst1 != null) : "null!";
-
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: "
-							+ "intersecting constraints.");
-				}
 
 				BoolExpr cst1 = instnSrc.get(newSrc);
 				BoolExpr cst2 = instnDst.get(newDst);
@@ -905,9 +878,6 @@ public class AbstractHeap extends Heap {
 				Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 						newSrc, field);
 
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: " + "weak updating");
-				}
 				Pair<Boolean, Boolean> res = weakUpdate(pair, new P2Set(
 						newDst1, cst));
 				ret.val0 = res.val0 | ret.val0;
@@ -976,18 +946,8 @@ public class AbstractHeap extends Heap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: "
-					+ "instantiating callee constraint (recursive).");
-		}
-
 		// instantiate the calleeCst
 		BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
-
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: "
-					+ "instantiating callee memory location (recursive).");
-		}
 
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
@@ -1013,11 +973,6 @@ public class AbstractHeap extends Heap {
 
 				BoolExpr cst1 = instnSrc.get(newSrc);
 				BoolExpr cst2 = instnDst.get(newDst);
-
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: "
-							+ "intersecting constraints (recursive).");
-				}
 
 				BoolExpr cst = ConstraintManager.intersect(
 						ConstraintManager.intersect(cst1, cst2),
