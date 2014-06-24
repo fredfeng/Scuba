@@ -1091,13 +1091,6 @@ public class Summary {
 			assert (absHeap.contains(new RetElem(clazz, meth))) : ""
 					+ "the return value should be contained in the heap!";
 			retValue = absHeap.getRetElem(clazz, meth);
-			// }
-			// } else {
-			// if (G.debug4Sum) {
-			// System.out
-			// .println("[Debug4Sum] Not a processable instruction!");
-			// }
-			// }
 		}
 
 		// no sure whether we should mark this as no op.
@@ -1150,13 +1143,15 @@ public class Summary {
 		if (tgtSet.size() == 1) {
 			jq_Method callee = tgtSet.iterator().next();
 			Summary calleeSum = SummariesEnv.v().getSummary(callee);
+			
+			if (SummariesEnv.v().cheating()) {
+				String signature = callee.toString();
+				if (SummariesEnv.v().isStubMethod(signature))
+					return ret;
+			}
+			
 			if (calleeSum == null) {
 				StringUtil.reportInfo("Missing model for " + callee);
-				// if (opr instanceof InvokeStatic)
-				// if (SummariesEnv.v().getReachableMethods()
-				// .contains(callee))
-				// assert false : "static reachable method can not be missed."
-				// + callee;
 				return ret;
 			}
 			// assert calleeSum != null : "CalleeSum can not be null" +
@@ -1189,14 +1184,11 @@ public class Summary {
 			for (jq_Method tgt : tgtSet) {
 				// generate constraint for each potential target.
 				jq_Class tgtType = tgt.getDeclaringClass();
-
 				// this is unsound!
-				String signature = tgt.toString();
-				if(signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*") ||
-					signature.matches("^hashCode:\\(\\)I@java.*") ||
-					signature.matches("^hashCode:\\(\\)I@sun.*") ||
-					signature.matches("^toString:\\(\\)Ljava/lang/String;@sun.*")) {
-					continue;
+				if (SummariesEnv.v().cheating()) {
+					String signature = tgt.toString();
+					if(SummariesEnv.v().isStubMethod(signature))
+						continue;
 				}
 
 				if (SummariesEnv.v().disableCst || inBadScc)
@@ -1219,13 +1211,6 @@ public class Summary {
 					System.err
 							.println("[WARNING:]Unreachable method because of missing model."
 									+ tgt);
-
-					// if (SummariesEnv.v().getReachableMethods()
-					// .contains(tgt))
-					// assert false :
-					// "virtual reachable method can not be missed."
-					// + tgt;
-
 					continue;
 				}
 

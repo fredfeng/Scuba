@@ -61,14 +61,14 @@ public class SummariesEnv {
 	// ignore string
 	protected boolean openBlklist = false;
 	// cheating
-	protected boolean cheating = false;
+	protected boolean cheating = true;
 	// ignore string
 	protected boolean ignoreString = false;
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = true;
+	protected boolean disableCst = false;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
@@ -281,7 +281,22 @@ public class SummariesEnv {
 				|| signature.matches("^clone:\\(\\)Ljava/lang/Object;@sun.*")
 				|| signature
 						.matches("^putAllForCreate:\\(Ljava/util/Map;\\)V@java.*")
+				//just for speeding up debugging.
 				|| signature.matches("^getResource.*")
+				|| signature.matches("^checkCodeSigning:.*")
+				|| signature.matches("^checkTLSServer:.*") 
+				|| signature.matches("^checkNetscapeCertType.*")
+				|| signature.matches("^getExtensionValue:.*")
+				|| signature.matches("^getCriticalExtensionOIDs.*")
+				|| signature.matches("^getCriticalExtensionOIDs.*")
+				|| signature.matches("^isNonEuroLangSupported.*")
+				|| signature.matches("^createLocaleList.*")
+				|| signature
+						.matches("^access$000:\\(\\).*sun.*")
+				|| signature
+						.matches("<clinit>:\\(\\)V@sun.*")
+				|| signature.matches("getPrngAlgorithm:\\(\\)Ljava/lang/String;@java.*")
+				|| signature.matches("<clinit>:\\(\\)V@javax.*")
 				|| signature.matches("^hasNext:\\(\\)Z@java"))
 			return true;
 		
