@@ -775,13 +775,18 @@ public class Summary {
 									+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
 					printCalleeHeapInfo("dbgPermission");
 				}
-				
-				if(G.dbgBlowup && meth.toString().contains("equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
+
+				if (G.dbgBlowup
+						&& meth.toString()
+								.contains(
+										"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
 					int num = 0;
 					for (Pair p : getAbsHeap().keySet()) {
 						num += getAbsHeap().get(p).size();
 					}
-					StringUtil.reportInfo("Current heap size after instantiate: " + num);
+					StringUtil
+							.reportInfo("Current heap size after instantiate: "
+									+ num);
 				}
 			}
 			if (G.debug4Sum) {
@@ -796,22 +801,24 @@ public class Summary {
 			if (G.tuning)
 				StringUtil.reportSec("Time to instantiate callsite: " + stmt,
 						startInstCallsite, endInstCallsite);
-			
-			if(G.dbgBlowup && meth.toString().contains("equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
+
+			if (G.dbgBlowup
+					&& meth.toString()
+							.contains(
+									"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
 				int num = 0;
 				for (Pair p : getAbsHeap().keySet()) {
 					num += getAbsHeap().get(p).size();
 				}
 				StringUtil.reportInfo("Current heap size after invoke: " + num);
-				
-				/*if(num < 20) {
-					absHeap.dumpHeapToFile("equals");
-					System.out.println(meth.getCFG().fullDump());
-					
-					assert false;
-				}*/
+
+				/*
+				 * if(num < 20) { absHeap.dumpHeapToFile("equals");
+				 * System.out.println(meth.getCFG().fullDump());
+				 * 
+				 * assert false; }
+				 */
 			}
-			
 
 		}
 
@@ -1192,10 +1199,12 @@ public class Summary {
 
 				// this is unsound!
 				String signature = tgt.toString();
-				if(signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*") ||
-					signature.matches("^hashCode:\\(\\)I@java.*") ||
-					signature.matches("^hashCode:\\(\\)I@sun.*") ||
-					signature.matches("^toString:\\(\\)Ljava/lang/String;@sun.*")) {
+				if (signature
+						.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*")
+						|| signature.matches("^hashCode:\\(\\)I@java.*")
+						|| signature.matches("^hashCode:\\(\\)I@sun.*")
+						|| signature
+								.matches("^toString:\\(\\)Ljava/lang/String;@sun.*")) {
 					continue;
 				}
 

@@ -61,7 +61,7 @@ public class SummariesEnv {
 	// ignore string
 	protected boolean openBlklist = false;
 	// cheating
-	protected boolean cheating = false;
+	protected boolean cheating = true;
 	// ignore string
 	protected boolean ignoreString = false;
 
@@ -253,7 +253,7 @@ public class SummariesEnv {
 	public void setReachableMethods(Set<jq_Method> reachableMethods) {
 		this.reachableMethods = reachableMethods;
 	}
-	
+
 	public boolean isStubMethod(String signature) {
 		if (signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*")
 				|| signature.matches("equals:(Ljava/lang/Object;)Z@sun.*")
@@ -284,7 +284,7 @@ public class SummariesEnv {
 				|| signature.matches("^getResource.*")
 				|| signature.matches("^hasNext:\\(\\)Z@java"))
 			return true;
-		
+
 		return false;
 	}
 }

@@ -32,7 +32,7 @@ public class G {
 
 	public static boolean dbgBlowup = false;
 
-	public static boolean dbgQuery = false;
+	public static boolean dbgQuery = true;
 
 	public static boolean instnInfo = false;
 
