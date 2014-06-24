@@ -299,7 +299,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// 1.get its corresponding scc
 		Set<jq_Method> scc = nodeToScc.get(node);
 
-		if (G.dbgFilter) {
+		if (G.dbgQuery) {
 			for (jq_Method m : scc) {
 				StringUtil.reportInfo("Byte code for Method: [" + G.countScc
 						+ "]" + m);
@@ -445,13 +445,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("add to blacklist: " + m.toString());
 			return new Pair<Boolean, Boolean>(false, false);
 		}
-		
+
 		if (SummariesEnv.v().cheating()) {
 			String signature = m.toString();
 			if (SummariesEnv.v().isStubMethod(signature))
-			return new Pair<Boolean, Boolean>(false, false);
+				return new Pair<Boolean, Boolean>(false, false);
 		}
-		 
+
 		ControlFlowGraph cfg = m.getCFG();
 
 		if (G.dbgSmashing) {
