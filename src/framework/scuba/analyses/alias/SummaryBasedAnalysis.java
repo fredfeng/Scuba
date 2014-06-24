@@ -445,8 +445,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("add to blacklist: " + m.toString());
 			return new Pair<Boolean, Boolean>(false, false);
 		}
-
-		// ControlFlowGraph cfg = CodeCache.getCode(m);
+		
+		if (SummariesEnv.v().cheating()) {
+			String signature = m.toString();
+			if (SummariesEnv.v().isStubMethod(signature))
+			return new Pair<Boolean, Boolean>(false, false);
+		}
+		 
 		ControlFlowGraph cfg = m.getCFG();
 
 		if (G.dbgSmashing) {
@@ -462,22 +467,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		summary.setHasAnalyzed();
-		
+
 		if (G.dbgBlowup) {
-			StringUtil
-					.reportInfo("dbgBlowup: "
-							+ "------------------------------------------------");
+			StringUtil.reportInfo("dbgBlowup: "
+					+ "------------------------------------------------");
 			StringUtil.reportInfo("dbgBlowup: analyzing " + m);
 			int num = 0;
 			for (Pair p : summary.getAbsHeap().keySet()) {
 				num += summary.getAbsHeap().get(p).size();
 			}
-			if(num > 100) System.out.println("BAD..." + m);
+			if (num > 100)
+				System.out.println("BAD..." + num + " " + m);
 			StringUtil.reportInfo("dbgBlowup: "
 					+ " edges in the current caller: " + num);
-			StringUtil
-					.reportInfo("dbgBlowup: "
-							+ "~~~~~~~~~~~~~~~~dbgBlowup info~~~~~~~~~~~~~~~~~~~~");
+			StringUtil.reportInfo("dbgBlowup: "
+					+ "~~~~~~~~~~~~~~~~dbgBlowup info~~~~~~~~~~~~~~~~~~~~");
 		}
 
 		if (G.seePerf) {
@@ -494,15 +498,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			appTime += delta;
 		}
 
-		
 		if (G.dbgBlowup
-				&& m.toString()
-						.contains(
-								"equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
+				&& m.toString().contains(
+						"equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
 			summary.getAbsHeap().dumpHeapToFile("dateFormat");
 			System.out.println(m.getCFG().fullDump());
 		}
-		
+
 		return summary.isChanged();
 	}
 

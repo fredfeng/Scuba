@@ -35,6 +35,7 @@ public class SummariesEnv {
 			"<init>:(Ljava/util/SortedMap;)V@java.util.TreeMap",
 			"<init>:()V@sun.security.provider.Sun",
 			"<init>:(Ljava/util/Map;)V@java.util.HashMap",
+			"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry",
 			"clone:()Ljava/lang/Object;@java.util.TreeSet" };
 
 	public static enum FieldSmashLevel {
@@ -248,5 +249,39 @@ public class SummariesEnv {
 
 	public void setReachableMethods(Set<jq_Method> reachableMethods) {
 		this.reachableMethods = reachableMethods;
+	}
+	
+	public boolean isStubMethod(String signature) {
+		if (signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*")
+				|| signature.matches("equals:(Ljava/lang/Object;)Z@sun.*")
+				|| signature.matches("^hashCode:\\(\\)I@java.*")
+				|| signature.matches("^hashCode:\\(\\)I@sun.*")
+				|| signature
+						.matches("^remove:\\(Ljava/lang/Object;\\)Z@java.*")
+				|| signature
+						.matches("^removeAll:\\(Ljava/util/Collection;\\)Z@java.*")
+				|| signature
+						.matches("^toString:\\(\\)Ljava/lang/String;@sun.*")
+				|| signature
+						.matches("^toString:\\(\\)Ljava/lang/String;@java.*")
+				|| signature.matches("^rotateRight:\\(Ljava/util/TreeMap.*")
+				|| signature.matches("^rotateLeft:\\(Ljava/util/TreeMap.*")
+				|| signature.matches("^hasMoreElements:\\(\\)Z@java.*")
+				|| signature
+						.matches("implPut:\\(Ljava/lang/Object;Ljava/lang/Object;\\)Ljava/lang/Object;@java.*")
+				|| signature.matches("^getDefaultPRNG.*")
+				|| signature
+						.matches("^addAllForTreeSet:\\(Ljava/util/SortedSet;Ljava/lang/Object;\\)V@java.*")
+				|| signature
+						.matches("^addAll:\\(Ljava/util/Collection;\\)Z@java.*")
+				|| signature.matches("^clone:\\(\\)Ljava/lang/Object;@java.*")
+				|| signature.matches("^clone:\\(\\)Ljava/lang/Object;@sun.*")
+				|| signature
+						.matches("^putAllForCreate:\\(Ljava/util/Map;\\)V@java.*")
+				|| signature.matches("^getResource.*")
+				|| signature.matches("^hasNext:\\(\\)Z@java"))
+			return true;
+		
+		return false;
 	}
 }
