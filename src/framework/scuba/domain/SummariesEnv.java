@@ -68,7 +68,7 @@ public class SummariesEnv {
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = false;
+	protected boolean disableCst = true;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
@@ -110,7 +110,7 @@ public class SummariesEnv {
 	// fix-point or not
 	protected boolean useFixPoint = true;
 	// when concluding the clinit's and main, use fix-point or not
-	protected boolean topFixPoint = true;
+	protected boolean topFixPoint = false;
 
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
@@ -281,21 +281,20 @@ public class SummariesEnv {
 				|| signature.matches("^clone:\\(\\)Ljava/lang/Object;@sun.*")
 				|| signature
 						.matches("^putAllForCreate:\\(Ljava/util/Map;\\)V@java.*")
-				//just for speeding up debugging.
+				// just for speeding up debugging.
 				|| signature.matches("^getResource.*")
 				|| signature.matches("^checkCodeSigning:.*")
-				|| signature.matches("^checkTLSServer:.*") 
+				|| signature.matches("^checkTLSServer:.*")
 				|| signature.matches("^checkNetscapeCertType.*")
 				|| signature.matches("^getExtensionValue:.*")
 				|| signature.matches("^getCriticalExtensionOIDs.*")
 				|| signature.matches("^getCriticalExtensionOIDs.*")
 				|| signature.matches("^isNonEuroLangSupported.*")
 				|| signature.matches("^createLocaleList.*")
+				|| signature.matches("^access$000:\\(\\).*sun.*")
+				|| signature.matches("<clinit>:\\(\\)V@sun.*")
 				|| signature
-						.matches("^access$000:\\(\\).*sun.*")
-				|| signature
-						.matches("<clinit>:\\(\\)V@sun.*")
-				|| signature.matches("getPrngAlgorithm:\\(\\)Ljava/lang/String;@java.*")
+						.matches("getPrngAlgorithm:\\(\\)Ljava/lang/String;@java.*")
 				|| signature.matches("<clinit>:\\(\\)V@javax.*")
 				|| signature.matches("^hasNext:\\(\\)Z@java"))
 			return true;
