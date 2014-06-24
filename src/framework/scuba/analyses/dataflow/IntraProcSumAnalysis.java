@@ -219,80 +219,20 @@ public class IntraProcSumAnalysis {
 		return flagScc;
 	}
 
-	public static int bbProgress = 0;
-	public static int tmp1 = 0;
-	public static boolean opt = false;
-	public static int sm = 0;
-
 	public Pair<Boolean, Boolean> handleBasicBlock(BasicBlock bb,
 			boolean isInSCC) {
 		accessBlocksList.add(bb);
 		Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false, false);
 		// handle each quad in the basicblock.
-		bbProgress = 0;
 		for (Quad q : bb.getQuads()) {
-			if (G.dbgRet) {
-				System.out.println("Full dump");
-				System.out.println(bb.fullDump());
-			}
 			// handle the stmt
-			bbProgress++;
-
-			if (G.dbgMatch) {
-				StringUtil.reportInfo("Sunny -- BB progress: " + bbProgress
-						+ "-th iteration" + " out of " + bb.size());
-			}
-
-			if (G.dbgMatch) {
-				System.out.println("in the scc: " + SummaryBasedAnalysis.inS);
-				StringUtil.reportInfo("Sunny -- BB progress: [ CG: "
-						+ SummaryBasedAnalysis.cgProgress + " ]"
-						+ "handling stmt: " + q);
-			}
-
-			sm++;
-			if (G.dbgSmashing) {
-				if (sm == 93) {
-					summary.dumpSummaryToFile("$before$93");
-				}
-				if (sm == 93) {
-					summary.dumpSummaryToFile("$before$94");
-				}
-
-			}
 			Pair<Boolean, Boolean> flagStmt = summary.handleStmt(q);
-
-			if (G.dbgSmashing) {
-				System.out.println("dbgSmashing: " + "flag result: " + flagStmt
-						+ " id: " + sm);
-			}
-			if (G.dbgSmashing) {
-				if (sm == 93) {
-					summary.dumpSummaryToFile("$after$93");
-				}
-				if (sm == 93) {
-					summary.dumpSummaryToFile("$after$94");
-				}
-
-			}
-
-			if (G.dbgRef) {
-				System.out.println("dbgRef: " + "stmt result: " + flagStmt);
-			}
-
-			if (G.dbgMatch) {
-				StringUtil.reportInfo("Sunny -- BB progress: [ CG: "
-						+ SummaryBasedAnalysis.cgProgress + " ]"
-						+ "finish stmt: " + q + " result: " + flagStmt);
-			}
 
 			flag.val0 = flagStmt.val0 | flag.val0;
 			flag.val1 = flagStmt.val1 | flag.val1;
 
 		}
-		if (G.dbgRef) {
-			System.out.println("dbgRef: " + "basic block result: " + flag);
-		}
+
 		return flag;
 	}
 

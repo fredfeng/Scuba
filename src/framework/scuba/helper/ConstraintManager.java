@@ -186,10 +186,6 @@ public class ConstraintManager {
 
 		try {
 			// generate a new instance!
-			if (G.instnInfo) {
-				StringUtil.reportInfo("instnInfo: "
-						+ "simplifying the constraints.");
-			}
 
 			if (SummariesEnv.v().isUsingSimplifyCache()) {
 				ret = simplifyCache.get(expr.toString());
@@ -329,9 +325,6 @@ public class ConstraintManager {
 			// using toString as the key to map the same expr, buggy.
 
 			if (expr.IsEq() || expr.IsLE()) {
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: " + "base case: " + expr);
-				}
 				map.put(expr.toString(), (BoolExpr) expr);
 				return;
 			}
