@@ -134,8 +134,9 @@ public class MemLocInstnItem {
 		MemLocInstnSet ret = memLocInstnCache.get(loc);
 
 		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: " + "location " + loc
-					+ " is cached as: " + ret.keySet());
+			if (ret != null)
+				StringUtil.reportInfo("instnInfo: " + "location " + loc
+						+ " is cached as: " + ret.keySet());
 		}
 
 		if (loc instanceof ParamElem) {
