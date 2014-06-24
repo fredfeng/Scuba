@@ -37,6 +37,8 @@ public class SummariesEnv {
 			"<init>:(Ljava/util/Map;)V@java.util.HashMap",
 			"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry",
 			"clone:()Ljava/lang/Object;@java.util.TreeSet" };
+	
+	String[] goodlist = { "clone:()Ljava/lang/Object;@java.lang.Object" };
 
 	public static enum FieldSmashLevel {
 		LOW, MED, HIGH, CONTROL;
@@ -253,8 +255,15 @@ public class SummariesEnv {
 	public void setReachableMethods(Set<jq_Method> reachableMethods) {
 		this.reachableMethods = reachableMethods;
 	}
+	
+	public boolean isInGoodlist(String gd) {
+		return Arrays.asList(goodlist).contains(gd);
+	}
 
 	public boolean isStubMethod(String signature) {
+		if(isInGoodlist(signature))
+			return false;
+		
 		if (signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*")
 				|| signature.matches("equals:(Ljava/lang/Object;)Z@sun.*")
 				|| signature.matches("^hashCode:\\(\\)I@java.*")
