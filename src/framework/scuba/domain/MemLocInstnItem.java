@@ -133,6 +133,11 @@ public class MemLocInstnItem {
 
 		MemLocInstnSet ret = memLocInstnCache.get(loc);
 
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: " + "location " + loc
+					+ " is cached as: " + ret.keySet());
+		}
+
 		if (loc instanceof ParamElem) {
 			assert (ret != null) : "parameters should have been instantiated"
 					+ " when the first time init the instantiation";
@@ -227,6 +232,11 @@ public class MemLocInstnItem {
 			assert false : "wried things happen! Unknow type.";
 		}
 
+		if (G.instnInfo) {
+			StringUtil.reportInfo("instnInfo: " + loc
+					+ " is instantiated into " + ret.keySet());
+		}
+
 		return ret;
 	}
 
@@ -236,11 +246,6 @@ public class MemLocInstnItem {
 			AbstractHeap callerHeap, ProgramPoint point) {
 
 		MemLocInstnSet ret = memLocInstnCache.get(loc);
-
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: " + "location " + loc
-					+ " is cached as: " + ret.keySet());
-		}
 
 		if (loc instanceof ParamElem) {
 			assert (ret != null) : "parameters should have been instantiated"
@@ -320,11 +325,6 @@ public class MemLocInstnItem {
 
 		} else {
 			assert false : "wried things happen! Unknow type.";
-		}
-
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: " + loc
-					+ " is instantiated into " + ret.keySet());
 		}
 
 		return ret;
