@@ -36,7 +36,7 @@ public class Alloc {
 
 	@Override
 	public String toString() {
-		return "[A]" + type.getName() + " " + allocSite;
+		return "[A]" + type.getName() + " " + allocSite + " " + allocSite.getMethod();
 	}
 
 }
