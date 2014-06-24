@@ -299,7 +299,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// 1.get its corresponding scc
 		Set<jq_Method> scc = nodeToScc.get(node);
 
-		if (G.dbgFilter) {
+		if (G.dbgQuery) {
 			for (jq_Method m : scc) {
 				StringUtil.reportInfo("Byte code for Method: [" + G.countScc
 						+ "]" + m);
@@ -366,25 +366,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// when terminating, decide what locations in the summary to propagate
 		Set<jq_Method> scc = nodeToScc.get(node);
 
-		if (G.instnInfo) {
-			for (jq_Method m : scc) {
-				Summary sum = SummariesEnv.v().getSummary(m);
-
-				System.out.println("byte code FOR: " + m + "\n" + " [Id] "
-						+ ++dcount);
-				System.out.println(m.getCFG().fullDump());
-				if (sum != null) {
-					if (G.countScc == 354) {
-						sum.dumpSummaryToFile("$354");
-					}
-					if (G.countScc == 355) {
-						sum.dumpSummaryToFile("$355");
-					}
-
-				}
-			}
-		}
-
 		// when terminating, clean up locals in the summary
 		if (SummariesEnv.v().useClearLocals()) {
 			for (jq_Method m : scc) {
@@ -445,13 +426,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("add to blacklist: " + m.toString());
 			return new Pair<Boolean, Boolean>(false, false);
 		}
-		
+
 		if (SummariesEnv.v().cheating()) {
 			String signature = m.toString();
 			if (SummariesEnv.v().isStubMethod(signature))
-			return new Pair<Boolean, Boolean>(false, false);
+				return new Pair<Boolean, Boolean>(false, false);
 		}
-		 
+
 		ControlFlowGraph cfg = m.getCFG();
 
 		if (G.dbgSmashing) {

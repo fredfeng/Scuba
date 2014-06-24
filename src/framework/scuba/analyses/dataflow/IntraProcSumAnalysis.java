@@ -135,15 +135,6 @@ public class IntraProcSumAnalysis {
 					+ accessBlocksList);
 		}
 
-		// TODO
-		if (G.dbgQuery) {
-			if (summary
-					.getMethod()
-					.toString()
-					.equals("<init>:(Ljava/util/Enumeration;)V@javax.crypto.SunJCE_j")) {
-				summary.dumpSummaryMappingToFile("" + d++);
-			}
-		}
 		summary.getAbsHeap().fillPropSet();
 		if (G.validate) {
 			summary.getAbsHeap().validate();

@@ -731,10 +731,6 @@ public class Summary {
 				// using smart skip for callee instantiation
 				if (SummariesEnv.v().smartSkip) {
 					if (smartSkip.contains(item)) {
-						if (G.dbgQuery) {
-							System.out.println("dbgQuery: "
-									+ "hitting the smart skip cache!");
-						}
 						continue;
 					}
 				}
@@ -775,13 +771,18 @@ public class Summary {
 									+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
 					printCalleeHeapInfo("dbgPermission");
 				}
-				
-				if(G.dbgBlowup && meth.toString().contains("equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
+
+				if (G.dbgBlowup
+						&& meth.toString()
+								.contains(
+										"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
 					int num = 0;
 					for (Pair p : getAbsHeap().keySet()) {
 						num += getAbsHeap().get(p).size();
 					}
-					StringUtil.reportInfo("Current heap size after instantiate: " + num);
+					StringUtil
+							.reportInfo("Current heap size after instantiate: "
+									+ num);
 				}
 			}
 			if (G.debug4Sum) {
@@ -796,22 +797,24 @@ public class Summary {
 			if (G.tuning)
 				StringUtil.reportSec("Time to instantiate callsite: " + stmt,
 						startInstCallsite, endInstCallsite);
-			
-			if(G.dbgBlowup && meth.toString().contains("equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
+
+			if (G.dbgBlowup
+					&& meth.toString()
+							.contains(
+									"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
 				int num = 0;
 				for (Pair p : getAbsHeap().keySet()) {
 					num += getAbsHeap().get(p).size();
 				}
 				StringUtil.reportInfo("Current heap size after invoke: " + num);
-				
-				/*if(num < 20) {
-					absHeap.dumpHeapToFile("equals");
-					System.out.println(meth.getCFG().fullDump());
-					
-					assert false;
-				}*/
+
+				/*
+				 * if(num < 20) { absHeap.dumpHeapToFile("equals");
+				 * System.out.println(meth.getCFG().fullDump());
+				 * 
+				 * assert false; }
+				 */
 			}
-			
 
 		}
 
@@ -1015,11 +1018,6 @@ public class Summary {
 
 					Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(
 							false, false);
-
-					if (G.instnInfo) {
-						StringUtil
-								.reportInfo("I am handling the static store!");
-					}
 
 					flag = absHeap.handleStoreStmt(meth.getDeclaringClass(),
 							meth, lhs.getRegister(), lvt, field.getField(),

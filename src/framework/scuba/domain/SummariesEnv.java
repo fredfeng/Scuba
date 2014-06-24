@@ -253,7 +253,7 @@ public class SummariesEnv {
 	public void setReachableMethods(Set<jq_Method> reachableMethods) {
 		this.reachableMethods = reachableMethods;
 	}
-	
+
 	public boolean isStubMethod(String signature) {
 		if (signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*")
 				|| signature.matches("equals:(Ljava/lang/Object;)Z@sun.*")
@@ -299,7 +299,7 @@ public class SummariesEnv {
 				|| signature.matches("<clinit>:\\(\\)V@javax.*")
 				|| signature.matches("^hasNext:\\(\\)Z@java"))
 			return true;
-		
+
 		return false;
 	}
 }

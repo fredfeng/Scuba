@@ -28,13 +28,13 @@ public class G {
 
 	public static boolean dbgMatch = false;
 
-	public static boolean dbgPermission = false;
+	public static boolean dbgPermission = true;
 
 	public static boolean dbgBlowup = false;
 
-	public static boolean dbgQuery = false;
+	public static boolean dbgQuery = true;
 
-	public static boolean instnInfo = false;
+	public static boolean instnInfo = true;
 
 	public static boolean dbgRef = false;
 
