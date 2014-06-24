@@ -366,7 +366,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// when terminating, decide what locations in the summary to propagate
 		Set<jq_Method> scc = nodeToScc.get(node);
 
-		if (G.dbgQuery) {
+		if (G.instnInfo) {
 			for (jq_Method m : scc) {
 				Summary sum = SummariesEnv.v().getSummary(m);
 
@@ -374,11 +374,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 						+ ++dcount);
 				System.out.println(m.getCFG().fullDump());
 				if (sum != null) {
-					if (G.countScc == 8) {
-						sum.dumpSummaryToFile("$8");
+					if (G.countScc == 354) {
+						sum.dumpSummaryToFile("$354");
 					}
-					if (G.countScc == 385) {
-						sum.dumpSummaryToFile("$385");
+					if (G.countScc == 355) {
+						sum.dumpSummaryToFile("$355");
 					}
 
 				}
@@ -476,8 +476,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			for (Pair p : summary.getAbsHeap().keySet()) {
 				num += summary.getAbsHeap().get(p).size();
 			}
+
 			if (num > 100)
 				System.out.println("BAD..." + num + " " + m);
+
 			StringUtil.reportInfo("dbgBlowup: "
 					+ " edges in the current caller: " + num);
 			StringUtil.reportInfo("dbgBlowup: "

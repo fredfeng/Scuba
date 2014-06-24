@@ -25,7 +25,7 @@ public class SummariesEnv {
 	protected SumConclusion finalSum;
 
 	public static enum PropType {
-		ALL, NOLOCAL, DOWNCAST, APPLOCAL;
+		ALL, NOLOCAL, DOWNCAST, APPLOCAL, NOTHING, NOALLOC;
 	}
 
 	String[] blklist = {
@@ -102,7 +102,7 @@ public class SummariesEnv {
 	// public FieldSmashLevel level = FieldSmashLevel.MED;
 	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
 	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
-	public int smashLength = 3;
+	public int smashLength = 5;
 
 	// clear locals in the summary
 	protected boolean clearLocals = false;
@@ -118,6 +118,9 @@ public class SummariesEnv {
 	protected PropType localType = PropType.DOWNCAST;
 
 	// protected PropType localType = PropType.NOLOCAL;
+	// protected PropType localType = PropType.NOALLOC;
+
+	// protected PropType localType = PropType.NOTHING;
 	// protected PropType localType = PropType.ALL;
 
 	public PropType getLocalType() {

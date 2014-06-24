@@ -204,6 +204,8 @@ public class MemLocInstnItem {
 				return ret;
 			}
 
+			// instantiation for smashed access path
+
 			AbsMemLoc base = ((AccessPath) loc).getBase();
 			FieldElem field = ((AccessPath) loc).getField();
 			assert (!orgs.contains((AccessPath) loc)) : "Location " + loc
@@ -252,21 +254,6 @@ public class MemLocInstnItem {
 
 		if (loc instanceof LocalVarElem || loc instanceof ParamElem
 				|| loc instanceof StaticElem) {
-			if (G.instnInfo) {
-				if (callee.toString().equals(
-						"equals:(Ljava/lang/Object;)Z@java.util.AbstractMap")) {
-					StringUtil.reportInfo("instnInfo: " + "param: " + loc
-							+ "is instn into \n" + ret.keySet());
-				}
-			}
-			if (G.dbgBlowup
-					&& caller
-							.toString()
-							.contains(
-									"equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
-				StringUtil.reportInfo("instnInfo: " + "param: " + loc
-						+ "is instn into \n" + ret.keySet());
-			}
 
 			// this is my little cute cache
 			if (ret != null) {

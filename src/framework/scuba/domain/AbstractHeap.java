@@ -799,6 +799,14 @@ public class AbstractHeap extends Heap {
 			}
 		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 
+		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.NOTHING) {
+			if (src.isNotArgDerived()) {
+				return ret;
+			}
+		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.NOALLOC) {
+			if (src instanceof AllocElem) {
+				return ret;
+			}
 		} else {
 			if (src instanceof LocalVarElem || src instanceof AllocElem) {
 				if (!calleeHeap.toProp(src)) {
@@ -838,32 +846,10 @@ public class AbstractHeap extends Heap {
 			StringUtil.reportInfo("instnInfo: "
 					+ "instantiating callee memory location.");
 		}
-		
-		if (calleeHeap.summary.getMethod().toString().equals("equals:(Ljava/lang/Object;)Z@java.util.AbstractMap")) {
-			SummariesEnv.v().useMemLocInstnCache = false;
-			SummariesEnv.v().smartSkip = false;
-			SummariesEnv.v().moreSmartSkip = false;
-		}
-		if (summary.getMethod().toString().equals("equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
-			SummariesEnv.v().useMemLocInstnCache = false;
-			SummariesEnv.v().smartSkip = false;
-			SummariesEnv.v().moreSmartSkip = false;
-		}
-		
+
 		MemLocInstnSet instnSrc = memLocInstn.instnMemLoc(src, this, point);
 		MemLocInstnSet instnDst = memLocInstn.instnMemLoc(dst, this, point);
 
-		if (calleeHeap.summary.getMethod().toString().equals("equals:(Ljava/lang/Object;)Z@java.util.AbstractMap")) {
-			SummariesEnv.v().useMemLocInstnCache = true;
-			SummariesEnv.v().smartSkip = true;
-			SummariesEnv.v().moreSmartSkip = true;
-		}
-		if (summary.getMethod().toString().equals("equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
-			SummariesEnv.v().useMemLocInstnCache = false;
-			SummariesEnv.v().smartSkip = false;
-			SummariesEnv.v().moreSmartSkip = false;
-		}
-		
 		assert (instnDst != null) : "instantiation of dst cannot be null!";
 		if (instnSrc == null) {
 			assert (src instanceof RetElem) : "only return value in the callee"
@@ -897,13 +883,13 @@ public class AbstractHeap extends Heap {
 				assert (newDst instanceof HeapObject) : ""
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
-				
+
 				if (G.instnInfo) {
 					StringUtil.reportInfo("instnInfo: "
 							+ "intantiated location in caller: " + "(" + newSrc
 							+ " , " + newDst + ")");
 				}
-				
+
 				assert (newDst1 != null) : "null!";
 
 				if (G.instnInfo) {
@@ -971,11 +957,17 @@ public class AbstractHeap extends Heap {
 		if (SummariesEnv.v().localType == SummariesEnv.PropType.NOLOCAL) {
 			if (src instanceof LocalVarElem) {
 				return ret;
-			} else if (!calleeHeap.toProp(src)) {
-				return ret;
+			} else if (src instanceof AllocElem) {
+				if (!calleeHeap.toProp(src)) {
+					return ret;
+				}
 			}
 		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 
+		} else if (SummariesEnv.v().localType == SummariesEnv.PropType.NOTHING) {
+			if (src.isNotArgDerived()) {
+				return ret;
+			}
 		} else {
 			if (src instanceof LocalVarElem || src instanceof AllocElem) {
 				if (!calleeHeap.toProp(src)) {
