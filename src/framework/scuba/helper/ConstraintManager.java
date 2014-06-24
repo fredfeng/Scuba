@@ -305,20 +305,11 @@ public class ConstraintManager {
 		ret = new HashMap<String, BoolExpr>();
 
 		// using toString as the key to map the same expr, buggy.
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: "
-					+ "extracting the terms in constraint: " + expr);
-		}
+
 		if (expr.IsEq() || expr.IsLE()) {
-			if (G.instnInfo) {
-				StringUtil.reportInfo("instnInfo: " + "base case: " + expr);
-			}
 			ret.put(expr.toString(), (BoolExpr) expr);
 		} else if (expr.IsAnd() || expr.IsOr()) {
-			if (G.instnInfo) {
-				StringUtil.reportInfo("instnInfo: " + "[recursive case:] "
-						+ expr);
-			}
+
 			for (int i = 0; i < expr.NumArgs(); i++) {
 				assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:"
 						+ expr.Args()[i];
@@ -336,10 +327,7 @@ public class ConstraintManager {
 	public static void extractTerm(Expr expr, Map<String, BoolExpr> map) {
 		try {
 			// using toString as the key to map the same expr, buggy.
-			if (G.instnInfo) {
-				StringUtil.reportInfo("instnInfo: "
-						+ "extracting the terms in constraint: " + expr);
-			}
+
 			if (expr.IsEq() || expr.IsLE()) {
 				if (G.instnInfo) {
 					StringUtil.reportInfo("instnInfo: " + "base case: " + expr);

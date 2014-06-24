@@ -1042,10 +1042,6 @@ public class AbstractHeap extends Heap {
 		if (ConstraintManager.isScala(cst))
 			return cst;
 
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: "
-					+ "begin the real instantiation for constraints.");
-		}
 		BoolExpr instC = ConstraintManager.instnConstaint(cst, callerHeap,
 				point, memLocInstn);
 
@@ -1433,11 +1429,6 @@ public class AbstractHeap extends Heap {
 		// this is a conservatively way to clear the cache
 		if (SummariesEnv.v().useMemLocInstnCache) {
 			if (ret.val0) {
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: "
-							+ "clearing the memory location cache"
-							+ " for location: " + src);
-				}
 				clearCache(src);
 			}
 		}
