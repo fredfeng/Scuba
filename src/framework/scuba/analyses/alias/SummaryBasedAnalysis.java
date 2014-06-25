@@ -777,32 +777,31 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (!relMV.isOpen())
 			relMV.load();
 		
-		RelView view = relMV.getView();
-		Iterable<Pair<jq_Method, Register>> res = view.getAry2ValTuples();
-		for (Pair<jq_Method, Register> trio : res) {
-			jq_Method meth = trio.val0;
-			Register r = trio.val1;
+		for(Register r : SummariesEnv.v().getProps()) {
+			RelView view = relMV.getView();
+			view.selectAndDelete(1, r);
+			Iterable<jq_Method> res = view.getAry1ValTuples();
+			jq_Method meth = res.iterator().next();
+			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
+			Set<Alloc> sites = new HashSet<Alloc>();
+			for (AllocElem alloc : p2Set) {
+				sites.add(alloc.getAlloc());
+			}
 			
 			RelView viewChord = relVH.getView();
 			viewChord.selectAndDelete(0, r);
+			if(viewChord.size() == 0)
+				continue;
 			Iterable<Quad> resChord = viewChord.getAry1ValTuples();
 			Set<Quad> pts = SetUtils.newSet(viewChord.size());
 			// no filter, add all
 			for (Quad inst : resChord)
 				pts.add(inst);
 			
-			if(pts.isEmpty()) 
-				continue;
-			
-			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
-			Set<Alloc> sites = new HashSet<Alloc>();
-			for (AllocElem alloc : p2Set) {
-				sites.add(alloc.getAlloc());
-			}
-
 			System.out.println("P2Set for " + r + " in " + meth);
 			System.out.println("[Scuba] " + sites);
 			System.out.println("[Chord] " + pts);
+			
 		}
 	}
 	
