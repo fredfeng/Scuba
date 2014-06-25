@@ -716,11 +716,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (Pair<jq_Method, Register> trio : res) {
 			jq_Method meth = trio.val0;
 			Register r = trio.val1;
-			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
-			Set<Alloc> sites = new HashSet<Alloc>();
-			for (AllocElem alloc : p2Set) {
-				sites.add(alloc.getAlloc());
-			}
 			
 			RelView viewChord = relVH.getView();
 			viewChord.selectAndDelete(0, r);
@@ -730,6 +725,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			for (Quad inst : resChord)
 				pts.add(inst);
 			
+			if(pts.isEmpty()) 
+				continue;
+			
+			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
+			Set<Alloc> sites = new HashSet<Alloc>();
+			for (AllocElem alloc : p2Set) {
+				sites.add(alloc.getAlloc());
+			}
+
 			System.out.println("P2Set for " + r + " in " + meth);
 			System.out.println("[Scuba] " + sites);
 			System.out.println("[Chord] " + pts);
