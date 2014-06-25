@@ -76,6 +76,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relAppLocal;
 	protected ProgramRel relDcLocal;
 	protected ProgramRel relLibM;
+	protected ProgramRel relVH;
+	protected ProgramRel relMV;
+
+
 
 	protected CICG callGraph;
 
@@ -107,6 +111,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// perform downcast analysis
 		downcast();
+		
+		// perform points to set.
+		pointToSet();
 
 		StringUtil.reportInfo("[Scuba] summaries size: "
 				+ SummariesEnv.v().getSums().keySet().size());
@@ -594,6 +601,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relAppLocal = (ProgramRel) ClassicProject.g().getTrgt("AppLocal");
 		relDcLocal = (ProgramRel) ClassicProject.g().getTrgt("DcLocal");
 		relLibM = (ProgramRel) ClassicProject.g().getTrgt("librariesM");
+		relMV = (ProgramRel) ClassicProject.g().getTrgt("MV");
+		relVH = (ProgramRel) ClassicProject.g().getTrgt("ptsVH");
+
 
 		if (!relDcLocal.isOpen())
 			relDcLocal.load();
@@ -759,6 +769,39 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		return ret;
 	}
 
+	//point2set comparison.
+	public void pointToSet() {
+		if (!relVH.isOpen())
+			relVH.load();
+		
+		if (!relMV.isOpen())
+			relMV.load();
+		
+		RelView view = relMV.getView();
+		Iterable<Pair<jq_Method, Register>> res = view.getAry2ValTuples();
+		for (Pair<jq_Method, Register> trio : res) {
+			jq_Method meth = trio.val0;
+			Register r = trio.val1;
+			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
+			Set<Alloc> sites = new HashSet<Alloc>();
+			for (AllocElem alloc : p2Set) {
+				sites.add(alloc.getAlloc());
+			}
+			
+			RelView viewChord = relVH.getView();
+			viewChord.selectAndDelete(0, r);
+			Iterable<Quad> resChord = viewChord.getAry1ValTuples();
+			Set<Quad> pts = SetUtils.newSet(viewChord.size());
+			// no filter, add all
+			for (Quad inst : resChord)
+				pts.add(inst);
+			
+			System.out.println("P2Set for " + r + " in " + meth);
+			System.out.println("[Scuba] " + sites);
+			System.out.println("[Chord] " + pts);
+		}
+	}
+	
 	// downcast analysis.
 	public void downcast() {
 		if (!relDcm.isOpen())
