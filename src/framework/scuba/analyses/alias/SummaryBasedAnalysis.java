@@ -93,10 +93,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// app locals from haiyan's analysis.
 		extractAppLocals();
 
-		if (G.dbgFilter) {
-			System.out.println("dbgFilter: " + SummariesEnv.v().getProps());
-		}
-
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
 
@@ -300,14 +296,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// 1.get its corresponding scc
 		Set<jq_Method> scc = nodeToScc.get(node);
 
-		if (G.dbgQuery) {
-			for (jq_Method m : scc) {
-				StringUtil.reportInfo("Byte code for Method: [" + G.countScc
-						+ "]" + m);
-				StringUtil.reportInfo(m.getCFG().fullDump());
-			}
-		}
-
 		if (scc.size() == 1) {
 			// self loop. perform scc.
 			if (node.getSuccessors().contains(node)) {
@@ -336,20 +324,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// at the end, mark it as terminated.
 		terminateAndDoGC(node);
-
-		if (G.dbgMatch) {
-			for (jq_Method m : scc) {
-				Summary sum = SummariesEnv.v().getSummary(m);
-				if (sum == null) {
-					continue;
-				}
-				StringUtil.reportInfo("[" + G.countScc
-						+ "] Blowup: for method: " + m);
-				StringUtil.reportInfo("Blowup: " + "successors: "
-						+ Env.cg.getSuccs(m));
-				sum.printCalleeHeapInfo("Blowup");
-			}
-		}
 
 		if (G.tuning) {
 			long endSCC = System.nanoTime();
@@ -436,12 +410,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		ControlFlowGraph cfg = m.getCFG();
 
-		if (G.dbgSmashing) {
-			System.out.println("*****************************************");
-			System.out.println(cfg.fullDump());
-			System.out.println("*****************************************");
-		}
-
 		intrapro.analyze(cfg);
 
 		if (G.validate) {
@@ -450,43 +418,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		summary.setHasAnalyzed();
 
-		if (G.dbgBlowup) {
-			StringUtil.reportInfo("dbgBlowup: "
-					+ "------------------------------------------------");
-			StringUtil.reportInfo("dbgBlowup: analyzing " + m);
-			int num = 0;
-			for (Pair p : summary.getAbsHeap().keySet()) {
-				num += summary.getAbsHeap().get(p).size();
-			}
-
-			if (num > 100)
-				System.out.println("BAD..." + num + " " + m);
-
-			StringUtil.reportInfo("dbgBlowup: "
-					+ " edges in the current caller: " + num);
-			StringUtil.reportInfo("dbgBlowup: "
-					+ "~~~~~~~~~~~~~~~~dbgBlowup info~~~~~~~~~~~~~~~~~~~~");
-		}
-
-		if (G.seePerf) {
-			if (m.toString().equals("hashCode:()I@java.util.Hashtable$Entry")) {
-				summary.dumpSummaryToFile("$hashCode");
-			}
-		}
-
 		long endMeth = System.nanoTime();
 		long delta = endMeth - startMeth;
 		if (libMeths.contains(m)) {
 			libTime += delta;
 		} else {
 			appTime += delta;
-		}
-
-		if (G.dbgBlowup
-				&& m.toString().contains(
-						"equals:(Ljava/lang/Object;)Z@java.text.DateFormat")) {
-			summary.getAbsHeap().dumpHeapToFile("dateFormat");
-			System.out.println(m.getCFG().fullDump());
 		}
 
 		return summary.isChanged();
@@ -696,22 +633,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	public Set<AllocElem> query(jq_Class clazz, jq_Method method,
 			Register variable) {
 		Set<AllocElem> ret = new HashSet<AllocElem>();
-		jq_Method entry = Program.g().getMainMethod();
 		SumConclusion sum = SummariesEnv.v().getFinalSum();
 		// Summary sum = SummariesEnv.v().getSummary(entry);
-		if (G.dbgQuery) {
-			StringUtil.reportInfo("Query: "
-					+ "---------------------------------------------");
-			StringUtil.reportInfo("Query: " + " size of sum: "
-					+ sum.getHeapSize());
-			StringUtil.reportInfo("Query: " + " entry method: " + entry);
-		}
 		assert (sum != null) : "the entry method should have a summary!";
 		Summary sum1 = SummariesEnv.v().getSummary(method);
 
 		if (sum1 == null) {
-			if (G.dbgQuery) {
-				StringUtil.reportInfo("Query: "
+			if (G.dbgAntlr) {
+				StringUtil.reportInfo("[dbgAntlr]: "
 						+ "[we cannot get the summary for the method!] "
 						+ method);
 			}
@@ -720,42 +649,47 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		assert (sum1 != null) : "the method of the variable should have a summary!";
 
-		if (G.dbgQuery) {
-			StringUtil.reportInfo("Query: " + " size of sum: "
+		if (G.dbgAntlr) {
+			StringUtil.reportInfo("[dbgAntlr]" + " size of sum: "
 					+ sum1.getHeapSize());
-			StringUtil.reportInfo("Query: " + " variable method: " + method);
+			StringUtil.reportInfo("[dbgAntlr]" + " variable method: " + method
+					+ " Id: [" + G.IdMapping.get(sum1) + " ]");
 		}
 
-		if (sum1.getAbsHeap()
-				.getHeap()
-				.containsKey(
-						new Pair<AbsMemLoc, FieldElem>(new LocalVarElem(clazz,
-								method, variable), EpsilonFieldElem
-								.getEpsilonFieldElem()))) {
-			count++;
-			if (G.dbgQuery) {
-				StringUtil.reportInfo("Query: "
-						+ "[we can get the location in the heap!]");
-
-				StringUtil.reportInfo("Query: "
-						+ "[P2Set in the declearing method]"
-						+ sum1.getAbsHeap()
-								.getHeap()
-								.get(new Pair<AbsMemLoc, FieldElem>(
-										new LocalVarElem(clazz, method,
-												variable), EpsilonFieldElem
-												.getEpsilonFieldElem())));
-			}
-		} else {
-			if (G.dbgQuery) {
-				StringUtil.reportInfo("Query: "
+		LocalVarElem local = sum1.getAbsHeap().getLocalVarElem(clazz, method,
+				variable);
+		if (local == null) {
+			if (G.dbgAntlr) {
+				StringUtil.reportInfo("[dbgAntlr] "
 						+ "[we cannot get the location in the heap!]");
 			}
-			return ret;
+		} else {
+			if (G.dbgAntlr) {
+				StringUtil.reportInfo("[dbgAntlr] "
+						+ "[we can get the location in the heap!]");
+			}
+			Set<FieldElem> fields = local.getFields();
+			assert (fields.size() == 1) : "local can only have 1 field (epsilon)!";
+			FieldElem f = fields.iterator().next();
+			assert (f instanceof EpsilonFieldElem) : "local can only have epsilon field!";
+			EpsilonFieldElem e = (EpsilonFieldElem) f;
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[P2Set in the declearing method]");
+			P2Set p2set = sum1.getAbsHeap().getHeap()
+					.get(new Pair<AbsMemLoc, FieldElem>(local, e));
+			StringUtil
+					.reportInfo("[dbgAntlr] "
+							+ "------------------------------------------------------------------------------------");
+			for (HeapObject hObj : p2set.keySet()) {
+				StringUtil.reportInfo("[dbgAntlr] " + hObj);
+			}
+			StringUtil
+					.reportInfo("[dbgAntlr] "
+							+ "------------------------------------------------------------------------------------");
+
+			ret = sum.getP2Set(local, e);
 		}
 
-		LocalVarElem local = sum1.getLocalVarElem(clazz, method, variable);
-		ret = sum.getP2Set(local);
 		return ret;
 	}
 
@@ -779,9 +713,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			// System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
 			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
 
-			Set<Alloc> sites = new HashSet<Alloc>();
+			Set<Quad> sites = new HashSet<Quad>();
 			for (AllocElem alloc : p2Set) {
-				sites.add(alloc.getAlloc());
+				sites.add(alloc.getAlloc().getAllocSite());
 			}
 
 			StringUtil.reportInfo("[Scuba] method: " + meth);
@@ -799,10 +733,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 			StringUtil.reportInfo("[Chord] p2Set of " + r + ":" + pts);
 
-		}
-
-		if (G.dbgQuery) {
-			StringUtil.reportInfo("Query: " + count);
 		}
 
 	}
