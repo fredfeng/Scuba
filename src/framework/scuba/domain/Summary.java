@@ -91,7 +91,9 @@ public class Summary {
 	final protected MemLocInstnCacheDepMap locDepMap;
 
 	// smart skip for instantiating the callees
-	protected Set<MemLocInstnItem> smartSkip = new HashSet<MemLocInstnItem>();
+	protected Set<Summary> smartSkip = new HashSet<Summary>();
+	// the methods that this summary may effect
+	protected Set<Summary> smartSkipDepSet = new HashSet<Summary>();
 
 	// finish current summary.
 	private boolean terminated;
@@ -682,7 +684,7 @@ public class Summary {
 
 				// using smart skip for callee instantiation
 				if (SummariesEnv.v().smartSkip) {
-					if (smartSkip.contains(item)) {
+					if (smartSkip.contains(calleeSum)) {
 						continue;
 					}
 				}
@@ -697,11 +699,15 @@ public class Summary {
 							+ G.IdMapping.get(calleeSum));
 				}
 
+				// add this method into the callee's depSet because callee's
+				// summary effects this method
+				calleeSum.smartSkipDepSet.add(Summary.this);
+
 				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
 						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
 
 				if (SummariesEnv.v().smartSkip) {
-					smartSkip.add(item);
+					smartSkip.add(calleeSum);
 				}
 
 				absHeap.markChanged(flag);

@@ -49,14 +49,14 @@ public class SummariesEnv {
 	protected Set<jq_Method> reachableMethods = new HashSet<jq_Method>();
 
 	// cheating
-	protected boolean cheating = false;
+	protected boolean cheating = true;
 	// ignore string
 	protected boolean ignoreString = false;
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = false;
+	protected boolean disableCst = true;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
