@@ -1211,26 +1211,7 @@ public class AbstractHeap extends Heap {
 
 		if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.LOW) {
 			if (loc.isArgDerived()) {
-				// the first branch is to deal with recurisve index field
-				if (field instanceof IndexFieldElem) {
-					if (loc instanceof StaticElem) {
-						ret = Env.getStaticAccessPath((StaticElem) loc, field);
-					} else if (loc instanceof ParamElem) {
-						ret = getLocalAccessPath((ParamElem) loc, field);
-					} else if (loc instanceof AccessPath) {
-						if (loc instanceof StaticAccessPath) {
-							ret = Env.getStaticAccessPath(
-									(StaticAccessPath) loc, field);
-						} else if (loc instanceof LocalAccessPath) {
-							ret = getLocalAccessPath((LocalAccessPath) loc,
-									field);
-						} else {
-							assert false : "only two kinds of access path!";
-						}
-					} else {
-						assert false : "only three kinds of things can have default targets!";
-					}
-				} else if (loc.hasFieldSelector(field)) {
+				if (loc.hasFieldSelector(field)) {
 					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
 					// only AccessPath has field selectors
 					AccessPath path = ((AccessPath) loc).getPrefix(field);
