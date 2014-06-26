@@ -10,4 +10,16 @@ public class ChordUtil {
 		return a.implementsInterface(b) || b.implementsInterface(a)
 				|| a.extendsClass(b) || b.extendsClass(a);
 	}
+
+	public static boolean prefixMatch(String str, String[] prefixes) {
+        for (String prefix : prefixes) {
+            if (str.startsWith(prefix))
+                return true;
+            
+            //haiyan added regular expression matching
+            if(str.matches(prefix))
+            	return true;
+        }
+        return false;
+	}
 }
