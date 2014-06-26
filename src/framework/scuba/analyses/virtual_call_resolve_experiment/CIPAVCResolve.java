@@ -1,4 +1,4 @@
-package chord.analyses.virtual_call_resolve_experiment;
+package framework.scuba.analyses.virtual_call_resolve_experiment;
 
 import java.util.HashMap;
 import java.util.HashSet;

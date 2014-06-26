@@ -1,4 +1,4 @@
-package chord.analyses.alias_experiment;
+package framework.scuba.analyses.alias_experiment;
 
 import java.util.HashMap;
 import java.util.Map;

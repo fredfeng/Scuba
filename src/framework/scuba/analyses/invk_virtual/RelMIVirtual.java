@@ -1,4 +1,4 @@
-package chord.analyses.invk_virtual;
+package framework.scuba.analyses.invk_virtual;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.Operator;

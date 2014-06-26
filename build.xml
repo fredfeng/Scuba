@@ -15,6 +15,16 @@
           <exclude name="**/*.java"/>
         </fileset>
     </copy>
+    <copy todir="classes/framework/scuba/analyses/alias_experiment/">
+        <fileset dir="src/framework/scuba/analyses/alias_experiment">
+          <exclude name="**/*.java"/>
+        </fileset>
+    </copy>
+    <copy todir="classes/framework/scuba/analyses/virtual_call_resolve_experiment/">
+        <fileset dir="src/framework/scuba/analyses/virtual_call_resolve_experiment">
+          <exclude name="**/*.java"/>
+        </fileset>
+    </copy>
 
     <copy todir="classes/framework/scuba/analyses/librariesfilter/">
         <fileset dir="src/framework/scuba/analyses/librariesfilter">
