@@ -1397,6 +1397,17 @@ public class AbstractHeap extends Heap {
 		if (SummariesEnv.v().useMemLocInstnCache) {
 			if (ret.val0) {
 				clearCache(src);
+				// we need to reanalyze this method (conservative)
+				if (summary == null) {
+					return ret;
+				}
+				Set<Summary> toRemove = new HashSet<Summary>();
+				for (Summary s : summary.smartSkipDepSet) {
+					toRemove.add(s);
+				}
+				for (Summary s : toRemove) {
+					s.smartSkipDepSet.remove(summary);
+				}
 			}
 		}
 
@@ -1430,6 +1441,7 @@ public class AbstractHeap extends Heap {
 
 				// reset the boolean flag in smartSkip to let the caller
 				// instantiate the callee corresponding to the item
+				// TODO currently we keep this to be conservative
 				if (SummariesEnv.v().smartSkip) {
 					summary.smartSkip.remove(item);
 				}
