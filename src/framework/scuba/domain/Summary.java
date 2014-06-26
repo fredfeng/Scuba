@@ -686,14 +686,12 @@ public class Summary {
 				// using smart skip for callee instantiation
 				if (SummariesEnv.v().smartSkip) {
 					if (smartSkip.contains(item)) {
-						continue;
-					}
-				}
-
-				// for locals to propagate
-				if (SummariesEnv.v().jump) {
-					if (jumpInstnSet.contains(calleeSum)) {
-						continue;
+						// for locals to propagate
+						if (SummariesEnv.v().jump) {
+							if (jumpInstnSet.contains(calleeSum)) {
+								continue;
+							}
+						}
 					}
 				}
 
