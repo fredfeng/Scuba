@@ -51,8 +51,6 @@ import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 
-import framework.scuba.analyses.alias.SummaryBasedAnalysis;
-import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.AccessPathHelper;
 import framework.scuba.helper.ConstraintManager;
@@ -91,9 +89,12 @@ public class Summary {
 	final protected MemLocInstnCacheDepMap locDepMap;
 
 	// smart skip for instantiating the callees
-	protected Set<Summary> smartSkip = new HashSet<Summary>();
-	// the methods that this summary may effect
-	protected Set<Summary> smartSkipDepSet = new HashSet<Summary>();
+	protected Set<MemLocInstnItem> smartSkip = new HashSet<MemLocInstnItem>();
+
+	// the methods this summary has effect on
+	protected Set<Summary> jumpEffectSet = new HashSet<Summary>();
+	// the methods that this summary depends on
+	protected Set<Summary> jumpInstnSet = new HashSet<Summary>();
 
 	// finish current summary.
 	private boolean terminated;
@@ -684,7 +685,14 @@ public class Summary {
 
 				// using smart skip for callee instantiation
 				if (SummariesEnv.v().smartSkip) {
-					if (smartSkip.contains(calleeSum)) {
+					if (smartSkip.contains(item)) {
+						continue;
+					}
+				}
+
+				// for locals to propagate
+				if (SummariesEnv.v().jump) {
+					if (jumpInstnSet.contains(calleeSum)) {
 						continue;
 					}
 				}
@@ -701,13 +709,16 @@ public class Summary {
 
 				// add this method into the callee's depSet because callee's
 				// summary effects this method
-				calleeSum.smartSkipDepSet.add(Summary.this);
+				calleeSum.jumpEffectSet.add(Summary.this);
 
 				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
 						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
 
 				if (SummariesEnv.v().smartSkip) {
-					smartSkip.add(calleeSum);
+					smartSkip.add(item);
+				}
+				if (SummariesEnv.v().jump) {
+					jumpInstnSet.add(calleeSum);
 				}
 
 				absHeap.markChanged(flag);

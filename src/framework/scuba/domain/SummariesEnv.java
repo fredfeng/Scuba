@@ -1,6 +1,5 @@
 package framework.scuba.domain;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -82,6 +81,8 @@ public class SummariesEnv {
 	public boolean smartSkip = true;
 	// a fine-grained smart skip for instantiating edges
 	public boolean moreSmartSkip = true;
+	// when dbging SCC use this
+	public boolean jump = true;
 	// a trick to avoid hanging in gigantic SCC (the remove() method)
 	protected boolean badMethodSkip = true;
 

@@ -1396,16 +1396,19 @@ public class AbstractHeap extends Heap {
 		if (SummariesEnv.v().useMemLocInstnCache) {
 			if (ret.val0) {
 				clearCache(src);
-				// we need to reanalyze this method (conservative)
-				if (summary == null) {
-					return ret;
-				}
-				Set<Summary> toRemove = new HashSet<Summary>();
-				for (Summary s : summary.smartSkipDepSet) {
-					toRemove.add(s);
-				}
-				for (Summary s : toRemove) {
-					s.smartSkipDepSet.remove(summary);
+				if (SummariesEnv.v().jump) {
+					if (src instanceof LocalVarElem) {
+						Register v = ((LocalVarElem) src).getLocal();
+						if (SummariesEnv.v().toProp(v)) {
+							// we need to reanalyze this method (conservative)
+							if (summary == null) {
+								return ret;
+							}
+							for (Summary s : summary.jumpEffectSet) {
+								s.jumpInstnSet.remove(summary);
+							}
+						}
+					}
 				}
 			}
 		}

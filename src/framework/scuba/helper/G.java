@@ -30,8 +30,8 @@ public class G {
 	public static boolean dbgQuery = false;
 
 	public static int mId = 0;
-	public static boolean dbgAntlr = false;
-	public static boolean dbgInstn = false;
+	public static boolean dbgAntlr = true;
+	public static boolean dbgInstn = true;
 	public static Map<Summary, Integer> IdMapping = new HashMap<Summary, Integer>();
 
 	public static int sample = 367;
@@ -74,9 +74,9 @@ public class G {
 	// number of edges that are instantiated into in the caller
 	public static int instToEdges = 0;
 
+	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 	// public static String dotOutputPath =
-	// "/home/yufeng/research/Scuba/output/";
-	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
+	// "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
 
 	public static long instCstSubTime;
 }
