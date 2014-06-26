@@ -37,7 +37,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 8;
+	protected int allocDepth = 4;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
