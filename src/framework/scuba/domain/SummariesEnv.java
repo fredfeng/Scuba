@@ -62,19 +62,19 @@ public class SummariesEnv {
 	// whether use cache for instantiating AccessPath
 	public boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
-	public boolean useCstInstnCache = false;
+	public boolean useCstInstnCache = true;
 	// whether use cache for extracting terms
-	public boolean useExtractCache = false;
+	public boolean useExtractCache = true;
 	// whether use cache for constraint simplification
-	public boolean useSimplifyCache = false;
+	public boolean useSimplifyCache = true;
 	// whether use cache for constraint union operation
-	public boolean useUnionCache = false;
+	public boolean useUnionCache = true;
 	// whether use cache for constraint intersection operation
-	public boolean useInterCache = false;
+	public boolean useInterCache = true;
 	// whether use cache for substitution operation of constraints
-	public boolean useSubCache = false;
+	public boolean useSubCache = true;
 	// whether use equivalence checking cache
-	public boolean useEqCache = false;
+	public boolean useEqCache = true;
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
