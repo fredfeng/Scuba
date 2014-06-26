@@ -77,7 +77,7 @@ public class SumConclusion {
 		return clinitHeaps.size() + 1;
 	}
 
-	public Set<AllocElem> getP2Set(LocalVarElem local) {
+	public Set<AllocElem> getP2Set(LocalVarElem local, EpsilonFieldElem e) {
 		Set<AllocElem> ret = new HashSet<AllocElem>();
 		assert (local != null);
 		P2Set p2set = sumHeap.locToP2Set.get(new Pair<AbsMemLoc, FieldElem>(
@@ -86,8 +86,17 @@ public class SumConclusion {
 			return ret;
 		}
 
-		if (G.dbgQuery) {
-			System.out.println("Query: " + "p2 set in final sum: " + p2set);
+		if (G.dbgAntlr) {
+			StringUtil.reportInfo("[dbgAntlr] " + "[p2 set in final sum] ");
+			StringUtil
+					.reportInfo("[dbgAntlr] "
+							+ "------------------------------------------------------------------------------------");
+			for (HeapObject hObj : p2set.keySet()) {
+				StringUtil.reportInfo("[dbgAntlr] " + hObj);
+			}
+			StringUtil
+					.reportInfo("[dbgAntlr] "
+							+ "------------------------------------------------------------------------------------");
 		}
 
 		for (HeapObject hObj : p2set.keySet()) {

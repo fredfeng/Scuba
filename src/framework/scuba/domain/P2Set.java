@@ -69,12 +69,6 @@ public class P2Set {
 				if (ConstraintManager.isEqual(p2Set.get(obj), newCst))
 					continue;
 
-				if (G.dbgSmashing) {
-					System.out.println("dbgSmashing: "
-							+ "not equal constraints: " + p2Set.get(obj) + " "
-							+ newCst);
-				}
-
 				p2Set.put(obj, newCst);
 				// TODO
 				changeHeap = true;

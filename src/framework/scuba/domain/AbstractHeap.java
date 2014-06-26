@@ -31,10 +31,10 @@ public class AbstractHeap extends Heap {
 	protected final Summary summary;
 
 	// all locations in the heap including both keys and values
-	protected final Set<AbsMemLoc> heap;
+	public final Set<AbsMemLoc> heap;
 
 	// a mapping described in Figure 7 of the paper
-	protected final Map<Pair<AbsMemLoc, FieldElem>, P2Set> locToP2Set;
+	public final Map<Pair<AbsMemLoc, FieldElem>, P2Set> locToP2Set;
 
 	// the locations that are originally produced by the method this abstract
 	// heap belongs to, particularly the locations includes:
@@ -57,7 +57,7 @@ public class AbstractHeap extends Heap {
 	// 1. <AccessPath> 2. <ParamElem> 3. <StaticElem> 4. <RetElem>
 	// 5. <AllocElem> that are connected by 1-4 will be propagated
 	// 6. others will not be propagated
-	protected Set<AbsMemLoc> toProp = new HashSet<AbsMemLoc>();
+	public Set<AbsMemLoc> toProp = new HashSet<AbsMemLoc>();
 
 	public static enum VariableType {
 		PARAMEMTER, LOCAL_VARIABLE;
@@ -161,9 +161,6 @@ public class AbstractHeap extends Heap {
 			jq_Method method, Register left, VariableType leftVType,
 			Register right, VariableType rightVType) {
 
-		if (G.dbgFilter) {
-			System.out.println("handling the stmt");
-		}
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
@@ -759,8 +756,11 @@ public class AbstractHeap extends Heap {
 				}
 			}
 		}
+
 		return ret;
 	}
+
+	public static int count = 0;
 
 	private Pair<Boolean, Boolean> instnEdge(AbsMemLoc src, HeapObject dst,
 			FieldElem field, MemLocInstnItem memLocInstn,
@@ -804,9 +804,17 @@ public class AbstractHeap extends Heap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: " + "instantiating callee edge: "
-					+ "(" + src + "  ,  " + field + ")" + "-->" + dst);
+		if (G.dbgAntlr && G.dbgInstn) {
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[instantiating callee edge]: " + "method Id: "
+					+ G.IdMapping.get(calleeHeap.summary));
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+			StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + src);
+			StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
+			StringUtil.reportInfo("[dbgAntlr] " + "DST: " + dst);
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
 		}
 
 		// more smart skip for instantiating edges
@@ -835,11 +843,15 @@ public class AbstractHeap extends Heap {
 			return ret;
 		}
 
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: "
-					+ "the callee edge is instantiated into: "
+		if (G.dbgAntlr && G.dbgInstn) {
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[the callee edge is instantiated into]: "
 					+ instnSrc.size() + "src locations " + "and "
 					+ instnDst.size() + " dst locations");
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
 		}
 
 		for (AbsMemLoc newSrc : instnSrc.keySet()) {
@@ -859,12 +871,17 @@ public class AbstractHeap extends Heap {
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
 
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: "
-							+ "instantiated location in caller: " + "("
-							+ newSrc + " , " + newDst + ")");
+				if (G.dbgAntlr && G.dbgInstn) {
+					StringUtil.reportInfo("[dbgAntlr] "
+							+ "[instantiated caller edge]: ");
+					StringUtil.reportInfo("[dbgAntlr] "
+							+ "-------------------------------------------");
+					StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + newSrc);
+					StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
+					StringUtil.reportInfo("[dbgAntlr] " + "DST: " + newDst1);
+					StringUtil.reportInfo("[dbgAntlr] "
+							+ "-------------------------------------------");
 				}
-
 				assert (newDst1 != null) : "null!";
 
 				BoolExpr cst1 = instnSrc.get(newSrc);
@@ -878,6 +895,17 @@ public class AbstractHeap extends Heap {
 				Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 						newSrc, field);
 
+				if (G.dbgAntlr && G.dump) {
+					if (G.IdMapping.get(summary) == G.sample
+							|| G.IdMapping.get(summary) == G.sample1
+							|| G.IdMapping.get(summary) == G.sample2) {
+						summary.dumpSummaryToFile(G.IdMapping.get(summary)
+								+ "$" + ++count);
+						StringUtil.reportInfo("[dbgAntlr] " + "dump counter: "
+								+ count);
+					}
+				}
+
 				Pair<Boolean, Boolean> res = weakUpdate(pair, new P2Set(
 						newDst1, cst));
 				ret.val0 = res.val0 | ret.val0;
@@ -887,12 +915,6 @@ public class AbstractHeap extends Heap {
 
 		long end = System.nanoTime();
 
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: " + "caller heap becomes: "
-					+ size() + " edges");
-			StringUtil.reportSec("instnInfo: "
-					+ "total time to instn this edge: ", start, end);
-		}
 		return ret;
 	}
 
@@ -900,11 +922,6 @@ public class AbstractHeap extends Heap {
 			HeapObject dst, FieldElem field, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst,
 			Set<Pair<AbsMemLoc, P2Set>> toAdd) {
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: "
-					+ "instantiating callee edge (recurisve): " + "(" + src
-					+ "," + field + ")" + "-->" + dst);
-		}
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
@@ -1015,7 +1032,7 @@ public class AbstractHeap extends Heap {
 
 	// get the LocalVarElem given the declaring class, declaring method, and the
 	// corresponding register in the IR
-	protected LocalVarElem getLocalVarElem(jq_Class clazz, jq_Method method,
+	public LocalVarElem getLocalVarElem(jq_Class clazz, jq_Method method,
 			Register variable) {
 		// create a wrapper
 		LocalVarElem ret = new LocalVarElem(clazz, method, variable);
@@ -1194,7 +1211,26 @@ public class AbstractHeap extends Heap {
 
 		if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.LOW) {
 			if (loc.isArgDerived()) {
-				if (loc.hasFieldSelector(field)) {
+				// the first branch is to deal with recurisve index field
+				if (field instanceof IndexFieldElem) {
+					if (loc instanceof StaticElem) {
+						ret = Env.getStaticAccessPath((StaticElem) loc, field);
+					} else if (loc instanceof ParamElem) {
+						ret = getLocalAccessPath((ParamElem) loc, field);
+					} else if (loc instanceof AccessPath) {
+						if (loc instanceof StaticAccessPath) {
+							ret = Env.getStaticAccessPath(
+									(StaticAccessPath) loc, field);
+						} else if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc,
+									field);
+						} else {
+							assert false : "only two kinds of access path!";
+						}
+					} else {
+						assert false : "only three kinds of things can have default targets!";
+					}
+				} else if (loc.hasFieldSelector(field)) {
 					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
 					// only AccessPath has field selectors
 					AccessPath path = ((AccessPath) loc).getPrefix(field);
@@ -1369,15 +1405,9 @@ public class AbstractHeap extends Heap {
 			currentP2Set = new P2Set();
 			locToP2Set.put(pair, currentP2Set);
 		}
-		if (G.dbgSmashing) {
-			System.out.println("dbgSmashing: " + "current p2set: "
-					+ currentP2Set);
-			System.out.println("dbgSmashing: " + "to update: " + p2Set);
-		}
+
 		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set, this);
-		if (G.dbgSmashing) {
-			System.out.println("dbgSmashing: " + "weakupdate result: " + res);
-		}
+
 		ret.val0 = res.val0;
 		ret.val1 = res.val1;
 

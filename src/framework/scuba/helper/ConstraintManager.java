@@ -200,23 +200,12 @@ public class ConstraintManager {
 			if (isScala(ret))
 				return ret;
 
-			if (G.instnInfo) {
-				StringUtil.reportInfo("instnInfo: "
-						+ "extracting the constraints." + "[size]"
-						+ ret.toString().length() + " " + ret);
-			}
-
 			Map<String, BoolExpr> map;
 			if (SummariesEnv.v().isUsingExtractCache()) {
 				map = extractTermUsingCache(ret);
 			} else {
 				map = new HashMap<String, BoolExpr>();
 				extractTerm(ret, map);
-			}
-
-			if (G.instnInfo) {
-				StringUtil.reportInfo("instnInfo: "
-						+ "substituting constraints.");
 			}
 
 			BoolExpr ret1 = ret;
@@ -261,11 +250,6 @@ public class ConstraintManager {
 				} else {
 					ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
 				}
-			}
-
-			if (G.instnInfo) {
-				StringUtil.reportInfo("instnInfo: "
-						+ "simplifying the constraint result.");
 			}
 
 			BoolExpr result = null;
@@ -330,10 +314,7 @@ public class ConstraintManager {
 			}
 
 			if (expr.IsAnd() || expr.IsOr()) {
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: " + "[recursive case:] "
-							+ expr);
-				}
+
 				for (int i = 0; i < expr.NumArgs(); i++) {
 					assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:"
 							+ expr.Args()[i];

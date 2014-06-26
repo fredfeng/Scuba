@@ -28,18 +28,6 @@ public class SummariesEnv {
 		ALL, NOLOCAL, DOWNCAST, APPLOCAL, NOTHING, NOALLOC;
 	}
 
-	String[] blklist = {
-			"remove:(Ljava/lang/Object;)Z@java.util.AbstractCollection",
-			"buildFromSorted:(IIIILjava/util/Iterator;Ljava/io/ObjectInputStream;Ljava/lang/Object;)Ljava/util/TreeMap$Entry;@java.util.TreeMap",
-			"buildFromSorted:(ILjava/util/Iterator;Ljava/io/ObjectInputStream;Ljava/lang/Object;)V@java.util.TreeMap",
-			"<init>:(Ljava/util/SortedMap;)V@java.util.TreeMap",
-			"<init>:()V@sun.security.provider.Sun",
-			"<init>:(Ljava/util/Map;)V@java.util.HashMap",
-			"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry",
-			"clone:()Ljava/lang/Object;@java.util.TreeSet" };
-
-	String[] goodlist = { "clone:()Ljava/lang/Object;@java.lang.Object" };
-
 	public static enum FieldSmashLevel {
 		LOW, MED, HIGH, CONTROL;
 	}
@@ -50,7 +38,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 6;
+	protected int allocDepth = 1;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;

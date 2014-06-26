@@ -14,7 +14,12 @@ import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
-import framework.scuba.analyses.alias.SummaryBasedAnalysis;
+import framework.scuba.domain.AbsMemLoc;
+import framework.scuba.domain.FieldElem;
+import framework.scuba.domain.HeapObject;
+import framework.scuba.domain.LocalVarElem;
+import framework.scuba.domain.P2Set;
+import framework.scuba.domain.RetElem;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper;
@@ -42,6 +47,20 @@ public class IntraProcSumAnalysis {
 			StringUtil.reportInfo("dbgPermission: " + " analyzing method: "
 					+ g.getMethod());
 			StringUtil.reportInfo("dbgPermission: " + g.fullDump());
+		}
+
+		if (G.dbgAntlr) {
+
+			if (!G.IdMapping.containsKey(summary)) {
+				G.IdMapping.put(summary, ++G.mId);
+			}
+			StringUtil.reportInfo("[dbgAntlr] " + " byte code for method ["
+					+ G.IdMapping.get(summary) + "] " + g.getMethod());
+			System.out
+					.println("==============================================");
+			System.out.println(g.fullDump());
+			System.out
+					.println("==============================================");
 		}
 
 		// create the memory locations for the parameters first if has not
@@ -104,9 +123,7 @@ public class IntraProcSumAnalysis {
 		int tmp = 0;
 		for (Node rep : repGraph.getReversePostOrder()) {
 			tmp++;
-			if (G.dbgSCC) {
-				StringUtil.reportInfo("Analyzing BB SCC times: " + tmp);
-			}
+
 			Set<BasicBlock> scc = nodeToScc.get(rep);
 			if (scc.size() == 1) {
 				BasicBlock sccB = scc.iterator().next();
@@ -139,6 +156,28 @@ public class IntraProcSumAnalysis {
 		if (G.validate) {
 			summary.getAbsHeap().validate();
 		}
+		if (G.dbgAntlr && G.dump) {
+			summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
+		}
+		if (G.dbgAntlr) {
+			for (AbsMemLoc loc : summary.getAbsHeap().heap) {
+				if ((loc instanceof LocalVarElem && summary.getAbsHeap()
+						.toProp(loc)) || loc instanceof RetElem) {
+					StringUtil
+							.reportInfo("[dbgAntlr] "
+									+ "-----------------------------------------------");
+					StringUtil.reportInfo("[dbgAntlr] " + "P2Set of " + loc);
+					for (FieldElem f : loc.getFields()) {
+						P2Set p2set = summary.getAbsHeap().locToP2Set
+								.get(new Pair<AbsMemLoc, FieldElem>(loc, f));
+						for (HeapObject hObj : p2set.keySet()) {
+							StringUtil.reportInfo("[dbgAntlr] " + "field: " + f
+									+ " " + hObj);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	public static int d = 0;
@@ -159,41 +198,14 @@ public class IntraProcSumAnalysis {
 			wl.add(scc.iterator().next());
 
 		Set<BasicBlock> set = new HashSet<BasicBlock>();
-		sccProgress = 0;
-		int smash = 0;
+
 		while (true) {
-			if (G.dbgSmashing) {
-				smash++;
-				if (summary != null && smash >= 30) {
-					summary.dumpSummaryToFile("$equals");
-					assert false;
-				}
-			}
-			if (G.dbgMatch) {
-				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
-						+ SummaryBasedAnalysis.cgProgress + " ]" + set.size()
-						+ " out of " + scc.size());
-				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
-						+ SummaryBasedAnalysis.cgProgress + " ]"
-						+ " iteration: " + ++sccProgress + "-th");
-			}
+
 			BasicBlock bb = wl.poll();
 			if (set.contains(bb))
 				continue;
 
-			if (G.dbgMatch) {
-				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
-						+ SummaryBasedAnalysis.cgProgress + " ]"
-						+ "handling BB: " + bb);
-			}
-
 			Pair<Boolean, Boolean> flag = handleBasicBlock(bb, true);
-
-			if (G.dbgMatch) {
-				StringUtil.reportInfo("Sunny -- SCC progress: [ CG: "
-						+ SummaryBasedAnalysis.cgProgress + " ]"
-						+ "finish BB: " + bb + " result: " + flag);
-			}
 
 			flagScc.val0 = flag.val0 | flagScc.val0;
 			flagScc.val1 = flag.val1 | flagScc.val1;

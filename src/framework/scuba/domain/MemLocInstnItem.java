@@ -133,12 +133,6 @@ public class MemLocInstnItem {
 
 		MemLocInstnSet ret = memLocInstnCache.get(loc);
 
-		if (G.instnInfo) {
-			if (ret != null)
-				StringUtil.reportInfo("instnInfo: " + "location " + loc
-						+ " is cached as: " + ret.keySet());
-		}
-
 		if (loc instanceof ParamElem) {
 			assert (ret != null) : "parameters should have been instantiated"
 					+ " when the first time init the instantiation";
@@ -231,11 +225,6 @@ public class MemLocInstnItem {
 			memLocInstnCache.put(loc, ret);
 		} else {
 			assert false : "wried things happen! Unknow type.";
-		}
-
-		if (G.instnInfo) {
-			StringUtil.reportInfo("instnInfo: " + loc
-					+ " is instantiated into " + ret.keySet());
 		}
 
 		return ret;
