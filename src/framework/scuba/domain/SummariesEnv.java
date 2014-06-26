@@ -101,6 +101,9 @@ public class SummariesEnv {
 	// when concluding the clinit's and main, use fix-point or not
 	protected boolean topFixPoint = false;
 
+	// whether or not propagate parameters
+	protected boolean propParams = true;
+
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
 
