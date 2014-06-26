@@ -352,11 +352,6 @@ public class Summary {
 				RegisterOperand rhs = (RegisterOperand) ALoad.getBase(stmt);
 				RegisterOperand lhs = (RegisterOperand) ALoad.getDest(stmt);
 
-				jq_Class clz = (jq_Class) Program.g().getClass(
-						"java.lang.String");
-				if (lhs.getType().equals(clz) && SummariesEnv.v().ignoreString)
-					return;
-
 				VariableType lvt = getVarType(stmt.getMethod(),
 						lhs.getRegister());
 				VariableType rvt = getVarType(stmt.getMethod(),
@@ -387,11 +382,6 @@ public class Summary {
 			if (AStore.getValue(stmt) instanceof RegisterOperand) {
 				RegisterOperand lhs = (RegisterOperand) AStore.getBase(stmt);
 				RegisterOperand rhs = (RegisterOperand) AStore.getValue(stmt);
-
-				jq_Class clz = (jq_Class) Program.g().getClass(
-						"java.lang.String");
-				if (rhs.getType().equals(clz) && SummariesEnv.v().ignoreString)
-					return;
 
 				VariableType lvt = getVarType(stmt.getMethod(),
 						lhs.getRegister());
@@ -472,11 +462,6 @@ public class Summary {
 				assert (stmt.getOperator() instanceof Getfield);
 				RegisterOperand lhs = Getfield.getDest(stmt);
 
-				jq_Class clz = (jq_Class) Program.g().getClass(
-						"java.lang.String");
-				if (lhs.getType().equals(clz) && SummariesEnv.v().ignoreString)
-					return;
-
 				RegisterOperand rhsBase = (RegisterOperand) Getfield
 						.getBase(stmt);
 				jq_Method meth = stmt.getMethod();
@@ -510,11 +495,6 @@ public class Summary {
 			if (field.getField().getType() instanceof jq_Reference) {
 				jq_Method meth = stmt.getMethod();
 				RegisterOperand lhs = Getstatic.getDest(stmt);
-
-				jq_Class clz = (jq_Class) Program.g().getClass(
-						"java.lang.String");
-				if (lhs.getType().equals(clz) && SummariesEnv.v().ignoreString)
-					return;
 
 				jq_Class encloseClass = field.getField().getDeclaringClass();
 				VariableType lvt = getVarType(stmt.getMethod(),
@@ -835,11 +815,6 @@ public class Summary {
 				RegisterOperand rhs = (RegisterOperand) Move.getSrc(stmt);
 				RegisterOperand lhs = (RegisterOperand) Move.getDest(stmt);
 
-				jq_Class clz = (jq_Class) Program.g().getClass(
-						"java.lang.String");
-				if (rhs.getType().equals(clz) && SummariesEnv.v().ignoreString)
-					return;
-
 				VariableType lvt = getVarType(stmt.getMethod(),
 						lhs.getRegister());
 				VariableType rvt = getVarType(stmt.getMethod(),
@@ -914,11 +889,6 @@ public class Summary {
 			jq_Method meth = stmt.getMethod();
 			TypeOperand to = NewArray.getType(stmt);
 
-			jq_Array clz = (jq_Array) Program.g()
-					.getClass("java.lang.String[]");
-			if (to.getType().equals(clz) && SummariesEnv.v().ignoreString)
-				return;
-
 			RegisterOperand rop = NewArray.getDest(stmt);
 			VariableType vt = getVarType(meth, rop.getRegister());
 
@@ -991,12 +961,6 @@ public class Summary {
 					RegisterOperand lhs = (RegisterOperand) Putfield
 							.getBase(stmt);
 
-					jq_Class clz = (jq_Class) Program.g().getClass(
-							"java.lang.String");
-					if (rhs.getType().equals(clz)
-							&& SummariesEnv.v().ignoreString)
-						return;
-
 					VariableType lvt = getVarType(stmt.getMethod(),
 							lhs.getRegister());
 					VariableType rvt = getVarType(stmt.getMethod(),
@@ -1030,12 +994,6 @@ public class Summary {
 
 				if (rhso instanceof RegisterOperand) {
 					RegisterOperand rhs = (RegisterOperand) rhso;
-
-					jq_Class clz = (jq_Class) Program.g().getClass(
-							"java.lang.String");
-					if (rhs.getType().equals(clz)
-							&& SummariesEnv.v().ignoreString)
-						return;
 
 					VariableType rvt = getVarType(stmt.getMethod(),
 							rhs.getRegister());

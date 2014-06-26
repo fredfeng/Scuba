@@ -28,18 +28,6 @@ public class SummariesEnv {
 		ALL, NOLOCAL, DOWNCAST, APPLOCAL, NOTHING, NOALLOC;
 	}
 
-	String[] blklist = {
-			"remove:(Ljava/lang/Object;)Z@java.util.AbstractCollection",
-			"buildFromSorted:(IIIILjava/util/Iterator;Ljava/io/ObjectInputStream;Ljava/lang/Object;)Ljava/util/TreeMap$Entry;@java.util.TreeMap",
-			"buildFromSorted:(ILjava/util/Iterator;Ljava/io/ObjectInputStream;Ljava/lang/Object;)V@java.util.TreeMap",
-			"<init>:(Ljava/util/SortedMap;)V@java.util.TreeMap",
-			"<init>:()V@sun.security.provider.Sun",
-			"<init>:(Ljava/util/Map;)V@java.util.HashMap",
-			"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry",
-			"clone:()Ljava/lang/Object;@java.util.TreeSet" };
-	
-	String[] goodlist = { "clone:()Ljava/lang/Object;@java.lang.Object" };
-
 	public static enum FieldSmashLevel {
 		LOW, MED, HIGH, CONTROL;
 	}
@@ -60,17 +48,13 @@ public class SummariesEnv {
 	// all reachable methods
 	protected Set<jq_Method> reachableMethods = new HashSet<jq_Method>();
 
-	// ignore string
-	protected boolean openBlklist = false;
 	// cheating
 	protected boolean cheating = true;
-	// ignore string
-	protected boolean ignoreString = false;
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = true;
+	protected boolean disableCst = false;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
@@ -116,8 +100,8 @@ public class SummariesEnv {
 
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
-	// protected PropType localType = PropType.APPLOCAL;
-	protected PropType localType = PropType.DOWNCAST;
+	 protected PropType localType = PropType.APPLOCAL;
+//	protected PropType localType = PropType.DOWNCAST;
 
 	// protected PropType localType = PropType.NOLOCAL;
 	// protected PropType localType = PropType.NOALLOC;
@@ -173,14 +157,6 @@ public class SummariesEnv {
 		return disableCst;
 	}
 
-	public boolean openBlklist() {
-		return openBlklist;
-	}
-
-	public boolean ignoreString() {
-		return ignoreString;
-	}
-
 	public boolean forceGc() {
 		return forceGc;
 	}
@@ -228,10 +204,6 @@ public class SummariesEnv {
 		return summaries.put(meth, sum);
 	}
 
-	public boolean isInBlacklist(String blk) {
-		return Arrays.asList(blklist).contains(blk);
-	}
-
 	public void addPropSet(Register v) {
 		toProp.add(v);
 	}
@@ -256,56 +228,50 @@ public class SummariesEnv {
 		this.reachableMethods = reachableMethods;
 	}
 	
-	public boolean isInGoodlist(String gd) {
-		return Arrays.asList(goodlist).contains(gd);
-	}
-
 	public boolean isStubMethod(String signature) {
-		if(isInGoodlist(signature))
-			return false;
-		
 		if (signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*")
 				|| signature.matches("equals:(Ljava/lang/Object;)Z@sun.*")
 				|| signature.matches("^hashCode:\\(\\)I@java.*")
 				|| signature.matches("^hashCode:\\(\\)I@sun.*")
 				|| signature
-						.matches("^remove:\\(Ljava/lang/Object;\\)Z@java.*")
-				|| signature
-						.matches("^removeAll:\\(Ljava/util/Collection;\\)Z@java.*")
-				|| signature
-						.matches("^toString:\\(\\)Ljava/lang/String;@sun.*")
-				|| signature
-						.matches("^toString:\\(\\)Ljava/lang/String;@java.*")
-				|| signature.matches("^rotateRight:\\(Ljava/util/TreeMap.*")
-				|| signature.matches("^rotateLeft:\\(Ljava/util/TreeMap.*")
-				|| signature.matches("^hasMoreElements:\\(\\)Z@java.*")
-				|| signature
 						.matches("implPut:\\(Ljava/lang/Object;Ljava/lang/Object;\\)Ljava/lang/Object;@java.*")
-				|| signature.matches("^getDefaultPRNG.*")
-				|| signature
-						.matches("^addAllForTreeSet:\\(Ljava/util/SortedSet;Ljava/lang/Object;\\)V@java.*")
-				|| signature
-						.matches("^addAll:\\(Ljava/util/Collection;\\)Z@java.*")
-				|| signature.matches("^clone:\\(\\)Ljava/lang/Object;@java.*")
-				|| signature.matches("^clone:\\(\\)Ljava/lang/Object;@sun.*")
 				|| signature
 						.matches("^putAllForCreate:\\(Ljava/util/Map;\\)V@java.*")
-				// just for speeding up debugging.
-				|| signature.matches("^getResource.*")
-				|| signature.matches("^checkCodeSigning:.*")
-				|| signature.matches("^checkTLSServer:.*")
-				|| signature.matches("^checkNetscapeCertType.*")
-				|| signature.matches("^getExtensionValue:.*")
-				|| signature.matches("^getCriticalExtensionOIDs.*")
-				|| signature.matches("^getCriticalExtensionOIDs.*")
-				|| signature.matches("^isNonEuroLangSupported.*")
-				|| signature.matches("^createLocaleList.*")
-				|| signature.matches("^access$000:\\(\\).*sun.*")
-				|| signature.matches("<clinit>:\\(\\)V@sun.*")
 				|| signature
 						.matches("getPrngAlgorithm:\\(\\)Ljava/lang/String;@java.*")
-				|| signature.matches("<clinit>:\\(\\)V@javax.*")
-				|| signature.matches("^hasNext:\\(\\)Z@java"))
+//				|| signature
+//						.matches("^remove:\\(Ljava/lang/Object;\\)Z@java.*")
+//				|| signature
+//						.matches("^removeAll:\\(Ljava/util/Collection;\\)Z@java.*")
+//				|| signature
+//						.matches("^toString:\\(\\)Ljava/lang/String;@sun.*")
+//				|| signature
+//						.matches("^toString:\\(\\)Ljava/lang/String;@java.*")
+//				|| signature.matches("^rotateRight:\\(Ljava/util/TreeMap.*")
+//				|| signature.matches("^rotateLeft:\\(Ljava/util/TreeMap.*")
+//				|| signature.matches("^hasMoreElements:\\(\\)Z@java.*")
+//				|| signature.matches("^getDefaultPRNG.*")
+//				|| signature
+//						.matches("^addAllForTreeSet:\\(Ljava/util/SortedSet;Ljava/lang/Object;\\)V@java.*")
+//				|| signature
+//						.matches("^addAll:\\(Ljava/util/Collection;\\)Z@java.*")
+//				|| signature.matches("^clone:\\(\\)Ljava/lang/Object;@java.*")
+//				|| signature.matches("^clone:\\(\\)Ljava/lang/Object;@sun.*")
+				// just for speeding up debugging.
+//				|| signature.matches("^getResource.*")
+//				|| signature.matches("^checkCodeSigning:.*")
+//				|| signature.matches("^checkTLSServer:.*")
+//				|| signature.matches("^checkNetscapeCertType.*")
+//				|| signature.matches("^getExtensionValue:.*")
+//				|| signature.matches("^getCriticalExtensionOIDs.*")
+//				|| signature.matches("^getCriticalExtensionOIDs.*")
+//				|| signature.matches("^isNonEuroLangSupported.*")
+//				|| signature.matches("^createLocaleList.*")
+//				|| signature.matches("^access$000:\\(\\).*sun.*")
+//				|| signature.matches("<clinit>:\\(\\)V@sun.*")
+//				|| signature.matches("<clinit>:\\(\\)V@javax.*")
+//				|| signature.matches("^hasNext:\\(\\)Z@java")
+				)
 			return true;
 
 		return false;
