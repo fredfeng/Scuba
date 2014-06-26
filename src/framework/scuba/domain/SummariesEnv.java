@@ -37,7 +37,7 @@ public class SummariesEnv {
 			"<init>:(Ljava/util/Map;)V@java.util.HashMap",
 			"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry",
 			"clone:()Ljava/lang/Object;@java.util.TreeSet" };
-	
+
 	String[] goodlist = { "clone:()Ljava/lang/Object;@java.lang.Object" };
 
 	public static enum FieldSmashLevel {
@@ -50,7 +50,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 1;
+	protected int allocDepth = 6;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
@@ -63,14 +63,14 @@ public class SummariesEnv {
 	// ignore string
 	protected boolean openBlklist = false;
 	// cheating
-	protected boolean cheating = true;
+	protected boolean cheating = false;
 	// ignore string
 	protected boolean ignoreString = false;
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = true;
+	protected boolean disableCst = false;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
@@ -116,8 +116,9 @@ public class SummariesEnv {
 
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
-	// protected PropType localType = PropType.APPLOCAL;
-	protected PropType localType = PropType.DOWNCAST;
+	protected PropType localType = PropType.APPLOCAL;
+
+	// protected PropType localType = PropType.DOWNCAST;
 
 	// protected PropType localType = PropType.NOLOCAL;
 	// protected PropType localType = PropType.NOALLOC;
@@ -255,15 +256,15 @@ public class SummariesEnv {
 	public void setReachableMethods(Set<jq_Method> reachableMethods) {
 		this.reachableMethods = reachableMethods;
 	}
-	
+
 	public boolean isInGoodlist(String gd) {
 		return Arrays.asList(goodlist).contains(gd);
 	}
 
 	public boolean isStubMethod(String signature) {
-		if(isInGoodlist(signature))
+		if (isInGoodlist(signature))
 			return false;
-		
+
 		if (signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*")
 				|| signature.matches("equals:(Ljava/lang/Object;)Z@sun.*")
 				|| signature.matches("^hashCode:\\(\\)I@java.*")

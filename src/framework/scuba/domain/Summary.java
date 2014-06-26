@@ -147,9 +147,7 @@ public class Summary {
 		this.memLocInstnResult = new MemLocInstn4Method(this);
 		this.locDepMap = new MemLocInstnCacheDepMap(this);
 		this.aliasQueries = new AliasQueries(meth, this);
-		if (G.dump) {
-			this.dumpSummary4Method(meth);
-		}
+
 	}
 
 	// initialize the paramList
@@ -308,12 +306,21 @@ public class Summary {
 
 	public Pair<Boolean, Boolean> handleStmt(Quad quad) {
 
-		if (G.dbgPermission) {
-			StringUtil.reportInfo("dbgPermission: " + "handling stmt: " + quad);
-
+		if (G.dbgAntlr) {
+			StringUtil.reportInfo("[dbgAntlr] " + "[handling stmt] " + quad);
 		}
 		absHeap.markChanged(new Pair<Boolean, Boolean>(false, false));
 		quad.accept(qv);
+		if (G.dbgAntlr && G.dump) {
+			if (G.IdMapping.get(this) == G.sample
+					|| G.IdMapping.get(this) == G.sample1
+					|| G.IdMapping.get(this) == 259) {
+				this.dumpSummaryToFile(G.IdMapping.get(this) + "$"
+						+ ++this.absHeap.count);
+				StringUtil.reportInfo("[dbgAntlr] " + "dump counter: "
+						+ this.absHeap.count);
+			}
+		}
 		return absHeap.isChanged();
 	}
 
@@ -337,9 +344,6 @@ public class Summary {
 		// y = x[1];
 		public void visitALoad(Quad stmt) {
 			// TODO
-			if (G.dbgSmashing) {
-				System.out.println("dbgSmashing: " + " exec stmt: " + stmt);
-			}
 
 			Summary.aloadCnt++;
 
@@ -388,6 +392,8 @@ public class Summary {
 				RegisterOperand lhs = (RegisterOperand) AStore.getBase(stmt);
 				RegisterOperand rhs = (RegisterOperand) AStore.getValue(stmt);
 
+				System.out.println("ok: " + "lhs: " + lhs.getType());
+				System.out.println("ok: " + "rhs: " + rhs.getType());
 				jq_Class clz = (jq_Class) Program.g().getClass(
 						"java.lang.String");
 				if (rhs.getType().equals(clz) && SummariesEnv.v().ignoreString)
@@ -546,8 +552,7 @@ public class Summary {
 
 		public void visitInvoke(Quad stmt) {
 
-			StringUtil.reportInfo("Handle invoke----- " + stmt);
-			tmp++;
+			StringUtil.reportInfo("[Handle invoke] " + stmt);
 
 			long startInstCallsite = System.nanoTime();
 
@@ -584,13 +589,7 @@ public class Summary {
 			int count = 0;
 			// iterate all summaries of all the potential callees
 			for (Pair<Summary, BoolExpr> calleeSumCst : calleeSumCstPairs) {
-				count++;
-				tmp1++;
-				if (G.dbgSCC) {
-					StringUtil.reportInfo("tmp1: " + tmp1
-							+ "in the callee sum: " + count + " out of "
-							+ calleeSumCstPairs.size());
-				}
+
 				// the summary of the callee
 				Summary calleeSum = calleeSumCst.val0;
 				// the constraint for calling that callee
@@ -641,15 +640,7 @@ public class Summary {
 				MemLocInstnItem item = memLocInstnResult
 						.get(new Pair<Quad, jq_Method>(stmt, calleeSum
 								.getMethod()));
-				if (G.dbgRet) {
-					StringUtil.reportInfo(" get the mem loc instn");
-					if (item == null) {
-						StringUtil.reportInfo("it is a null!");
-					} else {
-						StringUtil.reportInfo("------");
-						item.print();
-					}
-				}
+
 				// if has not been cached
 				if (item == null) {
 					item = new MemLocInstnItem(meth, stmt,
@@ -690,10 +681,6 @@ public class Summary {
 							|| opr instanceof INVOKEINTERFACE_A
 							|| Invoke.getDest(stmt) != null) {
 
-						if (G.dbgRet) {
-							StringUtil.reportInfo("init the return mapping");
-						}
-
 						RegisterOperand ro = Invoke.getDest(stmt);
 						StackObject sObj = getMemLocation(
 								meth.getDeclaringClass(), meth,
@@ -706,10 +693,6 @@ public class Summary {
 					StringUtil.reportInfo("calleeSum Info: "
 							+ calleeSum.getMethod());
 				// instantiation the edges in the callee's heap
-				if (G.dbgSCC) {
-					StringUtil
-							.reportInfo("[before handling invoke] weak update size: ");
-				}
 
 				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
 						false);
@@ -721,17 +704,16 @@ public class Summary {
 					}
 				}
 
-				if (G.instnInfo) {
-					StringUtil.reportInfo("instnInfo: " + " there are ["
+				if (G.dbgAntlr) {
+					StringUtil.reportInfo("[dbgAntlr] " + " there are ["
 							+ calleeSum.getAbsHeap().size()
 							+ "] edges in the callee heap" + " of method "
-							+ calleeSum.getMethod());
+							+ calleeSum.getMethod() + " caller Id: ["
+							+ G.IdMapping.get(Summary.this) + "]");
+					StringUtil.reportInfo("[dbgAntlr] " + "calee Id: "
+							+ G.IdMapping.get(calleeSum));
 				}
 
-				if (G.dbgQuery) {
-					StringUtil.reportInfo("dbgQuery: "
-							+ "before entering handle invoke");
-				}
 				flag = absHeap.handleInvokeStmt(meth.getDeclaringClass(), meth,
 						stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
 
@@ -740,36 +722,7 @@ public class Summary {
 				}
 
 				absHeap.markChanged(flag);
-				if (G.dbgPermission) {
-					int num = 0;
-					for (Pair p : absHeap.locToP2Set.keySet()) {
-						num += absHeap.locToP2Set.get(p).size();
-					}
-					StringUtil.reportInfo("dbgPermission: "
-							+ " edges in the current caller: " + num);
-					StringUtil.reportInfo("dbgPermission: "
-							+ " caller method: " + getMethod() + " ["
-							+ perCallerId + " ]");
-					StringUtil.reportInfo("dbgPermission: "
-							+ "----------------------------------------");
-					StringUtil
-							.reportInfo("dbgPermission: "
-									+ "~~~~~~~~~~~~~~~~caller sum info~~~~~~~~~~~~~~~~~~~~");
-					printCalleeHeapInfo("dbgPermission");
-				}
 
-				if (G.dbgBlowup
-						&& meth.toString()
-								.contains(
-										"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
-					int num = 0;
-					for (Pair p : getAbsHeap().keySet()) {
-						num += getAbsHeap().get(p).size();
-					}
-					StringUtil
-							.reportInfo("Current heap size after instantiate: "
-									+ num);
-				}
 			}
 			if (G.debug4Sum) {
 				if (calleeSumCstPairs.isEmpty()) {
@@ -783,24 +736,6 @@ public class Summary {
 			if (G.tuning)
 				StringUtil.reportSec("Time to instantiate callsite: " + stmt,
 						startInstCallsite, endInstCallsite);
-
-			if (G.dbgBlowup
-					&& meth.toString()
-							.contains(
-									"equals:(Ljava/lang/Object;)Z@java.util.Hashtable$Entry")) {
-				int num = 0;
-				for (Pair p : getAbsHeap().keySet()) {
-					num += getAbsHeap().get(p).size();
-				}
-				StringUtil.reportInfo("Current heap size after invoke: " + num);
-
-				/*
-				 * if(num < 20) { absHeap.dumpHeapToFile("equals");
-				 * System.out.println(meth.getCFG().fullDump());
-				 * 
-				 * assert false; }
-				 */
-			}
 
 		}
 

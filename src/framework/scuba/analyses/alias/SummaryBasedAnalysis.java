@@ -79,8 +79,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relVH;
 	protected ProgramRel relMV;
 
-
-
 	protected CICG callGraph;
 
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
@@ -107,7 +105,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// perform downcast analysis
 		downcast();
-		
+
 		// perform points to set.
 		pointToSet();
 
@@ -541,7 +539,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relMV = (ProgramRel) ClassicProject.g().getTrgt("MV");
 		relVH = (ProgramRel) ClassicProject.g().getTrgt("ptsVH");
 
-
 		if (!relDcLocal.isOpen())
 			relDcLocal.load();
 
@@ -703,42 +700,42 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		return ret;
 	}
 
-	//point2set comparison.
+	// point2set comparison.
 	public void pointToSet() {
 		if (!relVH.isOpen())
 			relVH.load();
-		
+
 		if (!relMV.isOpen())
 			relMV.load();
-		
-		for(Register r : SummariesEnv.v().getProps()) {
+
+		for (Register r : SummariesEnv.v().getProps()) {
 			RelView view = relMV.getView();
 			view.selectAndDelete(1, r);
 			Iterable<jq_Method> res = view.getAry1ValTuples();
 			jq_Method meth = res.iterator().next();
 			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
-			Set<Alloc> sites = new HashSet<Alloc>();
+			Set<Quad> sites = new HashSet<Quad>();
 			for (AllocElem alloc : p2Set) {
-				sites.add(alloc.getAlloc());
+				sites.add(alloc.getAlloc().getAllocSite());
 			}
-			
+
 			RelView viewChord = relVH.getView();
 			viewChord.selectAndDelete(0, r);
-			if(viewChord.size() == 0)
+			if (viewChord.size() == 0)
 				continue;
 			Iterable<Quad> resChord = viewChord.getAry1ValTuples();
 			Set<Quad> pts = SetUtils.newSet(viewChord.size());
 			// no filter, add all
 			for (Quad inst : resChord)
 				pts.add(inst);
-			
+
 			System.out.println("P2Set for " + r + " in " + meth);
 			System.out.println("[Scuba] " + sites);
 			System.out.println("[Chord] " + pts);
-			
+
 		}
 	}
-	
+
 	// downcast analysis.
 	public void downcast() {
 		if (!relDcm.isOpen())
