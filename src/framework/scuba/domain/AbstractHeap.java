@@ -773,8 +773,6 @@ public class AbstractHeap extends Heap {
 			FieldElem field, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
 
-		long start = System.nanoTime();
-
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (src != null && dst != null && field != null) : "nulls!";
@@ -919,8 +917,6 @@ public class AbstractHeap extends Heap {
 				ret.val1 = res.val1 | ret.val1;
 			}
 		}
-
-		long end = System.nanoTime();
 
 		return ret;
 	}

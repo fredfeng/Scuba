@@ -10,7 +10,6 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.helper.ConstraintManager;
-import framework.scuba.helper.G;
 
 public class P2Set {
 
