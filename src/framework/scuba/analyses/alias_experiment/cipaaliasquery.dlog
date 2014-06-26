@@ -1,0 +1,19 @@
+# name=cipa-alias-resolve-dlog
+.include "F.dom"
+.include "H.dom"
+.include "V.dom"
+.bddvarorder V0xV1_F0_F1_H0_H1
+
+##input
+
+appsVV(v:V0,v1:V1)input
+
+VH(v:V0,h:H0) input
+
+##output
+VValias(v:V0,v1:V1) output
+
+
+##### cipa apps alias pairs
+VValias(v, v1) :- appsVV(v,v1), VH(v1,h), VH(v,h). 
+

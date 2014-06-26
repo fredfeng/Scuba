@@ -1,0 +1,35 @@
+# name=cspa-virtualcall-resolve-dlog
+
+.include "M.dom"
+.include "I.dom"
+.include "C.dom"
+.bddvarorder I0xM0xC0xC1
+
+# Context-sensitive virtual-call-resolve-experiment.
+
+# Author: haiyanzhu 
+##input
+reachableCM(c:C0,m:M0)input
+librariesM(m:M0)input
+CICM(c:C0,i:I0,d:C1,m:M0) input
+MIVirtual(m:M0,i:I0) input
+
+
+##constraints
+appsCM(c:C0, m:M0)
+CIVirtual(c:C0, i:I0)
+
+
+##output
+cspavirtualIM(i:I0, m:M0)output
+
+
+##rules
+appsCM(c,m) :- reachableCM(c,m), !librariesM(m).
+CIVirtual(c,i) :- appsCM(c,m), MIVirtual(m,i).
+
+
+
+
+##output
+cspavirtualIM(i, m) :- CICM(c,i,_,m), CIVirtual(c,i).

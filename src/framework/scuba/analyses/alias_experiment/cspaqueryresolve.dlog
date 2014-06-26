@@ -1,0 +1,31 @@
+# name=cspa-query-resolve-dlog
+.include "F.dom"
+.include "H.dom"
+.include "V.dom"
+.include "C.dom"
+
+.bddvarorder V0xV1_F0_F1_C0_C1
+
+
+
+VValias(v:V0,v1:V1) input
+
+CVC(c1:C0,v:V0,c2:C1) input # filtered version
+
+
+
+######## alias
+cspaVValias(v:V0,v1:V1) output
+
+### not alias
+cspaVVnotalias(v:V0,v1:V1) output
+
+
+
+
+####### resolve alias
+cspaVValias(v,v1)  :- VValias(v,v1), CVC(_,v,c), CVC(_,v1,c). 
+
+########## not alias
+cspaVVnotalias(v,v1)  :-  VValias(v,v1), !cspaVValias(v,v1).
+

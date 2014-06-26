@@ -1,0 +1,38 @@
+# name=cipa-virtualcall-resolve-dlog
+
+.include "M.dom"
+.include "I.dom"
+.bddvarorder I0xM0
+
+# Context-insensitive virtual-call-resolve-experiment.
+
+# Author: haiyanzhu 
+##input
+reachableM(m:M0)input
+librariesM(m:M0)input
+IM(i:I0,m:M0) input
+MIVirtual(m:M0,i:I0) input
+
+
+##constraints
+appsM(m:M0)
+appsIVirtual(i:I0)
+
+##output
+cipavirtualIM(i:I0, m:M0)output
+
+
+
+##rules
+appsM(m) :- reachableM(m), !librariesM(m).
+appsIVirtual(i) :- appsM(m), MIVirtual(m,i).
+
+
+##output
+cipavirtualIM(i, m) :- IM(i, m), appsIVirtual(i).
+
+
+
+
+
+

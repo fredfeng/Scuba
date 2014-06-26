@@ -1,0 +1,36 @@
+# name=data-dependence-pair-generate-dlog
+.include "F.dom"
+.include "V.dom"
+.include "M.dom"
+.include "T.dom"
+.bddvarorder M0_V0xV1_F0_F1_T0_T1
+
+reachableM(m:M0)input
+librariesM(m:M0)input
+
+MV(m:M0,v:V0)input
+
+MgetInstFldInst(m:M0,l:V0,r:V1,f:F0) input
+MputInstFldInst(m:M0,l:V0,f:F0,r:V1) input
+sub(t1:T1,t2:T0) input
+FT(f:F0,t:T0)input
+##constraints
+appsM(m:M0)
+ 
+
+appsVF(v:V0, f:F0)
+
+appsVV(v:V0,v1:V1)output
+
+
+appsM(m) :- reachableM(m), !librariesM(m).
+
+
+appsVF(v,f) :- appsM(m), MgetInstFldInst(m,_,v,f).
+appsVF(v,f) :- appsM(m), MputInstFldInst(m,v,f,_).
+
+#appsVV(v,v1) :- appsVF(v,f), appsVF(v1,f), v<v1.
+	
+	
+appsVV(v,v1) :- appsVF(v,f), FT(f,t), appsVF(v1,f1), FT(f1,t1), sub(t,t1),  v<v1.
+appsVV(v,v1) :- appsVF(v,f), FT(f,t), appsVF(v1,f1), FT(f1,t1), sub(t1,t), v<v1.
