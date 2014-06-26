@@ -659,13 +659,10 @@ public class AbstractHeap extends Heap {
 		if (this.equals(calleeHeap)) {
 			isRecursive = true;
 		}
-		int iteration = 0;
 		// this is the real updating
 		if (!isRecursive) {
 			while (true) {
-				iteration++;
 				boolean go = false;
-
 				Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = calleeHeap.locToP2Set
 						.entrySet().iterator();
 				while (it.hasNext()) {
@@ -697,9 +694,7 @@ public class AbstractHeap extends Heap {
 				}
 			}
 		} else {
-			iteration++;
 			while (true) {
-
 				boolean go = false;
 				// this is used for updating for recursive calls
 				Map<Pair<AbsMemLoc, FieldElem>, Set<Pair<AbsMemLoc, P2Set>>> result = new HashMap<Pair<AbsMemLoc, FieldElem>, Set<Pair<AbsMemLoc, P2Set>>>();
@@ -1843,6 +1838,23 @@ public class AbstractHeap extends Heap {
 	public void fillPropSet() {
 		Set<AllocElem> wl = new HashSet<AllocElem>();
 		Set<AbsMemLoc> locals = new HashSet<AbsMemLoc>();
+		// this is a post-processing which create pseudo-locals for
+		// parameters which we want to propagate
+		for (ParamElem param : summary.formals) {
+			Register v = param.getParameter();
+			if (SummariesEnv.v().toProp(v)) {
+				// create a pseudo-local element
+				LocalVarElem pLocal = getLocalVarElem(summary.getMethod()
+						.getDeclaringClass(), summary.getMethod(), v);
+				// do an extra assign for local = parameter
+				// put this pseudo-local element into the heap
+				handleAssignStmt(summary.getMethod().getDeclaringClass(),
+						summary.getMethod(), v, VariableType.LOCAL_VARIABLE, v,
+						VariableType.PARAMEMTER);
+				// instead, we prop this pseudo-local element
+				locals.add(pLocal);
+			}
+		}
 		// add all locations that are guaranteed to be propagated to the caller
 		for (Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = locToP2Set
 				.entrySet().iterator(); it.hasNext();) {
@@ -1850,6 +1862,7 @@ public class AbstractHeap extends Heap {
 			Pair<AbsMemLoc, FieldElem> pair = entry.getKey();
 			AbsMemLoc loc = entry.getKey().val0;
 
+			// this is the normal propagation part
 			if (loc instanceof AccessPath || loc instanceof ParamElem
 					|| loc instanceof StaticElem || loc instanceof RetElem) {
 				// add all potential allocs into wl
