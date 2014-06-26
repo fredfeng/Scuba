@@ -12,8 +12,6 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.helper.ConstraintManager;
-import framework.scuba.helper.G;
-import framework.scuba.utils.StringUtil;
 
 public class MemLocInstnItem {
 
@@ -218,7 +216,8 @@ public class MemLocInstnItem {
 					+ loc + " and we can remove it from orgs";
 			orgs.remove((AccessPath) loc);
 			for (AbsMemLoc loc1 : instnLocSet.keySet()) {
-				result.getSum().addToDepMap(loc1,
+				result.getSum().addToDepMap(
+						new Pair<AbsMemLoc, FieldElem>(loc1, field),
 						new Pair<MemLocInstnItem, Set<AccessPath>>(this, orgs));
 			}
 			ret = callerHeap.instnLookup(instnLocSet, field);

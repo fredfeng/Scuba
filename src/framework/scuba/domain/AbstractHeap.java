@@ -757,6 +757,18 @@ public class AbstractHeap extends Heap {
 			}
 		}
 
+		if (ret.val1) {
+			if (SummariesEnv.v().jump) {
+				// we need to reanalyze this method (conservative)
+				if (summary == null) {
+					return ret;
+				}
+				for (Summary s : summary.jumpEffectSet) {
+					s.jumpInstnSet.remove(summary);
+				}
+			}
+		}
+
 		return ret;
 	}
 
@@ -1395,7 +1407,7 @@ public class AbstractHeap extends Heap {
 		// this is a conservatively way to clear the cache
 		if (SummariesEnv.v().useMemLocInstnCache) {
 			if (ret.val0) {
-				clearCache(src);
+				clearCache(src, f);
 				if (SummariesEnv.v().jump) {
 					if (src instanceof LocalVarElem) {
 						Register v = ((LocalVarElem) src).getLocal();
@@ -1419,7 +1431,7 @@ public class AbstractHeap extends Heap {
 	// clear all the related cache including:
 	// 1. memory location instantiation cache
 	// 2. constraint instantiation cache
-	protected Pair<Boolean, Boolean> clearCache(AbsMemLoc src) {
+	protected Pair<Boolean, Boolean> clearCache(AbsMemLoc src, FieldElem f) {
 		boolean ret1 = false;
 		boolean ret2 = false;
 		// this check is for the final summary (conclusion)
@@ -1427,7 +1439,8 @@ public class AbstractHeap extends Heap {
 			return new Pair<Boolean, Boolean>(ret1, ret2);
 		}
 		// clear the memory location instantiation cache
-		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.locDepMap.get(src);
+		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.locDepMap
+				.get(new Pair<AbsMemLoc, FieldElem>(src, f));
 		// possible that no one currently depends on src
 		if (deps == null) {
 			return new Pair<Boolean, Boolean>(ret1, ret2);

@@ -1331,9 +1331,10 @@ public class Summary {
 		return absHeap.size();
 	}
 
-	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(AbsMemLoc loc,
+	public Map<MemLocInstnItem, Set<AccessPath>> addToDepMap(
+			Pair<AbsMemLoc, FieldElem> pair,
 			Pair<MemLocInstnItem, Set<AccessPath>> deps) {
-		return locDepMap.add(loc, deps);
+		return locDepMap.add(pair, deps);
 	}
 
 	public void removeLocals() {
