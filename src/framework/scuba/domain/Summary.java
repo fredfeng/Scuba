@@ -1162,8 +1162,7 @@ public class Summary {
 			// do not override current method, call genCst recursively.
 			BoolExpr t = ConstraintManager.genFalse();
 			for (jq_Class sub : Env.getSuccessors(statT)) {
-				if (sub.getVirtualMethod(callee.getNameAndDesc()) != null
-						|| hasInherit(callee, sub, tgtSet))
+				if (sub.getVirtualMethod(callee.getNameAndDesc()) != null)
 					continue;
 				assert !sub.equals(statT) : "do not repeat!";
 				BoolExpr phi = genCst(p2Set, callee, sub, tgtSet);
