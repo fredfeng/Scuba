@@ -172,7 +172,6 @@ public class ConstraintManager {
 
 		try {
 			// generate a new instance!
-
 			if (SummariesEnv.v().isUsingSimplifyCache()) {
 				ret = simplifyCache.get(expr.toString());
 				if (ret == null) {
