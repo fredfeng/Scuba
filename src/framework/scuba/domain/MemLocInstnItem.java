@@ -227,11 +227,12 @@ public class MemLocInstnItem {
 			// transitively reachable from the current instantiated memory
 			// locations in order to be sound
 			// if (SummariesEnv.v().instnSmashedAP) {
-			// Set<AbsMemLoc> visited = new HashSet<AbsMemLoc>();
+			//
+			// Set<AccessPath> visited = new HashSet<AccessPath>();
 			// LinkedHashSet<Pair<AccessPath, BoolExpr>> wl = new
 			// LinkedHashSet<Pair<AccessPath, BoolExpr>>();
-			// Set<Pair<AbsMemLoc, BoolExpr>> targets = new
-			// HashSet<Pair<AbsMemLoc, BoolExpr>>();
+			// MemLocInstnSet targets = new MemLocInstnSet();
+			//
 			// for (AbsMemLoc loc1 : instnLocSet.keySet()) {
 			// BoolExpr expr1 = instnLocSet.get(loc1);
 			// if (loc1 instanceof AccessPath
@@ -243,9 +244,36 @@ public class MemLocInstnItem {
 			// while (!wl.isEmpty()) {
 			// Pair<AccessPath, BoolExpr> elem = wl.iterator().next();
 			// wl.remove(elem);
-			// AbsMemLoc loc2 = elem.val0;
-			// BoolExpr expr2 = elem.val1;
+			// AccessPath ap = elem.val0;
+			// AbsMemLoc b = ap.getBase();
+			// FieldElem f = ap.getField();
+			// Set<FieldElem> smashedFields = ap.getSmashedFields();
+			// BoolExpr cst = elem.val1;
+			// visited.add(ap);
+			// MemLocInstnSet worker = new MemLocInstnSet(ap, cst);
 			//
+			// for (FieldElem f1 : ap.getFields()) {
+			// if (!smashedFields.contains(f1)) {
+			// continue;
+			// }
+			// if (f.equals(f1)) {
+			// MemLocInstnSet next = callerHeap.instnLookup(
+			// worker, f1);
+			// targets.addAll(next);
+			// }
+			// if (smashedFields.contains(f1)) {
+			// MemLocInstnSet next = callerHeap.instnLookup(
+			// worker, f1);
+			// for (AbsMemLoc loc2 : next.keySet()) {
+			// if (loc2 instanceof AccessPath
+			// && !visited.contains(loc2)) {
+			// BoolExpr expr2 = next.get(loc2);
+			// wl.add(new Pair<AccessPath, BoolExpr>(
+			// (AccessPath) loc2, expr2));
+			// }
+			// }
+			// }
+			// }
 			// }
 			// }
 

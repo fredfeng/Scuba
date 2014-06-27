@@ -58,7 +58,7 @@ public abstract class AccessPath extends HeapObject {
 	}
 
 	// only when the ap has f can this method be called.
-	public Set<FieldElem> getSmashedFields(FieldElem f) {
+	public Set<FieldElem> getPreSmashedFields(FieldElem f) {
 		assert hasFieldSelector(f) : "getSmashedFields(f) can only "
 				+ "be called when it is a smashed access path!";
 		Set<FieldElem> ret = new HashSet<FieldElem>();

@@ -46,6 +46,9 @@ public class SummariesEnv {
 
 	// all reachable methods
 	protected Set<jq_Method> reachableMethods = new HashSet<jq_Method>();
+	
+	// all library methods
+	protected Set<jq_Method> libMeths = new HashSet<jq_Method>();
 
 	// cheating
 	protected boolean cheating = false;
@@ -55,7 +58,7 @@ public class SummariesEnv {
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = true;
+	protected boolean disableCst = false;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
@@ -234,6 +237,14 @@ public class SummariesEnv {
 
 	public void setReachableMethods(Set<jq_Method> reachableMethods) {
 		this.reachableMethods = reachableMethods;
+	}
+	
+	public Set<jq_Method> getLibMeths() {
+		return libMeths;
+	}
+
+	public void setLibMeths(Set<jq_Method> libMeths) {
+		this.libMeths = libMeths;
 	}
 
 	public boolean isStubMethod(String signature) {

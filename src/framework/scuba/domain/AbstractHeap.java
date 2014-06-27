@@ -1269,7 +1269,9 @@ public class AbstractHeap extends Heap {
 	// AllocElem
 	public AllocElem getAllocElem(AllocElem other, ProgramPoint point) {
 		AllocElem ret = other.clone();
-		ret.appendContextFront(point);
+		if (!SummariesEnv.v().getLibMeths()
+				.contains(point.getBelongingMethod()))
+			ret.appendContextFront(point);
 
 		if (memLocFactory.containsKey(ret)) {
 			return (AllocElem) memLocFactory.get(ret);
@@ -1319,7 +1321,7 @@ public class AbstractHeap extends Heap {
 						AccessPath path = ((AccessPath) loc).getPrefix(field);
 						System.out.println("***** " + "getting smashed fields");
 						Set<FieldElem> smashedFields = ((AccessPath) loc)
-								.getSmashedFields(field);
+								.getPreSmashedFields(field);
 						System.out.println("******* " + "smashed fields: "
 								+ smashedFields);
 						if (path instanceof LocalAccessPath) {

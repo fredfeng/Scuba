@@ -21,15 +21,17 @@ public class MemLocInstnSet {
 		instnLocSet.put(loc, constraint);
 	}
 
-	public void add(AbsMemLoc loc) {
+	public void add(AbsMemLoc loc, BoolExpr expr) {
 		if (!instnLocSet.containsKey(loc)) {
-			instnLocSet.put(loc, ConstraintManager.genTrue());
+			instnLocSet.put(loc, expr);
 		}
 	}
 
-	public void addAll(Set<AbsMemLoc> locs) {
-		for (AbsMemLoc loc : locs) {
-			add(loc);
+	public void addAll(MemLocInstnSet other) {
+		for (AbsMemLoc loc : other.keySet()) {
+			if (!instnLocSet.containsKey(loc)) {
+				instnLocSet.put(loc, other.get(loc));
+			}
 		}
 	}
 
