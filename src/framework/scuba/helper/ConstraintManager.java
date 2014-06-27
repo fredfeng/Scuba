@@ -61,6 +61,10 @@ public class ConstraintManager {
 
 	// map from term to heapObject. for unlifting.
 	static Map<String, AccessPath> term2Ap = new HashMap<String, AccessPath>();
+	
+	//map from smashed accesspath to a counter
+	static Map<AccessPath, Integer> ap2Counter = new HashMap<AccessPath, Integer>();
+
 
 	// this is my little cute cache for constraint instantiation
 	public static final CstInstnCache instnCache = new CstInstnCache();
@@ -129,7 +133,17 @@ public class ConstraintManager {
 
 			} else if (ho instanceof AccessPath) {
 				AccessPath ap = (AccessPath) ho;
-				String symbol = "v" + ap.getId();
+				String symbol = "";
+				if (ap.isSmashed()) {
+					int cnt = 1;
+					if (ap2Counter.get(ap) != null)
+						cnt = ap2Counter.get(ap) + 1;
+
+					ap2Counter.put(ap, cnt);
+					symbol = "v" + ap.getId() + "s" + cnt;
+				} else {
+					symbol = "v" + ap.getId();
+				}
 				// put to map for unlifting later.
 				term2Ap.put(symbol, ap);
 				Expr o = ctx.MkConst(symbol, ctx.IntSort());
@@ -397,9 +411,6 @@ public class ConstraintManager {
 		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
 		if(p2Set.isEmpty()) return genTrue();
-
-		assert !p2Set.isEmpty() : "cannot be empty";
-
 		assert typeInt > 0 : "Invalid type int.";
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
@@ -413,12 +424,10 @@ public class ConstraintManager {
 
 	// generate equality typing constraint.
 	public static BoolExpr genEqTyping(P2Set p2Set, jq_Class t) {
-
 		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
 		if(p2Set.isEmpty()) return genTrue();
 
-		assert !p2Set.isEmpty() : "cannot be empty";
 		assert typeInt > 0 : "Invalid type int.";
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
@@ -438,7 +447,6 @@ public class ConstraintManager {
 		assert typeInt > 0 : "Invalid type int.";
 		if(p2Set.isEmpty()) return genTrue();
 
-		assert !p2Set.isEmpty() : "cannot be empty";
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
@@ -465,7 +473,6 @@ public class ConstraintManager {
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
 		if(p2Set.isEmpty()) return genTrue();
-		assert !p2Set.isEmpty() : "cannot be empty";
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);

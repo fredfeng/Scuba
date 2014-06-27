@@ -549,6 +549,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		Iterable<jq_Method> res = relLibM.getAry1ValTuples();
 		libMeths = SetUtils.iterableToSet(res, relLibM.size());
+		SummariesEnv.v().setLibMeths(libMeths);
 
 		// pass relCha ref to SummariesEnv
 		Env.buildClassHierarchy();
