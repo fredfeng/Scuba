@@ -125,9 +125,6 @@ public class ConstraintManager {
 				// always true for jq_array.
 				if (jType instanceof jq_Array)
 					return (BoolExpr) cur;
-				// assert jType instanceof jq_Class :
-				// "alloc object should be a jq_class. "
-				// + "[type]: " + jType + " [AllocElem]: " + ae;
 				cur = ctx.MkInt(Env.getConstTerm4Class((jq_Class) jType));
 
 			} else if (ho instanceof AccessPath) {
@@ -145,21 +142,10 @@ public class ConstraintManager {
 			// lift type(o)=T
 			if (isEqual) {
 				BoolExpr eq = ctx.MkEq(cur, ctx.MkInt(typeInt));
-				// perform simplification like 2=2 -> true, 2=3 -> false
-				// Expr simEq = eq.Simplify();
-				// assert simEq instanceof BoolExpr :
-				// "Must return a boolean expr.";
-				// return (BoolExpr)simEq;
 				return eq;
-
 				// lift type(o)<=T
 			} else {
 				BoolExpr le = ctx.MkLe((IntExpr) cur, ctx.MkInt(typeInt));
-				// perform simplification like 2=2 -> true, 2=3 -> false
-				// Expr simLe = le.Simplify();
-				// assert simLe instanceof BoolExpr :
-				// "Must return a boolean expr.";
-				// return (BoolExpr)simLe;
 				return le;
 			}
 
@@ -359,10 +345,6 @@ public class ConstraintManager {
 				interCache.put(new Pair<String, String>(first.toString(),
 						second.toString()), ret);
 			}
-			// try to simplify.
-			// Expr sim = inter.Simplify();
-			// assert inter instanceof BoolExpr :
-			// "Unknown constraints in intersection!";
 			return ret;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -403,9 +385,6 @@ public class ConstraintManager {
 				unionCache.put(new Pair<String, String>(first.toString(),
 						second.toString()), ret);
 			}
-			// try to simplify.
-			// Expr sim = union.Simplify();
-			// assert sim instanceof BoolExpr : "Unknown constraints in union!";
 			return ret;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -418,6 +397,10 @@ public class ConstraintManager {
 	public static BoolExpr genSubTyping(P2Set p2Set, jq_Class t) {
 		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
+		if(p2Set.isEmpty()) return genTrue();
+
+		assert !p2Set.isEmpty() : "cannot be empty";
+
 		assert typeInt > 0 : "Invalid type int.";
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
@@ -434,6 +417,9 @@ public class ConstraintManager {
 
 		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
+		if(p2Set.isEmpty()) return genTrue();
+
+		assert !p2Set.isEmpty() : "cannot be empty";
 		assert typeInt > 0 : "Invalid type int.";
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
@@ -451,6 +437,9 @@ public class ConstraintManager {
 
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
+		if(p2Set.isEmpty()) return genTrue();
+
+		assert !p2Set.isEmpty() : "cannot be empty";
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
@@ -476,6 +465,8 @@ public class ConstraintManager {
 
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
+		if(p2Set.isEmpty()) return genTrue();
+		assert !p2Set.isEmpty() : "cannot be empty";
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
@@ -508,11 +499,6 @@ public class ConstraintManager {
 		// actually we don't need to clone a new instance. Since we will create
 		// a fresh new one during intersect or union
 		return expr;
-		/*
-		 * try { BoolExpr clone = ctx.MkOr(new BoolExpr[] { expr, expr });
-		 * return (BoolExpr)clone.Simplify(); } catch (Z3Exception e) { // TODO
-		 * Auto-generated catch block e.printStackTrace(); } return null;
-		 */
 	}
 
 	/**

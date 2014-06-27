@@ -1258,7 +1258,9 @@ public class AbstractHeap extends Heap {
 	// AllocElem
 	public AllocElem getAllocElem(AllocElem other, ProgramPoint point) {
 		AllocElem ret = other.clone();
-		ret.appendContextFront(point);
+		if (!SummariesEnv.v().getLibMeths()
+				.contains(point.getBelongingMethod()))
+			ret.appendContextFront(point);
 
 		if (memLocFactory.containsKey(ret)) {
 			return (AllocElem) memLocFactory.get(ret);
