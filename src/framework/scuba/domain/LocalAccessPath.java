@@ -2,22 +2,8 @@ package framework.scuba.domain;
 
 public class LocalAccessPath extends AccessPath {
 
-	// base can be an AccessPath, a ParamElem or a StaticElem
-	// i.e., AccessPath is a recursive data structure
-	final protected AbsMemLoc base;
-
-	final protected FieldElem field;
-
-	protected int Id;
-
 	public LocalAccessPath(AbsMemLoc base, FieldElem field, int Id) {
-		this.base = base;
-		this.field = field;
-		this.Id = Id;
-		// when creating an AccessPath, add the field into the fields set of the
-		// base because the base has such a field
-		base.addField(field);
-		length = base.length + 1;
+		super(base, field, Id);
 	}
 
 	public AbsMemLoc getBase() {

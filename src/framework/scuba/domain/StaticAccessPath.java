@@ -1,19 +1,9 @@
 package framework.scuba.domain;
 
 public class StaticAccessPath extends AccessPath {
-	// base is a StaticElem
-	final protected AbsMemLoc base;
-
-	final protected FieldElem field;
-
-	protected int Id;
 
 	public StaticAccessPath(AbsMemLoc base, FieldElem field, int Id) {
-		this.base = base;
-		this.field = field;
-		this.Id = Id;
-		base.addField(field);
-		this.length = base.length + 1;
+		super(base, field, Id);
 	}
 
 	public AbsMemLoc getBase() {

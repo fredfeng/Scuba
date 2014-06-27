@@ -2,6 +2,7 @@ package framework.scuba.domain;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.microsoft.z3.BoolExpr;
@@ -38,6 +39,10 @@ public class MemLocInstnSet {
 
 	public boolean containsKey(AbsMemLoc loc) {
 		return instnLocSet.containsKey(loc);
+	}
+
+	public Set<Entry<AbsMemLoc, BoolExpr>> entrySet() {
+		return instnLocSet.entrySet();
 	}
 
 	public Set<AbsMemLoc> keySet() {

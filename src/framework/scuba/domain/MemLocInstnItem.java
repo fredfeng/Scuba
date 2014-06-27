@@ -1,8 +1,10 @@
 package framework.scuba.domain;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
@@ -220,6 +222,33 @@ public class MemLocInstnItem {
 						new Pair<AbsMemLoc, FieldElem>(loc1, field),
 						new Pair<MemLocInstnItem, Set<AccessPath>>(this, orgs));
 			}
+
+			// a work-list algorithm for find all locations that are
+			// transitively reachable from the current instantiated memory
+			// locations in order to be sound
+			// if (SummariesEnv.v().instnSmashedAP) {
+			// Set<AbsMemLoc> visited = new HashSet<AbsMemLoc>();
+			// LinkedHashSet<Pair<AccessPath, BoolExpr>> wl = new
+			// LinkedHashSet<Pair<AccessPath, BoolExpr>>();
+			// Set<Pair<AbsMemLoc, BoolExpr>> targets = new
+			// HashSet<Pair<AbsMemLoc, BoolExpr>>();
+			// for (AbsMemLoc loc1 : instnLocSet.keySet()) {
+			// BoolExpr expr1 = instnLocSet.get(loc1);
+			// if (loc1 instanceof AccessPath
+			// && ((AccessPath) loc1).isSmashed()) {
+			// wl.add(new Pair<AccessPath, BoolExpr>(
+			// (AccessPath) loc1, expr1));
+			// }
+			// }
+			// while (!wl.isEmpty()) {
+			// Pair<AccessPath, BoolExpr> elem = wl.iterator().next();
+			// wl.remove(elem);
+			// AbsMemLoc loc2 = elem.val0;
+			// BoolExpr expr2 = elem.val1;
+			//
+			// }
+			// }
+
 			ret = callerHeap.instnLookup(instnLocSet, field);
 			memLocInstnCache.put(loc, ret);
 		} else {

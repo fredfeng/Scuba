@@ -90,6 +90,17 @@ public class AbstractHeap extends Heap {
 		if (loc.isArgDerived()) {
 			// get the default target given the memory location and the field
 			AccessPath defaultTarget = getDefaultTarget(loc, field);
+
+			System.out
+					.println("*************************************************");
+			System.out.println("default target of : " + loc + " with field : "
+					+ field);
+			System.out.println(defaultTarget);
+			System.out.println("smashed fields: "
+					+ defaultTarget.getSmashedFields());
+			System.out
+					.println("*************************************************");
+
 			// always find the default p2set of (loc, field)
 			P2Set defaultP2Set = new P2Set(defaultTarget);
 			// return the p2set always including the default p2set
@@ -1306,7 +1317,11 @@ public class AbstractHeap extends Heap {
 						assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
 						// only AccessPath has field selectors
 						AccessPath path = ((AccessPath) loc).getPrefix(field);
-
+						System.out.println("***** " + "getting smashed fields");
+						Set<FieldElem> smashedFields = ((AccessPath) loc)
+								.getSmashedFields(field);
+						System.out.println("******* " + "smashed fields: "
+								+ smashedFields);
 						if (path instanceof LocalAccessPath) {
 							ret = getLocalAccessPath((LocalAccessPath) path);
 						} else if (path instanceof StaticAccessPath) {
@@ -1315,6 +1330,8 @@ public class AbstractHeap extends Heap {
 						} else {
 							assert false : "only access path is allowed!";
 						}
+						// TODO changing the location potentially dangerous!
+						ret.addSmashedFields(smashedFields);
 					} else {
 						if (loc instanceof StaticElem) {
 							ret = Env.getStaticAccessPath((StaticElem) loc,
@@ -1322,12 +1339,20 @@ public class AbstractHeap extends Heap {
 						} else if (loc instanceof ParamElem) {
 							ret = getLocalAccessPath((ParamElem) loc, field);
 						} else if (loc instanceof AccessPath) {
+							// we should call the method without parameters
+							// because loc is not a smashed access path!
+							Set<FieldElem> smashedFields = ((AccessPath) loc)
+									.getSmashedFields();
 							if (loc instanceof StaticAccessPath) {
 								ret = Env.getStaticAccessPath(
 										(StaticAccessPath) loc, field);
+								// TODO changing the location
+								ret.addSmashedFields(smashedFields);
 							} else if (loc instanceof LocalAccessPath) {
 								ret = getLocalAccessPath((LocalAccessPath) loc,
 										field);
+								// TODO changing the location
+								ret.addSmashedFields(smashedFields);
 							} else {
 								assert false : "only two kinds of access path!";
 							}
