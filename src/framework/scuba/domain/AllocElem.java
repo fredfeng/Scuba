@@ -67,6 +67,11 @@ public class AllocElem extends HeapObject {
 	}
 
 	@Override
+	public int countFieldSelector(FieldElem field) {
+		return 0;
+	}
+
+	@Override
 	public AllocElem clone() {
 		return new AllocElem(alloc, context.clone());
 	}

@@ -87,7 +87,7 @@ public class SumConclusion {
 		}
 
 		if (G.dbgAntlr) {
-			StringUtil.reportInfo("[dbgAntlr] " + "[p2 set in final sum] ");
+			StringUtil.reportInfo("[dbgAntlr] " + "[p2 set in final summary] ");
 			StringUtil
 					.reportInfo("[dbgAntlr] "
 							+ "------------------------------------------------------------------------------------");

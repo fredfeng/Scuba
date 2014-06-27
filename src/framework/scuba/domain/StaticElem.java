@@ -48,4 +48,9 @@ public class StaticElem extends StackObject {
 	public boolean hasFieldSelector(FieldElem field) {
 		return false;
 	}
+
+	@Override
+	public int countFieldSelector(FieldElem field) {
+		return 0;
+	}
 }

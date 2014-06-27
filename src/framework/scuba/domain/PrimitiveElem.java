@@ -21,6 +21,12 @@ public class PrimitiveElem extends StackObject {
 	}
 
 	@Override
+	public int countFieldSelector(FieldElem field) {
+		assert false : "we cannot do this!";
+		return 0;
+	}
+
+	@Override
 	public boolean equals(Object other) {
 		return (other instanceof PrimitiveElem);
 	}

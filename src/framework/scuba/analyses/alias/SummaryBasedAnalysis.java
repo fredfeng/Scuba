@@ -659,6 +659,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		LocalVarElem local = sum1.getAbsHeap().getLocalVarElem(clazz, method,
 				variable);
+
 		if (local == null) {
 			if (G.dbgAntlr) {
 				StringUtil.reportInfo("[dbgAntlr] "
@@ -702,6 +703,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (!relMV.isOpen())
 			relMV.load();
 
+		int exact = 0;
+		int subSet = 0;
+		int superSet = 0;
+		int other = 0;
 		for (Register r : SummariesEnv.v().getProps()) {
 			RelView view = relMV.getView();
 			view.selectAndDelete(1, r);
@@ -726,8 +731,28 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			System.out.println("P2Set for " + r + " in " + meth);
 			System.out.println("[Scuba] " + sites);
 			System.out.println("[Chord] " + pts);
-
+			// assert (pts.containsAll(sites));
+			if (pts.containsAll(sites) && sites.containsAll(pts)) {
+				exact++;
+			} else if (pts.containsAll(sites)) {
+				subSet++;
+			} else if (sites.containsAll(pts)) {
+				superSet++;
+			} else {
+				other++;
+			}
 		}
+
+		System.out
+				.println("============================================================");
+		System.out.println("[Scuba] [Exhausitive Comparision Statistics]");
+		System.out.println("[Scuba] and [Chord] exactly the same: " + exact);
+		System.out.println("[Scuba] is better than [Chord]: " + subSet);
+		System.out.println("[Scuba] is worse than [Chord]: " + superSet);
+		System.out.println("[Scuba] and [Chord] have different results: "
+				+ other);
+		System.out
+				.println("============================================================");
 	}
 
 	// downcast analysis.

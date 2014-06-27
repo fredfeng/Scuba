@@ -36,6 +36,11 @@ public class RetElem extends StackObject {
 	}
 
 	@Override
+	public int countFieldSelector(FieldElem field) {
+		return 0;
+	}
+
+	@Override
 	public boolean equals(Object other) {
 		return (other instanceof RetElem)
 				&& (clazz.equals(((RetElem) other).clazz))

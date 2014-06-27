@@ -659,9 +659,18 @@ public class AbstractHeap extends Heap {
 		if (this.equals(calleeHeap)) {
 			isRecursive = true;
 		}
+		int iteration = 0;
 		// this is the real updating
 		if (!isRecursive) {
 			while (true) {
+				iteration++;
+				if (G.dbgAntlr) {
+					StringUtil
+							.reportInfo("[dbgAntlr] "
+									+ "****************************************************");
+					StringUtil.reportInfo("[dbgAntlr] " + "[" + iteration
+							+ "]-th iteration");
+				}
 				boolean go = false;
 				Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = calleeHeap.locToP2Set
 						.entrySet().iterator();
@@ -686,6 +695,16 @@ public class AbstractHeap extends Heap {
 						go = res.val0 | go;
 					}
 				}
+
+				if (G.dbgAntlr) {
+					StringUtil.reportInfo("[dbgAntlr] " + "[Iteration Result] "
+							+ "[" + iteration + "]-th iteration: " + "[" + go
+							+ "]");
+					StringUtil
+							.reportInfo("[dbgAntlr] "
+									+ "****************************************************");
+				}
+
 				if (!go) {
 					break;
 				}
@@ -695,6 +714,14 @@ public class AbstractHeap extends Heap {
 			}
 		} else {
 			while (true) {
+				iteration++;
+				if (G.dbgAntlr) {
+					StringUtil
+							.reportInfo("[dbgAntlr] "
+									+ "****************************************************");
+					StringUtil.reportInfo("[dbgAntlr] " + "[" + iteration
+							+ "]-th iteration");
+				}
 				boolean go = false;
 				// this is used for updating for recursive calls
 				Map<Pair<AbsMemLoc, FieldElem>, Set<Pair<AbsMemLoc, P2Set>>> result = new HashMap<Pair<AbsMemLoc, FieldElem>, Set<Pair<AbsMemLoc, P2Set>>>();
@@ -743,6 +770,16 @@ public class AbstractHeap extends Heap {
 						go = res.val0 | go;
 					}
 				}
+
+				if (G.dbgAntlr) {
+					StringUtil.reportInfo("[dbgAntlr] " + "[Iteration Result] "
+							+ "[" + iteration + "]-th iteration: " + "[" + go
+							+ "]");
+					StringUtil
+							.reportInfo("[dbgAntlr] "
+									+ "****************************************************");
+				}
+
 				if (!go) {
 					break;
 				}
@@ -809,7 +846,7 @@ public class AbstractHeap extends Heap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
-		if (G.dbgAntlr && G.dbgInstn) {
+		if (G.dbgAntlr) {
 			StringUtil.reportInfo("[dbgAntlr] "
 					+ "[instantiating callee edge]: " + "method Id: "
 					+ G.IdMapping.get(calleeHeap.summary));
@@ -848,7 +885,7 @@ public class AbstractHeap extends Heap {
 			return ret;
 		}
 
-		if (G.dbgAntlr && G.dbgInstn) {
+		if (G.dbgAntlr) {
 			StringUtil.reportInfo("[dbgAntlr] "
 					+ "-------------------------------------------");
 			StringUtil.reportInfo("[dbgAntlr] "
@@ -900,7 +937,7 @@ public class AbstractHeap extends Heap {
 				Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 						newSrc, field);
 
-				if (G.dbgAntlr && G.dump) {
+				if (G.dbgAntlr && G.dbgInstn && G.dump) {
 					if (G.IdMapping.get(summary) == G.sample
 							|| G.IdMapping.get(summary) == G.sample1
 							|| G.IdMapping.get(summary) == G.sample2) {
@@ -915,7 +952,14 @@ public class AbstractHeap extends Heap {
 						newDst1, cst));
 				ret.val0 = res.val0 | ret.val0;
 				ret.val1 = res.val1 | ret.val1;
+
 			}
+		}
+
+		if (G.dbgAntlr) {
+			StringUtil.reportInfo("[dbgAntlr] " + "[Instn Result] "
+					+ "change heap: " + "[" + ret.val0 + "] "
+					+ "change summary: " + "[" + ret.val1 + "]");
 		}
 
 		return ret;
@@ -966,6 +1010,19 @@ public class AbstractHeap extends Heap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
+		if (G.dbgAntlr) {
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[instantiating (recursive) callee edge]: "
+					+ "method Id: " + G.IdMapping.get(calleeHeap.summary));
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+			StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + src);
+			StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
+			StringUtil.reportInfo("[dbgAntlr] " + "DST: " + dst);
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+		}
+
 		// instantiate the calleeCst
 		BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
 
@@ -982,6 +1039,17 @@ public class AbstractHeap extends Heap {
 			return ret;
 		}
 
+		if (G.dbgAntlr) {
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[the callee edge is instantiated into]: "
+					+ instnSrc.size() + "src locations " + "and "
+					+ instnDst.size() + " dst locations");
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+		}
+
 		for (AbsMemLoc newSrc : instnSrc.keySet()) {
 			for (AbsMemLoc newDst : instnDst.keySet()) {
 
@@ -990,6 +1058,18 @@ public class AbstractHeap extends Heap {
 				HeapObject newDst1 = (HeapObject) newDst;
 
 				assert (newDst1 != null) : "null!";
+
+				if (G.dbgAntlr && G.dbgInstn) {
+					StringUtil.reportInfo("[dbgAntlr] "
+							+ "[instantiated (recurisve) caller edge]: ");
+					StringUtil.reportInfo("[dbgAntlr] "
+							+ "-------------------------------------------");
+					StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + newSrc);
+					StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
+					StringUtil.reportInfo("[dbgAntlr] " + "DST: " + newDst1);
+					StringUtil.reportInfo("[dbgAntlr] "
+							+ "-------------------------------------------");
+				}
 
 				BoolExpr cst1 = instnSrc.get(newSrc);
 				BoolExpr cst2 = instnDst.get(newDst);
@@ -1003,6 +1083,13 @@ public class AbstractHeap extends Heap {
 						cst)));
 			}
 		}
+
+		if (G.dbgAntlr) {
+			StringUtil.reportInfo("[dbgAntlr] " + "[Instn Result] "
+					+ "change heap: " + "[" + ret.val0 + "] "
+					+ "change summary: " + "[" + ret.val1 + "]");
+		}
+
 		return ret;
 	}
 
@@ -1329,33 +1416,108 @@ public class AbstractHeap extends Heap {
 			}
 		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.CONTROL) {
 			if (loc.isArgDerived()) {
-				if (loc instanceof AccessPath) {
-					if (loc.length >= SummariesEnv.v().smashLength) {
-						if (loc instanceof LocalAccessPath) {
-							ret = getLocalAccessPath((LocalAccessPath) loc);
-						} else if (loc instanceof StaticAccessPath) {
+				if (loc.countFieldSelector(field) >= SummariesEnv.v().smashLength) {
+					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+					// only AccessPath has field selectors
+					AccessPath path = ((AccessPath) loc).getPrefix(field);
+					if (path instanceof LocalAccessPath) {
+						ret = getLocalAccessPath((LocalAccessPath) path);
+					} else if (path instanceof StaticAccessPath) {
+						ret = Env.getStaticAccessPath((StaticAccessPath) path);
+					} else {
+						assert false : "only access path is allowed!";
+					}
+				} else {
+					if (loc instanceof StaticElem) {
+						ret = Env.getStaticAccessPath((StaticElem) loc, field);
+					} else if (loc instanceof ParamElem) {
+						ret = getLocalAccessPath((ParamElem) loc, field);
+					} else if (loc instanceof AccessPath) {
+						if (loc instanceof StaticAccessPath) {
+							ret = Env.getStaticAccessPath(
+									(StaticAccessPath) loc, field);
+						} else if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc,
+									field);
+						} else {
+							assert false : "only two kinds of access path!";
+						}
+					} else {
+						assert false : "only three kinds of things can have default targets!";
+					}
+				}
+			} else {
+				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
+			}
+		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.ICONTROL) {
+			if (loc.isArgDerived()) {
+				if (field instanceof IndexFieldElem) {
+					// for index field we do this smashing for smashLength
+					if (loc.countFieldSelector(field) >= SummariesEnv.v().smashLength) {
+						// only AccessPath has field selectors
+						AccessPath path = ((AccessPath) loc).getPrefix(field);
+						if (path instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) path);
+						} else if (path instanceof StaticAccessPath) {
 							ret = Env
-									.getStaticAccessPath((StaticAccessPath) loc);
+									.getStaticAccessPath((StaticAccessPath) path);
 						} else {
 							assert false : "only access path is allowed!";
 						}
 					} else {
-						if (loc instanceof LocalAccessPath) {
-							ret = getLocalAccessPath((LocalAccessPath) loc,
+						if (loc instanceof StaticElem) {
+							ret = Env.getStaticAccessPath((StaticElem) loc,
 									field);
-						} else if (loc instanceof StaticAccessPath) {
-							ret = Env.getStaticAccessPath(
-									(StaticAccessPath) loc, field);
+						} else if (loc instanceof ParamElem) {
+							ret = getLocalAccessPath((ParamElem) loc, field);
+						} else if (loc instanceof AccessPath) {
+							if (loc instanceof StaticAccessPath) {
+								ret = Env.getStaticAccessPath(
+										(StaticAccessPath) loc, field);
+							} else if (loc instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) loc,
+										field);
+							} else {
+								assert false : "only two kinds of access path!";
+							}
+						} else {
+							assert false : "only three kinds of things can have default targets!";
+						}
+					}
+				} else {
+					// for non-index field, we always do smashing
+					if (loc.hasFieldSelector(field)) {
+						assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+						// only AccessPath has field selectors
+						AccessPath path = ((AccessPath) loc).getPrefix(field);
+						if (path instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) path);
+						} else if (path instanceof StaticAccessPath) {
+							ret = Env
+									.getStaticAccessPath((StaticAccessPath) path);
 						} else {
 							assert false : "only access path is allowed!";
 						}
+					} else {
+						if (loc instanceof StaticElem) {
+							ret = Env.getStaticAccessPath((StaticElem) loc,
+									field);
+						} else if (loc instanceof ParamElem) {
+							ret = getLocalAccessPath((ParamElem) loc, field);
+						} else if (loc instanceof AccessPath) {
+							if (loc instanceof StaticAccessPath) {
+								ret = Env.getStaticAccessPath(
+										(StaticAccessPath) loc, field);
+							} else if (loc instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) loc,
+										field);
+							} else {
+								assert false : "only two kinds of access path!";
+							}
+						} else {
+							assert false : "only three kinds of things can have default targets!";
+						}
 					}
-				} else if (loc instanceof ParamElem) {
-					ret = getLocalAccessPath((ParamElem) loc, field);
-				} else if (loc instanceof StaticElem) {
-					ret = Env.getStaticAccessPath((StaticElem) loc, field);
-				} else {
-					assert false : "only access path is allowed!";
 				}
 			} else {
 				assert false : "you can NOT get the default target for a non-arg derived mem loc!";

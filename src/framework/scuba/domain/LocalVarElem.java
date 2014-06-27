@@ -75,4 +75,9 @@ public class LocalVarElem extends StackObject {
 		return false;
 	}
 
+	@Override
+	public int countFieldSelector(FieldElem field) {
+		return 0;
+	}
+
 }

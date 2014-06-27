@@ -86,6 +86,11 @@ public class StaticAccessPath extends AccessPath {
 		return field.equals(f) || base.hasFieldSelector(f);
 	}
 
+	@Override
+	public int countFieldSelector(FieldElem f) {
+		return base.countFieldSelector(f) + (field.equals(f) ? 1 : 0);
+	}
+
 	// get the prefix ending with field f which is also an AccessPath
 	// ONLY AccessPath has this getPrefix method
 	// ONLY when hasFieldSelector returns true, you can call this method

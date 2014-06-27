@@ -90,9 +90,17 @@ public class LocalAccessPath extends AccessPath {
 		return field.equals(f) || base.hasFieldSelector(f);
 	}
 
+	@Override
+	public int countFieldSelector(FieldElem f) {
+		return base.countFieldSelector(f) + (field.equals(f) ? 1 : 0);
+	}
+
 	// get the prefix ending with field f which is also an AccessPath
 	// ONLY AccessPath has this getPrefix method
 	// ONLY when hasFieldSelector returns true, you can call this method
+	// this method return the prefix which is the right-most access path
+	// e.g. a.\e.f.g.f.k will return a.\e.f.g.f if we want to get f field
+	@Override
 	public LocalAccessPath getPrefix(FieldElem f) {
 		assert hasFieldSelector(f) : this
 				+ " does NOT have field selector "
@@ -106,6 +114,8 @@ public class LocalAccessPath extends AccessPath {
 
 	// try to find the prefix ending with f
 	// if not found, return null
+	// this method does the same thing as the one above
+	@Override
 	public LocalAccessPath findPrefix(FieldElem f) {
 		if (field.equals(f)) {
 			return this;
@@ -114,5 +124,4 @@ public class LocalAccessPath extends AccessPath {
 		}
 		return null;
 	}
-
 }

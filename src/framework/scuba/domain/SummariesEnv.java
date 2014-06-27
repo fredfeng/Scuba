@@ -28,7 +28,7 @@ public class SummariesEnv {
 	}
 
 	public static enum FieldSmashLevel {
-		LOW, MED, HIGH, CONTROL;
+		LOW, MED, HIGH, CONTROL, ICONTROL;
 	}
 
 	public static SummariesEnv v() {
@@ -37,7 +37,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 4;
+	protected int allocDepth = 3;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
@@ -87,11 +87,12 @@ public class SummariesEnv {
 	protected boolean badMethodSkip = true;
 
 	// type smashing for fields (imprecise) [DO NOT use this!]
-	public FieldSmashLevel level = FieldSmashLevel.LOW;
+	// public FieldSmashLevel level = FieldSmashLevel.LOW;
 	// public FieldSmashLevel level = FieldSmashLevel.MED;
 	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
 	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
-	public int smashLength = 5;
+	public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
+	public int smashLength = 2;
 
 	// clear locals in the summary
 	protected boolean clearLocals = false;
