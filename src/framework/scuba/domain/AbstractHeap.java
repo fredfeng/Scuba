@@ -1300,39 +1300,81 @@ public class AbstractHeap extends Heap {
 		AccessPath ret = null;
 
 		if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.LOW) {
-			if (loc.isArgDerived()) {
-				if (loc.hasFieldSelector(field)) {
-					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
-					// only AccessPath has field selectors
-					AccessPath path = ((AccessPath) loc).getPrefix(field);
-					if (path instanceof LocalAccessPath) {
-						ret = getLocalAccessPath((LocalAccessPath) path);
-					} else if (path instanceof StaticAccessPath) {
-						ret = Env.getStaticAccessPath((StaticAccessPath) path);
-					} else {
-						assert false : "only access path is allowed!";
-					}
-				} else {
-					if (loc instanceof StaticElem) {
-						ret = Env.getStaticAccessPath((StaticElem) loc, field);
-					} else if (loc instanceof ParamElem) {
-						ret = getLocalAccessPath((ParamElem) loc, field);
-					} else if (loc instanceof AccessPath) {
-						if (loc instanceof StaticAccessPath) {
-							ret = Env.getStaticAccessPath(
-									(StaticAccessPath) loc, field);
-						} else if (loc instanceof LocalAccessPath) {
-							ret = getLocalAccessPath((LocalAccessPath) loc,
-									field);
+			if (SummariesEnv.v().instnSmashedAP) {
+				if (loc.isArgDerived()) {
+					if (loc.hasFieldSelector(field)) {
+						assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+						// only AccessPath has field selectors
+						AccessPath path = ((AccessPath) loc).getPrefix(field);
+
+						if (path instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) path);
+						} else if (path instanceof StaticAccessPath) {
+							ret = Env
+									.getStaticAccessPath((StaticAccessPath) path);
 						} else {
-							assert false : "only two kinds of access path!";
+							assert false : "only access path is allowed!";
 						}
 					} else {
-						assert false : "only three kinds of things can have default targets!";
+						if (loc instanceof StaticElem) {
+							ret = Env.getStaticAccessPath((StaticElem) loc,
+									field);
+						} else if (loc instanceof ParamElem) {
+							ret = getLocalAccessPath((ParamElem) loc, field);
+						} else if (loc instanceof AccessPath) {
+							if (loc instanceof StaticAccessPath) {
+								ret = Env.getStaticAccessPath(
+										(StaticAccessPath) loc, field);
+							} else if (loc instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) loc,
+										field);
+							} else {
+								assert false : "only two kinds of access path!";
+							}
+						} else {
+							assert false : "only three kinds of things can have default targets!";
+						}
 					}
+				} else {
+					assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 				}
 			} else {
-				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
+				if (loc.isArgDerived()) {
+					if (loc.hasFieldSelector(field)) {
+						assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+						// only AccessPath has field selectors
+						AccessPath path = ((AccessPath) loc).getPrefix(field);
+						if (path instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) path);
+						} else if (path instanceof StaticAccessPath) {
+							ret = Env
+									.getStaticAccessPath((StaticAccessPath) path);
+						} else {
+							assert false : "only access path is allowed!";
+						}
+					} else {
+						if (loc instanceof StaticElem) {
+							ret = Env.getStaticAccessPath((StaticElem) loc,
+									field);
+						} else if (loc instanceof ParamElem) {
+							ret = getLocalAccessPath((ParamElem) loc, field);
+						} else if (loc instanceof AccessPath) {
+							if (loc instanceof StaticAccessPath) {
+								ret = Env.getStaticAccessPath(
+										(StaticAccessPath) loc, field);
+							} else if (loc instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) loc,
+										field);
+							} else {
+								assert false : "only two kinds of access path!";
+							}
+						} else {
+							assert false : "only three kinds of things can have default targets!";
+						}
+					}
+				} else {
+					assert false : "you can NOT get the default target for a non-arg derived mem loc!";
+				}
 			}
 		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.MED) {
 			if (loc.isArgDerived()) {

@@ -5,7 +5,7 @@ import java.util.Set;
 
 public abstract class AccessPath extends HeapObject {
 
-	protected Set<FieldElem> reps = new HashSet<FieldElem>();
+	protected Set<FieldElem> smashed = new HashSet<FieldElem>();
 
 	abstract public AbsMemLoc getBase();
 
@@ -20,6 +20,24 @@ public abstract class AccessPath extends HeapObject {
 	abstract public AccessPath findPrefix(FieldElem f);
 
 	public boolean isSmashed() {
-		return !reps.isEmpty();
+		return !smashed.isEmpty();
+	}
+
+	public void addSmashedField(FieldElem f) {
+		assert (f instanceof NormalFieldElem || f instanceof IndexFieldElem) : ""
+				+ "only normal field and index field can be smashed!";
+		smashed.add(f);
+	}
+
+	public void addSmashedFields(Set<FieldElem> fields) {
+		for (FieldElem f : fields) {
+			assert (f instanceof NormalFieldElem || f instanceof IndexFieldElem) : ""
+					+ "only normal field and index field can be smashed!";
+		}
+		smashed.addAll(fields);
+	}
+
+	public Set<FieldElem> getSmashedFields() {
+		return smashed;
 	}
 }
