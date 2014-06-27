@@ -37,7 +37,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 5;
+	protected int allocDepth = 4;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
@@ -48,7 +48,7 @@ public class SummariesEnv {
 	protected Set<jq_Method> reachableMethods = new HashSet<jq_Method>();
 
 	// cheating
-	protected boolean cheating = false;
+	protected boolean cheating = true;
 	// ignore string
 	protected boolean ignoreString = false;
 
@@ -101,17 +101,16 @@ public class SummariesEnv {
 	// when concluding the clinit's and main, use fix-point or not
 	protected boolean topFixPoint = false;
 
+	// whether or not propagate parameters
+	protected boolean propParams = true;
+
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
-
-	// protected PropType localType = PropType.DOWNCAST;
 	protected PropType localType = PropType.APPLOCAL;
 
 	// protected PropType localType = PropType.DOWNCAST;
-
 	// protected PropType localType = PropType.NOLOCAL;
 	// protected PropType localType = PropType.NOALLOC;
-
 	// protected PropType localType = PropType.NOTHING;
 	// protected PropType localType = PropType.ALL;
 

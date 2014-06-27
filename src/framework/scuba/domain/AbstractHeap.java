@@ -773,8 +773,6 @@ public class AbstractHeap extends Heap {
 			FieldElem field, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
 
-		long start = System.nanoTime();
-
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (src != null && dst != null && field != null) : "nulls!";
@@ -919,8 +917,6 @@ public class AbstractHeap extends Heap {
 				ret.val1 = res.val1 | ret.val1;
 			}
 		}
-
-		long end = System.nanoTime();
 
 		return ret;
 	}
@@ -1838,21 +1834,25 @@ public class AbstractHeap extends Heap {
 	public void fillPropSet() {
 		Set<AllocElem> wl = new HashSet<AllocElem>();
 		Set<AbsMemLoc> locals = new HashSet<AbsMemLoc>();
-		// this is a post-processing which create pseudo-locals for
-		// parameters which we want to propagate
-		for (ParamElem param : summary.formals) {
-			Register v = param.getParameter();
-			if (SummariesEnv.v().toProp(v)) {
-				// create a pseudo-local element
-				LocalVarElem pLocal = getLocalVarElem(summary.getMethod()
-						.getDeclaringClass(), summary.getMethod(), v);
-				// do an extra assign for local = parameter
-				// put this pseudo-local element into the heap
-				handleAssignStmt(summary.getMethod().getDeclaringClass(),
-						summary.getMethod(), v, VariableType.LOCAL_VARIABLE, v,
-						VariableType.PARAMEMTER);
-				// instead, we prop this pseudo-local element
-				locals.add(pLocal);
+
+		if (SummariesEnv.v().propParams) {
+			// this is a post-processing which create pseudo-locals for
+			// parameters which we want to propagate
+			for (ParamElem param : summary.formals) {
+				Register v = param.getParameter();
+				if (SummariesEnv.v().toProp(v)) {
+					// create a pseudo-local element
+					LocalVarElem pLocal = getLocalVarElem(summary.getMethod()
+							.getDeclaringClass(), summary.getMethod(), v);
+					// do an extra assign for local = parameter
+					// put this pseudo-local element into the heap
+					handleAssignStmt(summary.getMethod().getDeclaringClass(),
+							summary.getMethod(), v,
+							VariableType.LOCAL_VARIABLE, v,
+							VariableType.PARAMEMTER);
+					// instead, we prop this pseudo-local element
+					locals.add(pLocal);
+				}
 			}
 		}
 		// add all locations that are guaranteed to be propagated to the caller
