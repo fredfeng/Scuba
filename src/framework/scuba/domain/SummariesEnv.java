@@ -37,7 +37,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 3;
+	protected int allocDepth = 5;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
@@ -48,7 +48,7 @@ public class SummariesEnv {
 	protected Set<jq_Method> reachableMethods = new HashSet<jq_Method>();
 
 	// cheating
-	protected boolean cheating = true;
+	protected boolean cheating = false;
 	// ignore string
 	protected boolean ignoreString = false;
 
@@ -59,6 +59,8 @@ public class SummariesEnv {
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
+	// this is the sound way to do the instantiation
+	public boolean instnSmashedAP = true;
 	// whether use cache for instantiating AccessPath
 	public boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation

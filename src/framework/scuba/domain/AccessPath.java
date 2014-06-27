@@ -1,6 +1,11 @@
 package framework.scuba.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public abstract class AccessPath extends HeapObject {
+
+	protected Set<FieldElem> reps = new HashSet<FieldElem>();
 
 	abstract public AbsMemLoc getBase();
 
@@ -13,4 +18,8 @@ public abstract class AccessPath extends HeapObject {
 	abstract public AccessPath getPrefix(FieldElem f);
 
 	abstract public AccessPath findPrefix(FieldElem f);
+
+	public boolean isSmashed() {
+		return !reps.isEmpty();
+	}
 }

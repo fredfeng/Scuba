@@ -36,7 +36,6 @@ public class AccessPathHelper {
 		StackObject root = ap.findRoot();
 		assert (root instanceof StaticElem) : "root should be a static element!";
 		LinkedList<FieldElem> fieldSeq = AccessPathHelper.fieldSeq(ap);
-		System.out.println(fieldSeq);
 		resolve(absHeap, root, fieldSeq, 0, ret);
 	}
 

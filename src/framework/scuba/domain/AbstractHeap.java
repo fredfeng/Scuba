@@ -846,7 +846,7 @@ public class AbstractHeap extends Heap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
-		if (G.dbgAntlr) {
+		if (G.dbgAntlr && G.dbgInvoke) {
 			StringUtil.reportInfo("[dbgAntlr] "
 					+ "[instantiating callee edge]: " + "method Id: "
 					+ G.IdMapping.get(calleeHeap.summary));
@@ -885,7 +885,7 @@ public class AbstractHeap extends Heap {
 			return ret;
 		}
 
-		if (G.dbgAntlr) {
+		if (G.dbgAntlr && G.dbgInvoke) {
 			StringUtil.reportInfo("[dbgAntlr] "
 					+ "-------------------------------------------");
 			StringUtil.reportInfo("[dbgAntlr] "
@@ -1010,7 +1010,7 @@ public class AbstractHeap extends Heap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
-		if (G.dbgAntlr) {
+		if (G.dbgAntlr && G.dbgInvoke) {
 			StringUtil.reportInfo("[dbgAntlr] "
 					+ "[instantiating (recursive) callee edge]: "
 					+ "method Id: " + G.IdMapping.get(calleeHeap.summary));
@@ -1039,7 +1039,7 @@ public class AbstractHeap extends Heap {
 			return ret;
 		}
 
-		if (G.dbgAntlr) {
+		if (G.dbgAntlr && G.dbgInvoke) {
 			StringUtil.reportInfo("[dbgAntlr] "
 					+ "-------------------------------------------");
 			StringUtil.reportInfo("[dbgAntlr] "
