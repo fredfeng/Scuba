@@ -1,17 +1,14 @@
 package framework.scuba.analyses.alias;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
-import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.bddbddb.Rel.RelView;
 import chord.project.ClassicProject;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
-import framework.scuba.domain.Alloc;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.utils.StringUtil;
 
@@ -26,8 +23,8 @@ public class MayAliasAnalysis {
 	protected ProgramRel relMV;
 	SummaryBasedAnalysis analysis;
 
-	public MayAliasAnalysis(ProgramRel mv, SummaryBasedAnalysis sum) {
-		relVValias = (ProgramRel) ClassicProject.g().getTrgt("cspaVValias");
+	public MayAliasAnalysis(ProgramRel mv, ProgramRel alias, SummaryBasedAnalysis sum) {
+		relVValias = alias;
 		relMV = mv;
 		analysis = sum;
 	}
@@ -35,6 +32,9 @@ public class MayAliasAnalysis {
 	public void run() {
 		if (!relVValias.isOpen())
 			relVValias.load();
+		
+		if (!relMV.isOpen())
+			relMV.load();
 
 		RelView view = relVValias.getView();
 		Iterable<Pair<Register, Register>> res = view
@@ -66,9 +66,15 @@ public class MayAliasAnalysis {
 						+ " || " + p2Set2);
 			} else {
 				p2Set1.retainAll(p2Set2);
-				if(p2Set1.isEmpty())
-					StringUtil.reportInfo("[mayAlias] result: YES. No alias."
-							+ p2Set1 + " || " + p2Set2);
+				if(p2Set1.isEmpty()) {
+					StringUtil.reportInfo("[mayAlias] result: YES. Not alias.");
+					StringUtil.reportInfo("v1:" + p2Set1);
+					StringUtil.reportInfo("v2:" + p2Set2);
+				}else{
+					StringUtil.reportInfo("[mayAlias] result: No. Still alias.");
+					StringUtil.reportInfo("v1:" + p2Set1);
+					StringUtil.reportInfo("v2:" + p2Set2);
+				}
 			}
 		}
 		
