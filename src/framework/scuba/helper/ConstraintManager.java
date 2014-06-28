@@ -141,6 +141,7 @@ public class ConstraintManager {
 
 					ap2Counter.put(ap, cnt);
 					symbol = "v" + ap.getId() + "s" + cnt;
+//					System.out.println("smashing: " + symbol + " " + ap);
 				} else {
 					symbol = "v" + ap.getId();
 				}

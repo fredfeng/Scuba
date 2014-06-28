@@ -152,7 +152,7 @@ public class IntraProcSumAnalysis {
 					+ accessBlocksList);
 		}
 
-		summary.dumpSummaryToFile("" + ++count);
+//		summary.dumpSummaryToFile("" + ++count);
 
 		summary.getAbsHeap().fillPropSet();
 		if (G.validate) {

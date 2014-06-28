@@ -91,15 +91,15 @@ public class AbstractHeap extends Heap {
 			// get the default target given the memory location and the field
 			AccessPath defaultTarget = getDefaultTarget(loc, field);
 
-			System.out
-					.println("*************************************************");
-			System.out.println("default target of : " + loc + " with field : "
-					+ field);
-			System.out.println(defaultTarget);
-			System.out.println("smashed fields: "
-					+ defaultTarget.getSmashedFields());
-			System.out
-					.println("*************************************************");
+//			System.out
+//					.println("*************************************************");
+//			System.out.println("default target of : " + loc + " with field : "
+//					+ field);
+//			System.out.println(defaultTarget);
+//			System.out.println("smashed fields: "
+//					+ defaultTarget.getSmashedFields());
+//			System.out
+//					.println("*************************************************");
 
 			// always find the default p2set of (loc, field)
 			P2Set defaultP2Set = new P2Set(defaultTarget);
@@ -1319,11 +1319,11 @@ public class AbstractHeap extends Heap {
 						assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
 						// only AccessPath has field selectors
 						AccessPath path = ((AccessPath) loc).getPrefix(field);
-						System.out.println("***** " + "getting smashed fields");
+//						System.out.println("***** " + "getting smashed fields");
 						Set<FieldElem> smashedFields = ((AccessPath) loc)
 								.getPreSmashedFields(field);
-						System.out.println("******* " + "smashed fields: "
-								+ smashedFields);
+//						System.out.println("******* " + "smashed fields: "
+//								+ smashedFields);
 						if (path instanceof LocalAccessPath) {
 							ret = getLocalAccessPath((LocalAccessPath) path);
 						} else if (path instanceof StaticAccessPath) {
