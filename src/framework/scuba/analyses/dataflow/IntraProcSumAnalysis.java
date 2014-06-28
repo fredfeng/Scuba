@@ -152,6 +152,11 @@ public class IntraProcSumAnalysis {
 					+ accessBlocksList);
 		}
 
+<<<<<<< HEAD
+=======
+//		summary.dumpSummaryToFile("" + ++count);
+
+>>>>>>> ecbd65f9d618919d996819e10662c6d5e2347352
 		summary.getAbsHeap().fillPropSet();
 		if (G.validate) {
 			summary.getAbsHeap().validate();
