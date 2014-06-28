@@ -715,8 +715,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			jq_Method meth = res.iterator().next();
 			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
 			Set<Quad> sites = new HashSet<Quad>();
+			Set<Alloc> allocs = new HashSet<Alloc>();
 			for (AllocElem alloc : p2Set) {
 				sites.add(alloc.getAlloc().getAllocSite());
+				allocs.add(alloc.getAlloc());
 			}
 
 			RelView viewChord = relVH.getView();
@@ -732,6 +734,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			System.out.println("P2Set for " + r + " in " + meth);
 			System.out.println("[Scuba] " + sites);
 			System.out.println("[Chord] " + pts);
+			System.out.println("[Scuba] " + "[AllocSite] " + allocs);
 			// assert (pts.containsAll(sites));
 			if (pts.containsAll(sites) && sites.containsAll(pts)) {
 				exact++;
@@ -783,11 +786,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 			boolean dcScuba = true;
 			Set<Quad> sites = new HashSet<Quad>();
+			Set<Alloc> allocs = new HashSet<Alloc>();
 			if (p2Set.isEmpty())
 				empScuba++;
 
 			for (AllocElem alloc : p2Set) {
 				sites.add(alloc.getAlloc().getAllocSite());
+				allocs.add(alloc.getAlloc());
 				if (castType.isArrayType()) {
 					if (!alloc.getAlloc().getType().isArrayType())
 						dcScuba = false;
@@ -842,10 +847,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 			StringUtil.reportInfo("[Scuba] method: " + meth);
 			StringUtil.reportInfo("[Scuba] Downcast Type: " + castType);
-			StringUtil.reportInfo("[Scuba] p2Set of " + r + ":" + sites);
+			StringUtil.reportInfo("[Scuba] p2Set of " + r + ": " + sites);
+			StringUtil.reportInfo("[Scuba] allocs of " + r + ": " + allocs);
 			StringUtil.reportInfo("[Scuba] cast result: " + dcScuba);
 			StringUtil.reportInfo("[Chord] cast result: " + dcChord);
-			StringUtil.reportInfo("[Chord] p2Set of " + r + ":" + pts);
+			StringUtil.reportInfo("[Chord] p2Set of " + r + ": " + pts);
 			if (dcChord)
 				succChord++;
 			if (dcScuba)

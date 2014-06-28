@@ -96,12 +96,12 @@ public class SummariesEnv {
 	protected boolean badMethodSkip = true;
 
 	// type smashing for fields (imprecise) [DO NOT use this!]
-	public FieldSmashLevel level = FieldSmashLevel.LOW;
+	// public FieldSmashLevel level = FieldSmashLevel.LOW;
 	// public FieldSmashLevel level = FieldSmashLevel.MED;
 	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
 	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
-	// public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
-	public int smashLength = 2;
+	public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
+	public int smashLength = 3;
 
 	// clear locals in the summary
 	protected boolean clearLocals = false;

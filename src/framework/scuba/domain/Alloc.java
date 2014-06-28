@@ -18,7 +18,8 @@ public class Alloc {
 
 	@Override
 	public boolean equals(Object other) {
-		return (other instanceof Alloc) && (type.equals(((Alloc) other).type));
+		return (other instanceof Alloc) && (type.equals(((Alloc) other).type))
+				&& (allocSite.equals(((Alloc) other).allocSite));
 	}
 
 	public jq_Type getType() {
@@ -36,7 +37,8 @@ public class Alloc {
 
 	@Override
 	public String toString() {
-		return "[A]" + type.getName() + " " + allocSite + " " + allocSite.getMethod();
+		return "[A]" + type.getName() + " " + allocSite + " "
+				+ allocSite.getMethod();
 	}
 
 }
