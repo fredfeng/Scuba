@@ -152,8 +152,6 @@ public class IntraProcSumAnalysis {
 					+ accessBlocksList);
 		}
 
-		summary.dumpSummaryToFile("" + ++count);
-
 		summary.getAbsHeap().fillPropSet();
 		if (G.validate) {
 			summary.getAbsHeap().validate();
@@ -181,8 +179,6 @@ public class IntraProcSumAnalysis {
 			}
 		}
 	}
-
-	public static int count = 0;
 
 	// compute the fixed-point for this scc.
 	public Pair<Boolean, Boolean> handleSCC(Set<BasicBlock> scc) {

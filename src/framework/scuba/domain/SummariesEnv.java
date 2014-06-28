@@ -37,7 +37,9 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 5;
+	protected int allocDepth = 3;
+	// dynamically control the depth
+	protected boolean dynAlloc = true;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
@@ -46,24 +48,26 @@ public class SummariesEnv {
 
 	// all reachable methods
 	protected Set<jq_Method> reachableMethods = new HashSet<jq_Method>();
-	
+
 	// all library methods
 	protected Set<jq_Method> libMeths = new HashSet<jq_Method>();
 
 	// cheating
-	protected boolean cheating = false;
+	protected boolean cheating = true;
 	// ignore string
 	protected boolean ignoreString = false;
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = false;
+	protected boolean disableCst = true;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
-	// this is the sound way to do the instantiation
-	public boolean instnSmashedAP = true;
+	// this is the sound way to do smashing
+	public boolean markSmashedFields = false;
+	// this is used for instantiating the locations
+	public boolean instnSmashedAPs = false;
 	// whether use cache for instantiating AccessPath
 	public boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
@@ -238,7 +242,7 @@ public class SummariesEnv {
 	public void setReachableMethods(Set<jq_Method> reachableMethods) {
 		this.reachableMethods = reachableMethods;
 	}
-	
+
 	public Set<jq_Method> getLibMeths() {
 		return libMeths;
 	}

@@ -14,6 +14,7 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.G;
 
 public class MemLocInstnItem {
 
@@ -179,15 +180,36 @@ public class MemLocInstnItem {
 					|| ((AllocElem) loc).length() < SummariesEnv.v().allocDepth) {
 
 				if (((AllocElem) loc).contains(point)) {
+					// to avoid non-termination
 					AllocElem allocElem = callerHeap
 							.getAllocElem(((AllocElem) loc));
 					ret = new MemLocInstnSet(allocElem,
 							ConstraintManager.genTrue());
 				} else {
-					AllocElem allocElem = callerHeap.getAllocElem(
-							((AllocElem) loc), point);
-					ret = new MemLocInstnSet(allocElem,
-							ConstraintManager.genTrue());
+					if (SummariesEnv.v().dynAlloc) {
+						// using dynamic allocation
+						if (!SummariesEnv.v().getLibMeths()
+								.contains(point.getBelongingMethod())) {
+							// caller is NOT in java library
+							AllocElem allocElem = callerHeap.getAllocElem(
+									((AllocElem) loc), point);
+							ret = new MemLocInstnSet(allocElem,
+									ConstraintManager.genTrue());
+						} else {
+							// caller is in java library
+							AllocElem allocElem = callerHeap
+									.getAllocElem(((AllocElem) loc));
+							ret = new MemLocInstnSet(allocElem,
+									ConstraintManager.genTrue());
+						}
+					} else {
+						// not using dynamic allocation
+						// just append the context without differentiating
+						AllocElem allocElem = callerHeap.getAllocElem(
+								((AllocElem) loc), point);
+						ret = new MemLocInstnSet(allocElem,
+								ConstraintManager.genTrue());
+					}
 				}
 			} else if (((AllocElem) loc).length() == SummariesEnv.v().allocDepth) {
 				// TODO
@@ -223,61 +245,77 @@ public class MemLocInstnItem {
 						new Pair<MemLocInstnItem, Set<AccessPath>>(this, orgs));
 			}
 
+			ret = callerHeap.instnLookup(instnLocSet, field);
+
 			// a work-list algorithm for find all locations that are
 			// transitively reachable from the current instantiated memory
 			// locations in order to be sound
-			// if (SummariesEnv.v().instnSmashedAP) {
-			//
-			// Set<AccessPath> visited = new HashSet<AccessPath>();
-			// LinkedHashSet<Pair<AccessPath, BoolExpr>> wl = new
-			// LinkedHashSet<Pair<AccessPath, BoolExpr>>();
-			// MemLocInstnSet targets = new MemLocInstnSet();
-			//
-			// for (AbsMemLoc loc1 : instnLocSet.keySet()) {
-			// BoolExpr expr1 = instnLocSet.get(loc1);
-			// if (loc1 instanceof AccessPath
-			// && ((AccessPath) loc1).isSmashed()) {
-			// wl.add(new Pair<AccessPath, BoolExpr>(
-			// (AccessPath) loc1, expr1));
-			// }
-			// }
-			// while (!wl.isEmpty()) {
-			// Pair<AccessPath, BoolExpr> elem = wl.iterator().next();
-			// wl.remove(elem);
-			// AccessPath ap = elem.val0;
-			// AbsMemLoc b = ap.getBase();
-			// FieldElem f = ap.getField();
-			// Set<FieldElem> smashedFields = ap.getSmashedFields();
-			// BoolExpr cst = elem.val1;
-			// visited.add(ap);
-			// MemLocInstnSet worker = new MemLocInstnSet(ap, cst);
-			//
-			// for (FieldElem f1 : ap.getFields()) {
-			// if (!smashedFields.contains(f1)) {
-			// continue;
-			// }
-			// if (f.equals(f1)) {
-			// MemLocInstnSet next = callerHeap.instnLookup(
-			// worker, f1);
-			// targets.addAll(next);
-			// }
-			// if (smashedFields.contains(f1)) {
-			// MemLocInstnSet next = callerHeap.instnLookup(
-			// worker, f1);
-			// for (AbsMemLoc loc2 : next.keySet()) {
-			// if (loc2 instanceof AccessPath
-			// && !visited.contains(loc2)) {
-			// BoolExpr expr2 = next.get(loc2);
-			// wl.add(new Pair<AccessPath, BoolExpr>(
-			// (AccessPath) loc2, expr2));
-			// }
-			// }
-			// }
-			// }
-			// }
-			// }
+			if (SummariesEnv.v().markSmashedFields
+					&& SummariesEnv.v().instnSmashedAPs) {
+				// to avoid non-termination
+				Set<AccessPath> visited = new HashSet<AccessPath>();
+				// work list storing the access paths that are candidates as
+				// the instantiated locations
+				LinkedHashSet<Pair<AccessPath, BoolExpr>> wl = new LinkedHashSet<Pair<AccessPath, BoolExpr>>();
+				// the locations that can really be instantiated into
+				MemLocInstnSet targets = new MemLocInstnSet();
+				// initialized the work list
+				for (AbsMemLoc loc1 : ret.keySet()) {
+					BoolExpr expr1 = ret.get(loc1);
+					// only adding the smashed access paths in the work list
+					if (loc1 instanceof AccessPath
+							&& ((AccessPath) loc1).isSmashed()) {
+						wl.add(new Pair<AccessPath, BoolExpr>(
+								(AccessPath) loc1, expr1));
+					}
+				}
+				// the work list algorithm
+				while (!wl.isEmpty()) {
+					Pair<AccessPath, BoolExpr> elem = wl.iterator().next();
+					wl.remove(elem);
+					AccessPath ap = elem.val0;
+					assert (ap.isSmashed()) : "work list should only contain "
+							+ "smashed access paths!";
+					AbsMemLoc b = ap.getBase();
+					FieldElem f = ap.getField();
+					Set<FieldElem> smashedFields = ap.getSmashedFields();
+					BoolExpr cst = elem.val1;
+					// mark as visited
+					visited.add(ap);
+					// worker is a candidate
+					MemLocInstnSet worker = new MemLocInstnSet(ap, cst);
 
-			ret = callerHeap.instnLookup(instnLocSet, field);
+					for (FieldElem f1 : ap.getFields()) {
+						// ignore the in-compatible fields
+						if (!smashedFields.contains(f1)) {
+							continue;
+						}
+						// if ending fields match, then this is one target
+						if (f.equals(f1)) {
+							MemLocInstnSet next = callerHeap.instnLookup(
+									worker, f1);
+							targets.addAll(next);
+						}
+						// if f1 is smashed by ap, then add this into wl
+						if (smashedFields.contains(f1)) {
+							MemLocInstnSet next = callerHeap.instnLookup(
+									worker, f1);
+							for (AbsMemLoc loc2 : next.keySet()) {
+								if (loc2 instanceof AccessPath
+										&& ((AccessPath) loc2).isSmashed()
+										&& !visited.contains(loc2)) {
+									BoolExpr cst2 = next.get(loc2);
+									wl.add(new Pair<AccessPath, BoolExpr>(
+											(AccessPath) loc2, cst2));
+								}
+							}
+						}
+					}
+				}
+				// then conjoin with the previous result
+				ret.addAll(targets);
+			}
+
 			memLocInstnCache.put(loc, ret);
 		} else {
 			assert false : "wried things happen! Unknow type.";
