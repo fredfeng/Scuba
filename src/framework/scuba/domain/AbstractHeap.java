@@ -144,7 +144,10 @@ public class AbstractHeap extends Heap {
 		for (AbsMemLoc loc : instnLocSet.keySet()) {
 			BoolExpr cst = instnLocSet.get(loc);
 
+			SummariesEnv.v().setMarkSmashedFlag();
 			P2Set tgt = lookup(loc, field);
+			SummariesEnv.v().resestMarkSmashedFlag();
+
 			assert (tgt != null) : "get a null p2 set!";
 			P2Set projP2Set = P2SetHelper.project(tgt, cst);
 			ret.join(projP2Set);
@@ -195,8 +198,10 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set arg-derived marker for v1!";
 		assert v2.knownArgDerived() : "we should set arg-derived marker for v2!";
 
+		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
+		SummariesEnv.v().resestMarkSmashedFlag();
 
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
@@ -264,8 +269,10 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
+		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
+		SummariesEnv.v().resestMarkSmashedFlag();
 
 		NormalFieldElem f = Env.getNormalFieldElem(rightField);
 		P2Set p2Setv2f = lookup(p2Setv2, f);
@@ -300,8 +307,10 @@ public class AbstractHeap extends Heap {
 		assert (v1.knownArgDerived()) : "we should mark arg-derived marker before using v1!";
 		assert (v2.knownArgDerived()) : "we should mark arg-derived marker before using v2!";
 
+		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
+		SummariesEnv.v().resestMarkSmashedFlag();
 
 		IndexFieldElem index = IndexFieldElem.getIndexFieldElem();
 		P2Set p2Setv2i = lookup(p2Setv2, index);
@@ -350,8 +359,10 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
+		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
+		SummariesEnv.v().resestMarkSmashedFlag();
 
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
@@ -403,10 +414,12 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
+		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv1 = lookup(v1, EpsilonFieldElem.getEpsilonFieldElem());
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv1 != null) : "get a null p2 set!";
 		assert (p2Setv2 != null) : "get a null p2 set!";
+		SummariesEnv.v().resestMarkSmashedFlag();
 
 		IndexFieldElem index = IndexFieldElem.getIndexFieldElem();
 		for (HeapObject hObj : p2Setv1.keySet()) {
@@ -463,10 +476,12 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
+		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv1 = lookup(v1, EpsilonFieldElem.getEpsilonFieldElem());
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv1 != null) : "get a null p2 set!";
 		assert (p2Setv2 != null) : "get a null p2 set!";
+		SummariesEnv.v().resestMarkSmashedFlag();
 
 		NormalFieldElem f = Env.getNormalFieldElem(leftField);
 		for (HeapObject obj : p2Setv1.keySet()) {
@@ -519,8 +534,10 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
+		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
+		SummariesEnv.v().resestMarkSmashedFlag();
 
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
@@ -641,8 +658,11 @@ public class AbstractHeap extends Heap {
 		// update the p2set of the return value
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 				retElem, EpsilonFieldElem.getEpsilonFieldElem());
+
+		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Set = lookup(v, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Set != null) : "get a null p2set!";
+		SummariesEnv.v().resestMarkSmashedFlag();
 
 		Pair<Boolean, Boolean> res = weakUpdate(pair, p2Set);
 		ret.val0 = res.val0;
@@ -1505,77 +1525,159 @@ public class AbstractHeap extends Heap {
 				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 			}
 		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.ICONTROL) {
-			if (loc.isArgDerived()) {
-				if (field instanceof IndexFieldElem) {
-					// for index field we do this smashing for smashLength
-					if (loc.countFieldSelector(field) >= SummariesEnv.v().smashLength) {
-						// only AccessPath has field selectors
-						AccessPath path = ((AccessPath) loc).getPrefix(field);
-						if (path instanceof LocalAccessPath) {
-							ret = getLocalAccessPath((LocalAccessPath) path);
-						} else if (path instanceof StaticAccessPath) {
-							ret = Env
-									.getStaticAccessPath((StaticAccessPath) path);
+			if (SummariesEnv.v().markSmashedFlag) {
+				if (loc.isArgDerived()) {
+					if (field instanceof IndexFieldElem) {
+						// for index field we do this smashing for smashLength
+						if (loc.countFieldSelector(field) >= SummariesEnv.v().smashLength) {
+							// only AccessPath has field selectors
+							AccessPath path = ((AccessPath) loc)
+									.getPrefix(field);
+							if (path instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) path);
+							} else if (path instanceof StaticAccessPath) {
+								ret = Env
+										.getStaticAccessPath((StaticAccessPath) path);
+							} else {
+								assert false : "only access path is allowed!";
+							}
+							ret.setSmashed();
 						} else {
-							assert false : "only access path is allowed!";
+							if (loc instanceof StaticElem) {
+								ret = Env.getStaticAccessPath((StaticElem) loc,
+										field);
+							} else if (loc instanceof ParamElem) {
+								ret = getLocalAccessPath((ParamElem) loc, field);
+							} else if (loc instanceof AccessPath) {
+								if (loc instanceof StaticAccessPath) {
+									ret = Env.getStaticAccessPath(
+											(StaticAccessPath) loc, field);
+								} else if (loc instanceof LocalAccessPath) {
+									ret = getLocalAccessPath(
+											(LocalAccessPath) loc, field);
+								} else {
+									assert false : "only two kinds of access path!";
+								}
+							} else {
+								assert false : "only three kinds of things can have default targets!";
+							}
 						}
 					} else {
-						if (loc instanceof StaticElem) {
-							ret = Env.getStaticAccessPath((StaticElem) loc,
-									field);
-						} else if (loc instanceof ParamElem) {
-							ret = getLocalAccessPath((ParamElem) loc, field);
-						} else if (loc instanceof AccessPath) {
-							if (loc instanceof StaticAccessPath) {
-								ret = Env.getStaticAccessPath(
-										(StaticAccessPath) loc, field);
-							} else if (loc instanceof LocalAccessPath) {
-								ret = getLocalAccessPath((LocalAccessPath) loc,
-										field);
+						// for non-index field, we always do smashing
+						if (loc.hasFieldSelector(field)) {
+							assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+							// only AccessPath has field selectors
+							AccessPath path = ((AccessPath) loc)
+									.getPrefix(field);
+							if (path instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) path);
+							} else if (path instanceof StaticAccessPath) {
+								ret = Env
+										.getStaticAccessPath((StaticAccessPath) path);
 							} else {
-								assert false : "only two kinds of access path!";
+								assert false : "only access path is allowed!";
 							}
+							ret.setSmashed();
 						} else {
-							assert false : "only three kinds of things can have default targets!";
+							if (loc instanceof StaticElem) {
+								ret = Env.getStaticAccessPath((StaticElem) loc,
+										field);
+							} else if (loc instanceof ParamElem) {
+								ret = getLocalAccessPath((ParamElem) loc, field);
+							} else if (loc instanceof AccessPath) {
+								if (loc instanceof StaticAccessPath) {
+									ret = Env.getStaticAccessPath(
+											(StaticAccessPath) loc, field);
+								} else if (loc instanceof LocalAccessPath) {
+									ret = getLocalAccessPath(
+											(LocalAccessPath) loc, field);
+								} else {
+									assert false : "only two kinds of access path!";
+								}
+							} else {
+								assert false : "only three kinds of things can have default targets!";
+							}
 						}
 					}
 				} else {
-					// for non-index field, we always do smashing
-					if (loc.hasFieldSelector(field)) {
-						assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
-						// only AccessPath has field selectors
-						AccessPath path = ((AccessPath) loc).getPrefix(field);
-						if (path instanceof LocalAccessPath) {
-							ret = getLocalAccessPath((LocalAccessPath) path);
-						} else if (path instanceof StaticAccessPath) {
-							ret = Env
-									.getStaticAccessPath((StaticAccessPath) path);
-						} else {
-							assert false : "only access path is allowed!";
-						}
-					} else {
-						if (loc instanceof StaticElem) {
-							ret = Env.getStaticAccessPath((StaticElem) loc,
-									field);
-						} else if (loc instanceof ParamElem) {
-							ret = getLocalAccessPath((ParamElem) loc, field);
-						} else if (loc instanceof AccessPath) {
-							if (loc instanceof StaticAccessPath) {
-								ret = Env.getStaticAccessPath(
-										(StaticAccessPath) loc, field);
-							} else if (loc instanceof LocalAccessPath) {
-								ret = getLocalAccessPath((LocalAccessPath) loc,
-										field);
+					assert false : "you can NOT get the default target for a non-arg derived mem loc!";
+				}
+
+			} else {
+				if (loc.isArgDerived()) {
+					if (field instanceof IndexFieldElem) {
+						// for index field we do this smashing for smashLength
+						if (loc.countFieldSelector(field) >= SummariesEnv.v().smashLength) {
+							// only AccessPath has field selectors
+							AccessPath path = ((AccessPath) loc)
+									.getPrefix(field);
+							if (path instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) path);
+							} else if (path instanceof StaticAccessPath) {
+								ret = Env
+										.getStaticAccessPath((StaticAccessPath) path);
 							} else {
-								assert false : "only two kinds of access path!";
+								assert false : "only access path is allowed!";
 							}
 						} else {
-							assert false : "only three kinds of things can have default targets!";
+							if (loc instanceof StaticElem) {
+								ret = Env.getStaticAccessPath((StaticElem) loc,
+										field);
+							} else if (loc instanceof ParamElem) {
+								ret = getLocalAccessPath((ParamElem) loc, field);
+							} else if (loc instanceof AccessPath) {
+								if (loc instanceof StaticAccessPath) {
+									ret = Env.getStaticAccessPath(
+											(StaticAccessPath) loc, field);
+								} else if (loc instanceof LocalAccessPath) {
+									ret = getLocalAccessPath(
+											(LocalAccessPath) loc, field);
+								} else {
+									assert false : "only two kinds of access path!";
+								}
+							} else {
+								assert false : "only three kinds of things can have default targets!";
+							}
+						}
+					} else {
+						// for non-index field, we always do smashing
+						if (loc.hasFieldSelector(field)) {
+							assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+							// only AccessPath has field selectors
+							AccessPath path = ((AccessPath) loc)
+									.getPrefix(field);
+							if (path instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) path);
+							} else if (path instanceof StaticAccessPath) {
+								ret = Env
+										.getStaticAccessPath((StaticAccessPath) path);
+							} else {
+								assert false : "only access path is allowed!";
+							}
+						} else {
+							if (loc instanceof StaticElem) {
+								ret = Env.getStaticAccessPath((StaticElem) loc,
+										field);
+							} else if (loc instanceof ParamElem) {
+								ret = getLocalAccessPath((ParamElem) loc, field);
+							} else if (loc instanceof AccessPath) {
+								if (loc instanceof StaticAccessPath) {
+									ret = Env.getStaticAccessPath(
+											(StaticAccessPath) loc, field);
+								} else if (loc instanceof LocalAccessPath) {
+									ret = getLocalAccessPath(
+											(LocalAccessPath) loc, field);
+								} else {
+									assert false : "only two kinds of access path!";
+								}
+							} else {
+								assert false : "only three kinds of things can have default targets!";
+							}
 						}
 					}
+				} else {
+					assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 				}
-			} else {
-				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 			}
 		}
 

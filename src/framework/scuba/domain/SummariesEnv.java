@@ -64,6 +64,8 @@ public class SummariesEnv {
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 
+	// this is naively just marking the flag in access path
+	public boolean markSmashedFlag = false;
 	// this is the sound way to do smashing
 	public boolean markSmashedFields = false;
 	// this is used for instantiating the locations
@@ -123,6 +125,14 @@ public class SummariesEnv {
 	// protected PropType localType = PropType.NOALLOC;
 	// protected PropType localType = PropType.NOTHING;
 	// protected PropType localType = PropType.ALL;
+
+	public void setMarkSmashedFlag() {
+		markSmashedFlag = true;
+	}
+
+	public void resestMarkSmashedFlag() {
+		markSmashedFlag = false;
+	}
 
 	public PropType getLocalType() {
 		return localType;

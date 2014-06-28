@@ -35,8 +35,19 @@ public abstract class AccessPath extends HeapObject {
 
 	abstract public AccessPath findPrefix(FieldElem f);
 
+	protected boolean isSmashed;
+
+	public void setSmashed() {
+		isSmashed = true;
+	}
+
+	public void resetSmashed() {
+		isSmashed = false;
+	}
+
 	public boolean isSmashed() {
-		return !smashed.isEmpty();
+		return isSmashed;
+		// return !smashed.isEmpty();
 	}
 
 	public void addSmashedField(FieldElem f) {

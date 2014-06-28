@@ -1273,31 +1273,33 @@ public class Summary {
 		total = param2Alloc + param2AP + static2Alloc + static2AP + local2Alloc
 				+ local2AP + ret2Alloc + ret2AP + ap2Alloc + ap2AP
 				+ alloc2Alloc + alloc2AP;
-		StringUtil.reportInfo(s + ": -----------------------------------");
-		StringUtil.reportInfo(s + ": parameter --> Alloc: " + param2Alloc
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": parameter --> AccessPath: " + param2AP
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": static --> Alloc: " + static2Alloc
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": static --> AccessPath: " + static2AP
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": local --> Alloc: " + local2Alloc
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": local --> AccessPath: " + local2AP
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": ret --> Alloc: " + ret2Alloc + " out of "
-				+ total);
-		StringUtil.reportInfo(s + ": ret --> AccessPath: " + ret2AP
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": AccessPath --> Alloc: " + ap2Alloc
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": AccessPath --> AccessPath: " + ap2AP
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": Alloc --> Alloc: " + alloc2Alloc
-				+ " out of " + total);
-		StringUtil.reportInfo(s + ": Alloc --> AccessPath: " + alloc2AP
-				+ " out of " + total);
+		if (ap2AP > 100) {
+			StringUtil.reportInfo(s + ": -----------------------------------");
+			StringUtil.reportInfo(s + ": parameter --> Alloc: " + param2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": parameter --> AccessPath: " + param2AP
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": static --> Alloc: " + static2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": static --> AccessPath: " + static2AP
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": local --> Alloc: " + local2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": local --> AccessPath: " + local2AP
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": ret --> Alloc: " + ret2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": ret --> AccessPath: " + ret2AP
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": AccessPath --> Alloc: " + ap2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": AccessPath --> AccessPath: " + ap2AP
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": Alloc --> Alloc: " + alloc2Alloc
+					+ " out of " + total);
+			StringUtil.reportInfo(s + ": Alloc --> AccessPath: " + alloc2AP
+					+ " out of " + total);
+		}
 	}
 
 	public LocalVarElem getLocalVarElem(jq_Class clazz, jq_Method method,
