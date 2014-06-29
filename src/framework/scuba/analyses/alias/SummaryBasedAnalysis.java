@@ -409,6 +409,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		summary.setHasAnalyzed();
+		
+		int num = 0;
+		for (Pair p : summary.getAbsHeap().keySet()) {
+			num += summary.getAbsHeap().get(p).size();
+		}
+		if (num > 100) {
+			StringUtil.reportInfo("dbgBlowup: "
+					+ "------------------------------------------------");
+			StringUtil.reportInfo("dbgBlowup: analyzing " + m);
+			System.out.println("BAD..." + num + " " + m);
+			StringUtil.reportInfo("dbgBlowup: "
+					+ " edges in the current caller: " + num);
+			StringUtil.reportInfo("dbgBlowup: "
+					+ "~~~~~~~~~~~~~~~~dbgBlowup info~~~~~~~~~~~~~~~~~~~~");
+		}
 
 		long endMeth = System.nanoTime();
 		long delta = endMeth - startMeth;
