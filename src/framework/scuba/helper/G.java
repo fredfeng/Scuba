@@ -25,12 +25,12 @@ public class G {
 
 	public static boolean validate = false;
 
-	public static boolean dbgPermission = true;
+	public static boolean dbgPermission = false;
 
 	public static boolean dbgQuery = false;
 
 	public static int mId = 0;
-	public static boolean dbgAntlr = true;
+	public static boolean dbgAntlr = false;
 	public static boolean dbgInvoke = false;
 	public static boolean dbgInstn = false;
 	public static Map<Summary, Integer> IdMapping = new HashMap<Summary, Integer>();
