@@ -82,7 +82,8 @@ public class DowncastAnalysis {
 								.getType();
 
 						// /damm it!
-						if (!allocClz.extendsClass(castClz))
+						if (!allocClz.extendsClass(castClz)
+								&& !allocClz.implementsInterface(castClz))
 							dcScuba = false;
 					}
 				}
@@ -113,7 +114,8 @@ public class DowncastAnalysis {
 						else {
 							jq_Class allocClz = (jq_Class) t;
 							// nice.
-							if (!allocClz.extendsClass(castClz))
+							if (!allocClz.extendsClass(castClz)
+									&& !allocClz.implementsInterface(castClz))
 								dcChord = false;
 						}
 					}
@@ -125,7 +127,6 @@ public class DowncastAnalysis {
 			StringUtil.reportInfo("[Scuba] method: " + meth);
 			StringUtil.reportInfo("[Scuba] Downcast Type: " + castType);
 			StringUtil.reportInfo("[Scuba] p2Set of " + r + ": " + sites);
-			StringUtil.reportInfo("[Scuba] allocs of " + r + ": " + allocs);
 			StringUtil.reportInfo("[Scuba] cast result: " + dcScuba);
 			StringUtil.reportInfo("[Chord] cast result: " + dcChord);
 			StringUtil.reportInfo("[Chord] p2Set of " + r + ": " + pts);

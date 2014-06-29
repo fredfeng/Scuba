@@ -77,6 +77,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relLibM;
 	protected ProgramRel relVH;
 	protected ProgramRel relMV;
+	protected ProgramRel relVValias;
 
 	protected CICG callGraph;
 
@@ -106,7 +107,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		new DowncastAnalysis(relDcm, relDVH, this).run();
 
 		// perform points to set.
-		pointToSet();
+//		pointToSet();
+		new MayAliasAnalysis(relMV, relVValias, this).run();
 
 	}
 
@@ -523,6 +525,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relLibM = (ProgramRel) ClassicProject.g().getTrgt("librariesM");
 		relMV = (ProgramRel) ClassicProject.g().getTrgt("MV");
 		relVH = (ProgramRel) ClassicProject.g().getTrgt("ptsVH");
+		relVValias = (ProgramRel) ClassicProject.g().getTrgt("cspaVValias");
+
 
 		if (!relDcLocal.isOpen())
 			relDcLocal.load();

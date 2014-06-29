@@ -1,3 +1,3 @@
 ant clean
 ant jar
-java -cp lib/chord.jar -Dchord.work.dir=/home/yufeng/workspace/CFLexamples -Dchord.props.file=chord.properties.example -Dchord.run.analyses=sum-java chord.project.Boot
+java -cp lib/chord.jar -Dchord.work.dir=/home/yufeng/research/benchmark/pjbench-read-only/dacapo/benchmarks/antlr/ -Dchord.run.analyses=cspa-0cfa-dlog,prune-dlog,cspa-query-resolve-dlog,cspa-downcast-java,sum-java chord.project.Boot
