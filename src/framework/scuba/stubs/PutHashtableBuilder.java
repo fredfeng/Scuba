@@ -10,11 +10,16 @@ import joeq.Compiler.Quad.ICFGBuilder;
 import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.IConstOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
+import joeq.Compiler.Quad.Operand.TypeOperand;
 import joeq.Compiler.Quad.Operator.AStore;
 import joeq.Compiler.Quad.Operator.AStore.ASTORE_A;
 import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Move;
+import joeq.Compiler.Quad.Operator.New;
+import joeq.Compiler.Quad.Operator.Putfield;
 import joeq.Compiler.Quad.Operator.Move.MOVE_A;
+import joeq.Compiler.Quad.Operator.New.NEW;
+import joeq.Compiler.Quad.Operator.Putfield.PUTFIELD_A;
 import joeq.Compiler.Quad.Operator.Return;
 import joeq.Compiler.Quad.Operator.Return.RETURN_A;
 import joeq.Compiler.Quad.Quad;
@@ -50,26 +55,39 @@ public class PutHashtableBuilder implements ICFGBuilder {
 		Register r2 = rf.getOrCreateLocal(2, tabType);
 		Register t1 = rf.getOrCreateStack(1, objType);
 		Register t2 = rf.getOrCreateStack(2, tabType);
+		Register t3 = rf.getOrCreateStack(3, tabEntryType);
+
 		
 		ControlFlowGraph cfg = new ControlFlowGraph(m, 1, 0, rf);
-		BasicBlock bb = cfg.createBasicBlock(1, 1, 3, null);
+		BasicBlock bb = cfg.createBasicBlock(1, 1, 6, null);
 		tabType.load();
 		tabEntryType.load();
 		jq_Field tab = ((jq_Class)thisType).getDeclaredField("table");
 		FieldOperand tabF = new FieldOperand(tab);
+		
+		jq_Field val = ((jq_Class)tabEntryType).getDeclaredField("value");
+		FieldOperand valF = new FieldOperand(val);
 
 		Quad q1 = Move.create(0, bb, MOVE_A.INSTANCE, new RegisterOperand(t1,
 				objType), new RegisterOperand(r2, objType));
 		Quad q2 = Getfield.create(0, bb, Getfield.GETFIELD_A.INSTANCE,
 				new RegisterOperand(t2, tabType), ro0, tabF, null);
-		Quad q3 = AStore.create(1, bb, ASTORE_A.INSTANCE, new RegisterOperand(
-				t1, tabEntryType), new RegisterOperand(t2, tabType),
+		Quad q3 = New.create(1, bb, NEW.INSTANCE, new RegisterOperand(t3,
+				tabEntryType), new TypeOperand(tabEntryType));
+		Quad q4 = Putfield.create(2, bb, PUTFIELD_A.INSTANCE,
+				new RegisterOperand(t3, tabEntryType), valF,
+				new RegisterOperand(t1, objType), null);
+		Quad q5 = AStore.create(1, bb, ASTORE_A.INSTANCE, new RegisterOperand(
+				t3, tabEntryType), new RegisterOperand(t2, tabType),
 				new IConstOperand(1), null);
 		Quad ret = Return.create(3, bb, RETURN_A.INSTANCE, new RegisterOperand(
 				t1, objType));
 		bb.appendQuad(q1);
 		bb.appendQuad(q2);
 		bb.appendQuad(q3);
+		bb.appendQuad(q4);
+		bb.appendQuad(q5);
+
 		bb.appendQuad(ret);
 		BasicBlock entry = cfg.entry();
 		BasicBlock exit = cfg.exit();
