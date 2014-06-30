@@ -29,8 +29,8 @@ appsM(m) :- reachableM(m), !librariesM(m).
 appsVF(v,f) :- appsM(m), MgetInstFldInst(m,_,v,f).
 appsVF(v,f) :- appsM(m), MputInstFldInst(m,v,f,_).
 
-#appsVV(v,v1) :- appsVF(v,f), appsVF(v1,f), v<v1.
+appsVV(v,v1) :- appsVF(v,f), appsVF(v1,f), v<v1.
 	
 	
-appsVV(v,v1) :- appsVF(v,f), FT(f,t), appsVF(v1,f1), FT(f1,t1), sub(t,t1),  v<v1.
-appsVV(v,v1) :- appsVF(v,f), FT(f,t), appsVF(v1,f1), FT(f1,t1), sub(t1,t), v<v1.
+#appsVV(v,v1) :- appsVF(v,f), FT(f,t), appsVF(v1,f1), FT(f1,t1), sub(t,t1),  v<v1.
+#appsVV(v,v1) :- appsVF(v,f), FT(f,t), appsVF(v1,f1), FT(f1,t1), sub(t1,t), v<v1.
