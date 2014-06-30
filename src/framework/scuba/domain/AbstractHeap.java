@@ -237,11 +237,11 @@ public class AbstractHeap extends Heap {
 		assert v2.knownArgDerived() : "we should set arg-derived marker for v2!";
 
 		// change v2's static type
-		v2.setType(leftType);
+		// v2.setType(leftType);
 
 		// do an extra assignment
 		Pair<Boolean, Boolean> res = handleAssignStmt(clazz, method, left,
-				leftVType, leftType, right, rightVType, leftType);
+				leftVType, leftType, right, rightVType, rightType);
 		ret.val0 = res.val0;
 		ret.val1 = res.val1;
 

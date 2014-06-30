@@ -37,7 +37,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 1;
+	protected int allocDepth = 2;
 	// dynamically control the depth
 	protected boolean dynAlloc = true;
 
@@ -65,7 +65,7 @@ public class SummariesEnv {
 	public final int sccLimit = 30;
 
 	// type filter
-	public boolean useTypeFilter = true;
+	public boolean useTypeFilter = false;
 	// whether or not resolve default static access path in the final heap
 	public boolean resolveFinalHeap = true;
 
