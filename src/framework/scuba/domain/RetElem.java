@@ -2,6 +2,7 @@ package framework.scuba.domain;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Type;
 
 // TODO
 // RetElem is either the parameter or the local variable in the IR
@@ -17,11 +18,12 @@ public class RetElem extends StackObject {
 	// return value
 	// protected Register retValue;
 
-	public RetElem(jq_Class clazz, jq_Method method) {
+	public RetElem(jq_Class clazz, jq_Method method, jq_Type type) {
 		this.clazz = clazz;
 		this.method = method;
 		// this.retValue = retValue;
 		this.length = 1;
+		this.type = type;
 	}
 
 	@Override

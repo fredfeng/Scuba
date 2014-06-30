@@ -3,6 +3,10 @@ package framework.scuba.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import chord.program.Program;
+import joeq.Class.jq_Array;
+import joeq.Class.jq_Type;
+
 public abstract class AccessPath extends HeapObject {
 
 	protected Set<FieldElem> smashed = new HashSet<FieldElem>();
@@ -21,6 +25,23 @@ public abstract class AccessPath extends HeapObject {
 		// base because the base has such a field
 		base.addField(field);
 		length = base.length + 1;
+		if (field instanceof NormalFieldElem) {
+			this.type = ((NormalFieldElem) field).getField().getType();
+		} else if (field instanceof EpsilonFieldElem) {
+			this.type = base.getType();
+		} else if (field instanceof IndexFieldElem) {
+			// assert (base.getType() instanceof jq_Array) :
+			// "for access path with index field "
+			// + "base must be jq_Array!";
+			if (base.getType() instanceof jq_Array) {
+				this.type = ((jq_Array) base.getType()).getElementType();
+			} else {
+				this.type = Program.g().getClass("java.lang.Object");
+			}
+
+		} else {
+			assert false : "wired things!";
+		}
 	}
 
 	abstract public AbsMemLoc getBase();

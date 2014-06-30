@@ -1,14 +1,17 @@
 package framework.scuba.domain;
 
+import joeq.Class.jq_Type;
+
 public class AllocElem extends HeapObject {
 
 	final protected Alloc alloc;
 
 	final protected Context context;
 
-	public AllocElem(Alloc allocSite, Context context) {
+	public AllocElem(Alloc allocSite, Context context, jq_Type type) {
 		this.alloc = allocSite;
 		this.context = context;
+		this.type = type;
 	}
 
 	public AllocElem findRoot() {
@@ -73,7 +76,7 @@ public class AllocElem extends HeapObject {
 
 	@Override
 	public AllocElem clone() {
-		return new AllocElem(alloc, context.clone());
+		return new AllocElem(alloc, context.clone(), type);
 	}
 
 }

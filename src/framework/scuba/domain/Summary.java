@@ -162,8 +162,9 @@ public class Summary {
 	// fill the paramList from left to right, one by one
 	// MUST keep the proper sequence!
 	// every parameter in the list will only be translated once!
-	public void fillFormals(jq_Class clazz, jq_Method method, Register param) {
-		formals.add(absHeap.getParamElem(clazz, method, param));
+	public void fillFormals(jq_Class clazz, jq_Method method, Register param,
+			jq_Type type) {
+		formals.add(absHeap.getParamElem(clazz, method, param, type));
 	}
 
 	// get the paramList, which will used in the instantiation
@@ -314,16 +315,7 @@ public class Summary {
 		}
 		absHeap.markChanged(new Pair<Boolean, Boolean>(false, false));
 		quad.accept(qv);
-		if (G.dbgAntlr && G.dump) {
-			if (G.IdMapping.get(this) == G.sample
-					|| G.IdMapping.get(this) == G.sample1
-					|| G.IdMapping.get(this) == 259) {
-				this.dumpSummaryToFile(G.IdMapping.get(this) + "$"
-						+ ++this.absHeap.count);
-				StringUtil.reportInfo("[dbgAntlr] " + "dump counter: "
-						+ this.absHeap.count);
-			}
-		}
+
 		return absHeap.isChanged();
 	}
 
@@ -368,7 +360,8 @@ public class Summary {
 						false);
 
 				flag = absHeap.handleALoadStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
+						lhs.getRegister(), lvt, lhs.getType(),
+						rhs.getRegister(), rvt, rhs.getType());
 
 				absHeap.markChanged(flag);
 
@@ -404,7 +397,8 @@ public class Summary {
 						false);
 
 				flag = absHeap.handleAStoreStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
+						lhs.getRegister(), lvt, lhs.getType(),
+						rhs.getRegister(), rvt, rhs.getType());
 
 				absHeap.markChanged(flag);
 
@@ -453,12 +447,16 @@ public class Summary {
 					RegisterOperand lo = CheckCast.getDest(stmt);
 					Register l = lo.getRegister();
 
+					System.out.println("****** " + "left: " + lo.getType());
+					System.out.println("****** " + "right: " + ro.getType());
+
 					VariableType lvt = getVarType(stmt.getMethod(), l);
 					VariableType rvt = getVarType(stmt.getMethod(), r);
 					Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(
 							false, false);
-					flag = absHeap.handleAssignStmt(meth.getDeclaringClass(),
-							meth, l, lvt, r, rvt);
+					flag = absHeap.handleCheckCastStmt(
+							meth.getDeclaringClass(), meth, l, lvt,
+							lo.getType(), r, rvt, ro.getType());
 					absHeap.markChanged(flag);
 				}
 			}
@@ -485,8 +483,9 @@ public class Summary {
 				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
 						false);
 				flag = absHeap.handleLoadStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhsBase.getRegister(),
-						field.getField(), rvt);
+						lhs.getRegister(), lvt, lhs.getType(),
+						rhsBase.getRegister(), field.getField(), rvt,
+						rhsBase.getType());
 
 				absHeap.markChanged(flag);
 
@@ -515,8 +514,8 @@ public class Summary {
 				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
 						false);
 				flag = absHeap.handleStatLoadStmt(meth.getDeclaringClass(),
-						meth, lhs.getRegister(), lvt, encloseClass,
-						field.getField());
+						meth, lhs.getRegister(), lvt, lhs.getType(),
+						encloseClass, field.getField());
 
 				absHeap.markChanged(flag);
 
@@ -640,13 +639,16 @@ public class Summary {
 					// mapping the actuals in the call site of the caller to the
 					// locations in the caller's heap
 					for (int i = 0; i < actuals.length(); i++) {
-						Register v = actuals.get(i).getRegister();
+						RegisterOperand ro = actuals.get(i);
+						Register v = ro.getRegister();
 						if (getVarType(meth, v) == VariableType.PARAMEMTER) {
 							actualsMemLoc.add(absHeap.getParamElem(
-									meth.getDeclaringClass(), meth, v));
+									meth.getDeclaringClass(), meth, v,
+									ro.getType()));
 						} else if (getVarType(meth, v) == VariableType.LOCAL_VARIABLE) {
 							actualsMemLoc.add(absHeap.getLocalVarElem(
-									meth.getDeclaringClass(), meth, v));
+									meth.getDeclaringClass(), meth, v,
+									ro.getType()));
 						} else {
 							// actuals can be primitives, we use constants to
 							// denote those (we do not map formals to constants)
@@ -670,7 +672,7 @@ public class Summary {
 						RegisterOperand ro = Invoke.getDest(stmt);
 						StackObject sObj = getMemLocation(
 								meth.getDeclaringClass(), meth,
-								ro.getRegister());
+								ro.getRegister(), ro.getType());
 						assert (sObj != null) : "Fails to locate the right heap obj.";
 						item.initReturnToLHS(calleeSum.getRetValue(), sObj);
 					}
@@ -776,7 +778,8 @@ public class Summary {
 				Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
 						false);
 				flag = absHeap.handleAssignStmt(meth.getDeclaringClass(), meth,
-						lhs.getRegister(), lvt, rhs.getRegister(), rvt);
+						lhs.getRegister(), lvt, lhs.getType(),
+						rhs.getRegister(), rvt, rhs.getType());
 
 				absHeap.markChanged(flag);
 			} else {
@@ -810,8 +813,8 @@ public class Summary {
 			Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
 					false);
 			flag = absHeap.handleNewStmt(stmt.getMethod().getDeclaringClass(),
-					meth, rop.getRegister(), vt, to.getType(), stmt,
-					stmt.getID());
+					meth, rop.getRegister(), vt, rop.getType(), to.getType(),
+					stmt, stmt.getID());
 
 			absHeap.markChanged(flag);
 		}
@@ -829,8 +832,8 @@ public class Summary {
 			Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
 					false);
 			flag = absHeap.handleMultiNewArrayStmt(meth.getDeclaringClass(),
-					meth, rop.getRegister(), vt, to.getType(), plo.length(),
-					stmt, stmt.getID());
+					meth, rop.getRegister(), vt, rop.getType(), to.getType(),
+					plo.length(), stmt, stmt.getID());
 
 			absHeap.markChanged(flag);
 		}
@@ -848,7 +851,8 @@ public class Summary {
 			Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
 					false);
 			flag = absHeap.handleNewArrayStmt(meth.getDeclaringClass(), meth,
-					rop.getRegister(), vt, to.getType(), stmt, stmt.getID());
+					rop.getRegister(), vt, rop.getType(), to.getType(), stmt,
+					stmt.getID());
 
 			absHeap.markChanged(flag);
 		}
@@ -883,8 +887,8 @@ public class Summary {
 					Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(
 							false, false);
 					flag = absHeap.handleAssignStmt(meth.getDeclaringClass(),
-							meth, lhs.getRegister(), lvt, rhs.getRegister(),
-							rvt);
+							meth, lhs.getRegister(), lvt, lhs.getType(),
+							rhs.getRegister(), rvt, rhs.getType());
 					sig.val0 = flag.val0 | sig.val0;
 					sig.val1 = flag.val1 | sig.val1;
 				}
@@ -923,8 +927,9 @@ public class Summary {
 							false, false);
 
 					flag = absHeap.handleStoreStmt(meth.getDeclaringClass(),
-							meth, lhs.getRegister(), lvt, field.getField(),
-							rhs.getRegister(), rvt);
+							meth, lhs.getRegister(), lvt, lhs.getType(),
+							field.getField(), rhs.getRegister(), rvt,
+							rhs.getType());
 
 					absHeap.markChanged(flag);
 				}
@@ -955,7 +960,8 @@ public class Summary {
 							false, false);
 					flag = absHeap.handleStaticStoreStmt(
 							meth.getDeclaringClass(), meth, encloseClass,
-							field.getField(), rhs.getRegister(), rvt);
+							field.getField(), rhs.getRegister(), rvt,
+							rhs.getType());
 					absHeap.markChanged(flag);
 				}
 			} else {
@@ -979,13 +985,15 @@ public class Summary {
 
 			Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
 					false);
-			flag = absHeap.handleRetStmt(clazz, meth, ret, type);
+			flag = absHeap.handleRetStmt(clazz, meth, ret, type,
+					meth.getReturnType());
 			absHeap.markChanged(flag);
 
 			// if (retValue == null) {
-			assert (absHeap.contains(new RetElem(clazz, meth))) : ""
+			assert (absHeap.contains(new RetElem(clazz, meth, meth
+					.getReturnType()))) : ""
 					+ "the return value should be contained in the heap!";
-			retValue = absHeap.getRetElem(clazz, meth);
+			retValue = absHeap.getRetElem(clazz, meth, meth.getReturnType());
 		}
 
 		// no sure whether we should mark this as no op.
@@ -1071,7 +1079,7 @@ public class Summary {
 			jq_Class recvStatType = (jq_Class) ro.getType();
 
 			// generate pt-set for the receiver.
-			StackObject so = getMemLocation(clz, caller, recv);
+			StackObject so = getMemLocation(clz, caller, recv, ro.getType());
 			P2Set p2Set = absHeap.lookup(so,
 					EpsilonFieldElem.getEpsilonFieldElem());
 
@@ -1135,12 +1143,13 @@ public class Summary {
 		return vt;
 	}
 
-	public StackObject getMemLocation(jq_Class clz, jq_Method meth, Register r) {
+	public StackObject getMemLocation(jq_Class clz, jq_Method meth, Register r,
+			jq_Type type) {
 		VariableType vt = getVarType(meth, r);
 		if (vt == VariableType.LOCAL_VARIABLE) {
-			return absHeap.getLocalVarElem(clz, meth, r);
+			return absHeap.getLocalVarElem(clz, meth, r, type);
 		} else if (vt == VariableType.PARAMEMTER) {
-			return absHeap.getParamElem(clz, meth, r);
+			return absHeap.getParamElem(clz, meth, r, type);
 		}
 		return null;
 	}
@@ -1300,11 +1309,6 @@ public class Summary {
 			StringUtil.reportInfo(s + ": Alloc --> AccessPath: " + alloc2AP
 					+ " out of " + total);
 		}
-	}
-
-	public LocalVarElem getLocalVarElem(jq_Class clazz, jq_Method method,
-			Register variable) {
-		return absHeap.getLocalVarElem(clazz, method, variable);
 	}
 
 	public Set<AllocElem> getP2Set(LocalVarElem local) {

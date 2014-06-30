@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import joeq.Class.jq_Type;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
@@ -43,6 +44,76 @@ public class P2Set {
 	// of the paper, in which it only reads other and write this.p2Set
 	// this method will never get the pointer to the other p2set so do not worry
 	// about modifying the other p2set by modifying this p2set
+	public Pair<Boolean, Boolean> join(P2Set other, AbstractHeap absHeap,
+			jq_Type typeFilter) {
+		boolean changeHeap = false;
+		boolean changeSum = false;
+		for (HeapObject obj : other.keySet()) {
+
+			// filtering the in-compatible types
+			if (SummariesEnv.v().useTypeFilter) {
+				if (!obj.getType().isSubtypeOf(typeFilter)
+						&& !typeFilter.isSubtypeOf(obj.getType())) {
+					continue;
+				}
+			}
+
+			// the conjunction operation
+			if (p2Set.containsKey(obj)) {
+				// obj is in both p2sets
+				// directly get the other p2set's constraints
+				BoolExpr otherCst = other.get(obj);
+
+				// generate the union of the two (a shallow copy with the same
+				// constraints but different instances)
+				BoolExpr newCst = ConstraintManager.union(p2Set.get(obj),
+						otherCst);
+
+				// TODO
+				// remove the edges with false constraints
+				if (ConstraintManager.isFalse(newCst)) {
+					continue;
+				}
+				// check whether we need to update the p2set of this heap object
+				// TODO check the return value
+				// we should use the equivalence checking
+				if (ConstraintManager.isEqual(p2Set.get(obj), newCst))
+					continue;
+
+				p2Set.put(obj, newCst);
+				// TODO
+				changeHeap = true;
+				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
+					changeSum = true;
+				} else if (obj.isArgDerived() || absHeap.toProp(obj)) {
+					changeSum = true;
+				}
+			} else {
+				// obj is only in other's p2set
+				// AVOID directly get the constraint instance of the other
+				// p2set!!!! only get the shallow copy of the other constraints
+
+				BoolExpr otherCst = other.get(obj);
+				// TODO
+				// remove the edges with false constraints
+				if (ConstraintManager.isFalse(otherCst)) {
+					continue;
+				}
+
+				// for this case, we should add a new edge
+				p2Set.put(obj, ConstraintManager.clone(other.get(obj)));
+				changeHeap = true;
+				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
+					changeSum = true;
+				} else if (obj.isArgDerived() || absHeap.toProp(obj)) {
+					changeSum = true;
+				}
+			}
+		}
+		return new Pair<Boolean, Boolean>(changeHeap, changeSum);
+	}
+
+	// this is used for join operation not related to updating the heap
 	public Pair<Boolean, Boolean> join(P2Set other, AbstractHeap absHeap) {
 		boolean changeHeap = false;
 		boolean changeSum = false;

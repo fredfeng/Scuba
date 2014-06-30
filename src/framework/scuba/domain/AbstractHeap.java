@@ -9,12 +9,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.program.Program;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
@@ -130,6 +132,7 @@ public class AbstractHeap extends Heap {
 			P2Set tgt = lookup(obj, field);
 			assert (tgt != null) : "get a null p2 set!";
 			P2Set projP2Set = P2SetHelper.project(tgt, cst);
+
 			ret.join(projP2Set, this);
 		}
 
@@ -144,9 +147,7 @@ public class AbstractHeap extends Heap {
 		for (AbsMemLoc loc : instnLocSet.keySet()) {
 			BoolExpr cst = instnLocSet.get(loc);
 
-			SummariesEnv.v().setMarkSmashedFlag();
 			P2Set tgt = lookup(loc, field);
-			SummariesEnv.v().resestMarkSmashedFlag();
 
 			assert (tgt != null) : "get a null p2 set!";
 			P2Set projP2Set = P2SetHelper.project(tgt, cst);
@@ -163,7 +164,8 @@ public class AbstractHeap extends Heap {
 	// TODO we loose the constraint to allow LHS to be ParamElem (Not SSA)
 	public Pair<Boolean, Boolean> handleAssignStmt(jq_Class clazz,
 			jq_Method method, Register left, VariableType leftVType,
-			Register right, VariableType rightVType) {
+			jq_Type leftType, Register right, VariableType rightVType,
+			jq_Type rightType) {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
@@ -177,9 +179,9 @@ public class AbstractHeap extends Heap {
 
 		// generate memory location for lhs
 		if (leftVType == VariableType.PARAMEMTER) {
-			v1 = getParamElem(clazz, method, left);
+			v1 = getParamElem(clazz, method, left, leftType);
 		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
-			v1 = getLocalVarElem(clazz, method, left);
+			v1 = getLocalVarElem(clazz, method, left, leftType);
 		} else {
 			assert false : "wired thing! For assign stmt, LHS must be LocalElem!";
 		}
@@ -187,9 +189,9 @@ public class AbstractHeap extends Heap {
 
 		// generate the memory location for rhs
 		if (rightVType == VariableType.PARAMEMTER) {
-			v2 = getParamElem(clazz, method, right);
+			v2 = getParamElem(clazz, method, right, rightType);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			v2 = getLocalVarElem(clazz, method, right);
+			v2 = getLocalVarElem(clazz, method, right, rightType);
 		} else {
 			assert false : "for assign stmt, rhs must be LocalElem or ParamElem!";
 		}
@@ -198,10 +200,8 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set arg-derived marker for v1!";
 		assert v2.knownArgDerived() : "we should set arg-derived marker for v2!";
 
-		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
-		SummariesEnv.v().resestMarkSmashedFlag();
 
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
@@ -213,8 +213,43 @@ public class AbstractHeap extends Heap {
 		return ret;
 	}
 
+	public Pair<Boolean, Boolean> handleCheckCastStmt(jq_Class clazz,
+			jq_Method method, Register left, VariableType leftVType,
+			jq_Type leftType, Register right, VariableType rightVType,
+			jq_Type rightType) {
+		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
+		assert (leftVType == VariableType.LOCAL_VARIABLE || leftVType == VariableType.PARAMEMTER) : ""
+				+ "for CheckCast stmt, LHS must be LocalElem (or ParamElem, we HAVE NOT fully fixed SSA";
+		assert (rightVType == VariableType.LOCAL_VARIABLE || rightVType == VariableType.PARAMEMTER) : ""
+				+ "for CheckCast stmt, rhs must be LocalElem or ParamElem!";
+
+		// generates StackObject (either ParamElem or LocalVarElem)
+		StackObject v2 = null;
+		// generate the memory location for rhs
+		if (rightVType == VariableType.PARAMEMTER) {
+			v2 = getParamElem(clazz, method, right, rightType);
+		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
+			v2 = getLocalVarElem(clazz, method, right, rightType);
+		} else {
+			assert false : "for CheckCast stmt, rhs must be LocalElem or ParamElem!";
+		}
+		assert (v2 != null) : "v2 is null!";
+		assert v2.knownArgDerived() : "we should set arg-derived marker for v2!";
+
+		// change v2's static type
+		v2.setType(leftType);
+
+		// do an extra assignment
+		Pair<Boolean, Boolean> res = handleAssignStmt(clazz, method, left,
+				leftVType, leftType, right, rightVType, leftType);
+		ret.val0 = res.val0;
+		ret.val1 = res.val1;
+
+		return ret;
+	}
+
 	// this method is just a helper method for handling array allocations
-	private Pair<Boolean, Boolean> handleArrayLoad(ArrayAllocElem left,
+	private Pair<Boolean, Boolean> handleArrayLoad(AllocElem left,
 			IndexFieldElem index, AllocElem right) {
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(left,
@@ -234,7 +269,8 @@ public class AbstractHeap extends Heap {
 	// f: non-static field
 	public Pair<Boolean, Boolean> handleLoadStmt(jq_Class clazz,
 			jq_Method method, Register left, VariableType leftVType,
-			Register rightBase, jq_Field rightField, VariableType rightBaseVType) {
+			jq_Type leftType, Register rightBase, jq_Field rightField,
+			VariableType rightBaseVType, jq_Type rightBaseType) {
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for non-static load stmt, LHS must be LocalElem";
@@ -250,7 +286,7 @@ public class AbstractHeap extends Heap {
 		if (leftVType == VariableType.PARAMEMTER) {
 			assert false : "for non-static load stmt, LHS must be LocalElem";
 		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
-			v1 = getLocalVarElem(clazz, method, left);
+			v1 = getLocalVarElem(clazz, method, left, leftType);
 		} else {
 			assert false : "wired thing! For non-static load stmt, LHS must be LocalElem!";
 		}
@@ -258,9 +294,9 @@ public class AbstractHeap extends Heap {
 
 		// generate the memory location for rhs's base
 		if (rightBaseVType == VariableType.PARAMEMTER) {
-			v2 = getParamElem(clazz, method, rightBase);
+			v2 = getParamElem(clazz, method, rightBase, rightBaseType);
 		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
-			v2 = getLocalVarElem(clazz, method, rightBase);
+			v2 = getLocalVarElem(clazz, method, rightBase, rightBaseType);
 		} else {
 			assert false : "for non-static load stmt, rhs BASE must be LocalElem or ParamElem!";
 		}
@@ -269,10 +305,8 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
-		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
-		SummariesEnv.v().resestMarkSmashedFlag();
 
 		NormalFieldElem f = Env.getNormalFieldElem(rightField);
 		P2Set p2Setv2f = lookup(p2Setv2, f);
@@ -290,7 +324,8 @@ public class AbstractHeap extends Heap {
 	// treat it just like a load stmt: v1 = v2.\i where \i is the index field
 	public Pair<Boolean, Boolean> handleALoadStmt(jq_Class clazz,
 			jq_Method method, Register left, VariableType leftVType,
-			Register rightBase, VariableType rightBaseVType) {
+			jq_Type leftType, Register rightBase, VariableType rightBaseVType,
+			jq_Type rightBaseType) {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for array load stmt, LHS must be LocalElem";
@@ -298,8 +333,9 @@ public class AbstractHeap extends Heap {
 				|| (rightBaseVType == VariableType.PARAMEMTER) : ""
 				+ "for array stmt, rhs BASE must be either LocalVarElem or ParamElem!";
 
-		LocalVarElem v1 = getLocalVarElem(clazz, method, left);
-		LocalVarElem v2 = getLocalVarElem(clazz, method, rightBase);
+		LocalVarElem v1 = getLocalVarElem(clazz, method, left, leftType);
+		LocalVarElem v2 = getLocalVarElem(clazz, method, rightBase,
+				rightBaseType);
 
 		assert (v1 != null) : "v1 is null!";
 		assert (v2 != null) : "v2 is null!";
@@ -307,11 +343,11 @@ public class AbstractHeap extends Heap {
 		assert (v1.knownArgDerived()) : "we should mark arg-derived marker before using v1!";
 		assert (v2.knownArgDerived()) : "we should mark arg-derived marker before using v2!";
 
-		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
-		SummariesEnv.v().resestMarkSmashedFlag();
 
+		// TODO need to verifying this getArrayType method for Chord
+		assert (v2.getType() instanceof jq_Array) : "rhs of ALoad must be jq_Array!";
 		IndexFieldElem index = IndexFieldElem.getIndexFieldElem();
 		P2Set p2Setv2i = lookup(p2Setv2, index);
 		assert (p2Setv2i != null) : "get a null p2 set!";
@@ -334,7 +370,7 @@ public class AbstractHeap extends Heap {
 	// v1 = (A.f) where A.f is just a stack object
 	public Pair<Boolean, Boolean> handleStatLoadStmt(jq_Class clazz,
 			jq_Method method, Register left, VariableType leftVType,
-			jq_Class rightBase, jq_Field rightField) {
+			jq_Type leftType, jq_Class rightBase, jq_Field rightField) {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for static load stmt, LHS must be a local!";
@@ -344,7 +380,7 @@ public class AbstractHeap extends Heap {
 		if (leftVType == VariableType.PARAMEMTER) {
 			assert false : "for static load stmt, LHS must be LocalElem";
 		} else if (leftVType == VariableType.LOCAL_VARIABLE) {
-			v1 = getLocalVarElem(clazz, method, left);
+			v1 = getLocalVarElem(clazz, method, left, leftType);
 		} else {
 			assert false : "wired thing! For static load stmt, LHS must be LocalElem!";
 		}
@@ -359,10 +395,8 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
-		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
-		SummariesEnv.v().resestMarkSmashedFlag();
 
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
@@ -378,9 +412,16 @@ public class AbstractHeap extends Heap {
 	// field (all array base shares the same \i)
 	public Pair<Boolean, Boolean> handleAStoreStmt(jq_Class clazz,
 			jq_Method method, Register leftBase, VariableType leftBaseVType,
-			Register right, VariableType rightVType) {
+			jq_Type leftBaseType, Register right, VariableType rightVType,
+			jq_Type rightType) {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
+
+		// just temporily use this
+		if (!(leftBaseType instanceof jq_Array)) {
+			return ret;
+		}
+
 		assert (rightVType == VariableType.PARAMEMTER)
 				|| (rightVType == VariableType.LOCAL_VARIABLE) : "we are only considering local"
 				+ " variables and parameters as rhs";
@@ -392,9 +433,9 @@ public class AbstractHeap extends Heap {
 
 		// generate the memory location for rhs
 		if (leftBaseVType == VariableType.PARAMEMTER) {
-			v1 = getParamElem(clazz, method, leftBase);
+			v1 = getParamElem(clazz, method, leftBase, leftBaseType);
 		} else if (leftBaseVType == VariableType.LOCAL_VARIABLE) {
-			v1 = getLocalVarElem(clazz, method, leftBase);
+			v1 = getLocalVarElem(clazz, method, leftBase, leftBaseType);
 		} else {
 			assert false : "wired thing! For array store stmt,"
 					+ " LHS Base must be LocalElem or ParamElem!";
@@ -403,9 +444,9 @@ public class AbstractHeap extends Heap {
 
 		// generate the memory location for rhs's base
 		if (rightVType == VariableType.PARAMEMTER) {
-			v2 = getParamElem(clazz, method, right);
+			v2 = getParamElem(clazz, method, right, rightType);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			v2 = getLocalVarElem(clazz, method, right);
+			v2 = getLocalVarElem(clazz, method, right, rightType);
 		} else {
 			assert false : "for non-static store stmt, rhs must be LocalElem or ParamElem!";
 		}
@@ -414,13 +455,13 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
-		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv1 = lookup(v1, EpsilonFieldElem.getEpsilonFieldElem());
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv1 != null) : "get a null p2 set!";
 		assert (p2Setv2 != null) : "get a null p2 set!";
-		SummariesEnv.v().resestMarkSmashedFlag();
 
+		// TODO need verifying this
+		assert (v1.getType() instanceof jq_Array) : "lhs of AStore must be jq_Array!";
 		IndexFieldElem index = IndexFieldElem.getIndexFieldElem();
 		for (HeapObject hObj : p2Setv1.keySet()) {
 			BoolExpr cst = p2Setv1.get(hObj);
@@ -440,7 +481,8 @@ public class AbstractHeap extends Heap {
 	// v1.f = v2
 	public Pair<Boolean, Boolean> handleStoreStmt(jq_Class clazz,
 			jq_Method method, Register leftBase, VariableType leftBaseVType,
-			jq_Field leftField, Register right, VariableType rightVType) {
+			jq_Type leftBaseType, jq_Field leftField, Register right,
+			VariableType rightVType, jq_Type rightType) {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (rightVType == VariableType.PARAMEMTER)
@@ -454,9 +496,9 @@ public class AbstractHeap extends Heap {
 
 		// generate the memory location for lhs
 		if (leftBaseVType == VariableType.PARAMEMTER) {
-			v1 = getParamElem(clazz, method, leftBase);
+			v1 = getParamElem(clazz, method, leftBase, leftBaseType);
 		} else if (leftBaseVType == VariableType.LOCAL_VARIABLE) {
-			v1 = getLocalVarElem(clazz, method, leftBase);
+			v1 = getLocalVarElem(clazz, method, leftBase, leftBaseType);
 		} else {
 			assert false : "wired thing! For non-static store load stmt,"
 					+ " LHS Base must be LocalElem or ParamElem!";
@@ -465,9 +507,9 @@ public class AbstractHeap extends Heap {
 
 		// generate the memory location for rhs's base
 		if (rightVType == VariableType.PARAMEMTER) {
-			v2 = getParamElem(clazz, method, right);
+			v2 = getParamElem(clazz, method, right, rightType);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			v2 = getLocalVarElem(clazz, method, right);
+			v2 = getLocalVarElem(clazz, method, right, rightType);
 		} else {
 			assert false : "for non-static store stmt, rhs must be LocalElem or ParamElem!";
 		}
@@ -476,12 +518,10 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
-		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv1 = lookup(v1, EpsilonFieldElem.getEpsilonFieldElem());
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv1 != null) : "get a null p2 set!";
 		assert (p2Setv2 != null) : "get a null p2 set!";
-		SummariesEnv.v().resestMarkSmashedFlag();
 
 		NormalFieldElem f = Env.getNormalFieldElem(leftField);
 		for (HeapObject obj : p2Setv1.keySet()) {
@@ -507,7 +547,7 @@ public class AbstractHeap extends Heap {
 	// (A.f) = v2 where (A.f) is just a stack object (StaticElem)
 	public Pair<Boolean, Boolean> handleStaticStoreStmt(jq_Class clazz,
 			jq_Method method, jq_Class leftBase, jq_Field leftField,
-			Register right, VariableType rightVType) {
+			Register right, VariableType rightVType, jq_Type rightType) {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (rightVType == VariableType.PARAMEMTER)
@@ -523,9 +563,9 @@ public class AbstractHeap extends Heap {
 		StackObject v2 = null;
 		// generate the memory location for rhs
 		if (rightVType == VariableType.PARAMEMTER) {
-			v2 = getParamElem(clazz, method, right);
+			v2 = getParamElem(clazz, method, right, rightType);
 		} else if (rightVType == VariableType.LOCAL_VARIABLE) {
-			v2 = getLocalVarElem(clazz, method, right);
+			v2 = getLocalVarElem(clazz, method, right, rightType);
 		} else {
 			assert false : "for static store stmt, rhs must be LocalElem or ParamElem!";
 		}
@@ -534,10 +574,8 @@ public class AbstractHeap extends Heap {
 		assert v1.knownArgDerived() : "we should set the arg-derived marker when creating v1";
 		assert v2.knownArgDerived() : "we should set the arg-derived marker when creating v2";
 
-		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Setv2 = lookup(v2, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Setv2 != null) : "get a null p2 set!";
-		SummariesEnv.v().resestMarkSmashedFlag();
 
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(v1,
 				EpsilonFieldElem.getEpsilonFieldElem());
@@ -552,7 +590,7 @@ public class AbstractHeap extends Heap {
 	// v = new T
 	public Pair<Boolean, Boolean> handleNewStmt(jq_Class clazz,
 			jq_Method method, Register left, VariableType leftVType,
-			jq_Type right, Quad allocSite, int line) {
+			jq_Type leftType, jq_Type right, Quad allocSite, int line) {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "LHS of a new stmt must be a local variable!";
@@ -564,7 +602,7 @@ public class AbstractHeap extends Heap {
 		LocalVarElem v = null;
 		// generate the localVarElem for lhs
 		if (leftVType == VariableType.LOCAL_VARIABLE) {
-			v = getLocalVarElem(clazz, method, left);
+			v = getLocalVarElem(clazz, method, left, leftType);
 		} else {
 			assert false : "LHS of a new stmt must be a local variable!";
 		}
@@ -587,16 +625,16 @@ public class AbstractHeap extends Heap {
 	// dim = 1
 	public Pair<Boolean, Boolean> handleNewArrayStmt(jq_Class clazz,
 			jq_Method method, Register left, VariableType leftVType,
-			jq_Type right, Quad allocSite, int line) {
-		return handleMultiNewArrayStmt(clazz, method, left, leftVType, right,
-				1, allocSite, line);
+			jq_Type leftType, jq_Type right, Quad allocSite, int line) {
+		return handleMultiNewArrayStmt(clazz, method, left, leftVType,
+				leftType, right, 1, allocSite, line);
 	}
 
 	// handle multi-new stmt, e.g. X x1 = new X[1][2][3]
 	// dim is the dimension of this array, dim >= 2
 	public Pair<Boolean, Boolean> handleMultiNewArrayStmt(jq_Class clazz,
 			jq_Method method, Register left, VariableType leftVType,
-			jq_Type right, int dim, Quad allocSite, int line) {
+			jq_Type leftType, jq_Type right, int dim, Quad allocSite, int line) {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
@@ -605,14 +643,13 @@ public class AbstractHeap extends Heap {
 		LocalVarElem v = null;
 		// generate the localVarElem for lhs
 		if (leftVType == VariableType.LOCAL_VARIABLE) {
-			v = getLocalVarElem(clazz, method, left);
+			v = getLocalVarElem(clazz, method, left, leftType);
 		} else {
 			assert false : "LHS of a new stmt must be a local variable!";
 		}
 		assert (v != null) : "v is null!";
 		// generate the ArrayAllocElem for rhs
-		ArrayAllocElem allocT = getArrayAllocElem(clazz, method, right,
-				allocSite, dim, line);
+		AllocElem allocT = getAllocElem(clazz, method, allocSite, right, line);
 
 		assert allocT.knownArgDerived() : "we should set the arg-derived marker when creating allocT";
 		assert v.knownArgDerived() : "we should set the arg-derived marker when creating v";
@@ -622,16 +659,23 @@ public class AbstractHeap extends Heap {
 		// update the LHS's P2Set weakly
 		ret = weakUpdate(pair, new P2Set(allocT, ConstraintManager.genTrue()));
 
-		// handling fields of the ArrayAllocElem for multi-array with dim > 1
-		for (int i = dim; i >= 2; i--) {
-			ArrayAllocElem leftAllocT = getArrayAllocElem(clazz, method, right,
-					allocSite, i, line);
-			ArrayAllocElem rightAllocT = getArrayAllocElem(clazz, method,
-					right, allocSite, i - 1, line);
+		int i = dim;
+		jq_Type leftType1 = right;
+		jq_Type rightType1 = null;
+		while (i >= 2) {
+			assert (leftType1 instanceof jq_Array) : "lhs of multi-new must be jq_Array!";
+			rightType1 = ((jq_Array) leftType1).getElementType();
+			AllocElem leftAllocT = getAllocElem(clazz, method, allocSite,
+					leftType1, line);
+			AllocElem rightAllocT = getAllocElem(clazz, method, allocSite,
+					rightType1, line);
 			Pair<Boolean, Boolean> res = handleArrayLoad(leftAllocT,
 					IndexFieldElem.getIndexFieldElem(), rightAllocT);
 			ret.val0 = res.val0 | ret.val0;
 			ret.val1 = res.val1 | ret.val1;
+			assert (leftType1 instanceof jq_Array) : "lhs of multi-new must be jq_Array!";
+			leftType1 = ((jq_Array) leftType1).getElementType();
+			i--;
 		}
 
 		return ret;
@@ -639,30 +683,28 @@ public class AbstractHeap extends Heap {
 
 	// return v;
 	public Pair<Boolean, Boolean> handleRetStmt(jq_Class clazz,
-			jq_Method method, Register retValue, VariableType type) {
+			jq_Method method, Register retValue, VariableType retVType,
+			jq_Type retType) {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		// first try to find the corresponding local or parameter that has been
 		// declared before returning
 		StackObject v = null;
-		if (type == VariableType.LOCAL_VARIABLE) {
-			v = getLocalVarElem(clazz, method, retValue);
-		} else if (type == VariableType.PARAMEMTER) {
-			v = getParamElem(clazz, method, retValue);
+		if (retVType == VariableType.LOCAL_VARIABLE) {
+			v = getLocalVarElem(clazz, method, retValue, retType);
+		} else if (retVType == VariableType.PARAMEMTER) {
+			v = getParamElem(clazz, method, retValue, retType);
 		} else {
 			assert false : "we are only considering return value to be local or parameter!";
 		}
 
 		// create return value element (only one return value for one method)
-		RetElem retElem = getRetElem(clazz, method);
+		RetElem retElem = getRetElem(clazz, method, method.getReturnType());
 		// update the p2set of the return value
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 				retElem, EpsilonFieldElem.getEpsilonFieldElem());
-
-		SummariesEnv.v().setMarkSmashedFlag();
 		P2Set p2Set = lookup(v, EpsilonFieldElem.getEpsilonFieldElem());
 		assert (p2Set != null) : "get a null p2set!";
-		SummariesEnv.v().resestMarkSmashedFlag();
 
 		Pair<Boolean, Boolean> res = weakUpdate(pair, p2Set);
 		ret.val0 = res.val0;
@@ -958,15 +1000,11 @@ public class AbstractHeap extends Heap {
 				Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 						newSrc, field);
 
-				if (G.dbgAntlr && G.dbgInstn && G.dump) {
-					if (G.IdMapping.get(summary) == G.sample
-							|| G.IdMapping.get(summary) == G.sample1
-							|| G.IdMapping.get(summary) == G.sample2) {
-						summary.dumpSummaryToFile(G.IdMapping.get(summary)
-								+ "$" + ++count);
-						StringUtil.reportInfo("[dbgAntlr] " + "dump counter: "
-								+ count);
-					}
+				if (G.dbgFilter) {
+					System.out
+							.println("dbgFilter: " + "updating pair: " + pair);
+					System.out.println("dbgFilter: " + "updating p2set: "
+							+ "[dst]: " + newDst1);
 				}
 
 				Pair<Boolean, Boolean> res = weakUpdate(pair, new P2Set(
@@ -1144,9 +1182,15 @@ public class AbstractHeap extends Heap {
 	// get the LocalVarElem given the declaring class, declaring method, and the
 	// corresponding register in the IR
 	public LocalVarElem getLocalVarElem(jq_Class clazz, jq_Method method,
-			Register variable) {
-		// create a wrapper
-		LocalVarElem ret = new LocalVarElem(clazz, method, variable);
+			Register variable, jq_Type type) {
+		LocalVarElem ret = null;
+		if (type.isPrepared()) {
+			// create a wrapper
+			ret = new LocalVarElem(clazz, method, variable, type);
+		} else {
+			ret = new LocalVarElem(clazz, method, variable, Program.g()
+					.getClass("java.lang.Object"));
+		}
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (LocalVarElem) memLocFactory.get(ret);
@@ -1163,12 +1207,30 @@ public class AbstractHeap extends Heap {
 		return ret;
 	}
 
+	public LocalVarElem getLocalVarElem4Query(jq_Class clazz, jq_Method method,
+			Register variable) {
+		// create a wrapper
+		LocalVarElem ret = new LocalVarElem(clazz, method, variable);
+		// try to look up this wrapper in the memory location factory
+		if (memLocFactory.containsKey(ret)) {
+			return (LocalVarElem) memLocFactory.get(ret);
+		}
+		ret = null;
+		return ret;
+	}
+
 	// get the ParamElem given the declaring class, declaring method and the
 	// corresponding register in the IR
 	public ParamElem getParamElem(jq_Class clazz, jq_Method method,
-			Register parameter) {
-		// create a wrapper
-		ParamElem ret = new ParamElem(clazz, method, parameter);
+			Register parameter, jq_Type type) {
+		ParamElem ret = null;
+		if (type.isPrepared()) {
+			// create a wrapper
+			ret = new ParamElem(clazz, method, parameter, type);
+		} else {
+			ret = new ParamElem(clazz, method, parameter, Program.g().getClass(
+					"java.lang.Object"));
+		}
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (ParamElem) memLocFactory.get(ret);
@@ -1186,9 +1248,16 @@ public class AbstractHeap extends Heap {
 	}
 
 	// only one RetElem for one specific method
-	public RetElem getRetElem(jq_Class clazz, jq_Method method) {
-		// create a wrapper
-		RetElem ret = new RetElem(clazz, method);
+	public RetElem getRetElem(jq_Class clazz, jq_Method method, jq_Type retType) {
+
+		RetElem ret = null;
+		if (retType.isPrepared()) {
+			// create a wrapper
+			ret = new RetElem(clazz, method, retType);
+		} else {
+			ret = new RetElem(clazz, method, Program.g().getClass(
+					"java.lang.Object"));
+		}
 		// try to look up
 		if (memLocFactory.containsKey(ret)) {
 			return (RetElem) memLocFactory.get(ret);
@@ -1248,7 +1317,7 @@ public class AbstractHeap extends Heap {
 			Quad allocSite, jq_Type type, int line) {
 		Context context = new Context(Env.getProgramPoint(clazz, method, line));
 		// create an AllocElem wrapper
-		AllocElem ret = new AllocElem(new Alloc(type, allocSite), context);
+		AllocElem ret = new AllocElem(new Alloc(type, allocSite), context, type);
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (AllocElem) memLocFactory.get(ret);
@@ -1268,7 +1337,8 @@ public class AbstractHeap extends Heap {
 			return (AllocElem) memLocFactory.get(other);
 		}
 
-		AllocElem ret = new AllocElem(other.alloc, other.context.clone());
+		AllocElem ret = new AllocElem(other.alloc, other.context.clone(),
+				other.type);
 		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
 
@@ -1285,24 +1355,6 @@ public class AbstractHeap extends Heap {
 		if (memLocFactory.containsKey(ret)) {
 			return (AllocElem) memLocFactory.get(ret);
 		}
-		ArgDerivedHelper.markArgDerived(ret);
-		memLocFactory.put(ret, ret);
-
-		return ret;
-	}
-
-	public ArrayAllocElem getArrayAllocElem(jq_Class clazz, jq_Method method,
-			jq_Type type, Quad allocSite, int dim, int line) {
-		Context context = new Context(Env.getProgramPoint(clazz, method, line));
-		// create an AllocElem wrapper
-		ArrayAllocElem ret = new ArrayAllocElem(new Alloc(type, allocSite),
-				context, dim);
-		// try to look up this wrapper in the memory location factory
-		if (memLocFactory.containsKey(ret)) {
-			return (ArrayAllocElem) memLocFactory.get(ret);
-		}
-		// not found in the factory
-		// every time generating a memory location, do this marking
 		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
 
@@ -1709,7 +1761,23 @@ public class AbstractHeap extends Heap {
 			locToP2Set.put(pair, currentP2Set);
 		}
 
-		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set, this);
+		jq_Type typeFilter = null;
+
+		if (f instanceof NormalFieldElem) {
+			typeFilter = ((NormalFieldElem) f).getField().getType();
+		} else if (f instanceof IndexFieldElem) {
+			typeFilter = ((src.getType() instanceof jq_Array) ? ((jq_Array) src
+					.getType()).getElementType() : Program.g().getClass(
+					"java.lang.Object"));
+		} else if (f instanceof EpsilonFieldElem) {
+			typeFilter = src.getType();
+		} else {
+			assert false : "wired thing! unknow type!";
+		}
+		assert typeFilter != null;
+		// typeFilter = Program.g().getType("java.lang.Object");
+
+		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set, this, typeFilter);
 
 		ret.val0 = res.val0;
 		ret.val1 = res.val1;
@@ -2162,13 +2230,14 @@ public class AbstractHeap extends Heap {
 				if (SummariesEnv.v().toProp(v)) {
 					// create a pseudo-local element
 					LocalVarElem pLocal = getLocalVarElem(summary.getMethod()
-							.getDeclaringClass(), summary.getMethod(), v);
+							.getDeclaringClass(), summary.getMethod(), v,
+							param.getType());
 					// do an extra assign for local = parameter
 					// put this pseudo-local element into the heap
 					handleAssignStmt(summary.getMethod().getDeclaringClass(),
 							summary.getMethod(), v,
-							VariableType.LOCAL_VARIABLE, v,
-							VariableType.PARAMEMTER);
+							VariableType.LOCAL_VARIABLE, param.getType(), v,
+							VariableType.PARAMEMTER, param.getType());
 					// instead, we prop this pseudo-local element
 					locals.add(pLocal);
 				}

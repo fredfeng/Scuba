@@ -35,9 +35,7 @@ public class G {
 	public static boolean dbgInstn = false;
 	public static Map<Summary, Integer> IdMapping = new HashMap<Summary, Integer>();
 
-	public static int sample = 367;
-	public static int sample2 = 259;
-	public static int sample1 = 363;
+	public static boolean dbgFilter = false;
 
 	// flag to tune performance.
 	public static boolean tuning = true;

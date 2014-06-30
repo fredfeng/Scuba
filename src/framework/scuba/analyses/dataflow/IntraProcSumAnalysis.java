@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
@@ -70,10 +71,12 @@ public class IntraProcSumAnalysis {
 			summary.initFormals();
 			RegisterFactory rf = g.getRegisterFactory();
 			jq_Method meth = g.getMethod();
+			jq_Type[] paramTypes = meth.getParamTypes();
 			int numArgs = meth.getParamTypes().length;
 			for (int zIdx = 0; zIdx < numArgs; zIdx++) {
 				Register param = rf.get(zIdx);
-				summary.fillFormals(meth.getDeclaringClass(), meth, param);
+				summary.fillFormals(meth.getDeclaringClass(), meth, param,
+						paramTypes[zIdx]);
 			}
 		}
 

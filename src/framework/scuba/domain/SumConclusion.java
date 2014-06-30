@@ -103,15 +103,17 @@ public class SumConclusion {
 			if (hObj instanceof AllocElem) {
 				ret.add((AllocElem) hObj);
 			} else {
-				// if (hObj instanceof StaticAccessPath) {
-				// assert (hObj instanceof StaticAccessPath)
-				// && (hObj.findRoot() instanceof StaticElem) : ""
-				// + "only StaticElem AccessPath allowed in the entry!";
-				// AccessPathHelper.resolve(sumHeap, (StaticAccessPath) hObj,
-				// ret);
-				// } else {
-				// System.out.println("[CANNOT FIND!]");
-				// }
+				if (SummariesEnv.v().resolveFinalHeap) {
+					if (hObj instanceof StaticAccessPath) {
+						assert (hObj instanceof StaticAccessPath)
+								&& (hObj.findRoot() instanceof StaticElem) : ""
+								+ "only StaticElem AccessPath allowed in the entry!";
+						AccessPathHelper.resolve(sumHeap,
+								(StaticAccessPath) hObj, ret);
+					} else {
+						System.out.println("[CANNOT FIND!]");
+					}
+				}
 			}
 		}
 		return ret;

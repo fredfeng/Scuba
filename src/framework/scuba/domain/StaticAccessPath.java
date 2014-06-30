@@ -1,5 +1,7 @@
 package framework.scuba.domain;
 
+import joeq.Class.jq_Type;
+
 public class StaticAccessPath extends AccessPath {
 
 	public StaticAccessPath(AbsMemLoc base, FieldElem field, int Id) {

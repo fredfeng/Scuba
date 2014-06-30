@@ -2,6 +2,7 @@ package framework.scuba.domain;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class ParamElem extends StackObject {
@@ -15,11 +16,13 @@ public class ParamElem extends StackObject {
 	// the parameter of this parameter
 	Register parameter;
 
-	public ParamElem(jq_Class clazz, jq_Method method, Register parameter) {
+	public ParamElem(jq_Class clazz, jq_Method method, Register parameter,
+			jq_Type type) {
 		this.clazz = clazz;
 		this.method = method;
 		this.parameter = parameter;
 		this.length = 1;
+		this.type = type;
 	}
 
 	@Override

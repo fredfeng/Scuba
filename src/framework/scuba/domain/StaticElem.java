@@ -2,6 +2,7 @@ package framework.scuba.domain;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
+import joeq.Class.jq_Type;
 
 public class StaticElem extends StackObject {
 
@@ -15,6 +16,7 @@ public class StaticElem extends StackObject {
 		this.clazz = clazz;
 		this.field = field;
 		this.length = 1;
+		this.type = field.getType();
 	}
 
 	@Override

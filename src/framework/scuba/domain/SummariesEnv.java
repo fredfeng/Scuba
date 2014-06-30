@@ -37,7 +37,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 2;
+	protected int allocDepth = 1;
 	// dynamically control the depth
 	protected boolean dynAlloc = true;
 
@@ -63,6 +63,11 @@ public class SummariesEnv {
 	protected boolean disableCst = true;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
+
+	// type filter
+	public boolean useTypeFilter = true;
+	// whether or not resolve default static access path in the final heap
+	public boolean resolveFinalHeap = true;
 
 	// this is naively just marking the flag in access path
 	public boolean markSmashedFlag = false;

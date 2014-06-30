@@ -2,6 +2,7 @@ package framework.scuba.domain;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class LocalVarElem extends StackObject {
@@ -14,6 +15,15 @@ public class LocalVarElem extends StackObject {
 
 	// the variable of this local variable
 	protected Register local;
+
+	public LocalVarElem(jq_Class clazz, jq_Method method, Register local,
+			jq_Type type) {
+		this.clazz = clazz;
+		this.method = method;
+		this.local = local;
+		this.length = 1;
+		this.type = type;
+	}
 
 	public LocalVarElem(jq_Class clazz, jq_Method method, Register local) {
 		this.clazz = clazz;

@@ -3,11 +3,15 @@ package framework.scuba.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import joeq.Class.jq_Type;
+
 public abstract class AbsMemLoc {
 
 	protected Set<FieldElem> fields = new HashSet<FieldElem>();
 
 	protected int length;
+
+	protected jq_Type type;
 
 	public static enum ArgDerivedType {
 		IS_ARG_DERIVED, NOT_ARG_DERIVED, UN_KNOWN;
@@ -17,6 +21,14 @@ public abstract class AbsMemLoc {
 
 	// abstract methods
 	abstract public AbsMemLoc findRoot();
+
+	public jq_Type getType() {
+		return type;
+	}
+
+	public void setType(jq_Type type) {
+		this.type = type;
+	}
 
 	public void setArgDerived() {
 		this.argDerived = ArgDerivedType.IS_ARG_DERIVED;
