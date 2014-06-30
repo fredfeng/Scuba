@@ -151,10 +151,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 	private void sumAnalyze() {
 
-		if (G.dump) {
-			dumpCallGraph();
-		}
-
 		// dumpMeth();
 
 		// step 1: collapse scc into one node.
@@ -409,7 +405,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		summary.setHasAnalyzed();
-		
+
 		int num = 0;
 		for (Pair p : summary.getAbsHeap().keySet()) {
 			num += summary.getAbsHeap().get(p).size();
