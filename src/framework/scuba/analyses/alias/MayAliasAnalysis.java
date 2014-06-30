@@ -53,6 +53,9 @@ public class MayAliasAnalysis {
 			Iterable<jq_Method> m2It = viewMv2.getAry1ValTuples();
 			jq_Method m2 = m2It.iterator().next();
 			jq_Class cls2 = m2.getDeclaringClass();
+			// long start2SCC = System.nanoTime();
+
+			// StringUtil.reportSec("CHORD's time", startSCC, start2SCC);
 
 			Set<AllocElem> p2Set1 = analysis.query(cls1, m1, v1);
 			Set<AllocElem> p2Set2 = analysis.query(cls2, m2, v2);
@@ -61,8 +64,7 @@ public class MayAliasAnalysis {
 			StringUtil.reportInfo("[mayAlias] " + v2 + "@" + m2);
 
 			if (p2Set1.isEmpty() || p2Set2.isEmpty()) {
-				StringUtil.reportInfo("[mayAlias] result: unknown" + p2Set1
-						+ " || " + p2Set2);
+				StringUtil.reportInfo("[mayAlias] result: unknown");
 			} else {
 				p2Set1.retainAll(p2Set2);
 				if (p2Set1.isEmpty()) {
@@ -74,6 +76,7 @@ public class MayAliasAnalysis {
 							.reportInfo("[mayAlias] result: No. Still alias.");
 					StringUtil.reportInfo("v1:" + p2Set1);
 					StringUtil.reportInfo("v2:" + p2Set2);
+
 				}
 			}
 		}
