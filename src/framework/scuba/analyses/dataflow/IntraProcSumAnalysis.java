@@ -164,6 +164,7 @@ public class IntraProcSumAnalysis {
 				summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
 			}
 			if (G.IdMapping.get(summary) == 2531) {
+				summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
 				assert false;
 			}
 		}
