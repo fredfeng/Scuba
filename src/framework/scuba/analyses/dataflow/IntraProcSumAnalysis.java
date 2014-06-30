@@ -159,7 +159,7 @@ public class IntraProcSumAnalysis {
 		if (G.validate) {
 			summary.getAbsHeap().validate();
 		}
-		if (G.dbgAntlr && G.dump) {
+		if (G.dump) {
 			if (G.IdMapping.get(summary) == 1190)
 				summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
 		}
