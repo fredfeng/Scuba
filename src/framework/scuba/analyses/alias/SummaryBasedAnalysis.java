@@ -107,8 +107,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		new DowncastAnalysis(relDcm, relDVH, this).run();
 
 		// perform points to set.
-//		pointToSet();
-		new MayAliasAnalysis(relMV, relVValias, this).run();
+		pointToSet();
+		// new MayAliasAnalysis(relMV, relVValias, this).run();
 
 	}
 
@@ -527,7 +527,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relVH = (ProgramRel) ClassicProject.g().getTrgt("ptsVH");
 		relVValias = (ProgramRel) ClassicProject.g().getTrgt("cspaVValias");
 
-
 		if (!relDcLocal.isOpen())
 			relDcLocal.load();
 
@@ -653,8 +652,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 					+ " Id: [" + G.IdMapping.get(sum1) + " ]");
 		}
 
-		LocalVarElem local = sum1.getAbsHeap().getLocalVarElem(clazz, method,
-				variable);
+		LocalVarElem local = sum1.getAbsHeap().getLocalVarElem4Query(clazz,
+				method, variable);
 
 		if (local == null) {
 			if (G.dbgAntlr) {
@@ -703,6 +702,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		int subSet = 0;
 		int superSet = 0;
 		int other = 0;
+		int chordEmpty = 0;
+		int scubaEmpty = 0;
 		for (Register r : SummariesEnv.v().getProps()) {
 			RelView view = relMV.getView();
 			view.selectAndDelete(1, r);
@@ -740,6 +741,22 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			} else {
 				other++;
 			}
+			if (pts.isEmpty()) {
+				chordEmpty++;
+			}
+			if (sites.isEmpty()) {
+				scubaEmpty++;
+			}
+
+			if (sites.isEmpty()) {
+				System.out.println("------------------------------");
+				System.out.println("Empty happens: ");
+				System.out.println("P2Set for " + r + " in " + meth);
+				System.out.println("[Scuba] " + sites);
+				System.out.println("[Chord] " + pts);
+				System.out.println("[Scuba] " + "[AllocSite] " + allocs);
+				System.out.println("------------------------------");
+			}
 		}
 
 		System.out
@@ -750,6 +767,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("[Scuba] is worse than [Chord]: " + superSet);
 		System.out.println("[Scuba] and [Chord] have different results: "
 				+ other);
+		System.out.println("[Scuba] empty: " + scubaEmpty);
+		System.out.println("[Chord] emtpy: " + chordEmpty);
 		System.out
 				.println("============================================================");
 	}
