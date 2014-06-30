@@ -327,6 +327,9 @@ public class AbstractHeap extends Heap {
 			jq_Type leftType, Register rightBase, VariableType rightBaseVType,
 			jq_Type rightBaseType) {
 
+		System.out.println("****** " + "Aload: " + "left : " + left);
+		System.out.println("****** " + "Aload: " + "right : " + rightBase);
+
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 		assert (leftVType == VariableType.LOCAL_VARIABLE) : "for array load stmt, LHS must be LocalElem";
 		assert (rightBaseVType == VariableType.LOCAL_VARIABLE)
@@ -1873,6 +1876,8 @@ public class AbstractHeap extends Heap {
 		AccessPath defaultTarget = getDefaultTarget(loc, f);
 
 		if (p2Set.contains(defaultTarget)) {
+			System.out.println("**** " + "clean up: " + pair
+					+ " with target : " + defaultTarget);
 			p2Set.remove(defaultTarget);
 		}
 	}

@@ -30,9 +30,9 @@ public class G {
 	public static boolean dbgQuery = false;
 
 	public static int mId = 0;
-	public static boolean dbgAntlr = false;
+	public static boolean dbgAntlr = true;
 	public static boolean dbgInvoke = false;
-	public static boolean dbgInstn = false;
+	public static boolean dbgInstn = true;
 	public static Map<Summary, Integer> IdMapping = new HashMap<Summary, Integer>();
 
 	public static boolean dbgFilter = false;
