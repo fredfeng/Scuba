@@ -247,6 +247,7 @@ public class MemLocInstnItem {
 
 			ret = callerHeap.instnLookup(instnLocSet, field);
 
+			System.out.println("$$$$$$$ " + loc + " is instn into " + ret);
 			// a work-list algorithm for find all locations that are
 			// transitively reachable from the current instantiated memory
 			// locations in order to be sound
