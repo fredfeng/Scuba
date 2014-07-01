@@ -2238,7 +2238,7 @@ public class AbstractHeap extends Heap {
 		for (AbsMemLoc loc : allLocs) {
 			if (loc instanceof AccessPath) {
 				b.append("  ").append("\"" + loc.dump() + "\"");
-				b.append(" [shape=circle,label=\"");
+				b.append(" [shape=note label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof AllocElem) {
