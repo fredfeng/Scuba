@@ -1201,7 +1201,11 @@ public class AbstractHeap extends Heap {
 		// initialize the P2Set of this local
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(ret,
 				EpsilonFieldElem.getEpsilonFieldElem());
-		weakUpdate(pair, new P2Set());
+		P2Set p2set = locToP2Set.get(pair);
+		if (p2set == null) {
+			locToP2Set.put(pair, new P2Set());
+		}
+		// weakUpdate(pair, new P2Set());
 
 		return ret;
 	}
@@ -1239,7 +1243,11 @@ public class AbstractHeap extends Heap {
 		// initialize the P2Set of this parameter
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(ret,
 				EpsilonFieldElem.getEpsilonFieldElem());
-		weakUpdate(pair, new P2Set());
+		P2Set p2set = locToP2Set.get(pair);
+		if (p2set == null) {
+			locToP2Set.put(pair, new P2Set());
+		}
+		// weakUpdate(pair, new P2Set());
 
 		return ret;
 	}
@@ -1263,7 +1271,11 @@ public class AbstractHeap extends Heap {
 		// initialize the P2Set of this RetElem
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(ret,
 				EpsilonFieldElem.getEpsilonFieldElem());
-		weakUpdate(pair, new P2Set());
+		P2Set p2set = locToP2Set.get(pair);
+		if (p2set == null) {
+			locToP2Set.put(pair, new P2Set());
+		}
+		// weakUpdate(pair, new P2Set());
 
 		return ret;
 	}
@@ -1980,7 +1992,7 @@ public class AbstractHeap extends Heap {
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
 		// first clean up the default targets in the p2set given the pair
-		cleanup(p2Set, pair);
+		// cleanup(p2Set, pair);
 
 		AbsMemLoc src = pair.val0;
 		FieldElem f = pair.val1;
