@@ -383,11 +383,6 @@ public class Summary {
 				RegisterOperand lhs = (RegisterOperand) AStore.getBase(stmt);
 				RegisterOperand rhs = (RegisterOperand) AStore.getValue(stmt);
 
-				jq_Class clz = (jq_Class) Program.g().getClass(
-						"java.lang.String");
-				if (rhs.getType().equals(clz) && SummariesEnv.v().ignoreString)
-					return;
-
 				VariableType lvt = getVarType(stmt.getMethod(),
 						lhs.getRegister());
 				VariableType rvt = getVarType(stmt.getMethod(),
@@ -1047,11 +1042,9 @@ public class Summary {
 			jq_Method callee = tgtSet.iterator().next();
 			Summary calleeSum = SummariesEnv.v().getSummary(callee);
 
-			if (SummariesEnv.v().cheating()) {
-				String signature = callee.toString();
-				if (SummariesEnv.v().isStubMethod(signature))
-					return ret;
-			}
+			String signature = callee.toString();
+			if (SummariesEnv.v().isStubMethod(signature))
+				return ret;
 
 			if (calleeSum == null) {
 				StringUtil.reportInfo("Missing model for " + callee);
@@ -1087,12 +1080,9 @@ public class Summary {
 			for (jq_Method tgt : tgtSet) {
 				// generate constraint for each potential target.
 				jq_Class tgtType = tgt.getDeclaringClass();
-				// this is unsound!
-				if (SummariesEnv.v().cheating()) {
-					String signature = tgt.toString();
-					if (SummariesEnv.v().isStubMethod(signature))
-						continue;
-				}
+				String signature = tgt.toString();
+				if (SummariesEnv.v().isStubMethod(signature))
+					continue;
 
 				if (SummariesEnv.v().disableCst || inBadScc)
 					cst = ConstraintManager.genTrue();

@@ -390,11 +390,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		summary.setChanged(new Pair<Boolean, Boolean>(false, false));
 		intrapro.setSummary(summary);
 
-		if (SummariesEnv.v().cheating()) {
-			String signature = m.toString();
-			if (SummariesEnv.v().isStubMethod(signature))
-				return new Pair<Boolean, Boolean>(false, false);
-		}
+		String signature = m.toString();
+		if (SummariesEnv.v().isStubMethod(signature))
+			return new Pair<Boolean, Boolean>(false, false);
 
 		ControlFlowGraph cfg = m.getCFG();
 

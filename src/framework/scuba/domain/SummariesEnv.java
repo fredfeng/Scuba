@@ -52,18 +52,12 @@ public class SummariesEnv {
 	// all library methods
 	protected Set<jq_Method> libMeths = new HashSet<jq_Method>();
 
-	// cheating
-	protected boolean cheating = true;
-	// ignore string
-	protected boolean ignoreString = false;
-
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
 	protected boolean disableCst = true;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
-
 	// type filter
 	public boolean useTypeFilter = false;
 	// whether or not resolve default static access path in the final heap
@@ -189,10 +183,6 @@ public class SummariesEnv {
 
 	public boolean forceGc() {
 		return forceGc;
-	}
-
-	public boolean cheating() {
-		return cheating;
 	}
 
 	public static void reset() {
