@@ -160,19 +160,8 @@ public class IntraProcSumAnalysis {
 			summary.getAbsHeap().validate();
 		}
 		if (G.dump) {
-			if (G.IdMapping.get(summary) == 867) {
-				summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
-			}
-			if (G.IdMapping.get(summary) == 1190) {
-				summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
-			}
-			if (G.IdMapping.get(summary) == 1457) {
-				summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
-			}
-			if (G.IdMapping.get(summary) == 2531) {
-				summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
-				assert false;
-			}
+			summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
+
 		}
 		if (G.dbgAntlr) {
 			for (AbsMemLoc loc : summary.getAbsHeap().heap) {

@@ -3,9 +3,8 @@ package framework.scuba.domain;
 import java.util.HashSet;
 import java.util.Set;
 
-import chord.program.Program;
 import joeq.Class.jq_Array;
-import joeq.Class.jq_Type;
+import chord.program.Program;
 
 public abstract class AccessPath extends HeapObject {
 

@@ -72,9 +72,9 @@ public class SummariesEnv {
 	// this is naively just marking the flag in access path
 	public boolean markSmashedFlag = false;
 	// this is the sound way to do smashing
-	public boolean markSmashedFields = false;
+	public boolean markSmashedFields = true;
 	// this is used for instantiating the locations
-	public boolean instnSmashedAPs = false;
+	public boolean instnSmashedAPs = true;
 	// whether use cache for instantiating AccessPath
 	public boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation

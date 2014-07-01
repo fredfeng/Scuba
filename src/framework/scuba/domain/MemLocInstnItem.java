@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
@@ -14,7 +13,6 @@ import chord.util.tuple.object.Pair;
 import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.helper.ConstraintManager;
-import framework.scuba.helper.G;
 
 public class MemLocInstnItem {
 
@@ -247,7 +245,6 @@ public class MemLocInstnItem {
 
 			ret = callerHeap.instnLookup(instnLocSet, field);
 
-			System.out.println("$$$$$$$ " + loc + " is instn into " + ret);
 			// a work-list algorithm for find all locations that are
 			// transitively reachable from the current instantiated memory
 			// locations in order to be sound
@@ -261,13 +258,13 @@ public class MemLocInstnItem {
 				// the locations that can really be instantiated into
 				MemLocInstnSet targets = new MemLocInstnSet();
 				// initialized the work list
-				for (AbsMemLoc loc1 : ret.keySet()) {
-					BoolExpr expr1 = ret.get(loc1);
-					// only adding the smashed access paths in the work list
-					if (loc1 instanceof AccessPath
-							&& ((AccessPath) loc1).isSmashed()) {
-						wl.add(new Pair<AccessPath, BoolExpr>(
-								(AccessPath) loc1, expr1));
+				if (((AccessPath) loc).isSmashed) {
+					for (AbsMemLoc loc1 : ret.keySet()) {
+						BoolExpr expr1 = ret.get(loc1);
+						if (loc1 instanceof AccessPath) {
+							wl.add(new Pair<AccessPath, BoolExpr>(
+									(AccessPath) loc1, expr1));
+						}
 					}
 				}
 				// the work list algorithm
