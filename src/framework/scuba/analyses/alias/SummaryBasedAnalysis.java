@@ -103,6 +103,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		sumAnalyze();
 
 		conclude();
+		dumpCallGraph();
 
 		// dump interesting stats
 		dumpStatistics();
@@ -258,25 +259,31 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			for (jq_Method nb : scc) {
 				// init successor.
 				for (jq_Method sucb : callGraph.getSuccs(nb)) {
-					if (scc.contains(sucb))
+					if (scc.contains(sucb)) {
+						if(scc.size() == 1 && nb.equals(sucb)) {
+							cur.setSelfLoop(true);
+						}
 						continue;
-					else {
+					} else {
 						Node scNode = methToNode.get(sucb);
 						cur.addSuccessor(scNode);
 					}
 				}
 				// init preds.
 				for (jq_Method pred : callGraph.getPreds(nb)) {
-					if (scc.contains(pred))
+					if (scc.contains(pred)) {
+						if(scc.size() == 1 && nb.equals(pred)) {
+							cur.setSelfLoop(true);
+						}
 						continue;
-					else {
+					} else {
 						Node pdNode = methToNode.get(pred);
 						cur.addPred(pdNode);
 					}
 				}
 			}
 		}
-
+		
 		return repGraph;
 	}
 
@@ -298,7 +305,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		if (scc.size() == 1) {
 			// self loop. perform scc.
-			if (node.getSuccessors().contains(node)) {
+			if (node.isSelfLoop()) {
 				analyzeSCC(node);
 			} else {
 				jq_Method m = scc.iterator().next();
@@ -374,7 +381,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	}
 
 	// check whether all nodes have terminated.
-	private boolean allTerminated(List<Node> succs) {
+	private boolean allTerminated(Set<Node> succs) {
 		boolean flag = true;
 		for (Node node : succs)
 			if (!node.isTerminated()) {
@@ -407,7 +414,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		summary.setHasAnalyzed();
-
+		
 		int num = 0;
 		for (Pair p : summary.getAbsHeap().keySet()) {
 			num += summary.getAbsHeap().get(p).size();
