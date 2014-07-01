@@ -48,6 +48,8 @@ public class P2Set {
 			jq_Type typeFilter) {
 		boolean changeHeap = false;
 		boolean changeSum = false;
+		if(!typeFilter.isPrepared()) 
+			typeFilter.prepare();
 		for (HeapObject obj : other.keySet()) {
 
 			// filtering the in-compatible types
