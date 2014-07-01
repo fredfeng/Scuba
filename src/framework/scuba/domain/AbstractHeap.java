@@ -1032,6 +1032,19 @@ public class AbstractHeap extends Heap {
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
+		if (G.dbgAntlr && G.dbgInvoke) {
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[instantiating (recursive) callee edge]: "
+					+ "method Id: " + G.IdMapping.get(calleeHeap.summary));
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+			StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + src);
+			StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
+			StringUtil.reportInfo("[dbgAntlr] " + "DST: " + dst);
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+		}
+
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
 			if (memLocInstn.memLocInstnCache.containsKey(src)
@@ -1069,19 +1082,6 @@ public class AbstractHeap extends Heap {
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
-
-		if (G.dbgAntlr && G.dbgInvoke) {
-			StringUtil.reportInfo("[dbgAntlr] "
-					+ "[instantiating (recursive) callee edge]: "
-					+ "method Id: " + G.IdMapping.get(calleeHeap.summary));
-			StringUtil.reportInfo("[dbgAntlr] "
-					+ "-------------------------------------------");
-			StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + src);
-			StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
-			StringUtil.reportInfo("[dbgAntlr] " + "DST: " + dst);
-			StringUtil.reportInfo("[dbgAntlr] "
-					+ "-------------------------------------------");
-		}
 
 		// instantiate the calleeCst
 		BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);

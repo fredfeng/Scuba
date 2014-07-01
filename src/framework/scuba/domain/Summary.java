@@ -316,6 +316,10 @@ public class Summary {
 		}
 		absHeap.markChanged(new Pair<Boolean, Boolean>(false, false));
 		quad.accept(qv);
+		if (G.dbgAntlr) {
+			StringUtil.reportInfo("[dbgAntlr] " + "[result of handling stmt] "
+					+ quad + " " + absHeap.isChanged());
+		}
 		if (G.dbgAntlr && G.dump) {
 			this.dumpSummaryToFile("" + G.IdMapping.get(this) + "$" + count);
 		}
@@ -447,9 +451,6 @@ public class Summary {
 					Register r = ro.getRegister();
 					RegisterOperand lo = CheckCast.getDest(stmt);
 					Register l = lo.getRegister();
-
-					System.out.println("****** " + "left: " + lo.getType());
-					System.out.println("****** " + "right: " + ro.getType());
 
 					VariableType lvt = getVarType(stmt.getMethod(), l);
 					VariableType rvt = getVarType(stmt.getMethod(), r);
