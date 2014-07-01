@@ -215,19 +215,17 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	 */
 	private Graph collapseSCCs() {
 		Graph repGraph = new Graph();
-		int idx = 0;
-
 		Set<jq_Method> sccs = new HashSet<jq_Method>();
-		Set<jq_Method> cgs = new HashSet<jq_Method>();
-
-		cgs.addAll(callGraph.getNodes());
-
 		SCCHelper4CG s4g = new SCCHelper4CG(callGraph, callGraph.getRoots());
-
 		int maxSize = 0;
+		int tltSCCMeths = 0;
+		int idx = 0;
+		int methsInCG = callGraph.getNodes().size();
+
 		for (Set<jq_Method> scc : s4g.getComponents()) {
 			// create a representation node for each scc.
 			idx++;
+			tltSCCMeths += scc.size();
 			if (scc.size() > maxSize)
 				maxSize = scc.size();
 			Node node = new Node("scc" + idx);
@@ -239,20 +237,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			repGraph.addNode(node);
 			sccs.addAll(scc);
 		}
-
-		// FIXME: This is a bug in chord. The total number of SCCs is not equal
-		// to the total number of reachable methods. Adding the missing methods
-		// to scc list.
-		cgs.removeAll(sccs);
-		for (jq_Method miss : cgs) {
-			idx++;
-			Node node = new Node("scc" + idx);
-			Set<jq_Method> newScc = new HashSet<jq_Method>();
-			newScc.add(miss);
-			nodeToScc.put(node, newScc);
-			sccToNode.put(newScc, node);
-			methToNode.put(miss, node);
-		}
+		
+		assert tltSCCMeths == methsInCG : tltSCCMeths + " VS " + methsInCG;
 
 		for (Set<jq_Method> scc : s4g.getComponents()) {
 			Node cur = sccToNode.get(scc);
