@@ -1,5 +1,6 @@
 package framework.scuba.domain;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,6 +38,9 @@ public class MemLocInstnItem {
 
 	// hasRet = true: there is a location mapped in the caller's heap
 	protected boolean hasRet = false;
+
+	protected Map<ParamElem, StackObject> formalToActuals = new HashMap<ParamElem, StackObject>();
+	protected Map<RetElem, StackObject> retToReceiver = new HashMap<RetElem, StackObject>();
 
 	public MemLocInstnItem(jq_Method caller, Quad callsite, jq_Method callee,
 			MemLocInstn4Method result) {
@@ -102,8 +106,9 @@ public class MemLocInstnItem {
 				continue;
 			} else {
 				ParamElem formal = formals.get(i);
-				memLocInstnCache.put(formal, new MemLocInstnSet(actual,
-						ConstraintManager.genTrue()));
+				formalToActuals.put(formal, actual);
+				// memLocInstnCache.put(formal, new MemLocInstnSet(actual,
+				// ConstraintManager.genTrue()));
 			}
 		}
 	}
@@ -111,8 +116,9 @@ public class MemLocInstnItem {
 	// initialize the return value and lhs mapping
 	public void initReturnToLHS(RetElem ret, StackObject lhs) {
 		hasRet = true;
-		memLocInstnCache.put(ret,
-				new MemLocInstnSet(lhs, ConstraintManager.genTrue()));
+		retToReceiver.put(ret, lhs);
+		// memLocInstnCache.put(ret,
+		// new MemLocInstnSet(lhs, ConstraintManager.genTrue()));
 	}
 
 	// a wrapper method for memory location instantiation
@@ -135,23 +141,29 @@ public class MemLocInstnItem {
 
 		MemLocInstnSet ret = memLocInstnCache.get(loc);
 
+		// if (loc instanceof ParamElem) {
+		// assert (ret != null) : "parameters should have been instantiated"
+		// + " when the first time init the instantiation";
+		// }
+		//
+		// if (loc instanceof RetElem) {
+		// if (hasRet) {
+		// assert (ret != null) : "return value should have been instantiated"
+		// + " when the first time init the instantiation!";
+		// } else {
+		// assert (ret == null) : "if there is no LHS in the call site, "
+		// + "we cannot instantiate the return value";
+		// }
+		// }
 		if (loc instanceof ParamElem) {
-			assert (ret != null) : "parameters should have been instantiated"
-					+ " when the first time init the instantiation";
-		}
-
-		if (loc instanceof RetElem) {
-			if (hasRet) {
-				assert (ret != null) : "return value should have been instantiated"
-						+ " when the first time init the instantiation!";
-			} else {
-				assert (ret == null) : "if there is no LHS in the call site, "
-						+ "we cannot instantiate the return value";
+			if (ret != null) {
+				return ret;
 			}
-		}
-
-		if (loc instanceof LocalVarElem || loc instanceof ParamElem
-				|| loc instanceof StaticElem) {
+			assert (formalToActuals.containsKey(loc)) : "formals to actuals should be instantiated!";
+			ret = new MemLocInstnSet(formalToActuals.get(loc),
+					ConstraintManager.genTrue());
+			memLocInstnCache.put(loc, ret);
+		} else if (loc instanceof LocalVarElem || loc instanceof StaticElem) {
 			// this is my little cute cache
 			if (ret != null) {
 				return ret;
@@ -161,9 +173,16 @@ public class MemLocInstnItem {
 			// put into the map
 			memLocInstnCache.put(loc, ret);
 		} else if (loc instanceof RetElem) {
+			if (ret != null) {
+				return ret;
+			}
 			if (hasRet) {
-				assert (ret != null) : "return value should be mapped"
-						+ " the first time init the instantiation";
+				// assert (ret != null) : "return value should be mapped"
+				// + " the first time init the instantiation";
+				assert retToReceiver.containsKey(loc) : "ret should have been createad!";
+				ret = new MemLocInstnSet(retToReceiver.get(loc),
+						ConstraintManager.genTrue());
+				memLocInstnCache.put(loc, ret);
 				return ret;
 			} else {
 				assert (ret == null) : "return value should"
