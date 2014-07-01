@@ -260,7 +260,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				// init successor.
 				for (jq_Method sucb : callGraph.getSuccs(nb)) {
 					if (scc.contains(sucb)) {
-						if(scc.size() == 1 && nb.equals(sucb)) {
+						if (scc.size() == 1 && nb.equals(sucb)) {
 							cur.setSelfLoop(true);
 						}
 						continue;
@@ -272,7 +272,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				// init preds.
 				for (jq_Method pred : callGraph.getPreds(nb)) {
 					if (scc.contains(pred)) {
-						if(scc.size() == 1 && nb.equals(pred)) {
+						if (scc.size() == 1 && nb.equals(pred)) {
 							cur.setSelfLoop(true);
 						}
 						continue;
@@ -283,7 +283,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				}
 			}
 		}
-		
+
 		return repGraph;
 	}
 
@@ -407,6 +407,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		ControlFlowGraph cfg = m.getCFG();
 
+		System.out.println("$$$$ " + "oh my god " + cfg.getMethod());
 		intrapro.analyze(cfg);
 
 		if (G.validate) {
@@ -414,7 +415,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		summary.setHasAnalyzed();
-		
+
 		int num = 0;
 		for (Pair p : summary.getAbsHeap().keySet()) {
 			num += summary.getAbsHeap().get(p).size();

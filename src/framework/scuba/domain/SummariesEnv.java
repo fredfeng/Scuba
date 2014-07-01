@@ -28,7 +28,7 @@ public class SummariesEnv {
 	}
 
 	public static enum FieldSmashLevel {
-		LOW, MED, HIGH, CONTROL, ICONTROL, TYPESMASH, TYPECOMSMASH;
+		LOW, MED, HIGH, CONTROL, ICONTROL, TYPESMASH, TYPECOMPSMASH;
 	}
 
 	public static SummariesEnv v() {
@@ -66,9 +66,9 @@ public class SummariesEnv {
 	// this is naively just marking the flag in access path
 	public boolean markSmashedFlag = false;
 	// this is the sound way to do smashing
-	public boolean markSmashedFields = true;
+	public boolean markSmashedFields = false;
 	// this is used for instantiating the locations
-	public boolean instnSmashedAPs = true;
+	public boolean instnSmashedAPs = false;
 	// whether use cache for instantiating AccessPath
 	public boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
@@ -98,14 +98,13 @@ public class SummariesEnv {
 
 	public boolean iControl = true;
 
-	// type smashing for fields (imprecise) [DO NOT use this!]
-	// public FieldSmashLevel level = FieldSmashLevel.LOW;
+	public FieldSmashLevel level = FieldSmashLevel.LOW;
 	// public FieldSmashLevel level = FieldSmashLevel.MED;
 	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
 	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
 	// public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
-	public FieldSmashLevel level = FieldSmashLevel.TYPESMASH;
-	// public FieldSmashLevel level = FieldSmashLevel.TYPECOMSMASH;
+	// public FieldSmashLevel level = FieldSmashLevel.TYPESMASH;
+	// public FieldSmashLevel level = FieldSmashLevel.TYPECOMPMASH;
 	public int smashLength = 3;
 
 	// clear locals in the summary

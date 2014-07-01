@@ -311,13 +311,19 @@ public class Summary {
 	public Pair<Boolean, Boolean> handleStmt(Quad quad) {
 
 		if (G.dbgAntlr) {
-			StringUtil.reportInfo("[dbgAntlr] " + "[handling stmt] " + quad);
+			StringUtil.reportInfo("[dbgAntlr] " + "[handling stmt] " + quad
+					+ " [Id] " + ++count);
 		}
 		absHeap.markChanged(new Pair<Boolean, Boolean>(false, false));
 		quad.accept(qv);
+		if (G.dbgAntlr && G.dump) {
+			this.dumpSummaryToFile("" + G.IdMapping.get(this) + "$" + count);
+		}
 
 		return absHeap.isChanged();
 	}
+
+	public static int count = 0;
 
 	public static int tmp = 0;
 	public static int tmp1 = 0;

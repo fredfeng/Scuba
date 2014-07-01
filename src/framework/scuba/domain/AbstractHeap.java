@@ -1868,7 +1868,7 @@ public class AbstractHeap extends Heap {
 			} else {
 				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 			}
-		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPECOMSMASH) {
+		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPECOMPSMASH) {
 			if (loc.isArgDerived()) {
 				jq_Type type = null;
 				if (field instanceof NormalFieldElem) {

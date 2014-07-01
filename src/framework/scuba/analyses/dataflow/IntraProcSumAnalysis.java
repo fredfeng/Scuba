@@ -52,6 +52,8 @@ public class IntraProcSumAnalysis {
 
 		if (G.dbgAntlr) {
 
+			System.out.println("***** " + "analyzing " + g.getMethod());
+
 			if (!G.IdMapping.containsKey(summary)) {
 				G.IdMapping.put(summary, ++G.mId);
 			}
