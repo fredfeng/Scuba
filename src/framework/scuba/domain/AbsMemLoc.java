@@ -63,6 +63,10 @@ public abstract class AbsMemLoc {
 	// count how many field selectors are there in the given element
 	abstract public int countFieldSelector(FieldElem field);
 
+	abstract public boolean hasFieldType(jq_Type type);
+
+	abstract public boolean hasFieldTypeComp(jq_Type type);
+
 	public void addField(FieldElem field) {
 		fields.add(field);
 	}

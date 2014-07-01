@@ -10,9 +10,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operator.New;
+import joeq.Compiler.Quad.Operator.NewArray;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.alias.CICG;
@@ -758,13 +762,38 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			}
 
 			if (sites.isEmpty()) {
-				System.out.println("------------------------------");
-				System.out.println("Empty happens: ");
-				System.out.println("P2Set for " + r + " in " + meth);
-				System.out.println("[Scuba] " + sites);
-				System.out.println("[Chord] " + pts);
-				System.out.println("[Scuba] " + "[AllocSite] " + allocs);
-				System.out.println("------------------------------");
+				Quad q = pts.iterator().next();
+
+				jq_Type c = null;
+				if (q.getOperator() instanceof New) {
+					c = (New.getType(q)).getType();
+				} else if (q.getOperator() instanceof NewArray) {
+					c = (NewArray.getType(q)).getType();
+				}
+				if (c instanceof jq_Class) {
+					if (((jq_Class) c).extendsClass((jq_Class) Program.g()
+							.getClass("java.lang.Exception"))
+							|| ((jq_Class) c).equals((jq_Class) Program.g()
+									.getClass("java.lang.String"))) {
+					} else {
+						System.out.println("------------------------------");
+						System.out.println("Empty happens: ");
+						System.out.println("P2Set for " + r + " in " + meth);
+						System.out.println("[Scuba] " + sites);
+						System.out.println("[Chord] " + pts);
+						System.out
+								.println("[Scuba] " + "[AllocSite] " + allocs);
+						System.out.println("------------------------------");
+					}
+				} else {
+					System.out.println("------------------------------");
+					System.out.println("Empty happens: ");
+					System.out.println("P2Set for " + r + " in " + meth);
+					System.out.println("[Scuba] " + sites);
+					System.out.println("[Chord] " + pts);
+					System.out.println("[Scuba] " + "[AllocSite] " + allocs);
+					System.out.println("------------------------------");
+				}
 			}
 		}
 

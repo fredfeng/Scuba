@@ -83,6 +83,17 @@ public class LocalAccessPath extends AccessPath {
 		return base.countFieldSelector(f) + (field.equals(f) ? 1 : 0);
 	}
 
+	@Override
+	public boolean hasFieldType(jq_Type type) {
+		return this.type.equals(type) || base.hasFieldType(type);
+	}
+
+	@Override
+	public boolean hasFieldTypeComp(jq_Type type) {
+		return this.type.isSubtypeOf(type) || type.isSubtypeOf(this.type)
+				|| base.hasFieldTypeComp(type);
+	}
+
 	// get the prefix ending with field f which is also an AccessPath
 	// ONLY AccessPath has this getPrefix method
 	// ONLY when hasFieldSelector returns true, you can call this method
@@ -98,6 +109,24 @@ public class LocalAccessPath extends AccessPath {
 			return this;
 		}
 		return ((LocalAccessPath) base).getPrefix(f);
+	}
+
+	@Override
+	public LocalAccessPath getTypePrefix(jq_Type type) {
+		assert hasFieldType(type);
+		if (this.type.equals(type)) {
+			return this;
+		}
+		return ((LocalAccessPath) base).getTypePrefix(type);
+	}
+
+	@Override
+	public LocalAccessPath getTypeCompPrefix(jq_Type type) {
+		assert hasFieldTypeComp(type);
+		if (this.type.isSubtypeOf(type) || type.isSubtypeOf(this.type)) {
+			return this;
+		}
+		return ((LocalAccessPath) base).getTypeCompPrefix(type);
 	}
 
 	// try to find the prefix ending with f

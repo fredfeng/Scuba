@@ -75,6 +75,16 @@ public class AllocElem extends HeapObject {
 	}
 
 	@Override
+	public boolean hasFieldType(jq_Type type) {
+		return false;
+	}
+
+	@Override
+	public boolean hasFieldTypeComp(jq_Type type) {
+		return false;
+	}
+
+	@Override
 	public AllocElem clone() {
 		return new AllocElem(alloc, context.clone(), type);
 	}

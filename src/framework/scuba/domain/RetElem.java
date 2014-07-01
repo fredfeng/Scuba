@@ -43,6 +43,16 @@ public class RetElem extends StackObject {
 	}
 
 	@Override
+	public boolean hasFieldType(jq_Type type) {
+		return false;
+	}
+
+	@Override
+	public boolean hasFieldTypeComp(jq_Type type) {
+		return false;
+	}
+
+	@Override
 	public boolean equals(Object other) {
 		return (other instanceof RetElem)
 				&& (clazz.equals(((RetElem) other).clazz))

@@ -28,7 +28,7 @@ public class SummariesEnv {
 	}
 
 	public static enum FieldSmashLevel {
-		LOW, MED, HIGH, CONTROL, ICONTROL;
+		LOW, MED, HIGH, CONTROL, ICONTROL, TYPESMASH, TYPECOMSMASH;
 	}
 
 	public static SummariesEnv v() {
@@ -96,13 +96,17 @@ public class SummariesEnv {
 	// a trick to avoid hanging in gigantic SCC (the remove() method)
 	protected boolean badMethodSkip = true;
 
+	public boolean iControl = true;
+
 	// type smashing for fields (imprecise) [DO NOT use this!]
 	// public FieldSmashLevel level = FieldSmashLevel.LOW;
 	// public FieldSmashLevel level = FieldSmashLevel.MED;
 	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
 	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
-	public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
-	public int smashLength = 2;
+	// public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
+	public FieldSmashLevel level = FieldSmashLevel.TYPESMASH;
+	// public FieldSmashLevel level = FieldSmashLevel.TYPECOMSMASH;
+	public int smashLength = 3;
 
 	// clear locals in the summary
 	protected boolean clearLocals = false;

@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.Quad;
+import chord.program.Program;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
@@ -250,68 +253,161 @@ public class MemLocInstnItem {
 			// locations in order to be sound
 			if (SummariesEnv.v().markSmashedFields
 					&& SummariesEnv.v().instnSmashedAPs) {
-				// to avoid non-termination
-				Set<AccessPath> visited = new HashSet<AccessPath>();
-				// work list storing the access paths that are candidates as
-				// the instantiated locations
-				LinkedHashSet<Pair<AccessPath, BoolExpr>> wl = new LinkedHashSet<Pair<AccessPath, BoolExpr>>();
-				// the locations that can really be instantiated into
-				MemLocInstnSet targets = new MemLocInstnSet();
-				// initialized the work list
-				if (((AccessPath) loc).isSmashed) {
-					for (AbsMemLoc loc1 : ret.keySet()) {
-						BoolExpr expr1 = ret.get(loc1);
-						if (loc1 instanceof AccessPath) {
-							wl.add(new Pair<AccessPath, BoolExpr>(
-									(AccessPath) loc1, expr1));
+				if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPESMASH) {
+					// to avoid non-termination
+					Set<AbsMemLoc> visited = new HashSet<AbsMemLoc>();
+					// work list storing the locations that are candidates as
+					// the instantiated locations
+					LinkedHashSet<Pair<AbsMemLoc, BoolExpr>> wl = new LinkedHashSet<Pair<AbsMemLoc, BoolExpr>>();
+					// the locations that can really be instantiated into
+					MemLocInstnSet targets = new MemLocInstnSet();
+					// initialized the work list
+					if (((AccessPath) loc).isSmashed()) {
+						for (AbsMemLoc loc1 : ret.keySet()) {
+							BoolExpr expr1 = ret.get(loc1);
+							wl.add(new Pair<AbsMemLoc, BoolExpr>(loc1, expr1));
 						}
 					}
-				}
-				// the work list algorithm
-				while (!wl.isEmpty()) {
-					Pair<AccessPath, BoolExpr> elem = wl.iterator().next();
-					wl.remove(elem);
-					AccessPath ap = elem.val0;
-					assert (ap.isSmashed()) : "work list should only contain "
-							+ "smashed access paths!";
-					AbsMemLoc b = ap.getBase();
-					FieldElem f = ap.getField();
-					Set<FieldElem> smashedFields = ap.getSmashedFields();
-					BoolExpr cst = elem.val1;
-					// mark as visited
-					visited.add(ap);
-					// worker is a candidate
-					MemLocInstnSet worker = new MemLocInstnSet(ap, cst);
+					// the work list algorithm
+					while (!wl.isEmpty()) {
+						Pair<AbsMemLoc, BoolExpr> elem = wl.iterator().next();
+						wl.remove(elem);
+						AbsMemLoc canddt = elem.val0;
+						Set<FieldElem> smashedFields = ((AccessPath) loc)
+								.getSmashedFields();
+						// the smashed types
+						Set<jq_Type> smashedTypes = new HashSet<jq_Type>();
+						for (FieldElem f : smashedFields) {
+							if (f instanceof NormalFieldElem) {
+								smashedTypes.add(((NormalFieldElem) f)
+										.getField().getType());
+							} else if (f instanceof EpsilonFieldElem) {
+								smashedTypes.add(((AccessPath) loc).getBase()
+										.getType());
+							} else if (f instanceof IndexFieldElem) {
+								// assert false;
+								smashedTypes.add(Program.g().getClass(
+										"java.lang.Object"));
+							} else {
+								assert false;
+							}
+						}
+						jq_Type type = null;
+						if (field instanceof NormalFieldElem) {
+							type = ((NormalFieldElem) field).getField()
+									.getType();
+						} else if (field instanceof EpsilonFieldElem) {
+							type = loc.findRoot().getType();
+						} else if (field instanceof IndexFieldElem) {
+							type = (loc.getType() instanceof jq_Array) ? ((jq_Array) loc
+									.getType()).getElementType() : Program.g()
+									.getClass("java.lang.Object");
+						} else {
+							assert false;
+						}
+						assert type != null;
+						BoolExpr cst = elem.val1;
+						// mark as visited
+						visited.add(canddt);
+						// worker is a candidate
+						MemLocInstnSet worker = new MemLocInstnSet(canddt, cst);
 
-					for (FieldElem f1 : ap.getFields()) {
-						// ignore the in-compatible fields
-						if (!smashedFields.contains(f1)) {
-							continue;
-						}
-						// if ending fields match, then this is one target
-						if (f.equals(f1)) {
-							MemLocInstnSet next = callerHeap.instnLookup(
-									worker, f1);
-							targets.addAll(next);
-						}
-						// if f1 is smashed by ap, then add this into wl
-						if (smashedFields.contains(f1)) {
-							MemLocInstnSet next = callerHeap.instnLookup(
-									worker, f1);
-							for (AbsMemLoc loc2 : next.keySet()) {
-								if (loc2 instanceof AccessPath
-										&& ((AccessPath) loc2).isSmashed()
-										&& !visited.contains(loc2)) {
-									BoolExpr cst2 = next.get(loc2);
-									wl.add(new Pair<AccessPath, BoolExpr>(
-											(AccessPath) loc2, cst2));
+						for (FieldElem f1 : canddt.getFields()) {
+							jq_Type t = null;
+							if (f1 instanceof NormalFieldElem) {
+								t = ((NormalFieldElem) f1).getField().getType();
+							} else if (f1 instanceof EpsilonFieldElem) {
+								t = canddt.findRoot().getType();
+							} else if (f1 instanceof IndexFieldElem) {
+								t = (canddt.getType() instanceof jq_Array) ? ((jq_Array) canddt
+										.getType()).getElementType() : Program
+										.g().getClass("java.lang.Object");
+							} else {
+								assert false;
+							}
+							assert t != null;
+							// ignore the in-compatible fields
+							if (!smashedTypes.contains(t)) {
+								continue;
+							}
+							// if ending fields match, then this is one target
+							if (type.equals(t)) {
+								MemLocInstnSet next = callerHeap.instnLookup(
+										worker, f1);
+								targets.addAll(next);
+							}
+							// if f1 is smashed by ap, then add this into wl
+							if (smashedTypes.contains(t)) {
+								MemLocInstnSet next = callerHeap.instnLookup(
+										worker, f1);
+								for (AbsMemLoc loc2 : next.keySet()) {
+									if (!visited.contains(loc2)) {
+										BoolExpr cst2 = next.get(loc2);
+										wl.add(new Pair<AbsMemLoc, BoolExpr>(
+												loc2, cst2));
+									}
 								}
 							}
 						}
 					}
+					// then conjoin with the previous result
+					ret.addAll(targets);
+				} else {
+					// to avoid non-termination
+					Set<AbsMemLoc> visited = new HashSet<AbsMemLoc>();
+					// work list storing the locations that are candidates as
+					// the instantiated locations
+					LinkedHashSet<Pair<AbsMemLoc, BoolExpr>> wl = new LinkedHashSet<Pair<AbsMemLoc, BoolExpr>>();
+					// the locations that can really be instantiated into
+					MemLocInstnSet targets = new MemLocInstnSet();
+					// initialized the work list
+					if (((AccessPath) loc).isSmashed()) {
+						for (AbsMemLoc loc1 : ret.keySet()) {
+							BoolExpr expr1 = ret.get(loc1);
+							wl.add(new Pair<AbsMemLoc, BoolExpr>(loc1, expr1));
+						}
+					}
+					// the work list algorithm
+					while (!wl.isEmpty()) {
+						Pair<AbsMemLoc, BoolExpr> elem = wl.iterator().next();
+						wl.remove(elem);
+						AbsMemLoc canddt = elem.val0;
+						Set<FieldElem> smashedFields = ((AccessPath) loc)
+								.getSmashedFields();
+						BoolExpr cst = elem.val1;
+						// mark as visited
+						visited.add(canddt);
+						// worker is a candidate
+						MemLocInstnSet worker = new MemLocInstnSet(canddt, cst);
+
+						for (FieldElem f1 : canddt.getFields()) {
+							// ignore the in-compatible fields
+							if (!smashedFields.contains(f1)) {
+								continue;
+							}
+							// if ending fields match, then this is one target
+							if (field.equals(f1)) {
+								MemLocInstnSet next = callerHeap.instnLookup(
+										worker, f1);
+								targets.addAll(next);
+							}
+							// if f1 is smashed by ap, then add this into wl
+							if (smashedFields.contains(f1)) {
+								MemLocInstnSet next = callerHeap.instnLookup(
+										worker, f1);
+								for (AbsMemLoc loc2 : next.keySet()) {
+									if (!visited.contains(loc2)) {
+										BoolExpr cst2 = next.get(loc2);
+										wl.add(new Pair<AbsMemLoc, BoolExpr>(
+												loc2, cst2));
+									}
+								}
+							}
+						}
+					}
+					// then conjoin with the previous result
+					ret.addAll(targets);
 				}
-				// then conjoin with the previous result
-				ret.addAll(targets);
 			}
 
 			memLocInstnCache.put(loc, ret);

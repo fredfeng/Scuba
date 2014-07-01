@@ -79,6 +79,17 @@ public class StaticAccessPath extends AccessPath {
 	}
 
 	@Override
+	public boolean hasFieldType(jq_Type type) {
+		return this.type.equals(type) || base.hasFieldType(type);
+	}
+
+	@Override
+	public boolean hasFieldTypeComp(jq_Type type) {
+		return this.type.isSubtypeOf(type) || type.isSubtypeOf(this.type)
+				|| base.hasFieldTypeComp(type);
+	}
+
+	@Override
 	public int countFieldSelector(FieldElem f) {
 		return base.countFieldSelector(f) + (field.equals(f) ? 1 : 0);
 	}
@@ -98,6 +109,24 @@ public class StaticAccessPath extends AccessPath {
 		}
 
 		return ((StaticAccessPath) base).getPrefix(f);
+	}
+
+	@Override
+	public StaticAccessPath getTypePrefix(jq_Type type) {
+		assert hasFieldType(type);
+		if (this.type.equals(type)) {
+			return this;
+		}
+		return ((StaticAccessPath) base).getTypePrefix(type);
+	}
+
+	@Override
+	public StaticAccessPath getTypeCompPrefix(jq_Type type) {
+		assert hasFieldTypeComp(type);
+		if (this.type.isSubtypeOf(type) || type.isSubtypeOf(this.type)) {
+			return this;
+		}
+		return ((StaticAccessPath) base).getTypePrefix(type);
 	}
 
 	// try to find the prefix ending with f

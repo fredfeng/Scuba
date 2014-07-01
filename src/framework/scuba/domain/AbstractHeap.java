@@ -14,6 +14,7 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
+import joeq.Compiler.Quad.BytecodeToQuad.jq_ReturnAddressType;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.program.Program;
@@ -1183,14 +1184,12 @@ public class AbstractHeap extends Heap {
 	// corresponding register in the IR
 	public LocalVarElem getLocalVarElem(jq_Class clazz, jq_Method method,
 			Register variable, jq_Type type) {
-		LocalVarElem ret = null;
-		if (type.isPrepared()) {
-			// create a wrapper
-			ret = new LocalVarElem(clazz, method, variable, type);
-		} else {
-			ret = new LocalVarElem(clazz, method, variable, Program.g()
-					.getClass("java.lang.Object"));
+		if (!type.isPrepared() && !(type instanceof jq_ReturnAddressType)) {
+			type.prepare();
 		}
+		// create a wrapper
+		LocalVarElem ret = new LocalVarElem(clazz, method, variable, type);
+
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (LocalVarElem) memLocFactory.get(ret);
@@ -1223,14 +1222,12 @@ public class AbstractHeap extends Heap {
 	// corresponding register in the IR
 	public ParamElem getParamElem(jq_Class clazz, jq_Method method,
 			Register parameter, jq_Type type) {
-		ParamElem ret = null;
-		if (type.isPrepared()) {
-			// create a wrapper
-			ret = new ParamElem(clazz, method, parameter, type);
-		} else {
-			ret = new ParamElem(clazz, method, parameter, Program.g().getClass(
-					"java.lang.Object"));
+		if (!type.isPrepared() && !(type instanceof jq_ReturnAddressType)) {
+			type.prepare();
 		}
+		// create a wrapper
+		ParamElem ret = new ParamElem(clazz, method, parameter, type);
+
 		// try to look up this wrapper in the memory location factory
 		if (memLocFactory.containsKey(ret)) {
 			return (ParamElem) memLocFactory.get(ret);
@@ -1249,15 +1246,12 @@ public class AbstractHeap extends Heap {
 
 	// only one RetElem for one specific method
 	public RetElem getRetElem(jq_Class clazz, jq_Method method, jq_Type retType) {
-
-		RetElem ret = null;
-		if (retType.isPrepared()) {
-			// create a wrapper
-			ret = new RetElem(clazz, method, retType);
-		} else {
-			ret = new RetElem(clazz, method, Program.g().getClass(
-					"java.lang.Object"));
+		if (!retType.isPrepared() && !(retType instanceof jq_ReturnAddressType)) {
+			retType.prepare();
 		}
+		// create a wrapper
+		RetElem ret = new RetElem(clazz, method, retType);
+
 		// try to look up
 		if (memLocFactory.containsKey(ret)) {
 			return (RetElem) memLocFactory.get(ret);
@@ -1315,6 +1309,9 @@ public class AbstractHeap extends Heap {
 	// corresponding type and the line number
 	public AllocElem getAllocElem(jq_Class clazz, jq_Method method,
 			Quad allocSite, jq_Type type, int line) {
+		if (!type.isPrepared())
+			type.prepare();
+		// create a wrapper
 		Context context = new Context(Env.getProgramPoint(clazz, method, line));
 		// create an AllocElem wrapper
 		AllocElem ret = new AllocElem(new Alloc(type, allocSite), context, type);
@@ -1376,12 +1373,53 @@ public class AbstractHeap extends Heap {
 		if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.LOW) {
 			if (SummariesEnv.v().markSmashedFields) {
 				if (loc.isArgDerived()) {
-					if (loc.hasFieldSelector(field)) {
+					if (field instanceof IndexFieldElem) {
+						// for index field we do this smashing for smashLength
+						if (loc.countFieldSelector(field) >= SummariesEnv.v().smashLength) {
+							assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+							// only AccessPath has field selectors
+							AccessPath path = ((AccessPath) loc)
+									.getPrefix(field);
+							Set<FieldElem> smashedFields = ((AccessPath) loc)
+									.getPreSmashedFields(field);
+
+							if (path instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) path);
+							} else if (path instanceof StaticAccessPath) {
+								ret = Env
+										.getStaticAccessPath((StaticAccessPath) path);
+							} else {
+								assert false : "only access path is allowed!";
+							}
+							// TODO changing the location potentially dangerous!
+							ret.addSmashedFields(smashedFields);
+						} else {
+							if (loc instanceof StaticElem) {
+								ret = Env.getStaticAccessPath((StaticElem) loc,
+										field);
+							} else if (loc instanceof ParamElem) {
+								ret = getLocalAccessPath((ParamElem) loc, field);
+							} else if (loc instanceof AccessPath) {
+								if (loc instanceof StaticAccessPath) {
+									ret = Env.getStaticAccessPath(
+											(StaticAccessPath) loc, field);
+								} else if (loc instanceof LocalAccessPath) {
+									ret = getLocalAccessPath(
+											(LocalAccessPath) loc, field);
+								} else {
+									assert false : "only two kinds of access path!";
+								}
+							} else {
+								assert false : "only three kinds of things can have default targets!";
+							}
+						}
+					} else if (loc.hasFieldSelector(field)) {
 						assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
 						// only AccessPath has field selectors
 						AccessPath path = ((AccessPath) loc).getPrefix(field);
 						Set<FieldElem> smashedFields = ((AccessPath) loc)
 								.getPreSmashedFields(field);
+
 						if (path instanceof LocalAccessPath) {
 							ret = getLocalAccessPath((LocalAccessPath) path);
 						} else if (path instanceof StaticAccessPath) {
@@ -1654,7 +1692,6 @@ public class AbstractHeap extends Heap {
 				} else {
 					assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 				}
-
 			} else {
 				if (loc.isArgDerived()) {
 					if (field instanceof IndexFieldElem) {
@@ -1730,6 +1767,207 @@ public class AbstractHeap extends Heap {
 				} else {
 					assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 				}
+			}
+		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPESMASH) {
+			if (loc.isArgDerived()) {
+				jq_Type type = null;
+				if (field instanceof NormalFieldElem) {
+					type = ((NormalFieldElem) field).getField().getType();
+				} else if (field instanceof EpsilonFieldElem) {
+					type = loc.getType();
+				} else if (field instanceof IndexFieldElem) {
+					type = (loc.getType() instanceof jq_Array) ? ((jq_Array) loc
+							.getType()).getElementType() : Program.g()
+							.getClass("java.lang.Object");
+				}
+				assert (type != null);
+
+				if (field instanceof IndexFieldElem) {
+					// for index field we do this smashing for smashLength
+					if (loc.countFieldSelector(field) >= SummariesEnv.v().smashLength
+							&& loc.hasFieldType(type)) {
+						// assert false;
+						assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+						// only AccessPath has field selectors
+						AccessPath path = ((AccessPath) loc)
+								.getTypePrefix(type);
+						Set<FieldElem> smashedFields = ((AccessPath) loc)
+								.getPreSmashedFieldsForType(type);
+						if (path instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) path);
+						} else if (path instanceof StaticAccessPath) {
+							ret = Env
+									.getStaticAccessPath((StaticAccessPath) path);
+						} else {
+							assert false : "only access path is allowed!";
+						}
+						// TODO changing the location potentially dangerous!
+						ret.addSmashedFields(smashedFields);
+					} else {
+						if (loc instanceof StaticElem) {
+							ret = Env.getStaticAccessPath((StaticElem) loc,
+									field);
+						} else if (loc instanceof ParamElem) {
+							ret = getLocalAccessPath((ParamElem) loc, field);
+						} else if (loc instanceof AccessPath) {
+							if (loc instanceof StaticAccessPath) {
+								ret = Env.getStaticAccessPath(
+										(StaticAccessPath) loc, field);
+							} else if (loc instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) loc,
+										field);
+							} else {
+								assert false : "only two kinds of access path!";
+							}
+						} else {
+							assert false : "only three kinds of things can have default targets!";
+						}
+					}
+				} else if (loc.hasFieldType(type)) {
+					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+					// only AccessPath has field selectors
+					AccessPath path = ((AccessPath) loc).getTypePrefix(type);
+					Set<FieldElem> smashedFields = ((AccessPath) loc)
+							.getPreSmashedFieldsForType(type);
+					if (path instanceof LocalAccessPath) {
+						ret = getLocalAccessPath((LocalAccessPath) path);
+					} else if (path instanceof StaticAccessPath) {
+						ret = Env.getStaticAccessPath((StaticAccessPath) path);
+					} else {
+						assert false : "only access path is allowed!";
+					}
+					// TODO changing the location potentially dangerous!
+					ret.addSmashedFields(smashedFields);
+				} else {
+					if (loc instanceof StaticElem) {
+						ret = Env.getStaticAccessPath((StaticElem) loc, field);
+					} else if (loc instanceof ParamElem) {
+						ret = getLocalAccessPath((ParamElem) loc, field);
+					} else if (loc instanceof AccessPath) {
+						// we should call the method without parameters
+						// because loc is not a smashed access path!
+						Set<FieldElem> smashedFields = ((AccessPath) loc)
+								.getSmashedFields();
+						if (loc instanceof StaticAccessPath) {
+							ret = Env.getStaticAccessPath(
+									(StaticAccessPath) loc, field);
+							// TODO changing the location
+							ret.addSmashedFields(smashedFields);
+						} else if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc,
+									field);
+							// TODO changing the location
+							ret.addSmashedFields(smashedFields);
+						} else {
+							assert false : "only two kinds of access path!";
+						}
+					} else {
+						assert false : "only three kinds of things can have default targets!";
+					}
+				}
+			} else {
+				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
+			}
+		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPECOMSMASH) {
+			if (loc.isArgDerived()) {
+				jq_Type type = null;
+				if (field instanceof NormalFieldElem) {
+					type = ((NormalFieldElem) field).getField().getType();
+				} else if (field instanceof EpsilonFieldElem) {
+					type = loc.getType();
+				} else if (field instanceof IndexFieldElem) {
+					type = (loc.getType() instanceof jq_Array) ? ((jq_Array) loc
+							.getType()).getElementType() : Program.g()
+							.getClass("java.lang.Object");
+				}
+				assert (type != null);
+
+				if (field instanceof IndexFieldElem) {
+					// for index field we do this smashing for smashLength
+					if (loc.countFieldSelector(field) >= SummariesEnv.v().smashLength
+							&& loc.hasFieldTypeComp(type)) {
+						// assert false;
+						assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+						// only AccessPath has field selectors
+						AccessPath path = ((AccessPath) loc)
+								.getTypeCompPrefix(type);
+						Set<FieldElem> smashedFields = ((AccessPath) loc)
+								.getPreSmashedFieldsForTypeComp(type);
+						if (path instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) path);
+						} else if (path instanceof StaticAccessPath) {
+							ret = Env
+									.getStaticAccessPath((StaticAccessPath) path);
+						} else {
+							assert false : "only access path is allowed!";
+						}
+						// TODO changing the location potentially dangerous!
+						ret.addSmashedFields(smashedFields);
+					} else {
+						if (loc instanceof StaticElem) {
+							ret = Env.getStaticAccessPath((StaticElem) loc,
+									field);
+						} else if (loc instanceof ParamElem) {
+							ret = getLocalAccessPath((ParamElem) loc, field);
+						} else if (loc instanceof AccessPath) {
+							if (loc instanceof StaticAccessPath) {
+								ret = Env.getStaticAccessPath(
+										(StaticAccessPath) loc, field);
+							} else if (loc instanceof LocalAccessPath) {
+								ret = getLocalAccessPath((LocalAccessPath) loc,
+										field);
+							} else {
+								assert false : "only two kinds of access path!";
+							}
+						} else {
+							assert false : "only three kinds of things can have default targets!";
+						}
+					}
+				} else if (loc.hasFieldTypeComp(type)) {
+					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
+					// only AccessPath has field selectors
+					AccessPath path = ((AccessPath) loc)
+							.getTypeCompPrefix(type);
+					Set<FieldElem> smashedFields = ((AccessPath) loc)
+							.getPreSmashedFieldsForTypeComp(type);
+					if (path instanceof LocalAccessPath) {
+						ret = getLocalAccessPath((LocalAccessPath) path);
+					} else if (path instanceof StaticAccessPath) {
+						ret = Env.getStaticAccessPath((StaticAccessPath) path);
+					} else {
+						assert false : "only access path is allowed!";
+					}
+					// TODO changing the location potentially dangerous!
+					ret.addSmashedFields(smashedFields);
+				} else {
+					if (loc instanceof StaticElem) {
+						ret = Env.getStaticAccessPath((StaticElem) loc, field);
+					} else if (loc instanceof ParamElem) {
+						ret = getLocalAccessPath((ParamElem) loc, field);
+					} else if (loc instanceof AccessPath) {
+						// we should call the method without parameters
+						// because loc is not a smashed access path!
+						Set<FieldElem> smashedFields = ((AccessPath) loc)
+								.getSmashedFields();
+						if (loc instanceof StaticAccessPath) {
+							ret = Env.getStaticAccessPath(
+									(StaticAccessPath) loc, field);
+							// TODO changing the location
+							ret.addSmashedFields(smashedFields);
+						} else if (loc instanceof LocalAccessPath) {
+							ret = getLocalAccessPath((LocalAccessPath) loc,
+									field);
+							// TODO changing the location
+							ret.addSmashedFields(smashedFields);
+						} else {
+							assert false : "only two kinds of access path!";
+						}
+					} else {
+						assert false : "only three kinds of things can have default targets!";
+					}
+				}
+			} else {
+				assert false : "you can NOT get the default target for a non-arg derived mem loc!";
 			}
 		}
 

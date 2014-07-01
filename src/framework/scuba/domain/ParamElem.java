@@ -81,4 +81,14 @@ public class ParamElem extends StackObject {
 	public int countFieldSelector(FieldElem field) {
 		return 0;
 	}
+
+	@Override
+	public boolean hasFieldType(jq_Type type) {
+		return false;
+	}
+
+	@Override
+	public boolean hasFieldTypeComp(jq_Type type) {
+		return false;
+	}
 }

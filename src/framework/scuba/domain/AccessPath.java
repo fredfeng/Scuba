@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import joeq.Class.jq_Array;
+import joeq.Class.jq_Type;
 import chord.program.Program;
 
 public abstract class AccessPath extends HeapObject {
@@ -55,6 +56,10 @@ public abstract class AccessPath extends HeapObject {
 
 	abstract public AccessPath findPrefix(FieldElem f);
 
+	abstract public AccessPath getTypePrefix(jq_Type type);
+
+	abstract public AccessPath getTypeCompPrefix(jq_Type type);
+
 	protected boolean isSmashed;
 
 	public void setSmashed() {
@@ -66,8 +71,8 @@ public abstract class AccessPath extends HeapObject {
 	}
 
 	public boolean isSmashed() {
-		return isSmashed;
-		// return !smashed.isEmpty();
+		// return isSmashed;
+		return !smashed.isEmpty();
 	}
 
 	public void addSmashedField(FieldElem f) {
@@ -77,10 +82,12 @@ public abstract class AccessPath extends HeapObject {
 	}
 
 	public void addSmashedFields(Set<FieldElem> fields) {
-		for (FieldElem f : fields) {
-			assert (f instanceof NormalFieldElem || f instanceof IndexFieldElem) : ""
-					+ "only normal field and index field can be smashed!";
-		}
+		// if do type smashing, following is possible
+		// for (FieldElem f : fields) {
+		// assert (f instanceof NormalFieldElem || f instanceof IndexFieldElem)
+		// : ""
+		// + "only normal field and index field can be smashed!";
+		// }
 		smashed.addAll(fields);
 	}
 
@@ -96,6 +103,46 @@ public abstract class AccessPath extends HeapObject {
 		ret.addAll(smashed);
 		addFieldAsSmashed(f, ret);
 		return ret;
+	}
+
+	public Set<FieldElem> getPreSmashedFieldsForType(jq_Type type) {
+		assert hasFieldType(type) : "getSmashedFields(f) can only "
+				+ "be called when it is a smashed access path!";
+		Set<FieldElem> ret = new HashSet<FieldElem>();
+		ret.addAll(smashed);
+		addFieldAsSmashedForType(type, ret);
+		return ret;
+	}
+
+	public Set<FieldElem> getPreSmashedFieldsForTypeComp(jq_Type type) {
+		assert hasFieldTypeComp(type) : "getSmashedFields(f) can only "
+				+ "be called when it is a smashed access path!";
+		Set<FieldElem> ret = new HashSet<FieldElem>();
+		ret.addAll(smashed);
+		addFieldAsSmashedForTypeComp(type, ret);
+		return ret;
+	}
+
+	private void addFieldAsSmashedForTypeComp(jq_Type type, Set<FieldElem> set) {
+		if (this.type.isSubtypeOf(type) || type.isSubtypeOf(this.type)) {
+			set.add(field);
+			return;
+		}
+		set.add(field);
+		assert (base instanceof AccessPath);
+		((AccessPath) base).addFieldAsSmashedForTypeComp(type, set);
+		return;
+	}
+
+	private void addFieldAsSmashedForType(jq_Type type, Set<FieldElem> set) {
+		if (this.type.equals(type)) {
+			set.add(field);
+			return;
+		}
+		set.add(field);
+		assert (base instanceof AccessPath);
+		((AccessPath) base).addFieldAsSmashedForType(type, set);
+		return;
 	}
 
 	private void addFieldAsSmashed(FieldElem f, Set<FieldElem> set) {
