@@ -112,8 +112,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		new DowncastAnalysis(relDcm, relDVH, this).run();
 
 		// perform points to set.
-		pointToSet();
-		// new MayAliasAnalysis(relMV, relVValias, this).run();
+//		pointToSet();
+		new MayAliasAnalysis(relMV, relVValias, this).run();
 
 	}
 
@@ -393,7 +393,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		ControlFlowGraph cfg = m.getCFG();
 
-		System.out.println("$$$$ " + "oh my god " + cfg.getMethod());
 		intrapro.analyze(cfg);
 
 		if (G.validate) {
@@ -402,8 +401,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		summary.setHasAnalyzed();
 		
-		summary.getAbsHeap().dumpHeapToFile(m.getDeclaringClass().getName() + "@" +m.getName().toString());
-
 		int num = 0;
 		for (Pair p : summary.getAbsHeap().keySet()) {
 			num += summary.getAbsHeap().get(p).size();
