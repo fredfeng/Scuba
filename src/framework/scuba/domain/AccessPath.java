@@ -11,6 +11,8 @@ public abstract class AccessPath extends HeapObject {
 
 	protected Set<FieldElem> smashed = new HashSet<FieldElem>();
 
+	protected Set<FieldElem> endingFields = new HashSet<FieldElem>();
+
 	final protected AbsMemLoc base;
 
 	final protected FieldElem field;
@@ -25,6 +27,7 @@ public abstract class AccessPath extends HeapObject {
 		// base because the base has such a field
 		base.addField(field);
 		length = base.length + 1;
+		endingFields.add(field);
 		if (field instanceof NormalFieldElem) {
 			this.type = ((NormalFieldElem) field).getField().getType();
 		} else if (field instanceof EpsilonFieldElem) {
@@ -89,6 +92,18 @@ public abstract class AccessPath extends HeapObject {
 		// + "only normal field and index field can be smashed!";
 		// }
 		smashed.addAll(fields);
+	}
+
+	public void addEndingField(FieldElem f) {
+		endingFields.add(f);
+	}
+
+	public void addEndingFields(Set<FieldElem> fields) {
+		endingFields.addAll(fields);
+	}
+
+	public Set<FieldElem> getEndingFields() {
+		return endingFields;
 	}
 
 	public Set<FieldElem> getSmashedFields() {

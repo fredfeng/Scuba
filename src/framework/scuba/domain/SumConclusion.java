@@ -83,21 +83,21 @@ public class SumConclusion {
 		P2Set p2set = sumHeap.locToP2Set.get(new Pair<AbsMemLoc, FieldElem>(
 				local, EpsilonFieldElem.getEpsilonFieldElem()));
 		if (p2set == null) {
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "we cannot get the p2set in the final heap.");
 			return ret;
 		}
 
-		if (G.dbgAntlr) {
-			StringUtil.reportInfo("[dbgAntlr] " + "[p2 set in final summary] ");
-			StringUtil
-					.reportInfo("[dbgAntlr] "
-							+ "------------------------------------------------------------------------------------");
-			for (HeapObject hObj : p2set.keySet()) {
-				StringUtil.reportInfo("[dbgAntlr] " + hObj);
-			}
-			StringUtil
-					.reportInfo("[dbgAntlr] "
-							+ "------------------------------------------------------------------------------------");
+		StringUtil.reportInfo("[dbgAntlr] " + "[p2 set in final summary] ");
+		StringUtil
+				.reportInfo("[dbgAntlr] "
+						+ "------------------------------------------------------------------------------------");
+		for (HeapObject hObj : p2set.keySet()) {
+			StringUtil.reportInfo("[dbgAntlr] " + hObj);
 		}
+		StringUtil
+				.reportInfo("[dbgAntlr] "
+						+ "------------------------------------------------------------------------------------");
 
 		for (HeapObject hObj : p2set.keySet()) {
 			if (hObj instanceof AllocElem) {

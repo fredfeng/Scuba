@@ -75,7 +75,7 @@ public abstract class AbsMemLoc {
 		return this.fields;
 	}
 
-	public int length() {
+	public int contxtLength() {
 		return length;
 	}
 

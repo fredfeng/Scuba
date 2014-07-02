@@ -60,7 +60,7 @@ public class LocalAccessPath extends AccessPath {
 
 	@Override
 	public String toString() {
-		return base + "." + field;
+		return base + "." + field + "[" + isSmashed() + "]";
 	}
 
 	@Override

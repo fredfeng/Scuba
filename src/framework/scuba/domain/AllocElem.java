@@ -26,7 +26,7 @@ public class AllocElem extends HeapObject {
 		this.context.appendEnd(point);
 	}
 
-	public int length() {
+	public int contxtLength() {
 		return context.length();
 	}
 
