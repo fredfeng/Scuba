@@ -325,7 +325,10 @@ public class MemLocInstnItem {
 				// then conjoin with the previous result
 				ret.addAll(targets);
 			}
-			memLocInstnCache.put(loc, ret);
+			if (orgs.isEmpty() && ret.isEmpty()) {
+			} else {
+				memLocInstnCache.put(loc, ret);
+			}
 		} else {
 			assert false : "wried things happen! Unknow type.";
 		}
