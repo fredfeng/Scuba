@@ -34,7 +34,7 @@ public class G {
 	public static boolean dbgInvoke = true;
 	public static boolean dbgInstn = true;
 	public static Map<Summary, Integer> IdMapping = new HashMap<Summary, Integer>();
-	public static boolean dbgUndet = false;
+	public static boolean dbgUndet = true;
 
 	public static boolean dbgFilter = false;
 
@@ -74,9 +74,9 @@ public class G {
 	// number of edges that are instantiated into in the caller
 	public static int instToEdges = 0;
 
+	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 	// public static String dotOutputPath =
-	// "/home/yufeng/research/Scuba/output/";
-	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
+	// "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
 
 	public static long instCstSubTime;
 }

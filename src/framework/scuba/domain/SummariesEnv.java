@@ -28,7 +28,7 @@ public class SummariesEnv {
 	}
 
 	public static enum FieldSmashLevel {
-		LOW, MED, HIGH, CONTROL, ICONTROL, TYPESMASH, TYPECOMPSMASH;
+		REG, CTRLLENGTH, CTRLILENGTH, TYPESMASH, TYPECOMPSMASH;
 	}
 
 	public static SummariesEnv v() {
@@ -98,7 +98,7 @@ public class SummariesEnv {
 
 	public boolean iControl = true;
 
-	public FieldSmashLevel level = FieldSmashLevel.LOW;
+	public FieldSmashLevel level = FieldSmashLevel.REG;
 	// public FieldSmashLevel level = FieldSmashLevel.MED;
 	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
 	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
@@ -113,7 +113,7 @@ public class SummariesEnv {
 	// fix-point or not
 	protected boolean useFixPoint = true;
 	// when concluding the clinit's and main, use fix-point or not
-	protected boolean topFixPoint = false;
+	protected boolean topFixPoint = true;
 
 	// whether or not propagate parameters
 	protected boolean propParams = true;
