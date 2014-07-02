@@ -99,10 +99,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// app locals from haiyan's analysis.
 		extractAppLocals();
 
+		long start = System.nanoTime();
 		// compute SCCs and their representative nodes.
 		sumAnalyze();
-
 		conclude();
+		long end = System.nanoTime();
+		StringUtil.reportSec("Sum-based analysis runnint time: ", start, end);
+
 		dumpCallGraph();
 
 		// dump interesting stats

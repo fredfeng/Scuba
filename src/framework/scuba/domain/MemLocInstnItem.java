@@ -325,7 +325,7 @@ public class MemLocInstnItem {
 				// then conjoin with the previous result
 				ret.addAll(targets);
 			}
-			if (orgs.isEmpty() && ret.isEmpty()) {
+			if (ret.isEmpty()) {
 			} else {
 				memLocInstnCache.put(loc, ret);
 			}

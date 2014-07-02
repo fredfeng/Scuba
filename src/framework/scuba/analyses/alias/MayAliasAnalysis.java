@@ -30,7 +30,8 @@ public class MayAliasAnalysis {
 	}
 
 	public void run() {
-		StringUtil.reportInfo("May Alias Experiment--------------------------------");
+		StringUtil
+				.reportInfo("May Alias Experiment--------------------------------");
 		if (!relVValias.isOpen())
 			relVValias.load();
 
@@ -69,33 +70,37 @@ public class MayAliasAnalysis {
 			StringUtil.reportInfo("[mayAlias] " + v2 + "@" + m2);
 
 			if (p2Set1.isEmpty() || p2Set2.isEmpty()) {
-				StringUtil.reportInfo("[mayAlias]Result: unknown because one of them constains empty set.");
+				StringUtil
+						.reportInfo("[mayAlias]Result: unknown because one of them constains empty set.");
 				emptyQuery++;
 			} else {
 				bothNotEmpty++;
 				p2Set1.retainAll(p2Set2);
 				if (p2Set1.isEmpty()) {
 					StringUtil.reportInfo("[mayAlias]Result: YES. Not alias.");
-					StringUtil.reportInfo("[mayAlias]P2Set of " + v1 + " : " + p2Set1);
-					StringUtil.reportInfo("[mayAlias]P2Set of " + v2 + " : " + p2Set2);
+					StringUtil.reportInfo("[mayAlias]P2Set of " + v1 + " : "
+							+ p2Set1);
+					StringUtil.reportInfo("[mayAlias]P2Set of " + v2 + " : "
+							+ p2Set2);
 					bothNotEmptyNotAlias++;
 				} else {
-					StringUtil
-							.reportInfo("[mayAlias]Result: No. Still alias.");
-					StringUtil.reportInfo("[mayAlias]P2Set of " + v1 + " : " + p2Set1);
-					StringUtil.reportInfo("[mayAlias]P2Set of " + v2 + " : " + p2Set2);
+					StringUtil.reportInfo("[mayAlias]Result: No. Still alias.");
+					StringUtil.reportInfo("[mayAlias]P2Set of " + v1 + " : "
+							+ p2Set1);
+					StringUtil.reportInfo("[mayAlias]P2Set of " + v2 + " : "
+							+ p2Set2);
 
 				}
 			}
 		}
-		
-		StringUtil.reportInfo("[mayAlias]May Alias Result--------------------------------");
+
+		StringUtil
+				.reportInfo("[mayAlias]May Alias Result--------------------------------");
 		StringUtil.reportInfo("[mayAlias]Total queries: " + view.size());
 		StringUtil.reportInfo("[mayAlias]Non-empty Queries: " + bothNotEmpty);
-		StringUtil.reportInfo("[mayAlias]Non-alias Queries(Exclude empty): " + bothNotEmptyNotAlias);
-		StringUtil.reportInfo("[mayAlias]Non-alias Queries(Include empty): " + (bothNotEmptyNotAlias + emptyQuery));
-
-
-
+		StringUtil.reportInfo("[mayAlias]Non-alias Queries(Exclude empty): "
+				+ bothNotEmptyNotAlias);
+		StringUtil.reportInfo("[mayAlias]Non-alias Queries(Include empty): "
+				+ (bothNotEmptyNotAlias + emptyQuery));
 	}
 }
