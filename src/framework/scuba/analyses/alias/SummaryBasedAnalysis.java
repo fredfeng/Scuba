@@ -237,7 +237,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			repGraph.addNode(node);
 			sccs.addAll(scc);
 		}
-		
+
 		assert tltSCCMeths == methsInCG : tltSCCMeths + " VS " + methsInCG;
 
 		for (Set<jq_Method> scc : s4g.getComponents()) {
