@@ -927,6 +927,7 @@ public class AbstractHeap extends Heap {
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
 			if (memLocInstn.memLocInstnCache.containsKey(src)
+					&& memLocInstn.memLocInstnCache.containsKey(dst)
 					&& memLocInstn.memLocInstnCache.containsKey(dst)) {
 				return ret;
 			}
