@@ -21,7 +21,7 @@ public class G {
 
 	public static boolean debug4AbsHeap = false;
 
-	public static boolean dump = true;
+	public static boolean dump = false;
 
 	public static boolean validate = false;
 
@@ -34,6 +34,7 @@ public class G {
 	public static boolean dbgInvoke = true;
 	public static boolean dbgInstn = true;
 	public static Map<Summary, Integer> IdMapping = new HashMap<Summary, Integer>();
+	public static boolean dbgUndet = false;
 
 	public static boolean dbgFilter = false;
 
