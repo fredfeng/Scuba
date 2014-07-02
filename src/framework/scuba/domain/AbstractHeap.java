@@ -928,7 +928,8 @@ public class AbstractHeap extends Heap {
 		if (SummariesEnv.v().moreSmartSkip) {
 			if (memLocInstn.memLocInstnCache.containsKey(src)
 					&& memLocInstn.memLocInstnCache.containsKey(dst)
-					&& memLocInstn.memLocInstnCache.containsKey(dst)) {
+					&& ConstraintManager.instnCache.contains(memLocInstn,
+							calleeCst)) {
 				return ret;
 			}
 		}
