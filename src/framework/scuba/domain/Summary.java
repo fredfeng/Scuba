@@ -320,9 +320,6 @@ public class Summary {
 			StringUtil.reportInfo("[dbgAntlr] " + "[result of handling stmt] "
 					+ quad + " " + absHeap.isChanged());
 		}
-		if (G.dbgAntlr && G.dump) {
-			this.dumpSummaryToFile("" + G.IdMapping.get(this) + "$" + count);
-		}
 
 		return absHeap.isChanged();
 	}

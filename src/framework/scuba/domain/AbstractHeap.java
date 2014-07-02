@@ -1201,6 +1201,8 @@ public class AbstractHeap extends Heap {
 		// initialize the P2Set of this local
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(ret,
 				EpsilonFieldElem.getEpsilonFieldElem());
+		ret.addField(EpsilonFieldElem.getEpsilonFieldElem());
+		heap.add(ret);
 		P2Set p2set = locToP2Set.get(pair);
 		if (p2set == null) {
 			locToP2Set.put(pair, new P2Set());
@@ -1240,15 +1242,16 @@ public class AbstractHeap extends Heap {
 		// every time generating a memory location, do this marking
 		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
-		// initialize the P2Set of this parameter
+		// initialize the P2Set of this local
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(ret,
 				EpsilonFieldElem.getEpsilonFieldElem());
+		ret.addField(EpsilonFieldElem.getEpsilonFieldElem());
+		heap.add(ret);
 		P2Set p2set = locToP2Set.get(pair);
 		if (p2set == null) {
 			locToP2Set.put(pair, new P2Set());
 		}
 		// weakUpdate(pair, new P2Set());
-
 		return ret;
 	}
 
@@ -1268,9 +1271,11 @@ public class AbstractHeap extends Heap {
 		// every time generating a memory location, do this marking
 		ArgDerivedHelper.markArgDerived(ret);
 		memLocFactory.put(ret, ret);
-		// initialize the P2Set of this RetElem
+		// initialize the P2Set of this local
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(ret,
 				EpsilonFieldElem.getEpsilonFieldElem());
+		ret.addField(EpsilonFieldElem.getEpsilonFieldElem());
+		heap.add(ret);
 		P2Set p2set = locToP2Set.get(pair);
 		if (p2set == null) {
 			locToP2Set.put(pair, new P2Set());
@@ -1999,6 +2004,10 @@ public class AbstractHeap extends Heap {
 		// determine which locals to propagate
 		// fillPropSet(src, p2Set);
 		// src has field f even if the p2set might be empty
+		if (src instanceof LocalVarElem) {
+			assert f instanceof EpsilonFieldElem : "we should not " + "add "
+					+ f + " field " + "for local " + src;
+		}
 		src.addField(f);
 		// update the locations in the real heap graph
 		heap.add(src);
@@ -2250,7 +2259,7 @@ public class AbstractHeap extends Heap {
 		for (AbsMemLoc loc : allLocs) {
 			if (loc instanceof AccessPath) {
 				b.append("  ").append("\"" + loc.dump() + "\"");
-				b.append(" [shape=note label=\"");
+				b.append(" [shape=circle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof AllocElem) {
