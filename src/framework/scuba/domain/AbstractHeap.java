@@ -855,10 +855,11 @@ public class AbstractHeap extends Heap {
 
 		if (ret.val1) {
 			if (SummariesEnv.v().jump) {
-				// we need to reanalyze this method (conservative)
+				// this is for conclusion
 				if (summary == null) {
 					return ret;
 				}
+				// we need to reanalyze this method (conservative)
 				for (Summary s : summary.jumpEffectSet) {
 					s.jumpInstnSet.remove(summary);
 				}
@@ -873,6 +874,19 @@ public class AbstractHeap extends Heap {
 	private Pair<Boolean, Boolean> instnEdge(AbsMemLoc src, HeapObject dst,
 			FieldElem field, MemLocInstnItem memLocInstn,
 			AbstractHeap calleeHeap, ProgramPoint point, BoolExpr typeCst) {
+
+		if (G.dbgAntlr && G.dbgInvoke) {
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[instantiating callee edge]: " + "method Id: "
+					+ G.IdMapping.get(calleeHeap.summary));
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+			StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + src);
+			StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
+			StringUtil.reportInfo("[dbgAntlr] " + "DST: " + dst);
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "-------------------------------------------");
+		}
 
 		Pair<Boolean, Boolean> ret = new Pair<Boolean, Boolean>(false, false);
 
@@ -910,25 +924,10 @@ public class AbstractHeap extends Heap {
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
 
-		if (G.dbgAntlr && G.dbgInvoke) {
-			StringUtil.reportInfo("[dbgAntlr] "
-					+ "[instantiating callee edge]: " + "method Id: "
-					+ G.IdMapping.get(calleeHeap.summary));
-			StringUtil.reportInfo("[dbgAntlr] "
-					+ "-------------------------------------------");
-			StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + src);
-			StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
-			StringUtil.reportInfo("[dbgAntlr] " + "DST: " + dst);
-			StringUtil.reportInfo("[dbgAntlr] "
-					+ "-------------------------------------------");
-		}
-
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
 			if (memLocInstn.memLocInstnCache.containsKey(src)
-					&& memLocInstn.memLocInstnCache.containsKey(dst)
-					&& ConstraintManager.instnCache.contains(memLocInstn,
-							calleeCst)) {
+					&& memLocInstn.memLocInstnCache.containsKey(dst)) {
 				return ret;
 			}
 		}

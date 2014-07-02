@@ -37,7 +37,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 2;
+	protected int allocDepth = 3;
 	// dynamically control the depth
 	protected boolean dynAlloc = true;
 
