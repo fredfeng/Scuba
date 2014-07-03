@@ -39,7 +39,7 @@ public class VVRefine extends JavaAnalysis {
     	
     	domV = (DomV) ClassicProject.g().getTrgt("V");
     	relVV =(ProgramRel)ClassicProject.g().getTrgt("appsVV");    
-    	relVVRefined= (ProgramRel)ClassicProject.g().getTrgt("VVRefine");
+    	relVVRefined= (ProgramRel)ClassicProject.g().getTrgt("VVRefined");
     	
     	refineVV();
     }
