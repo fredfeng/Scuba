@@ -9,23 +9,31 @@
 
 
 VValias(v:V0,v1:V1) input
-
 CVC(c1:C0,v:V0,c2:C1) input # filtered version
 
 
 
 ######## alias
 cspaVValias(v:V0,v1:V1) output
-
-### not alias
 cspaVVnotalias(v:V0,v1:V1) output
 
-
+###### for print
+aliasVVpts(v:V0,c:C0,v1:V1,c1:C1)output
+notaliasVVpts(v:V0,c:C0,v1:V1,c1:C1)output
+cspaVVnotaliasy(v:V0,v1:V1) output
 
 
 ####### resolve alias
 cspaVValias(v,v1)  :- VValias(v,v1), CVC(_,v,c), CVC(_,v1,c). 
-
-########## not alias
 cspaVVnotalias(v,v1)  :-  VValias(v,v1), !cspaVValias(v,v1).
+
+##for print 
+aliasVVpts(v,c,v1,c1) :- cspaVValias(v,v1), CVC(_,v,c), CVC(_,v1,c1).
+
+#it is possible that v and v1 may not point to anything
+notaliasVVpts(v,c, v1, c1) :- cspaVVnotalias(v, v1), CVC(_,v,c), CVC(_,v1,c1).
+
+
+
+
 

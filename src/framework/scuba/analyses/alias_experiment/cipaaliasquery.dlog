@@ -6,14 +6,21 @@
 
 ##input
 
-appsVV(v:V0,v1:V1)input
+#appsVV(v:V0,v1:V1)input
+
+VVRefined(v:V0,v1:V1)input
 
 VH(v:V0,h:H0) input
+
+
 
 ##output
 VValias(v:V0,v1:V1) output
 
 
 ##### cipa apps alias pairs
-VValias(v, v1) :- appsVV(v,v1), VH(v1,h), VH(v,h). 
+#VValias(v, v1) :- appsVV(v,v1), VH(v1,h), VH(v,h). 
 
+
+#use refinedVV version
+VValias(v, v1) :- VVRefined(v,v1), VH(v1,h), VH(v,h). 
