@@ -1,8 +1,6 @@
-package chord.analyses.alias_experiment;
+package framework.scuba.analyses.alias_experiment;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
@@ -13,10 +11,8 @@ import chord.bddbddb.Rel.RelView;
 import chord.project.Chord;
 import chord.project.ClassicProject;
 import chord.project.analyses.JavaAnalysis;
-import chord.project.analyses.ProgramDom;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
-import chord.util.tuple.object.Quad;
 
 
 
