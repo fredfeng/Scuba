@@ -16,8 +16,7 @@ import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 
 /**
- * Relation containing each tuple (m,i) such that method m contains
- * method invocation quad i.
+ * refine appsVV because of duplicated this pointer
  *
  * @author haiyan
  */
