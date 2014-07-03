@@ -644,11 +644,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		Summary sum1 = SummariesEnv.v().getSummary(method);
 
 		if (sum1 == null) {
-			if (G.dbgAntlr) {
-				StringUtil.reportInfo("[dbgAntlr]: "
-						+ "[we cannot get the summary for the method!] "
-						+ method);
-			}
+
+			StringUtil.reportInfo("[dbgAntlr]: "
+					+ "[we cannot get the summary for the method!] " + method);
+
 			return ret;
 		}
 
@@ -665,35 +664,33 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				method, variable);
 
 		if (local == null) {
-			if (G.dbgAntlr) {
-				StringUtil.reportInfo("[dbgAntlr] "
-						+ "[we cannot get the location in the heap!]");
-			}
+
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[we cannot get the location in the heap!]");
+
 		} else {
-			if (G.dbgAntlr) {
-				StringUtil.reportInfo("[dbgAntlr] "
-						+ "[we can get the location in the heap!]");
-			}
+
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[we can get the location in the heap!]");
+
 			Set<FieldElem> fields = local.getFields();
 			assert (fields.size() == 1) : "local can only have 1 field (epsilon)!";
 			FieldElem f = fields.iterator().next();
 			assert (f instanceof EpsilonFieldElem) : "local can only have epsilon field!";
 			EpsilonFieldElem e = (EpsilonFieldElem) f;
-			// StringUtil.reportInfo("[dbgAntlr] "
-			// + "[P2Set in the declearing method]");
-			// P2Set p2set = sum1.getAbsHeap().getHeap()
-			// .get(new Pair<AbsMemLoc, FieldElem>(local, e));
-			// StringUtil
-			// .reportInfo("[dbgAntlr] "
-			// +
-			// "------------------------------------------------------------------------------------");
-			// for (HeapObject hObj : p2set.keySet()) {
-			// StringUtil.reportInfo("[dbgAntlr] " + hObj);
-			// }
-			// StringUtil
-			// .reportInfo("[dbgAntlr] "
-			// +
-			// "------------------------------------------------------------------------------------");
+			StringUtil.reportInfo("[dbgAntlr] "
+					+ "[P2Set in the declearing method]");
+			P2Set p2set = sum1.getAbsHeap().getHeap()
+					.get(new Pair<AbsMemLoc, FieldElem>(local, e));
+			StringUtil
+					.reportInfo("[dbgAntlr] "
+							+ "------------------------------------------------------------------------------------");
+			for (HeapObject hObj : p2set.keySet()) {
+				StringUtil.reportInfo("[dbgAntlr] " + hObj);
+			}
+			StringUtil
+					.reportInfo("[dbgAntlr] "
+							+ "------------------------------------------------------------------------------------");
 
 			ret = sum.getP2Set(local, e);
 		}

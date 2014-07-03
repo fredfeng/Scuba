@@ -37,7 +37,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 5;
+	protected int allocDepth = 3;
 	// dynamically control the depth
 	protected boolean dynAlloc = true;
 
@@ -66,9 +66,9 @@ public class SummariesEnv {
 	// this is naively just marking the flag in access path
 	public boolean markSmashedFlag = false;
 	// this is the sound way to do smashing
-	public boolean markSmashedFields = true;
+	public boolean markSmashedFields = false;
 	// this is used for instantiating the locations
-	public boolean instnSmashedAPs = true;
+	public boolean instnSmashedAPs = false;
 	// whether use cache for instantiating AccessPath
 	public boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
