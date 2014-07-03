@@ -48,7 +48,7 @@ public class VVRefine extends JavaAnalysis {
 
 		for (Pair<Register, Register> ele : vv) {
 			Register r1 = ele.val0;
-			Register r2 = ele.val0;
+			Register r2 = ele.val1;
 
 			jq_Method m1 = domV.getMethod(r1);
 			jq_Class c1 = m1.getDeclaringClass();
