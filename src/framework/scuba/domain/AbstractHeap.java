@@ -1799,23 +1799,9 @@ public class AbstractHeap extends Heap {
 			locToP2Set.put(pair, currentP2Set);
 		}
 
-		jq_Type typeFilter = null;
-
-		if (f instanceof NormalFieldElem) {
-			typeFilter = ((NormalFieldElem) f).getField().getType();
-		} else if (f instanceof IndexFieldElem) {
-			typeFilter = ((src.getType() instanceof jq_Array) ? ((jq_Array) src
-					.getType()).getElementType() : Program.g().getClass(
-					"java.lang.Object"));
-		} else if (f instanceof EpsilonFieldElem) {
-			typeFilter = src.getType();
-		} else {
-			assert false : "wired thing! unknow type!";
-		}
-		assert typeFilter != null;
 		// typeFilter = Program.g().getType("java.lang.Object");
 
-		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set, this, typeFilter);
+		Pair<Boolean, Boolean> res = currentP2Set.join(p2Set, this, src, f);
 
 		ret.val0 = res.val0;
 		ret.val1 = res.val1;

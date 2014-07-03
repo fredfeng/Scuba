@@ -21,7 +21,7 @@ public class G {
 
 	public static boolean debug4AbsHeap = false;
 
-	public static boolean dump = true;
+	public static boolean dump = false;
 
 	public static boolean validate = false;
 

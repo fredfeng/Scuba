@@ -116,7 +116,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// perform points to set.
 		pointToSet();
-		new MayAliasAnalysis(relMV, relVValias, this).run();
+		// new MayAliasAnalysis(relMV, relVValias, this).run();
 
 	}
 

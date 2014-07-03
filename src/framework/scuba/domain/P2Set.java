@@ -1,11 +1,14 @@
 package framework.scuba.domain;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Type;
+import chord.program.Program;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
@@ -45,20 +48,54 @@ public class P2Set {
 	// this method will never get the pointer to the other p2set so do not worry
 	// about modifying the other p2set by modifying this p2set
 	public Pair<Boolean, Boolean> join(P2Set other, AbstractHeap absHeap,
-			jq_Type typeFilter) {
+			AbsMemLoc src, FieldElem f) {
 		boolean changeHeap = false;
 		boolean changeSum = false;
+		jq_Type typeFilter = null;
+
+		if (f instanceof NormalFieldElem) {
+			typeFilter = ((NormalFieldElem) f).getField().getType();
+		} else if (f instanceof IndexFieldElem) {
+			typeFilter = ((src.getType() instanceof jq_Array) ? ((jq_Array) src
+					.getType()).getElementType() : Program.g().getClass(
+					"java.lang.Object"));
+		} else if (f instanceof EpsilonFieldElem) {
+			typeFilter = src.getType();
+		} else {
+			assert false : "wired thing! unknow type!";
+		}
+		assert typeFilter != null;
 
 		for (HeapObject obj : other.keySet()) {
 
 			// filtering the in-compatible types
-			if (SummariesEnv.v().useTypeFilter) {
+			if (SummariesEnv.v().useTypeFilter
+					&& SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.REG) {
 				if (!obj.getType().isSubtypeOf(typeFilter)
 						&& !typeFilter.isSubtypeOf(obj.getType())) {
 					continue;
 				}
 			}
 
+			if (SummariesEnv.v().useTypeFilter
+					&& SummariesEnv.v().level != SummariesEnv.FieldSmashLevel.REG) {
+				Set<jq_Type> set = new HashSet<jq_Type>();
+				if (obj instanceof AccessPath) {
+					set.addAll(((AccessPath) obj).getEndingFieldsTypes());
+				} else {
+					set.add(obj.getType());
+				}
+				boolean update = false;
+				for (jq_Type t : set) {
+					if (t.isSubtypeOf(typeFilter) || typeFilter.isSubtypeOf(t)) {
+						update = true;
+						break;
+					}
+				}
+				if (!update) {
+					continue;
+				}
+			}
 			// the conjunction operation
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets

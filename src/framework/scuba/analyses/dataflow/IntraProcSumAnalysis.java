@@ -160,7 +160,6 @@ public class IntraProcSumAnalysis {
 		}
 		if (G.dump) {
 			summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
-
 		}
 		if (G.dbgAntlr) {
 			for (AbsMemLoc loc : summary.getAbsHeap().heap) {

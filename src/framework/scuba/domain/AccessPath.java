@@ -41,10 +41,23 @@ public abstract class AccessPath extends HeapObject {
 			} else {
 				this.type = Program.g().getClass("java.lang.Object");
 			}
-
 		} else {
 			assert false : "wired things!";
 		}
+	}
+
+	public Set<jq_Type> getEndingFieldsTypes() {
+		Set<jq_Type> ret = new HashSet<jq_Type>();
+		for (FieldElem f : endingFields) {
+			if (f instanceof NormalFieldElem) {
+				ret.add(((NormalFieldElem) f).getField().getType());
+			} else if (f instanceof EpsilonFieldElem) {
+				ret.add(base.getType());
+			} else if (f instanceof IndexFieldElem) {
+				ret.add(Program.g().getClass("java.lang.Object"));
+			}
+		}
+		return ret;
 	}
 
 	abstract public AbsMemLoc getBase();
