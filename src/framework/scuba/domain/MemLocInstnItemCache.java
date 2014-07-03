@@ -58,4 +58,15 @@ public class MemLocInstnItemCache {
 		return cache.containsKey(loc);
 	}
 
+	public void dump() {
+		System.out.println("------------------------");
+
+		for (AbsMemLoc loc : cache.keySet()) {
+			System.out.println("loc: " + loc + " result: "
+					+ cache.get(loc).keySet());
+
+		}
+		System.out.println("------------------------");
+
+	}
 }

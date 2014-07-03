@@ -24,6 +24,13 @@ public class Context {
 		this.points.add(point);
 	}
 
+	public void replace(ProgramPoint point) {
+		ProgramPoint rm = pointsSeq.removeLast();
+		pointsSeq.addFirst(point);
+		points.remove(rm);
+		points.add(point);
+	}
+
 	public void appendFront(ProgramPoint point) {
 		pointsSeq.addFirst(point);
 		points.add(point);

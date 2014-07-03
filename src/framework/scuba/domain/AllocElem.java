@@ -26,6 +26,10 @@ public class AllocElem extends HeapObject {
 		this.context.appendEnd(point);
 	}
 
+	public void replace(ProgramPoint point) {
+		context.replace(point);
+	}
+
 	public int contxtLength() {
 		return context.length();
 	}

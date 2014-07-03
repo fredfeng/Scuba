@@ -37,7 +37,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 3;
+	protected int allocDepth = 5;
 	// dynamically control the depth
 	protected boolean dynAlloc = true;
 
@@ -59,7 +59,7 @@ public class SummariesEnv {
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 	// type filter
-	public boolean useTypeFilter = false;
+	public boolean useTypeFilter = true;
 	// whether or not resolve default static access path in the final heap
 	public boolean resolveFinalHeap = true;
 
@@ -88,15 +88,16 @@ public class SummariesEnv {
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
-	public boolean smartSkip = true;
+	public boolean smartSkip = false;
 	// a fine-grained smart skip for instantiating edges
 	public boolean moreSmartSkip = true;
 	// when dbging SCC use this
 	public boolean jump = true;
-	// a trick to avoid hanging in gigantic SCC (the remove() method)
+	// a trick to avoid hanging in gigantic SCC
 	protected boolean badMethodSkip = true;
 
-	public boolean iControl = true;
+	// replace the alloc element
+	public boolean allcReplc = false;
 
 	public FieldSmashLevel level = FieldSmashLevel.REG;
 	// public FieldSmashLevel level = FieldSmashLevel.MED;
@@ -104,7 +105,7 @@ public class SummariesEnv {
 	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
 	// public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
 	// public FieldSmashLevel level = FieldSmashLevel.TYPESMASH;
-	// public FieldSmashLevel level = FieldSmashLevel.TYPECOMPMASH;
+	// public FieldSmashLevel level = FieldSmashLevel.TYPECOMPSMASH;
 	public int smashLength = 3;
 
 	// clear locals in the summary

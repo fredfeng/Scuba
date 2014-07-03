@@ -44,7 +44,7 @@ public class CstInstnCacheDepMap {
 	}
 
 	public Set<BoolExpr> getExprs(AccessPath ap, MemLocInstnItem item) {
-		Set<BoolExpr> ret = null;
+		Set<BoolExpr> ret = new HashSet<BoolExpr>();
 		Map<MemLocInstnItem, Set<BoolExpr>> map = depMap.get(ap);
 		if (map == null) {
 			return ret;

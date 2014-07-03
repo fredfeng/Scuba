@@ -115,8 +115,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		new DowncastAnalysis(relDcm, relDVH, this).run();
 
 		// perform points to set.
-		// pointToSet();
-		new MayAliasAnalysis(relMV, relVValias, this).run();
+		pointToSet();
+		// new MayAliasAnalysis(relMV, relVValias, this).run();
 
 	}
 

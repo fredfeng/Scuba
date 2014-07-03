@@ -34,7 +34,7 @@ public class MemLocInstnCacheDepMap extends DependenceMap {
 		Map<MemLocInstnItem, Set<AccessPath>> ret = depMap.get(pair1);
 		if (ret == null) {
 			ret = new HashMap<MemLocInstnItem, Set<AccessPath>>();
-			ret.put(pair2.val0, pair2.val1);
+			depMap.put(pair1, ret);
 		}
 		Set<AccessPath> aps = ret.get(pair2.val0);
 		if (aps == null) {
@@ -75,6 +75,15 @@ public class MemLocInstnCacheDepMap extends DependenceMap {
 	public Map<MemLocInstnItem, Set<AccessPath>> remove(
 			Pair<AbsMemLoc, FieldElem> pair) {
 		return depMap.remove(pair);
+	}
+
+	public void dump() {
+		System.out.println("--------------------------");
+		for (Pair p : depMap.keySet()) {
+			System.out.println("pair: " + p.val0 + " " + p.val1);
+			System.out.println("deps: " + depMap.get(p));
+		}
+		System.out.println("--------------------------");
 	}
 
 }

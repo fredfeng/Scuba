@@ -1,6 +1,7 @@
 package framework.scuba.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -48,6 +49,7 @@ import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.program.Program;
 import chord.util.tuple.object.Pair;
+import chord.util.tuple.object.Trio;
 
 import com.microsoft.z3.BoolExpr;
 
@@ -90,6 +92,9 @@ public class Summary {
 
 	// smart skip for instantiating the callees
 	protected Set<MemLocInstnItem> smartSkip = new HashSet<MemLocInstnItem>();
+	//
+	protected Map<MemLocInstnItem, Set<Trio<AbsMemLoc, HeapObject, FieldElem>>> instnedEdges = new HashMap<MemLocInstnItem, Set<Trio<AbsMemLoc, HeapObject, FieldElem>>>();
+	protected Map<MemLocInstnItem, Map<AbsMemLoc, Set<Trio<AbsMemLoc, HeapObject, FieldElem>>>> edgeDepMap = new HashMap<MemLocInstnItem, Map<AbsMemLoc, Set<Trio<AbsMemLoc, HeapObject, FieldElem>>>>();
 
 	// the methods this summary has effect on
 	protected Set<Summary> jumpEffectSet = new HashSet<Summary>();
@@ -690,6 +695,10 @@ public class Summary {
 						// for locals to propagate
 						if (SummariesEnv.v().jump) {
 							if (jumpInstnSet.contains(calleeSum)) {
+								if (G.dbgCache) {
+									System.out.println("[dbgCache] "
+											+ "skipping the whole method!");
+								}
 								continue;
 							}
 						}
@@ -1359,5 +1368,35 @@ public class Summary {
 			}
 		}
 		return false;
+	}
+
+	public boolean containsInstnedEdge(MemLocInstnItem item, AbsMemLoc src,
+			HeapObject tgt, FieldElem f) {
+		Set<Trio<AbsMemLoc, HeapObject, FieldElem>> set = instnedEdges
+				.get(item);
+		if (set == null) {
+			return false;
+		}
+		return set.contains(new Trio<AbsMemLoc, HeapObject, FieldElem>(src,
+				tgt, f));
+	}
+
+	public Set<Trio<AbsMemLoc, HeapObject, FieldElem>> getDepEdges(
+			MemLocInstnItem item, AbsMemLoc loc) {
+		Map<AbsMemLoc, Set<Trio<AbsMemLoc, HeapObject, FieldElem>>> map = edgeDepMap
+				.get(item);
+		if (map == null) {
+			return null;
+		}
+		return map.get(loc);
+	}
+
+	public void removeAllInstnedEdges(MemLocInstnItem item,
+			Set<Trio<AbsMemLoc, HeapObject, FieldElem>> edges) {
+		Set<Trio<AbsMemLoc, HeapObject, FieldElem>> set = instnedEdges
+				.get(item);
+		if (set != null) {
+			set.removeAll(edges);
+		}
 	}
 }

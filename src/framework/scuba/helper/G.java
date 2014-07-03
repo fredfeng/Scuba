@@ -21,7 +21,7 @@ public class G {
 
 	public static boolean debug4AbsHeap = false;
 
-	public static boolean dump = false;
+	public static boolean dump = true;
 
 	public static boolean validate = false;
 
@@ -37,6 +37,7 @@ public class G {
 	public static boolean dbgUndet = false;
 
 	public static boolean dbgFilter = false;
+	public static boolean dbgCache = false;
 
 	// flag to tune performance.
 	public static boolean tuning = true;
@@ -74,9 +75,9 @@ public class G {
 	// number of edges that are instantiated into in the caller
 	public static int instToEdges = 0;
 
-	public static String dotOutputPath = "/home/yufeng/research/Scuba/output/";
 	// public static String dotOutputPath =
-	// "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
+	// "/home/yufeng/research/Scuba/output/";
+	public static String dotOutputPath = "/Users/xwang/xwang/Research/Projects/scuba/Scuba/output/";
 
 	public static long instCstSubTime;
 }

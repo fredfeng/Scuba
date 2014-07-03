@@ -19,6 +19,7 @@ import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.program.Program;
 import chord.util.tuple.object.Pair;
+import chord.util.tuple.object.Trio;
 
 import com.microsoft.z3.BoolExpr;
 
@@ -26,7 +27,6 @@ import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
 import framework.scuba.helper.P2SetHelper;
-import framework.scuba.helper.TypeHelper;
 import framework.scuba.utils.StringUtil;
 
 public class AbstractHeap extends Heap {
@@ -753,6 +753,7 @@ public class AbstractHeap extends Heap {
 
 						Pair<Boolean, Boolean> res = instnEdge(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst);
+						addDepEdges(memLocInstn, src, tgt, f);
 						ret.val0 = res.val0 | ret.val0;
 						ret.val1 = res.val1 | ret.val1;
 						// changing the heap means we need go (conservative)
@@ -807,6 +808,7 @@ public class AbstractHeap extends Heap {
 						HeapObject tgt = entry1.getKey();
 						instnEdge4RecurCall(src, tgt, f, memLocInstn,
 								calleeHeap, point, typeCst, toAdd);
+						addDepEdges(memLocInstn, src, tgt, f);
 						result.put(key, toAdd);
 					}
 				}
@@ -926,10 +928,8 @@ public class AbstractHeap extends Heap {
 
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
-			if (memLocInstn.memLocInstnCache.containsKey(src)
-					&& memLocInstn.memLocInstnCache.containsKey(dst)
-					&& ConstraintManager.instnCache.contains(memLocInstn,
-							calleeCst)) {
+			if (calleeHeap.summary.containsInstnedEdge(memLocInstn, src, dst,
+					field)) {
 				return ret;
 			}
 		}
@@ -964,12 +964,9 @@ public class AbstractHeap extends Heap {
 		for (AbsMemLoc newSrc : instnSrc.keySet()) {
 			// only for bad methods
 			if (SummariesEnv.v().badMethodSkip) {
-				if (summary.isInBadScc()
-						&& memLocInstn.memLocInstnCache.containsKey(src)) {
-					P2Set p2set = lookup(newSrc, field);
-					if (p2set.containsAll(instnDst.keySet())) {
-						continue;
-					}
+				P2Set p2set = lookup(newSrc, field);
+				if (p2set.containsAll(instnDst.keySet())) {
+					continue;
 				}
 			}
 
@@ -977,6 +974,13 @@ public class AbstractHeap extends Heap {
 				assert (newDst instanceof HeapObject) : ""
 						+ "dst should be instantiated as a heap object!";
 				HeapObject newDst1 = (HeapObject) newDst;
+
+				if (SummariesEnv.v().badMethodSkip) {
+					P2Set p2set = lookup(newSrc, field);
+					if (p2set.contains(newDst1)) {
+						continue;
+					}
+				}
 
 				if (G.dbgAntlr && G.dbgInstn) {
 					StringUtil.reportInfo("[dbgAntlr] "
@@ -1048,8 +1052,8 @@ public class AbstractHeap extends Heap {
 
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
-			if (memLocInstn.memLocInstnCache.containsKey(src)
-					&& memLocInstn.memLocInstnCache.containsKey(dst)) {
+			if (calleeHeap.summary.containsInstnedEdge(memLocInstn, src, dst,
+					field)) {
 				return ret;
 			}
 		}
@@ -1587,6 +1591,7 @@ public class AbstractHeap extends Heap {
 						}
 						// TODO changing the location potentially dangerous!
 						ret.addSmashedFields(smashedFields);
+						ret.addSmashedField(field);
 						ret.addEndingField(field);
 					} else {
 						if (loc instanceof StaticElem) {
@@ -1623,6 +1628,7 @@ public class AbstractHeap extends Heap {
 					}
 					// TODO changing the location potentially dangerous!
 					ret.addSmashedFields(smashedFields);
+					ret.addSmashedField(field);
 					ret.addEndingField(field);
 				} else {
 					if (loc instanceof StaticElem) {
@@ -1689,6 +1695,8 @@ public class AbstractHeap extends Heap {
 						}
 						// TODO changing the location potentially dangerous!
 						ret.addSmashedFields(smashedFields);
+						ret.addSmashedField(field);
+						ret.addEndingField(field);
 					} else {
 						if (loc instanceof StaticElem) {
 							ret = Env.getStaticAccessPath((StaticElem) loc,
@@ -1725,6 +1733,8 @@ public class AbstractHeap extends Heap {
 					}
 					// TODO changing the location potentially dangerous!
 					ret.addSmashedFields(smashedFields);
+					ret.addSmashedField(field);
+					ret.addEndingField(field);
 				} else {
 					if (loc instanceof StaticElem) {
 						ret = Env.getStaticAccessPath((StaticElem) loc, field);
@@ -1813,7 +1823,12 @@ public class AbstractHeap extends Heap {
 		// this is a conservatively way to clear the cache
 		if (SummariesEnv.v().useMemLocInstnCache) {
 			if (ret.val0) {
+				if (G.dbgCache) {
+					System.out.println("[dbgCache] "
+							+ "clearing the cache for " + src + " " + f);
+				}
 				clearCache(src, f);
+
 				if (SummariesEnv.v().jump) {
 					if (src instanceof LocalVarElem) {
 						Register v = ((LocalVarElem) src).getLocal();
@@ -1847,6 +1862,11 @@ public class AbstractHeap extends Heap {
 		// clear the memory location instantiation cache
 		Map<MemLocInstnItem, Set<AccessPath>> deps = summary.locDepMap
 				.get(new Pair<AbsMemLoc, FieldElem>(src, f));
+		if (G.dbgCache) {
+			System.out.println("[dbgCache] " + "locDepMap: ");
+			summary.locDepMap.dump();
+			System.out.println("[dbgCache] " + "deps: " + deps);
+		}
 		// possible that no one currently depends on src
 		if (deps == null) {
 			return new Pair<Boolean, Boolean>(ret1, ret2);
@@ -1857,6 +1877,10 @@ public class AbstractHeap extends Heap {
 			MemLocInstnItem item = entry.getKey();
 			Set<AccessPath> aps = entry.getValue();
 			for (AccessPath ap : aps) {
+				if (G.dbgCache) {
+					System.out.println("[dbgCache] "
+							+ "really removing cache for " + ap + " in item ");
+				}
 				ret1 = true;
 				item.remove(ap);
 
@@ -2325,5 +2349,41 @@ public class AbstractHeap extends Heap {
 			set.clear();
 		}
 		toProp.addAll(locals);
+	}
+
+	protected void addDepEdges(MemLocInstnItem item, AbsMemLoc src,
+			HeapObject tgt, FieldElem f) {
+		// add the edge into instantiated edges
+		Trio<AbsMemLoc, HeapObject, FieldElem> edge = new Trio<AbsMemLoc, HeapObject, FieldElem>(
+				src, tgt, f);
+		Set<Trio<AbsMemLoc, HeapObject, FieldElem>> instnedEdgs = summary.instnedEdges
+				.get(item);
+		if (instnedEdgs == null) {
+			instnedEdgs = new HashSet<Trio<AbsMemLoc, HeapObject, FieldElem>>();
+			summary.instnedEdges.put(item, instnedEdgs);
+		}
+		instnedEdgs.add(edge);
+		// mark dependence relation
+		Map<AbsMemLoc, Set<Trio<AbsMemLoc, HeapObject, FieldElem>>> edges = summary.edgeDepMap
+				.get(item);
+		if (edges == null) {
+			edges = new HashMap<AbsMemLoc, Set<Trio<AbsMemLoc, HeapObject, FieldElem>>>();
+			summary.edgeDepMap.put(item, edges);
+		}
+		// for src
+		Set<Trio<AbsMemLoc, HeapObject, FieldElem>> deps = edges.get(src);
+		if (deps == null) {
+			deps = new HashSet<Trio<AbsMemLoc, HeapObject, FieldElem>>();
+			edges.put(src, deps);
+		}
+		deps.add(edge);
+		// for tgt
+		deps = edges.get(tgt);
+		if (deps == null) {
+			deps = new HashSet<Trio<AbsMemLoc, HeapObject, FieldElem>>();
+			edges.put(tgt, deps);
+		}
+		deps.add(edge);
+
 	}
 }
