@@ -3,6 +3,7 @@ package framework.scuba.analyses.alias_experiment;
 import java.util.HashSet;
 import java.util.Set;
 
+import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.alias.Ctxt;
@@ -24,7 +25,7 @@ import chord.util.tuple.object.Pair;
 @Chord(
     name = "cspa-alias-java", 
     consumes = {"MV", "appsVV", "VValias", "cspaVValias", "cspaVVnotalias",
-    		"aliasVVpts", "notaliasVVpts"}
+    		"aliasVVpts", "notaliasVVpts", "VVRefined"}
 )
 public class CSPAAlias extends JavaAnalysis {
 
@@ -45,7 +46,9 @@ public class CSPAAlias extends JavaAnalysis {
 	private ProgramRel relaliasVVpts;
 	private ProgramRel relnotaliasVVpts;
 	
-
+	//print VVRefined
+	
+	private ProgramRel relVVRefined;
 	public void run() {
 		domV = (DomV) ClassicProject.g().getTrgt("V");
 		
@@ -69,7 +72,10 @@ public class CSPAAlias extends JavaAnalysis {
 				"notaliasVVpts");
 
 		
+		relVVRefined = (ProgramRel)ClassicProject.g().getTrgt("VVRefined");
 		
+		
+		VVRefined_print();
 		
 		print_result();
 		
@@ -79,6 +85,7 @@ public class CSPAAlias extends JavaAnalysis {
 	}
 
 	private void print_result() {
+		
 		VV();
 	}
 
@@ -267,5 +274,30 @@ public class CSPAAlias extends JavaAnalysis {
 		}
 		
 		System.out.println("NOTAliasPtsEnd");
+	}
+	
+	
+	private void VVRefined_print(){
+		if(!relVVRefined.isOpen())
+			relVVRefined.load();
+		
+		Iterable<Pair<Register, Register>> vv = relVVRefined.getAry2ValTuples();
+		
+		for(Pair<Register,Register> rr : vv){
+			Register r1 = rr.val0;
+			
+			Register r2 = rr.val1;
+			
+			
+			jq_Method  m1 = domV.getMethod(r1);
+			
+			jq_Method m2 = domV.getMethod(r2);
+			
+			
+			System.out.println("\n"+ r1.toString() + "::" + m1.toString() );
+			System.out.println(r2.toString() + "::" + m2.toString() );
+		}
+		
+		
 	}
 }
