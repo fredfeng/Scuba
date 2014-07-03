@@ -1,12 +1,12 @@
 package framework.scuba.analyses.alias;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.bddbddb.Rel.RelView;
-import chord.project.ClassicProject;
 import chord.project.analyses.ProgramRel;
 import chord.util.tuple.object.Pair;
 import framework.scuba.domain.AllocElem;
@@ -42,6 +42,7 @@ public class MayAliasAnalysis {
 		int bothNotEmpty = 0;
 		int bothNotEmptyNotAlias = 0;
 		int emptyQuery = 0;
+		int totalQuery = 0;
 
 		Iterable<Pair<Register, Register>> res = view.getAry2ValTuples();
 		for (Pair<Register, Register> vv : res) {
@@ -60,6 +61,13 @@ public class MayAliasAnalysis {
 			jq_Method m2 = m2It.iterator().next();
 			jq_Class cls2 = m2.getDeclaringClass();
 			// long start2SCC = System.nanoTime();
+			
+			if (v2.toString().equals("R0") && cls1.equals(cls2)
+					&& v1.toString().equals("R0")) {
+				continue;
+			}
+			
+			totalQuery++;
 
 			// StringUtil.reportSec("CHORD's time", startSCC, start2SCC);
 
@@ -75,8 +83,9 @@ public class MayAliasAnalysis {
 				emptyQuery++;
 			} else {
 				bothNotEmpty++;
-				p2Set1.retainAll(p2Set2);
-				if (p2Set1.isEmpty()) {
+				Set<AllocElem> intersection = new HashSet<AllocElem>(p2Set1);
+				intersection.retainAll(p2Set2);
+				if (intersection.isEmpty()) {
 					StringUtil.reportInfo("[mayAlias]Result: YES. Not alias.");
 					StringUtil.reportInfo("[mayAlias]P2Set of " + v1 + " : "
 							+ p2Set1);
@@ -96,7 +105,7 @@ public class MayAliasAnalysis {
 
 		StringUtil
 				.reportInfo("[mayAlias]May Alias Result--------------------------------");
-		StringUtil.reportInfo("[mayAlias]Total queries: " + view.size());
+		StringUtil.reportInfo("[mayAlias]Total queries: " + totalQuery);
 		StringUtil.reportInfo("[mayAlias]Non-empty Queries: " + bothNotEmpty);
 		StringUtil.reportInfo("[mayAlias]Non-alias Queries(Exclude empty): "
 				+ bothNotEmptyNotAlias);
