@@ -116,7 +116,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		// perform points to set.
 		pointToSet();
-		// new MayAliasAnalysis(relMV, relVValias, this).run();
+		new MayAliasAnalysis(relMV, relVValias, this).run();
 
 	}
 
@@ -679,19 +679,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			FieldElem f = fields.iterator().next();
 			assert (f instanceof EpsilonFieldElem) : "local can only have epsilon field!";
 			EpsilonFieldElem e = (EpsilonFieldElem) f;
-//			StringUtil.reportInfo("[dbgAntlr] "
-//					+ "[P2Set in the declearing method]");
-//			P2Set p2set = sum1.getAbsHeap().getHeap()
-//					.get(new Pair<AbsMemLoc, FieldElem>(local, e));
-//			StringUtil
-//					.reportInfo("[dbgAntlr] "
-//							+ "------------------------------------------------------------------------------------");
-//			for (HeapObject hObj : p2set.keySet()) {
-//				StringUtil.reportInfo("[dbgAntlr] " + hObj);
-//			}
-//			StringUtil
-//					.reportInfo("[dbgAntlr] "
-//							+ "------------------------------------------------------------------------------------");
+			// StringUtil.reportInfo("[dbgAntlr] "
+			// + "[P2Set in the declearing method]");
+			// P2Set p2set = sum1.getAbsHeap().getHeap()
+			// .get(new Pair<AbsMemLoc, FieldElem>(local, e));
+			// StringUtil
+			// .reportInfo("[dbgAntlr] "
+			// +
+			// "------------------------------------------------------------------------------------");
+			// for (HeapObject hObj : p2set.keySet()) {
+			// StringUtil.reportInfo("[dbgAntlr] " + hObj);
+			// }
+			// StringUtil
+			// .reportInfo("[dbgAntlr] "
+			// +
+			// "------------------------------------------------------------------------------------");
 
 			ret = sum.getP2Set(local, e);
 		}
