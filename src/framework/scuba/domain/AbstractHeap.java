@@ -1169,7 +1169,7 @@ public class AbstractHeap extends Heap {
 		if (ConstraintManager.isScala(cst))
 			return cst;
 
-		BoolExpr instC = ConstraintManager.instnConstaint(cst, callerHeap,
+		BoolExpr instC = ConstraintManager.instnConstaintNew(cst, callerHeap,
 				point, memLocInstn);
 
 		assert instC != null : "Invalid instantiated Constrait.";
@@ -1890,6 +1890,7 @@ public class AbstractHeap extends Heap {
 		boolean ret = false;
 		Set<BoolExpr> exprs = ConstraintManager.getCstDepMap().getExprs(ap,
 				item);
+		if(exprs == null) return ret;
 		for (BoolExpr expr : exprs) {
 			ret = true;
 			ConstraintManager.getCstInstnCache().removeExpr(item, expr);
