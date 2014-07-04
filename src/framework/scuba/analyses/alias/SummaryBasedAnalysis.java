@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
@@ -115,8 +114,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		new DowncastAnalysis(relDcm, relDVH, this).run();
 
 		// perform points to set.
-		// pointToSet();
-		new MayAliasAnalysis(relMV, relVValias, this).run();
+		pointToSet();
+		// new MayAliasAnalysis(relMV, relVValias, this).run();
 
 	}
 
@@ -403,8 +402,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		summary.setHasAnalyzed();
-		
-		summary.getAbsHeap().dumpHeapToFile(m.getDeclaringClass() +"@"+ m.toString().replace("/", ""));
 
 		int num = 0;
 		for (Pair p : summary.getAbsHeap().keySet()) {

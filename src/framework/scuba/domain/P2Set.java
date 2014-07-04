@@ -69,33 +69,37 @@ public class P2Set {
 		for (HeapObject obj : other.keySet()) {
 
 			// filtering the in-compatible types
-			if (SummariesEnv.v().useTypeFilter
-					&& SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.REG) {
-				if (!obj.getType().isSubtypeOf(typeFilter)
-						&& !typeFilter.isSubtypeOf(obj.getType())) {
-					continue;
+			if (SummariesEnv.v().useTypeFilter) {
+				if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.REG) {
+					if (!obj.getType().isSubtypeOf(typeFilter)
+							&& !typeFilter.isSubtypeOf(obj.getType())) {
+						continue;
+					}
+				} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPECOMPSMASH
+						|| SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPESMASH
+						|| SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.CTRLLENGTH) {
+					Set<jq_Type> set = new HashSet<jq_Type>();
+					if (obj instanceof AccessPath) {
+						set.addAll(((AccessPath) obj).getEndingFieldsTypes());
+					} else {
+						set.add(obj.getType());
+					}
+					boolean update = false;
+					for (jq_Type t : set) {
+						if (t.isSubtypeOf(typeFilter)
+								|| typeFilter.isSubtypeOf(t)) {
+							update = true;
+							break;
+						}
+					}
+					if (!update) {
+						continue;
+					}
+				} else {
+					assert false : "unknow decoding way!";
 				}
 			}
 
-			if (SummariesEnv.v().useTypeFilter
-					&& SummariesEnv.v().level != SummariesEnv.FieldSmashLevel.REG) {
-				Set<jq_Type> set = new HashSet<jq_Type>();
-				if (obj instanceof AccessPath) {
-					set.addAll(((AccessPath) obj).getEndingFieldsTypes());
-				} else {
-					set.add(obj.getType());
-				}
-				boolean update = false;
-				for (jq_Type t : set) {
-					if (t.isSubtypeOf(typeFilter) || typeFilter.isSubtypeOf(t)) {
-						update = true;
-						break;
-					}
-				}
-				if (!update) {
-					continue;
-				}
-			}
 			// the conjunction operation
 			if (p2Set.containsKey(obj)) {
 				// obj is in both p2sets

@@ -1523,17 +1523,17 @@ public class AbstractHeap extends Heap {
 			}
 		} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.CTRLLENGTH) {
 			if (loc.isArgDerived()) {
-				if (loc.countFieldSelector(field) >= SummariesEnv.v().smashLength) {
+				if (loc.length >= SummariesEnv.v().ctrlLength) {
 					assert (loc instanceof AccessPath) : "only AccessPath has field selectors!";
-					// only AccessPath has field selectors
-					AccessPath path = ((AccessPath) loc).getPrefix(field);
-					if (path instanceof LocalAccessPath) {
-						ret = getLocalAccessPath((LocalAccessPath) path);
-					} else if (path instanceof StaticAccessPath) {
-						ret = Env.getStaticAccessPath((StaticAccessPath) path);
+					if (loc instanceof LocalAccessPath) {
+						ret = getLocalAccessPath((LocalAccessPath) loc);
+					} else if (loc instanceof StaticAccessPath) {
+						ret = Env.getStaticAccessPath((StaticAccessPath) loc);
 					} else {
-						assert false : "only access path is allowed!";
+						assert false : "only two kinds of access paths!";
 					}
+					ret.addSmashedField(field);
+					ret.addEndingField(field);
 				} else {
 					if (loc instanceof StaticElem) {
 						ret = Env.getStaticAccessPath((StaticElem) loc, field);
@@ -1543,6 +1543,7 @@ public class AbstractHeap extends Heap {
 						if (loc instanceof StaticAccessPath) {
 							ret = Env.getStaticAccessPath(
 									(StaticAccessPath) loc, field);
+
 						} else if (loc instanceof LocalAccessPath) {
 							ret = getLocalAccessPath((LocalAccessPath) loc,
 									field);

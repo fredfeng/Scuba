@@ -66,9 +66,9 @@ public class SummariesEnv {
 	// this is naively just marking the flag in access path
 	public boolean markSmashedFlag = false;
 	// this is the sound way to do smashing
-	public boolean markSmashedFields = false;
+	public boolean markSmashedFields = true;
 	// this is used for instantiating the locations
-	public boolean instnSmashedAPs = false;
+	public boolean instnSmashedAPs = true;
 	// whether use cache for instantiating AccessPath
 	public boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
@@ -100,13 +100,11 @@ public class SummariesEnv {
 	public boolean allcReplc = false;
 
 	public FieldSmashLevel level = FieldSmashLevel.REG;
-	// public FieldSmashLevel level = FieldSmashLevel.MED;
-	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
-	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
-	// public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
+	// public FieldSmashLevel level = FieldSmashLevel.CTRLLENGTH;
 	// public FieldSmashLevel level = FieldSmashLevel.TYPESMASH;
 	// public FieldSmashLevel level = FieldSmashLevel.TYPECOMPSMASH;
 	public int smashLength = 3;
+	public int ctrlLength = 5;
 
 	// clear locals in the summary
 	protected boolean clearLocals = false;
