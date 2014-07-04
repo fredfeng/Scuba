@@ -70,31 +70,31 @@ public class SummariesEnv {
 	// this is used for instantiating the locations
 	public boolean instnSmashedAPs = true;
 	// whether use cache for instantiating AccessPath
-	public boolean useMemLocInstnCache = true;
+	public boolean useMemLocInstnCache = false;
 	// whether use cache for constraint instantiation
-	public boolean useCstInstnCache = true;
+	public boolean useCstInstnCache = false;
 	// whether use cache for extracting terms
-	public boolean useExtractCache = true;
+	public boolean useExtractCache = false;
 	// whether use cache for constraint simplification
-	public boolean useSimplifyCache = true;
+	public boolean useSimplifyCache = false;
 	// whether use cache for constraint union operation
-	public boolean useUnionCache = true;
+	public boolean useUnionCache = false;
 	// whether use cache for constraint intersection operation
-	public boolean useInterCache = true;
+	public boolean useInterCache = false;
 	// whether use cache for substitution operation of constraints
-	public boolean useSubCache = true;
+	public boolean useSubCache = false;
 	// whether use equivalence checking cache
-	public boolean useEqCache = true;
+	public boolean useEqCache = false;
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
 	public boolean smartSkip = false;
 	// a fine-grained smart skip for instantiating edges
-	public boolean moreSmartSkip = true;
+	public boolean moreSmartSkip = false;
 	// when dbging SCC use this
-	public boolean jump = true;
+	public boolean jump = false;
 	// a trick to avoid hanging in gigantic SCC
-	protected boolean badMethodSkip = true;
+	protected boolean badMethodSkip = false;
 
 	// replace the alloc element
 	public boolean allcReplc = false;

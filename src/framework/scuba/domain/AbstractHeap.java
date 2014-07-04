@@ -886,6 +886,7 @@ public class AbstractHeap extends Heap {
 			StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + src);
 			StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
 			StringUtil.reportInfo("[dbgAntlr] " + "DST: " + dst);
+			StringUtil.reportInfo("[dbgAntlr] " + "TypeCst: " + typeCst);
 			StringUtil.reportInfo("[dbgAntlr] "
 					+ "-------------------------------------------");
 		}
@@ -982,6 +983,14 @@ public class AbstractHeap extends Heap {
 					}
 				}
 
+				assert (newDst1 != null) : "null!";
+
+				BoolExpr cst1 = instnSrc.get(newSrc);
+				BoolExpr cst2 = instnDst.get(newDst1);
+				BoolExpr cst = ConstraintManager.intersect(
+						ConstraintManager.intersect(cst1, cst2),
+						ConstraintManager.intersect(instnCst, typeCst));
+
 				if (G.dbgAntlr && G.dbgInstn) {
 					StringUtil.reportInfo("[dbgAntlr] "
 							+ "[instantiated caller edge]: ");
@@ -990,28 +999,24 @@ public class AbstractHeap extends Heap {
 					StringUtil.reportInfo("[dbgAntlr] " + "SRC: " + newSrc);
 					StringUtil.reportInfo("[dbgAntlr] " + "FIELD: " + field);
 					StringUtil.reportInfo("[dbgAntlr] " + "DST: " + newDst1);
+					StringUtil.reportInfo("[dbgAntlr] " + "instn CST for loc "
+							+ newSrc + " :\n " + cst1);
+					StringUtil.reportInfo("[dbgAntlr] " + "instn CST for loc "
+							+ newDst1 + " :\n " + cst2);
+					StringUtil.reportInfo("[dbgAntlr] "
+							+ "instn CST for callee edge:\n " + instnCst);
+					StringUtil.reportInfo("[dbgAntlr] " + "type CST: \n"
+							+ typeCst);
+					StringUtil
+							.reportInfo("[dbgAntlr] " + "final CST:\n " + cst);
 					StringUtil.reportInfo("[dbgAntlr] "
 							+ "-------------------------------------------");
 				}
-				assert (newDst1 != null) : "null!";
-
-				BoolExpr cst1 = instnSrc.get(newSrc);
-				BoolExpr cst2 = instnDst.get(newDst);
-				BoolExpr cst = ConstraintManager.intersect(
-						ConstraintManager.intersect(cst1, cst2),
-						ConstraintManager.intersect(instnCst, typeCst));
 
 				assert (cst != null) : "null cst!";
 				assert (cst1 != null && cst2 != null && cst != null) : "get null constraints!";
 				Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(
 						newSrc, field);
-
-				if (G.dbgFilter) {
-					System.out
-							.println("dbgFilter: " + "updating pair: " + pair);
-					System.out.println("dbgFilter: " + "updating p2set: "
-							+ "[dst]: " + newDst1);
-				}
 
 				Pair<Boolean, Boolean> res = weakUpdate(pair, new P2Set(
 						newDst1, cst));
@@ -1891,7 +1896,8 @@ public class AbstractHeap extends Heap {
 		boolean ret = false;
 		Set<BoolExpr> exprs = ConstraintManager.getCstDepMap().getExprs(ap,
 				item);
-		if(exprs == null) return ret;
+		if (exprs == null)
+			return ret;
 		for (BoolExpr expr : exprs) {
 			ret = true;
 			ConstraintManager.getCstInstnCache().removeExpr(item, expr);

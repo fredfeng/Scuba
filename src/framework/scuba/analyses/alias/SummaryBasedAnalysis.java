@@ -405,8 +405,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		summary.setHasAnalyzed();
 		
-		summary.getAbsHeap().dumpHeapToFile(
-				m.getDeclaringClass() + "@" + m.toString().replace("/", ""));
+		// summary.getAbsHeap().dumpHeapToFile(
+		// m.getDeclaringClass() + "@" + m.toString().replace("/", ""));
 
 		int num = 0;
 		for (Pair p : summary.getAbsHeap().keySet()) {
