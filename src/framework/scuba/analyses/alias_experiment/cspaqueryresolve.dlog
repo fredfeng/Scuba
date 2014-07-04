@@ -20,7 +20,6 @@ cspaVVnotalias(v:V0,v1:V1) output
 ###### for print
 aliasVVpts(v:V0,c:C0,v1:V1,c1:C1)output
 notaliasVVpts(v:V0,c:C0,v1:V1,c1:C1)output
-cspaVVnotaliasy(v:V0,v1:V1) output
 
 
 ####### resolve alias
