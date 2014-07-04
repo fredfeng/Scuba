@@ -52,6 +52,7 @@ import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.AccessPathHelper;
@@ -1101,6 +1102,8 @@ public class Summary {
 					cst = ConstraintManager.genTrue();
 				else
 					cst = genCst(p2Set, tgt, tgtType, tgtSet);
+				
+				System.out.println("debug cst" + cst + " FOR: " + tgt);
 
 				// FIXME: We should assume that v can point to any object.
 				if (p2Set.isEmpty()) {
@@ -1167,22 +1170,30 @@ public class Summary {
 		if (SummariesEnv.v().disableCst())
 			return ConstraintManager.genTrue();
 		// 1. Base case: No subtype of T override m: type(o) <= T
-		if (!hasInherit(callee, statT, tgtSet)) {
-			return ConstraintManager.genSubTyping(p2Set, statT);
+		if (!overrideByAnySubclass(callee, statT, tgtSet)) {
+			if (statT.getSubClasses().length == 0)
+				return ConstraintManager.hasEqType(p2Set, statT);
+			else
+				return ConstraintManager.hasIntervalType(p2Set, statT);
+
 		} else {
 			// 2. Inductive case: for each its *direct* subclasses that
 			// do not override current method, call genCst recursively.
 			BoolExpr t = ConstraintManager.genFalse();
 			for (jq_Class sub : Env.getSuccessors(statT)) {
-				if (sub.getVirtualMethod(callee.getNameAndDesc()) != null)
+				jq_Method m = sub.getVirtualMethod(callee.getNameAndDesc());
+				if (m != null && m.getDeclaringClass().equals(sub)) {
 					continue;
-				assert !sub.equals(statT) : "do not repeat!";
+				}
 				BoolExpr phi = genCst(p2Set, callee, sub, tgtSet);
 				t = ConstraintManager.union(t, phi);
 			}
 			// do the union.
+//			return ConstraintManager.union(t,
+//					ConstraintManager.genEqTyping(p2Set, statT));
+			
 			return ConstraintManager.union(t,
-					ConstraintManager.genEqTyping(p2Set, statT));
+					ConstraintManager.hasEqType(p2Set, statT));
 		}
 	}
 
@@ -1194,7 +1205,7 @@ public class Summary {
 	 * @param tgt
 	 * @return
 	 */
-	protected boolean hasInherit(jq_Method callee, jq_Class statT,
+	protected boolean overrideByAnySubclass(jq_Method callee, jq_Class statT,
 			Set<jq_Method> tgtSet) {
 
 		for (jq_Method tgt : tgtSet) {

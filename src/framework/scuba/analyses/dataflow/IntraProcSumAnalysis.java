@@ -43,6 +43,16 @@ public class IntraProcSumAnalysis {
 	// analyze one method based on the cfg of this method
 	public void analyze(ControlFlowGraph g) {
 
+		// if (g.getMethod().toString().matches("sizeSpec.*ConfigFile")) {
+		// G.dbgAntlr = true;
+		// G.dbgInstn = true;
+		// G.dbgInvoke = true;
+		// } else {
+		// G.dbgAntlr = false;
+		// G.dbgInstn = false;
+		// G.dbgInvoke = false;
+		// }
+
 		if (G.dbgPermission) {
 			StringUtil.reportInfo("dbgPermission");
 			StringUtil.reportInfo("dbgPermission: " + " analyzing method: "

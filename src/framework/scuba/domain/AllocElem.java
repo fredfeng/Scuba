@@ -12,6 +12,7 @@ public class AllocElem extends HeapObject {
 		this.alloc = allocSite;
 		this.context = context;
 		this.type = type;
+		this.length = 1;
 	}
 
 	public AllocElem findRoot() {

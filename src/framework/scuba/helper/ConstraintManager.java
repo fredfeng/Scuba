@@ -32,7 +32,6 @@ import framework.scuba.domain.MemLocInstnSet;
 import framework.scuba.domain.P2Set;
 import framework.scuba.domain.ProgramPoint;
 import framework.scuba.domain.SummariesEnv;
-import framework.scuba.utils.StringUtil;
 
 /**
  * Class for generating/solving constraints, since right now our system can only
@@ -119,8 +118,12 @@ public class ConstraintManager {
 	 * @param ho
 	 * @return
 	 */
-	public static BoolExpr lift(HeapObject ho, int typeInt, boolean isEqual) {
+	public static BoolExpr lift(HeapObject ho, jq_Class t, boolean isEqual) {
 		Expr cur = genTrue();
+		int typeInt = Env.getConstTerm4Class(t);
+		int minInt = Env.getMinSubclass(t);
+		assert typeInt > minInt : "Invalid interval." + typeInt + " VS "
+				+ minInt;
 		try {
 			if (ho instanceof AllocElem) {
 				// return the number of its class.
@@ -141,7 +144,6 @@ public class ConstraintManager {
 
 					ap2Counter.put(ap, cnt);
 					symbol = "v" + ap.getId() + "s" + cnt;
-//					System.out.println("smashing: " + symbol + " " + ap);
 				} else {
 					symbol = "v" + ap.getId();
 				}
@@ -161,7 +163,10 @@ public class ConstraintManager {
 				// lift type(o)<=T
 			} else {
 				BoolExpr le = ctx.MkLe((IntExpr) cur, ctx.MkInt(typeInt));
-				return le;
+				BoolExpr ge = ctx.MkGe((IntExpr) cur, ctx.MkInt(minInt));
+				BoolExpr interval = ctx.MkAnd(new BoolExpr[] { le, ge });
+				System.out.println("generate interval..." + interval);
+				return interval;
 			}
 
 		} catch (Z3Exception e) {
@@ -210,7 +215,7 @@ public class ConstraintManager {
 
 			BoolExpr ret1 = ret;
 			for (BoolExpr sub : map.values()) {
-				assert sub.IsEq() || sub.IsLE() : "invalid sub expr" + sub;
+				assert sub.IsEq() || sub.IsLE() || sub.IsGE() : "invalid sub expr" + sub;
 				Expr term = sub.Args()[0].Args()[0];
 				// Using toString is ugly, but that's the only way i can get
 				// from Z3...
@@ -308,7 +313,7 @@ public class ConstraintManager {
 		try {
 			// using toString as the key to map the same expr, buggy.
 
-			if (expr.IsEq() || expr.IsLE()) {
+			if (expr.IsEq() || expr.IsLE() || expr.IsGE()) {
 				map.put(expr.toString(), (BoolExpr) expr);
 				return;
 			}
@@ -407,15 +412,20 @@ public class ConstraintManager {
 		return null;
 	}
 
-	// generate subtyping constraint.
+	/** generate subtyping constraint. 
+	    if t has no subclass, then we generate type(o)=t.
+	    else we generate an interval for it: t_min <= type(o) <= t
+	    t_min is the least lower bound.*/
 	public static BoolExpr genSubTyping(P2Set p2Set, jq_Class t) {
-		int typeInt = Env.getConstTerm4Class(t);
+		if (t.getSubClasses().length == 0)
+			return genEqTyping(p2Set, t);
+		
+		//else generate interval constraint.
 		BoolExpr b = genFalse();
 		if(p2Set.isEmpty()) return genTrue();
-		assert typeInt > 0 : "Invalid type int.";
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
-			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, false));
+			BoolExpr newCst = intersect(orgCst, lift(ho, t, false));
 			if (isTrue(newCst))
 				return trueExpr;
 			b = union(b, newCst);
@@ -425,19 +435,292 @@ public class ConstraintManager {
 
 	// generate equality typing constraint.
 	public static BoolExpr genEqTyping(P2Set p2Set, jq_Class t) {
-		int typeInt = Env.getConstTerm4Class(t);
 		BoolExpr b = genFalse();
 		if(p2Set.isEmpty()) return genTrue();
 
-		assert typeInt > 0 : "Invalid type int.";
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
-			BoolExpr newCst = intersect(orgCst, lift(ho, typeInt, true));
+			BoolExpr newCst = intersect(orgCst, lift(ho, t, true));
 			if (isTrue(newCst))
 				return trueExpr;
 			b = union(b, newCst);
 		}
 		return b;
+	}
+	
+	//type(o) = T
+	public static BoolExpr genEqType(HeapObject ho, jq_Class t) {
+		Expr term = lift1(ho);
+		Expr cur = genTrue();
+		int typeInt = Env.class2Term.get(t);
+		try {
+			if (ho instanceof AllocElem) {
+				assert term.IsInt();
+				int srcInt =((IntNum) term).Int();
+				int tgtInt = Env.getConstTerm4Class(t);
+				if(srcInt == tgtInt) 
+					return genTrue();
+				else 
+					return genFalse();
+			} else if (ho instanceof AccessPath) {
+				cur = typeFun.Apply(term);
+			}
+			BoolExpr eq = ctx.MkEq(cur, ctx.MkInt(typeInt));
+			return eq;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return (BoolExpr)cur;
+	}
+	
+	//type(o) <= T
+	public static BoolExpr genLeType(HeapObject ho, jq_Class t) {
+		Expr term = lift1(ho);
+		Expr cur = genTrue();
+		int typeInt = Env.class2Term.get(t);
+		try {
+			if (ho instanceof AllocElem) {
+				assert term.IsInt();
+				int srcInt =((IntNum) term).Int();
+				int tgtInt = Env.getConstTerm4Class(t);
+				if(srcInt <= tgtInt) 
+					return genTrue();
+				else 
+					return genFalse();
+			} else if (ho instanceof AccessPath) {
+				cur = typeFun.Apply(term);
+			}
+			BoolExpr le = ctx.MkLe((IntExpr) cur, ctx.MkInt(typeInt));
+			return le;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return (BoolExpr)cur;
+	}
+	
+	//type(o) >= T
+	public static BoolExpr genGeType(HeapObject ho, jq_Class t) {
+		Expr term = lift1(ho);
+		Expr cur = genTrue();
+		int typeInt = Env.class2Term.get(t);
+		try {
+			if (ho instanceof AllocElem) {
+				int srcInt =((IntNum) term).Int();
+				int tgtInt = Env.getConstTerm4Class(t);
+				if(srcInt >= tgtInt) 
+					return genTrue();
+				else 
+					return genFalse();
+			} else if (ho instanceof AccessPath) {
+				cur = typeFun.Apply(term);
+			}
+			BoolExpr le = ctx.MkGe((IntExpr) cur, ctx.MkInt(typeInt));
+			return le;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return (BoolExpr)cur;
+	}
+	
+	//type(o) = T
+	public static BoolExpr instEqType(String term, jq_Class t,
+			MemLocInstnSet p2Set) {
+		assert t!= null;
+		BoolExpr b = genFalse();
+		if(p2Set.isEmpty()) return genTrue();
+		
+		for (AbsMemLoc ho : p2Set.keySet()) {
+			if (ho instanceof HeapObject) {
+				BoolExpr orgCst = p2Set.get(ho);
+				BoolExpr newCst = intersect(orgCst,
+						genEqType((HeapObject) ho, t));
+				if (isTrue(newCst))
+					return trueExpr;
+
+				b = union(b, newCst);
+			}
+		}
+		return b;
+	}
+
+	// type(o) <= T
+	public static BoolExpr instLeType(String term, jq_Class t,
+			MemLocInstnSet p2Set) {
+		assert t!= null;
+
+		BoolExpr b = genFalse();
+		if(p2Set.isEmpty()) return genTrue();
+		
+		for (AbsMemLoc ho : p2Set.keySet()) {
+			if (ho instanceof HeapObject) {
+				BoolExpr orgCst = p2Set.get(ho);
+				BoolExpr newCst = intersect(orgCst,
+						genLeType((HeapObject) ho, t));
+				if (isTrue(newCst))
+					return trueExpr;
+
+				b = union(b, newCst);
+			}
+		}
+		return b;
+	}
+
+	// type(o) >= T
+	public static BoolExpr instGeType(String term, jq_Class t,
+			MemLocInstnSet p2Set) {
+		assert t!= null;
+
+		BoolExpr b = genFalse();
+		if(p2Set.isEmpty()) return genTrue();
+		
+		for (AbsMemLoc ho : p2Set.keySet()) {
+			if (ho instanceof HeapObject) {
+				BoolExpr orgCst = p2Set.get(ho);
+				BoolExpr newCst = intersect(orgCst,
+						genGeType((HeapObject) ho, t));
+				if (isTrue(newCst))
+					return trueExpr;
+
+				b = union(b, newCst);
+			}
+		}
+		return b;
+	}
+	
+	public static BoolExpr instnConstaintNew(BoolExpr expr,
+			AbstractHeap callerHeap, ProgramPoint point, MemLocInstnItem item) {
+		BoolExpr ret = null;
+		try {
+			ret = (BoolExpr) expr.Simplify();
+			if (isScala(ret))
+				return ret;
+
+			Map<String, BoolExpr> map;
+			map = new HashMap<String, BoolExpr>();
+			extractTerm(ret, map);
+
+			BoolExpr ret1 = ret;
+			for (BoolExpr sub : map.values()) {
+				assert sub.IsEq() || sub.IsLE() || sub.IsGE() : "invalid sub expr" + sub;
+				Expr term = sub.Args()[0].Args()[0];
+				String termStr = term.toString();
+				// Using toString is ugly, but that's the only way i can get
+				// from Z3...
+				AccessPath ap = (AccessPath) liftInv(termStr);
+				assert ap != null;
+
+				assert sub.Args()[1] instanceof IntNum : "arg must be IntNum!";
+				IntNum typeInt = (IntNum) sub.Args()[1];
+				jq_Class t = Env.class2TermRev.get(typeInt.Int());
+				assert t != null : typeInt;
+				// get points-to set for term
+				MemLocInstnSet p2Set = item.instnMemLoc(ap, callerHeap, point);
+
+				BoolExpr instSub;
+				if (sub.IsEq())
+					instSub = instEqType(termStr, t, p2Set);
+				else if(sub.IsLE())
+					instSub = instLeType(termStr, t, p2Set);
+				else {
+					assert sub.IsGE();
+					instSub = instGeType(termStr, t, p2Set);
+				}
+
+				ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
+			}
+
+			BoolExpr result = (BoolExpr) ret1.Simplify();
+
+			return result;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	//hasType(o)= T
+	public static BoolExpr hasEqType(P2Set p2Set, jq_Class t) {
+		BoolExpr b = genFalse();
+		if(p2Set.isEmpty()) return genTrue();
+
+		for (HeapObject ho : p2Set.keySet()) {
+			BoolExpr orgCst = p2Set.get(ho);
+			BoolExpr newCst = intersect(orgCst, genEqType(ho, t));
+			if (isTrue(newCst))
+				return trueExpr;
+			b = union(b, newCst);
+		}
+		return b;
+	}
+	
+	// T1 <= hasType(o) <=T
+	public static BoolExpr hasIntervalType(P2Set p2Set, jq_Class t) {
+		BoolExpr b = genFalse();
+		if(p2Set.isEmpty()) return genTrue();
+		
+		for (HeapObject ho : p2Set.keySet()) {
+			BoolExpr orgCst = p2Set.get(ho);
+			int minInt = Env.getMinSubclass(t);
+			jq_Class subMin = Env.class2TermRev.get(minInt);
+			assert subMin != null : minInt;
+			
+			BoolExpr le = genLeType(ho, t);
+			BoolExpr ge = genGeType(ho, subMin);
+			BoolExpr interval = intersect(le, ge);
+			
+			BoolExpr newCst = intersect(orgCst, interval);
+			if (isTrue(newCst))
+				return trueExpr;
+			b = union(b, newCst);
+		}
+		return b;
+	}
+	
+	/** lift: Convert heap object to term.*/
+	public static Expr lift1(HeapObject ho) {
+		Expr cur = genTrue();
+		try {
+			if (ho instanceof AllocElem) {
+				// return the number of its class.
+				AllocElem ae = (AllocElem) ho;
+				jq_Type jType = ae.getAlloc().getType();
+				// always true for jq_array.
+				if (jType instanceof jq_Array)
+					return (BoolExpr) cur;
+
+				cur = ctx.MkInt(Env.getConstTerm4Class((jq_Class) jType));
+
+			} else if (ho instanceof AccessPath) {
+				AccessPath ap = (AccessPath) ho;
+				String symbol = "";
+//				if (ap.isSmashed()) {
+//					int cnt = 1;
+//					if (ap2Counter.get(ap) != null)
+//						cnt = ap2Counter.get(ap) + 1;
+//
+//					ap2Counter.put(ap, cnt);
+//					symbol = "v" + ap.getId() + "s" + cnt;
+//				} else {
+					symbol = "v" + ap.getId();
+//				}
+				// put to map for unlifting later.
+				term2Ap.put(symbol, ap);
+				cur = ctx.MkConst(symbol, ctx.IntSort());
+			}
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return cur;
+	}
+	
+	/** lift inverse: Convert term to heap object.*/
+	public static HeapObject liftInv(String term) {
+		return term2Ap.get(term);
 	}
 
 	// instantiate subtyping constraint by term.
@@ -451,8 +734,10 @@ public class ConstraintManager {
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
-				BoolExpr newCst = intersect(orgCst,
-						lift((HeapObject) ho, typeInt, false));
+				BoolExpr newCst = intersect(
+						orgCst,
+						lift((HeapObject) ho, Env.class2TermRev.get(typeInt),
+								false));
 				if (isTrue(newCst))
 					return trueExpr;
 				b = union(b, newCst);
@@ -477,8 +762,10 @@ public class ConstraintManager {
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
-				BoolExpr newCst = intersect(orgCst,
-						lift((HeapObject) ho, typeInt, true));
+				BoolExpr newCst = intersect(
+						orgCst,
+						lift((HeapObject) ho, Env.class2TermRev.get(typeInt),
+								true));
 				if (isTrue(newCst))
 					return trueExpr;
 

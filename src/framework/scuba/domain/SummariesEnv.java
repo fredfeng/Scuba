@@ -37,9 +37,9 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 5;
+	protected int allocDepth = 3;
 	// dynamically control the depth
-	protected boolean dynAlloc = true;
+	protected boolean dynAlloc = false;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
@@ -55,7 +55,7 @@ public class SummariesEnv {
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
 	// disable constraint instantiate.
-	protected boolean disableCst = true;
+	protected boolean disableCst = false;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 	// type filter
@@ -100,13 +100,11 @@ public class SummariesEnv {
 	public boolean allcReplc = false;
 
 	public FieldSmashLevel level = FieldSmashLevel.REG;
-	// public FieldSmashLevel level = FieldSmashLevel.MED;
-	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
-	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
-	// public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
+	// public FieldSmashLevel level = FieldSmashLevel.CTRLLENGTH;
 	// public FieldSmashLevel level = FieldSmashLevel.TYPESMASH;
 	// public FieldSmashLevel level = FieldSmashLevel.TYPECOMPSMASH;
 	public int smashLength = 3;
+	public int ctrlLength = 5;
 
 	// clear locals in the summary
 	protected boolean clearLocals = false;

@@ -2,6 +2,7 @@ package framework.scuba.domain;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +11,6 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Reference;
-import joeq.Class.jq_Type;
 import chord.analyses.alias.CICG;
 import chord.program.Program;
 import framework.scuba.helper.ArgDerivedHelper;
@@ -42,6 +42,12 @@ public class Env {
 
 	// TODO: we still need to consider invokeinterface!
 	public final static Map<jq_Class, Integer> class2Term = new HashMap<jq_Class, Integer>();
+	
+	public final static Map<jq_Class, Integer> class2Min = new HashMap<jq_Class, Integer>();
+
+	
+	public final static Map<Integer, jq_Class> class2TermRev = new HashMap<Integer, jq_Class>();
+
 
 	// get the StaticElem given the declaring class and the corresponding field
 	// in the IR
@@ -147,15 +153,54 @@ public class Env {
 			if (r instanceof jq_Array)
 				continue;
 			final jq_Class cl = (jq_Class) r;
-			if (!cl.isInterface() && (cl.getSuperclass() != null)) {
+			if (!cl.isInterface() && (cl.getSuperclass() != null))
 				put(classToSubclasses, cl.getSuperclass(), cl);
-			}
 		}
 
 		/* Now do a post order traversal to get the numbers. */
 		jq_Reference rootObj = Program.g().getClass("java.lang.Object");
 		assert rootObj != null : "Fails to load java.lang.Object";
 		pfsVisit(1, (jq_Class) rootObj);
+	}
+	
+	/** This is used to generate interval for a given class. here we 
+	     return the number of subclass which have the minimal number.
+	     if no subclass, return its own number. */
+	public static int getMinSubclass(jq_Class clz) {
+		if(class2Min.get(clz) != null)
+			return class2Min.get(clz);
+		
+		jq_Class[] subClaz = clz.getSubClasses();
+		if(subClaz.length == 0) {
+			int self = class2Term.get(clz);
+			class2Min.put(clz, self);
+			return self;
+		}
+		
+		int min = class2Term.get(clz);
+		LinkedHashSet<jq_Class> wl = new LinkedHashSet<jq_Class>();
+		wl.add(clz);
+		while(!wl.isEmpty()) {
+			jq_Class sub = wl.iterator().next();
+			wl.remove(sub);
+			int subInt = class2Term.get(sub);
+			//subclass is unreachable.
+			if(class2Term.get(sub) == null) 
+				continue;
+			
+			if(subInt < min) 
+				min = subInt;
+			
+			jq_Class[] succs = sub.getSubClasses();
+			for(int i = 0; i < succs.length; i++) {
+				jq_Class succ = succs[i];
+				if(class2Term.get(succ) != null)
+					wl.add(succ);
+			}
+		}
+		//cache the result.
+		class2Min.put(clz, min);
+		return min;
 	}
 
 	/**
@@ -187,7 +232,8 @@ public class Env {
 			throw new RuntimeException("Attempt to pfs visit interface " + c);
 		}
 		class2Term.put(c, start);
-
+		class2TermRev.put(start, c);
+		
 		start++;
 		return start;
 	}
