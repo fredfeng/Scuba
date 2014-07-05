@@ -114,11 +114,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		new DowncastAnalysis(relDcm, relDVH, this).run();
 
 		// perform points to set.
-		pointToSet();
-		// new MayAliasAnalysis(relMV, relVValias, this).run();
-
-		System.out.println(SummariesEnv.v().getLibMeths());
-
+//		pointToSet();
+		new MayAliasAnalysis(relMV, relVValias, this).run();
 	}
 
 	// pre-analysis to extract all locals in application. This will decide which
@@ -396,6 +393,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		Summary summary = SummariesEnv.v().initSummary(m);
 		summary.setInBadScc(isBadScc);
+		//if its library, set constraint to true.
+		if(this.libMeths.contains(m))
+			summary.setInBadScc(true);
+
 		summary.setChanged(new Pair<Boolean, Boolean>(false, false));
 		intrapro.setSummary(summary);
 
@@ -546,7 +547,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relLibM = (ProgramRel) ClassicProject.g().getTrgt("librariesM");
 		relMV = (ProgramRel) ClassicProject.g().getTrgt("MV");
 		relVH = (ProgramRel) ClassicProject.g().getTrgt("ptsVH");
-		relVValias = (ProgramRel) ClassicProject.g().getTrgt("cspaVValias");
+		relVValias = (ProgramRel) ClassicProject.g().getTrgt("VValias");
 
 		if (!relDcLocal.isOpen())
 			relDcLocal.load();
