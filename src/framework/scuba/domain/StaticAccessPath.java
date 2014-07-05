@@ -60,7 +60,7 @@ public class StaticAccessPath extends AccessPath {
 
 	@Override
 	public String toString() {
-		return base + "." + field + "[" + isSmashed() + "]";
+		return base + "." + field + "[" + isSmashed() + "]" + "[T]" + type;
 	}
 
 	@Override

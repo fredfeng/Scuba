@@ -307,7 +307,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				analyzeSCC(node);
 			} else {
 				jq_Method m = scc.iterator().next();
-				analyze(m, (node.getPreds().size() == 0));
+				analyze(m, false);
 				if (G.dbgPermission) {
 					StringUtil.reportInfo("Evils:[" + G.countScc
 							+ "] begin regular node");
@@ -413,8 +413,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		summary.setHasAnalyzed();
 
-		// summary.getAbsHeap().dumpHeapToFile(
-		// m.getDeclaringClass() + "@" + m.toString().replace("/", ""));
+//		 summary.getAbsHeap().dumpHeapToFile(
+//		 m.getDeclaringClass() + "@" + m.toString().replace("/", ""));
 
 		int num = 0;
 		for (Pair p : summary.getAbsHeap().keySet()) {

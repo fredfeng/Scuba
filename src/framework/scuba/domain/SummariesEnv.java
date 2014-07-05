@@ -39,7 +39,7 @@ public class SummariesEnv {
 	// 0 means infinity
 	protected int allocDepth = 3;
 	// dynamically control the depth
-	protected boolean dynAlloc = false;
+	protected boolean dynAlloc = true;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
@@ -60,6 +60,7 @@ public class SummariesEnv {
 	public final int sccLimit = 30;
 	// type filter
 	public boolean useTypeFilter = true;
+	public boolean useSubTypeFilter = true;
 	// whether or not resolve default static access path in the final heap
 	public boolean resolveFinalHeap = true;
 
@@ -70,27 +71,27 @@ public class SummariesEnv {
 	// this is used for instantiating the locations
 	public boolean instnSmashedAPs = true;
 	// whether use cache for instantiating AccessPath
-	public boolean useMemLocInstnCache = false;
+	public boolean useMemLocInstnCache = true;
 	// whether use cache for constraint instantiation
-	public boolean useCstInstnCache = false;
+	public boolean useCstInstnCache = true;
 	// whether use cache for extracting terms
-	public boolean useExtractCache = false;
+	public boolean useExtractCache = true;
 	// whether use cache for constraint simplification
-	public boolean useSimplifyCache = false;
+	public boolean useSimplifyCache = true;
 	// whether use cache for constraint union operation
-	public boolean useUnionCache = false;
+	public boolean useUnionCache = true;
 	// whether use cache for constraint intersection operation
-	public boolean useInterCache = false;
+	public boolean useInterCache = true;
 	// whether use cache for substitution operation of constraints
-	public boolean useSubCache = false;
+	public boolean useSubCache = true;
 	// whether use equivalence checking cache
-	public boolean useEqCache = false;
+	public boolean useEqCache = true;
 	// this is a fantastic way to efficiently skip the instantiation for those
 	// callees that we can magically predict that they will not change the
 	// caller's heap
 	public boolean smartSkip = false;
 	// a fine-grained smart skip for instantiating edges
-	public boolean moreSmartSkip = false;
+	public boolean moreSmartSkip = true;
 	// when dbging SCC use this
 	public boolean jump = false;
 	// a trick to avoid hanging in gigantic SCC
@@ -119,13 +120,13 @@ public class SummariesEnv {
 
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
-	// protected PropType localType = PropType.APPLOCAL;
+	protected PropType localType = PropType.APPLOCAL;
 
 	// protected PropType localType = PropType.DOWNCAST;
 	// protected PropType localType = PropType.NOLOCAL;
 	// protected PropType localType = PropType.NOALLOC;
 	// protected PropType localType = PropType.NOTHING;
-	protected PropType localType = PropType.ALL;
+	// protected PropType localType = PropType.ALL;
 
 	public void setMarkSmashedFlag() {
 		markSmashedFlag = true;

@@ -61,7 +61,8 @@ public class LocalAccessPath extends AccessPath {
 	@Override
 	public String toString() {
 		return base + "." + field + "[" + isSmashed() + "]" + " smashed: "
-				+ "(" + smashed + ")" + " ending " + "(" + endingFields + ")";
+				+ "(" + smashed + ")" + " ending " + "(" + endingFields + ")"
+				+ "[T]" + type;
 	}
 
 	@Override
