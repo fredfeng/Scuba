@@ -291,7 +291,7 @@ public class ConstraintManager {
 
 		// using toString as the key to map the same expr, buggy.
 
-		if (expr.IsEq() || expr.IsLE()) {
+		if (expr.IsEq() || expr.IsLE() || expr.IsGE()) {
 			ret.put(expr.toString(), (BoolExpr) expr);
 		} else if (expr.IsAnd() || expr.IsOr()) {
 
