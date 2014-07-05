@@ -75,7 +75,7 @@ public class CSPAAlias extends JavaAnalysis {
 		relVVRefined = (ProgramRel)ClassicProject.g().getTrgt("VVRefined");
 		
 		
-		VVRefined_print();
+		//VVRefined_print();
 		
 		print_result();
 		

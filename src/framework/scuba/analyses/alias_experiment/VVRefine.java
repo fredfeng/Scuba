@@ -64,11 +64,11 @@ public class VVRefine extends JavaAnalysis {
 			jq_Method m2 = domV.getMethod(r2);
 			jq_Class c2 = m2.getDeclaringClass();
 
-			//r1 = R0 && r2= R0;
-			if (r1.toString().equals("R0") && r2.toString().equals("R0")){
-				if(c1.equals(c2)){
+			//r1 == R0 && r2== R0 && c1 == c2;
+			if (r1.toString().equals("R0") && r2.toString().equals("R0")&& c1.equals(c2)){
 					continue;
-				}else{
+                /*
+                else{
 					Pair<jq_Class, jq_Class> ccp1 = new Pair<jq_Class, jq_Class>(c1, c2);
 										
 					if( class_to_class_set.contains(ccp1)){
@@ -77,10 +77,11 @@ public class VVRefine extends JavaAnalysis {
 						relVVRefined.add(r1,r2);
 						 class_to_class_set.add(ccp1);
 					}
-				}
+				}*/
 			}
-			
-			
+			relVVRefined.add(r1,r2);
+
+			/*
 			//r1 = R0 && r2 != R0
 			if(r1.toString().equals("R0")&& !r2.toString().equals("R0")){
 				if(refine_map.containsKey(c1)){
@@ -115,7 +116,7 @@ public class VVRefine extends JavaAnalysis {
 						rs.add(r1);
 						refine_map.put(c2, rs);
 				}
-			}		
+			}	*/	
 		}
 
 		relVVRefined.save();
