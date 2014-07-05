@@ -116,7 +116,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		// perform points to set.
 		pointToSet();
 		// new MayAliasAnalysis(relMV, relVValias, this).run();
-		
+
 		System.out.println(SummariesEnv.v().getLibMeths());
 
 	}
@@ -139,6 +139,14 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			Iterable<Register> res = relDcLocal.getAry1ValTuples();
 			Set<Register> propSet = SetUtils.iterableToSet(res,
 					relDcLocal.size());
+			SummariesEnv.v().addAllPropSet(propSet);
+		} else {
+			if (!relAppLocal.isOpen())
+				relAppLocal.load();
+
+			Iterable<Register> res = relAppLocal.getAry1ValTuples();
+			Set<Register> propSet = SetUtils.iterableToSet(res,
+					relAppLocal.size());
 			SummariesEnv.v().addAllPropSet(propSet);
 		}
 	}
@@ -404,7 +412,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		summary.setHasAnalyzed();
-		
+
 		// summary.getAbsHeap().dumpHeapToFile(
 		// m.getDeclaringClass() + "@" + m.toString().replace("/", ""));
 

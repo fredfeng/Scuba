@@ -140,37 +140,8 @@ public class MemLocInstnItem {
 
 		MemLocInstnSet ret = memLocInstnCache.get(loc);
 
-		// if (loc instanceof ParamElem) {
-		// assert (ret != null) : "parameters should have been instantiated"
-		// + " when the first time init the instantiation";
-		// }
-		//
-		// if (loc instanceof RetElem) {
-		// if (hasRet) {
-		// assert (ret != null) : "return value should have been instantiated"
-		// + " when the first time init the instantiation!";
-		// } else {
-		// assert (ret == null) : "if there is no LHS in the call site, "
-		// + "we cannot instantiate the return value";
-		// }
-		// }
 		if (ret != null) {
 			return ret;
-		}
-
-		// if not hitting the cache, meaning we need to re-instantiate the edge
-		// which depends on this location again
-		if (SummariesEnv.v().moreSmartSkip) {
-			Summary calleeSum = SummariesEnv.v().getSummary(callee);
-			Set<Trio<AbsMemLoc, HeapObject, FieldElem>> edges = calleeSum
-					.getDepEdges(this, loc);
-			if (edges != null) {
-				if (G.dbgCache) {
-					System.out.println("[dbgCache] " + "removing edges "
-							+ edges);
-				}
-				calleeSum.removeAllInstnedEdges(this, edges);
-			}
 		}
 
 		if (loc instanceof ParamElem) {
@@ -435,13 +406,9 @@ public class MemLocInstnItem {
 			ret = new MemLocInstnSet(formalToActuals.get(loc),
 					ConstraintManager.genTrue());
 		} else if (loc instanceof LocalVarElem || loc instanceof StaticElem) {
-			// this is my little cute cache
-			// not hitting cache
 			ret = new MemLocInstnSet(loc, ConstraintManager.genTrue());
 		} else if (loc instanceof RetElem) {
 			if (hasRet) {
-				// assert (ret != null) : "return value should be mapped"
-				// + " the first time init the instantiation";
 				assert retToReceiver.containsKey(loc) : "ret should have been createad!";
 				ret = new MemLocInstnSet(retToReceiver.get(loc),
 						ConstraintManager.genTrue());
@@ -451,10 +418,7 @@ public class MemLocInstnItem {
 				return null;
 			}
 		} else if (loc instanceof AllocElem) {
-			// we also instantiated allocElem only once!
-			// wow! I guess it will save a LOT of time by doing this
 			if (SummariesEnv.v().allcReplc) {
-				// not hitting the cache
 				if (SummariesEnv.v().allocDepth == 0
 						|| ((AllocElem) loc).contxtLength() < SummariesEnv.v().allocDepth) {
 					if (((AllocElem) loc).contains(point)) {
@@ -495,8 +459,6 @@ public class MemLocInstnItem {
 						}
 					}
 				} else if (((AllocElem) loc).contxtLength() == SummariesEnv.v().allocDepth) {
-					// TODO
-					// AllocElem allocElem = (AllocElem) loc;
 					AllocElem allocElem = callerHeap
 							.getAllocElem((AllocElem) loc);
 					if (callee.equals(caller)) {
@@ -511,7 +473,6 @@ public class MemLocInstnItem {
 				}
 			} else {
 				// not replace
-				// not hitting the cache
 				if (SummariesEnv.v().allocDepth == 0
 						|| ((AllocElem) loc).contxtLength() < SummariesEnv.v().allocDepth) {
 					if (((AllocElem) loc).contains(point)) {
@@ -547,8 +508,6 @@ public class MemLocInstnItem {
 						}
 					}
 				} else if (((AllocElem) loc).contxtLength() == SummariesEnv.v().allocDepth) {
-					// TODO
-					// AllocElem allocElem = (AllocElem) loc;
 					AllocElem allocElem = callerHeap
 							.getAllocElem((AllocElem) loc);
 					ret = new MemLocInstnSet(allocElem,
@@ -559,16 +518,13 @@ public class MemLocInstnItem {
 			}
 
 		} else if (loc instanceof AccessPath) {
-
 			// instantiation for smashed access path
 			AbsMemLoc base = ((AccessPath) loc).getBase();
 			FieldElem field = ((AccessPath) loc).getField();
 
 			MemLocInstnSet instnLocSet = instnMemLocNoCache(base, callerHeap,
 					point);
-
 			ret = callerHeap.instnLookup(instnLocSet, field);
-
 			// a work-list algorithm for find all locations that are
 			// transitively reachable from the current instantiated memory
 			// locations in order to be sound

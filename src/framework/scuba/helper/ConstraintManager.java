@@ -60,10 +60,9 @@ public class ConstraintManager {
 
 	// map from term to heapObject. for unlifting.
 	static Map<String, AccessPath> term2Ap = new HashMap<String, AccessPath>();
-	
-	//map from smashed accesspath to a counter
-	static Map<AccessPath, Integer> ap2Counter = new HashMap<AccessPath, Integer>();
 
+	// map from smashed accesspath to a counter
+	static Map<AccessPath, Integer> ap2Counter = new HashMap<AccessPath, Integer>();
 
 	// this is my little cute cache for constraint instantiation
 	public static final CstInstnCache instnCache = new CstInstnCache();
@@ -177,6 +176,118 @@ public class ConstraintManager {
 		return null;
 	}
 
+	public static BoolExpr instnConstaintNew(BoolExpr expr,
+			AbstractHeap callerHeap, ProgramPoint point, MemLocInstnItem item) {
+		BoolExpr ret = null;
+		// check hitting cache
+		if (SummariesEnv.v().isUsingCstCache()) {
+			ret = instnCache.getBoolExpr(item, expr);
+			if (ret != null) {
+				return ret;
+			}
+		}
+
+		try {
+			if (SummariesEnv.v().isUsingSimplifyCache()) {
+				ret = simplifyCache.get(expr.toString());
+				if (ret == null) {
+					ret = (BoolExpr) expr.Simplify();
+					simplifyCache.put(expr.toString(), ret);
+				}
+			} else {
+				ret = (BoolExpr) expr.Simplify();
+			}
+			// ret = (BoolExpr) expr.Simplify();
+
+			if (isScala(ret))
+				return ret;
+
+			Map<String, BoolExpr> map;
+			map = new HashMap<String, BoolExpr>();
+			if (SummariesEnv.v().isUsingExtractCache()) {
+				map = extractTermUsingCache(ret);
+			} else {
+				extractTerm(ret, map);
+			}
+			// extractTerm(ret, map);
+
+			BoolExpr ret1 = ret;
+			for (BoolExpr sub : map.values()) {
+				assert sub.IsEq() || sub.IsLE() || sub.IsGE() : "invalid sub expr"
+						+ sub;
+				Expr term = sub.Args()[0].Args()[0];
+				String termStr = term.toString();
+				// Using toString is ugly, but that's the only way i can get
+				// from Z3...
+				AccessPath ap = (AccessPath) liftInv(termStr);
+				assert ap != null;
+
+				assert sub.Args()[1] instanceof IntNum : "arg must be IntNum!";
+				IntNum typeInt = (IntNum) sub.Args()[1];
+				jq_Class t = Env.class2TermRev.get(typeInt.Int());
+				assert t != null : typeInt;
+				// get points-to set for term
+				MemLocInstnSet p2Set = item.instnMemLoc(ap, callerHeap, point);
+
+				// update the dependence relation
+				if (SummariesEnv.v().isUsingCstCache()) {
+					cstDepMap.add(ap, new Pair<MemLocInstnItem, BoolExpr>(item,
+							expr));
+				}
+
+				BoolExpr instSub;
+				if (sub.IsEq())
+					instSub = instEqType(termStr, t, p2Set);
+				else if (sub.IsLE())
+					instSub = instLeType(termStr, t, p2Set);
+				else {
+					assert sub.IsGE();
+					instSub = instGeType(termStr, t, p2Set);
+				}
+
+				if (SummariesEnv.v().isUsingSubCache()) {
+					BoolExpr tmp = subCache
+							.get(new Trio<String, String, String>(ret1
+									.toString(), sub.toString(), instSub
+									.toString()));
+					if (tmp == null) {
+						tmp = (BoolExpr) ret1.Substitute(sub, instSub);
+					}
+					subCache.put(
+							new Trio<String, String, String>(ret1.toString(),
+									sub.toString(), instSub.toString()), tmp);
+					ret1 = tmp;
+				} else {
+					ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
+				}
+				// ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
+			}
+
+			BoolExpr result = null;
+			if (SummariesEnv.v().isUsingSimplifyCache()) {
+				result = simplifyCache.get(ret1.toString());
+				if (result == null) {
+					result = (BoolExpr) ret1.Simplify();
+					simplifyCache.put(ret1.toString(), result);
+				}
+			} else {
+				result = (BoolExpr) ret1.Simplify();
+			}
+
+			if (SummariesEnv.v().isUsingCstCache()) {
+				instnCache
+						.add(item, new Pair<BoolExpr, BoolExpr>(expr, result));
+			}
+			// BoolExpr result = (BoolExpr) ret1.Simplify();
+
+			return result;
+		} catch (Z3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	// perform unlifting and instantiation. Rule 2 in figure 10.
 	public static BoolExpr instnConstaint(BoolExpr expr,
 			AbstractHeap callerHeap, ProgramPoint point, MemLocInstnItem item) {
@@ -215,7 +326,8 @@ public class ConstraintManager {
 
 			BoolExpr ret1 = ret;
 			for (BoolExpr sub : map.values()) {
-				assert sub.IsEq() || sub.IsLE() || sub.IsGE() : "invalid sub expr" + sub;
+				assert sub.IsEq() || sub.IsLE() || sub.IsGE() : "invalid sub expr"
+						+ sub;
 				Expr term = sub.Args()[0].Args()[0];
 				// Using toString is ugly, but that's the only way i can get
 				// from Z3...
@@ -412,17 +524,19 @@ public class ConstraintManager {
 		return null;
 	}
 
-	/** generate subtyping constraint. 
-	    if t has no subclass, then we generate type(o)=t.
-	    else we generate an interval for it: t_min <= type(o) <= t
-	    t_min is the least lower bound.*/
+	/**
+	 * generate subtyping constraint. if t has no subclass, then we generate
+	 * type(o)=t. else we generate an interval for it: t_min <= type(o) <= t
+	 * t_min is the least lower bound.
+	 */
 	public static BoolExpr genSubTyping(P2Set p2Set, jq_Class t) {
 		if (t.getSubClasses().length == 0)
 			return genEqTyping(p2Set, t);
-		
-		//else generate interval constraint.
+
+		// else generate interval constraint.
 		BoolExpr b = genFalse();
-		if(p2Set.isEmpty()) return genTrue();
+		if (p2Set.isEmpty())
+			return genTrue();
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
 			BoolExpr newCst = intersect(orgCst, lift(ho, t, false));
@@ -436,7 +550,8 @@ public class ConstraintManager {
 	// generate equality typing constraint.
 	public static BoolExpr genEqTyping(P2Set p2Set, jq_Class t) {
 		BoolExpr b = genFalse();
-		if(p2Set.isEmpty()) return genTrue();
+		if (p2Set.isEmpty())
+			return genTrue();
 
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
@@ -447,8 +562,8 @@ public class ConstraintManager {
 		}
 		return b;
 	}
-	
-	//type(o) = T
+
+	// type(o) = T
 	public static BoolExpr genEqType(HeapObject ho, jq_Class t) {
 		Expr term = lift1(ho);
 		Expr cur = genTrue();
@@ -456,11 +571,11 @@ public class ConstraintManager {
 		try {
 			if (ho instanceof AllocElem) {
 				assert term.IsInt();
-				int srcInt =((IntNum) term).Int();
+				int srcInt = ((IntNum) term).Int();
 				int tgtInt = Env.getConstTerm4Class(t);
-				if(srcInt == tgtInt) 
+				if (srcInt == tgtInt)
 					return genTrue();
-				else 
+				else
 					return genFalse();
 			} else if (ho instanceof AccessPath) {
 				cur = typeFun.Apply(term);
@@ -471,10 +586,10 @@ public class ConstraintManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return (BoolExpr)cur;
+		return (BoolExpr) cur;
 	}
-	
-	//type(o) <= T
+
+	// type(o) <= T
 	public static BoolExpr genLeType(HeapObject ho, jq_Class t) {
 		Expr term = lift1(ho);
 		Expr cur = genTrue();
@@ -482,11 +597,11 @@ public class ConstraintManager {
 		try {
 			if (ho instanceof AllocElem) {
 				assert term.IsInt();
-				int srcInt =((IntNum) term).Int();
+				int srcInt = ((IntNum) term).Int();
 				int tgtInt = Env.getConstTerm4Class(t);
-				if(srcInt <= tgtInt) 
+				if (srcInt <= tgtInt)
 					return genTrue();
-				else 
+				else
 					return genFalse();
 			} else if (ho instanceof AccessPath) {
 				cur = typeFun.Apply(term);
@@ -497,21 +612,21 @@ public class ConstraintManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return (BoolExpr)cur;
+		return (BoolExpr) cur;
 	}
-	
-	//type(o) >= T
+
+	// type(o) >= T
 	public static BoolExpr genGeType(HeapObject ho, jq_Class t) {
 		Expr term = lift1(ho);
 		Expr cur = genTrue();
 		int typeInt = Env.class2Term.get(t);
 		try {
 			if (ho instanceof AllocElem) {
-				int srcInt =((IntNum) term).Int();
+				int srcInt = ((IntNum) term).Int();
 				int tgtInt = Env.getConstTerm4Class(t);
-				if(srcInt >= tgtInt) 
+				if (srcInt >= tgtInt)
 					return genTrue();
-				else 
+				else
 					return genFalse();
 			} else if (ho instanceof AccessPath) {
 				cur = typeFun.Apply(term);
@@ -522,16 +637,17 @@ public class ConstraintManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return (BoolExpr)cur;
+		return (BoolExpr) cur;
 	}
-	
-	//type(o) = T
+
+	// type(o) = T
 	public static BoolExpr instEqType(String term, jq_Class t,
 			MemLocInstnSet p2Set) {
-		assert t!= null;
+		assert t != null;
 		BoolExpr b = genFalse();
-		if(p2Set.isEmpty()) return genTrue();
-		
+		if (p2Set.isEmpty())
+			return genTrue();
+
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
@@ -549,11 +665,12 @@ public class ConstraintManager {
 	// type(o) <= T
 	public static BoolExpr instLeType(String term, jq_Class t,
 			MemLocInstnSet p2Set) {
-		assert t!= null;
+		assert t != null;
 
 		BoolExpr b = genFalse();
-		if(p2Set.isEmpty()) return genTrue();
-		
+		if (p2Set.isEmpty())
+			return genTrue();
+
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
@@ -571,11 +688,12 @@ public class ConstraintManager {
 	// type(o) >= T
 	public static BoolExpr instGeType(String term, jq_Class t,
 			MemLocInstnSet p2Set) {
-		assert t!= null;
+		assert t != null;
 
 		BoolExpr b = genFalse();
-		if(p2Set.isEmpty()) return genTrue();
-		
+		if (p2Set.isEmpty())
+			return genTrue();
+
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
@@ -589,63 +707,12 @@ public class ConstraintManager {
 		}
 		return b;
 	}
-	
-	public static BoolExpr instnConstaintNew(BoolExpr expr,
-			AbstractHeap callerHeap, ProgramPoint point, MemLocInstnItem item) {
-		BoolExpr ret = null;
-		try {
-			ret = (BoolExpr) expr.Simplify();
-			if (isScala(ret))
-				return ret;
 
-			Map<String, BoolExpr> map;
-			map = new HashMap<String, BoolExpr>();
-			extractTerm(ret, map);
-
-			BoolExpr ret1 = ret;
-			for (BoolExpr sub : map.values()) {
-				assert sub.IsEq() || sub.IsLE() || sub.IsGE() : "invalid sub expr" + sub;
-				Expr term = sub.Args()[0].Args()[0];
-				String termStr = term.toString();
-				// Using toString is ugly, but that's the only way i can get
-				// from Z3...
-				AccessPath ap = (AccessPath) liftInv(termStr);
-				assert ap != null;
-
-				assert sub.Args()[1] instanceof IntNum : "arg must be IntNum!";
-				IntNum typeInt = (IntNum) sub.Args()[1];
-				jq_Class t = Env.class2TermRev.get(typeInt.Int());
-				assert t != null : typeInt;
-				// get points-to set for term
-				MemLocInstnSet p2Set = item.instnMemLoc(ap, callerHeap, point);
-
-				BoolExpr instSub;
-				if (sub.IsEq())
-					instSub = instEqType(termStr, t, p2Set);
-				else if(sub.IsLE())
-					instSub = instLeType(termStr, t, p2Set);
-				else {
-					assert sub.IsGE();
-					instSub = instGeType(termStr, t, p2Set);
-				}
-
-				ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
-			}
-
-			BoolExpr result = (BoolExpr) ret1.Simplify();
-
-			return result;
-		} catch (Z3Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-	//hasType(o)= T
+	// hasType(o)= T
 	public static BoolExpr hasEqType(P2Set p2Set, jq_Class t) {
 		BoolExpr b = genFalse();
-		if(p2Set.isEmpty()) return genTrue();
+		if (p2Set.isEmpty())
+			return genTrue();
 
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
@@ -656,22 +723,23 @@ public class ConstraintManager {
 		}
 		return b;
 	}
-	
+
 	// T1 <= hasType(o) <=T
 	public static BoolExpr hasIntervalType(P2Set p2Set, jq_Class t) {
 		BoolExpr b = genFalse();
-		if(p2Set.isEmpty()) return genTrue();
-		
+		if (p2Set.isEmpty())
+			return genTrue();
+
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
 			int minInt = Env.getMinSubclass(t);
 			jq_Class subMin = Env.class2TermRev.get(minInt);
 			assert subMin != null : minInt;
-			
+
 			BoolExpr le = genLeType(ho, t);
 			BoolExpr ge = genGeType(ho, subMin);
 			BoolExpr interval = intersect(le, ge);
-			
+
 			BoolExpr newCst = intersect(orgCst, interval);
 			if (isTrue(newCst))
 				return trueExpr;
@@ -679,8 +747,8 @@ public class ConstraintManager {
 		}
 		return b;
 	}
-	
-	/** lift: Convert heap object to term.*/
+
+	/** lift: Convert heap object to term. */
 	public static Expr lift1(HeapObject ho) {
 		Expr cur = genTrue();
 		try {
@@ -697,16 +765,16 @@ public class ConstraintManager {
 			} else if (ho instanceof AccessPath) {
 				AccessPath ap = (AccessPath) ho;
 				String symbol = "";
-//				if (ap.isSmashed()) {
-//					int cnt = 1;
-//					if (ap2Counter.get(ap) != null)
-//						cnt = ap2Counter.get(ap) + 1;
-//
-//					ap2Counter.put(ap, cnt);
-//					symbol = "v" + ap.getId() + "s" + cnt;
-//				} else {
-					symbol = "v" + ap.getId();
-//				}
+				// if (ap.isSmashed()) {
+				// int cnt = 1;
+				// if (ap2Counter.get(ap) != null)
+				// cnt = ap2Counter.get(ap) + 1;
+				//
+				// ap2Counter.put(ap, cnt);
+				// symbol = "v" + ap.getId() + "s" + cnt;
+				// } else {
+				symbol = "v" + ap.getId();
+				// }
 				// put to map for unlifting later.
 				term2Ap.put(symbol, ap);
 				cur = ctx.MkConst(symbol, ctx.IntSort());
@@ -717,8 +785,8 @@ public class ConstraintManager {
 		}
 		return cur;
 	}
-	
-	/** lift inverse: Convert term to heap object.*/
+
+	/** lift inverse: Convert term to heap object. */
 	public static HeapObject liftInv(String term) {
 		return term2Ap.get(term);
 	}
@@ -729,7 +797,8 @@ public class ConstraintManager {
 
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		if(p2Set.isEmpty()) return genTrue();
+		if (p2Set.isEmpty())
+			return genTrue();
 
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
@@ -758,7 +827,8 @@ public class ConstraintManager {
 
 		BoolExpr b = genFalse();
 		assert typeInt > 0 : "Invalid type int.";
-		if(p2Set.isEmpty()) return genTrue();
+		if (p2Set.isEmpty())
+			return genTrue();
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);

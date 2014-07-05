@@ -71,8 +71,11 @@ public class P2Set {
 			// filtering the in-compatible types
 			if (SummariesEnv.v().useTypeFilter) {
 				if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.REG) {
-					if (!obj.getType().isSubtypeOf(typeFilter)
-							&& !typeFilter.isSubtypeOf(obj.getType())) {
+					// if (!obj.getType().isSubtypeOf(typeFilter)
+					// && !typeFilter.isSubtypeOf(obj.getType())) {
+					// continue;
+					// }
+					if (!obj.getType().isSubtypeOf(typeFilter)) {
 						continue;
 					}
 				} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPECOMPSMASH

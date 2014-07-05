@@ -930,7 +930,9 @@ public class AbstractHeap extends Heap {
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
 			if (calleeHeap.summary.containsInstnedEdge(memLocInstn, src, dst,
-					field)) {
+					field)
+					&& ConstraintManager.instnCache.contains(memLocInstn,
+							calleeCst)) {
 				return ret;
 			}
 		}
@@ -1055,14 +1057,6 @@ public class AbstractHeap extends Heap {
 					+ "-------------------------------------------");
 		}
 
-		// more smart skip for instantiating edges
-		if (SummariesEnv.v().moreSmartSkip) {
-			if (calleeHeap.summary.containsInstnedEdge(memLocInstn, src, dst,
-					field)) {
-				return ret;
-			}
-		}
-
 		assert (src != null && dst != null && field != null) : "nulls!";
 		assert (calleeHeap.contains(src)) : "callee's heap should contain the source of the edge!";
 		assert (calleeHeap.lookup(src, field).contains(dst)) : ""
@@ -1092,6 +1086,16 @@ public class AbstractHeap extends Heap {
 
 		BoolExpr calleeCst = calleeHeap.lookup(src, field).get(dst);
 		assert (calleeCst != null) : "constraint is null!";
+
+		// more smart skip for instantiating edges
+		if (SummariesEnv.v().moreSmartSkip) {
+			if (calleeHeap.summary.containsInstnedEdge(memLocInstn, src, dst,
+					field)
+					&& ConstraintManager.instnCache.contains(memLocInstn,
+							calleeCst)) {
+				return ret;
+			}
+		}
 
 		// instantiate the calleeCst
 		BoolExpr instnCst = instnCst(calleeCst, this, point, memLocInstn);
@@ -1875,6 +1879,17 @@ public class AbstractHeap extends Heap {
 				}
 				ret1 = true;
 				item.remove(ap);
+
+				// we need to invalidate all caches for the edges
+				if (SummariesEnv.v().moreSmartSkip) {
+					Summary calleeSum = SummariesEnv.v()
+							.getSummary(item.callee);
+					Set<Trio<AbsMemLoc, HeapObject, FieldElem>> edges = calleeSum
+							.getDepEdges(item, ap);
+					if (edges != null) {
+						calleeSum.removeAllInstnedEdges(item, edges);
+					}
+				}
 
 				// reset the boolean flag in smartSkip to let the caller
 				// instantiate the callee corresponding to the item
