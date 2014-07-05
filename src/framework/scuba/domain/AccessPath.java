@@ -39,8 +39,8 @@ public abstract class AccessPath extends HeapObject {
 			if (base.getType() instanceof jq_Array) {
 				this.type = ((jq_Array) base.getType()).getElementType();
 			} else {
-				assert false;
-				// this.type = Program.g().getClass("java.lang.Object");
+				// assert false;
+				this.type = Program.g().getClass("java.lang.Object");
 			}
 		} else {
 			assert false : "wired things!";

@@ -71,12 +71,24 @@ public class P2Set {
 			// filtering the in-compatible types
 			if (SummariesEnv.v().useTypeFilter) {
 				if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.REG) {
-					// if (!obj.getType().isSubtypeOf(typeFilter)
-					// && !typeFilter.isSubtypeOf(obj.getType())) {
-					// continue;
-					// }
-					if (!obj.getType().isSubtypeOf(typeFilter)) {
-						continue;
+					if (SummariesEnv.v().useSubTypeFilter) {
+						if (obj instanceof AllocElem) {
+							if (!obj.getType().isSubtypeOf(typeFilter)) {
+								continue;
+							}
+						} else if (obj instanceof AccessPath) {
+							if (!obj.getType().isSubtypeOf(typeFilter)
+									&& !typeFilter.isSubtypeOf(obj.getType())) {
+								continue;
+							}
+						} else {
+							assert false;
+						}
+					} else {
+						if (!obj.getType().isSubtypeOf(typeFilter)
+								&& !typeFilter.isSubtypeOf(obj.getType())) {
+							continue;
+						}
 					}
 				} else if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPECOMPSMASH
 						|| SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.TYPESMASH
