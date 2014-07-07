@@ -114,8 +114,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		new DowncastAnalysis(relDcm, relDVH, this).run();
 
 		// perform points to set.
-//		pointToSet();
-		new MayAliasAnalysis(relMV, relVValias, this).run();
+		pointToSet();
+		//new MayAliasAnalysis(relMV, relVValias, this).run();
+		//make sure you have result.txt under your work-dir before you turn on this!.
+		//new RegressionAnalysis(this).run();
 	}
 
 	// pre-analysis to extract all locals in application. This will decide which
@@ -393,10 +395,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		Summary summary = SummariesEnv.v().initSummary(m);
 		summary.setInBadScc(isBadScc);
-		//if its library, set constraint to true.
-		if(this.libMeths.contains(m))
-			summary.setInBadScc(true);
-
 		summary.setChanged(new Pair<Boolean, Boolean>(false, false));
 		intrapro.setSummary(summary);
 

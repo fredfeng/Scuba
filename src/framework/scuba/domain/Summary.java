@@ -1111,9 +1111,6 @@ public class Summary {
 				} else
 					cst = genCst(p2Set, tgt, tgtType, tgtSet);
 
-				System.out.println("debug cst" + cst + " FOR: " + tgt + " "
-						+ "p2set: " + p2Set);
-
 				// FIXME: We should assume that v can point to any object.
 				if (p2Set.isEmpty()) {
 					System.err
@@ -1198,9 +1195,6 @@ public class Summary {
 				t = ConstraintManager.union(t, phi);
 			}
 			// do the union.
-			// return ConstraintManager.union(t,
-			// ConstraintManager.genEqTyping(p2Set, statT));
-
 			return ConstraintManager.union(t,
 					ConstraintManager.hasEqType(p2Set, statT));
 		}
