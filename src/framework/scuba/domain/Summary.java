@@ -52,7 +52,6 @@ import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.AccessPathHelper;
@@ -1368,18 +1367,6 @@ public class Summary {
 				absHeap.locToP2Set.remove(pair);
 			}
 		}
-	}
-
-	public boolean filterTgt(jq_Method caller, jq_Method callee) {
-		jq_Class callerClz = caller.getDeclaringClass();
-		jq_Class calleeClz = callee.getDeclaringClass();
-		if (calleeClz.extendsClass(callerClz) && !calleeClz.equals(callerClz)
-				&& !callee.isAbstract()) {
-			if (calleeClz.getVirtualMethod(caller.getNameAndDesc()) != null) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	public boolean containsInstnedEdge(MemLocInstnItem item, AbsMemLoc src,
