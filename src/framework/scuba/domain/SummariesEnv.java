@@ -2,11 +2,13 @@ package framework.scuba.domain;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.util.tuple.object.Trio;
 
 /**
  * Global env to store all summaries of their methods. Singleton pattern.
@@ -37,7 +39,7 @@ public class SummariesEnv {
 
 	// the number of contexts in an AllocElem
 	// 0 means infinity
-	protected int allocDepth = 3;
+	protected int allocDepth = 0;
 	// dynamically control the depth
 	protected boolean dynAlloc = true;
 
@@ -51,6 +53,9 @@ public class SummariesEnv {
 
 	// all library methods
 	protected Set<jq_Method> libMeths = new HashSet<jq_Method>();
+	
+	//alias pairs
+	protected LinkedHashSet<Trio<jq_Method, Register, Register>> aliasPairs = new LinkedHashSet();
 
 	// force to invoke garbage collector for abstract heap.
 	protected boolean forceGc = false;
@@ -59,7 +64,7 @@ public class SummariesEnv {
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 	// type filter
-	public boolean useTypeFilter = true;
+	public boolean useTypeFilter = false;
 	public boolean useSubTypeFilter = true;
 	// whether or not resolve default static access path in the final heap
 	public boolean resolveFinalHeap = true;
@@ -257,6 +262,15 @@ public class SummariesEnv {
 
 	public void setLibMeths(Set<jq_Method> libMeths) {
 		this.libMeths = libMeths;
+	}
+	
+	public void addAliasPairs(jq_Method m, Register r1, Register r2) {
+		Trio<jq_Method, Register, Register> trio = new Trio(m, r1, r2);
+		aliasPairs.add(trio);
+	}
+	
+	public Set<Trio<jq_Method, Register, Register>> getAliasPairs() {
+		return aliasPairs;
 	}
 
 	public boolean isStubMethod(String signature) {

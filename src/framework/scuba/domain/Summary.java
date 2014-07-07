@@ -744,6 +744,15 @@ public class Summary {
 			if (G.tuning)
 				StringUtil.reportSec("Time to instantiate callsite: " + stmt,
 						startInstCallsite, endInstCallsite);
+			
+			//regression test.
+			jq_Method callee = Invoke.getMethod(stmt).getMethod();
+			if (callee.toString().equals(
+					"check_alias:(Ljava/lang/Object;Ljava/lang/Object;)V@A")) {
+				Register r1 = Invoke.getParam(stmt, 0).getRegister();
+				Register r2 = Invoke.getParam(stmt, 1).getRegister();
+				SummariesEnv.v().addAliasPairs(meth, r1, r2);
+			}
 
 		}
 
