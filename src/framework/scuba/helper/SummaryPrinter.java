@@ -42,6 +42,7 @@ import framework.scuba.domain.Summary;
 import framework.scuba.utils.StringUtil;
 
 public class SummaryPrinter {
+	
 	public void dumpSummary4Method(jq_Method meth) {
 		System.out.println("Summary for method: " + meth.getName());
 		System.out.println("**************************************");
