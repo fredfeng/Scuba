@@ -9,6 +9,7 @@ import java.util.Set;
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Trio;
+import framework.scuba.controller.SummaryController;
 
 /**
  * Global env to store all summaries of their methods. Singleton pattern.
@@ -22,6 +23,8 @@ public class SummariesEnv {
 	private static SummariesEnv instance = new SummariesEnv();
 
 	final protected Map<jq_Method, Summary> summaries = new HashMap<jq_Method, Summary>();
+	
+	protected SummaryController sumController;
 
 	protected SumConclusion finalSum;
 
@@ -41,7 +44,7 @@ public class SummariesEnv {
 	// 0 means infinity
 	protected int allocDepth = 0;
 	// dynamically control the depth
-	protected boolean dynAlloc = true;
+	protected boolean dynAlloc = false;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
@@ -57,8 +60,6 @@ public class SummariesEnv {
 	//alias pairs
 	protected LinkedHashSet<Trio<jq_Method, Register, Register>> aliasPairs = new LinkedHashSet();
 
-	// force to invoke garbage collector for abstract heap.
-	protected boolean forceGc = false;
 	// disable constraint instantiate.
 	protected boolean disableCst = false;
 	// we mark it as bad scc if its size greater than this number.
@@ -96,7 +97,7 @@ public class SummariesEnv {
 	// caller's heap
 	public boolean smartSkip = false;
 	// a fine-grained smart skip for instantiating edges
-	public boolean moreSmartSkip = true;
+	public boolean moreSmartSkip = false;
 	// when dbging SCC use this
 	public boolean jump = false;
 	// a trick to avoid hanging in gigantic SCC
@@ -125,13 +126,13 @@ public class SummariesEnv {
 
 	// which kind of local need to be propagated, e.g. downcast, all locals in
 	// app, etc.
-	protected PropType localType = PropType.APPLOCAL;
+	//protected PropType localType = PropType.APPLOCAL;
 
 	// protected PropType localType = PropType.DOWNCAST;
 	// protected PropType localType = PropType.NOLOCAL;
 	// protected PropType localType = PropType.NOALLOC;
 	// protected PropType localType = PropType.NOTHING;
-	// protected PropType localType = PropType.ALL;
+	 protected PropType localType = PropType.ALL;
 
 	public void setMarkSmashedFlag() {
 		markSmashedFlag = true;
@@ -187,10 +188,6 @@ public class SummariesEnv {
 
 	public boolean disableCst() {
 		return disableCst;
-	}
-
-	public boolean forceGc() {
-		return forceGc;
 	}
 
 	public static void reset() {
@@ -271,6 +268,14 @@ public class SummariesEnv {
 	
 	public Set<Trio<jq_Method, Register, Register>> getAliasPairs() {
 		return aliasPairs;
+	}
+	
+	public SummaryController getController() {
+		return sumController;
+	}
+	
+	public void setController(SummaryController ctl) {
+		sumController = ctl;
 	}
 
 	public boolean isStubMethod(String signature) {

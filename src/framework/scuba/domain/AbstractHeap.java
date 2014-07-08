@@ -23,6 +23,7 @@ import chord.util.tuple.object.Trio;
 
 import com.microsoft.z3.BoolExpr;
 
+import framework.scuba.controller.SummaryController;
 import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
@@ -929,8 +930,8 @@ public class AbstractHeap extends Heap {
 
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
-			if (calleeHeap.summary.containsInstnedEdge(memLocInstn, src, dst,
-					field)
+			if (SummariesEnv.v().getController().containsInstnedEdge(memLocInstn, src, dst,
+					field, calleeHeap.summary)
 					&& ConstraintManager.instnCache.contains(memLocInstn,
 							calleeCst)) {
 				return ret;
@@ -1089,8 +1090,9 @@ public class AbstractHeap extends Heap {
 
 		// more smart skip for instantiating edges
 		if (SummariesEnv.v().moreSmartSkip) {
-			if (calleeHeap.summary.containsInstnedEdge(memLocInstn, src, dst,
-					field)
+			if (SummariesEnv.v().getController()
+					.containsInstnedEdge(memLocInstn, src, dst, field,
+							calleeHeap.summary)
 					&& ConstraintManager.instnCache.contains(memLocInstn,
 							calleeCst)) {
 				return ret;
@@ -1884,10 +1886,13 @@ public class AbstractHeap extends Heap {
 				if (SummariesEnv.v().moreSmartSkip) {
 					Summary calleeSum = SummariesEnv.v()
 							.getSummary(item.callee);
-					Set<Trio<AbsMemLoc, HeapObject, FieldElem>> edges = calleeSum
-							.getDepEdges(item, ap);
+					SummaryController controller = SummariesEnv.v()
+							.getController();
+					Set<Trio<AbsMemLoc, HeapObject, FieldElem>> edges = controller
+							.getDepEdges(item, ap, calleeSum);
 					if (edges != null) {
-						calleeSum.removeAllInstnedEdges(item, edges);
+						controller
+								.removeAllInstnedEdges(item, edges, calleeSum);
 					}
 				}
 

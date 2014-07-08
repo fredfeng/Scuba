@@ -4,8 +4,6 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -35,6 +33,7 @@ import com.microsoft.z3.BoolExpr;
 
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
 import framework.scuba.analyses.downcast.DowncastAnalysis;
+import framework.scuba.controller.SummaryController;
 import framework.scuba.domain.AbsMemLoc;
 import framework.scuba.domain.AbstractHeap;
 import framework.scuba.domain.Alloc;
@@ -87,10 +86,18 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	HashMap<Node, Set<jq_Method>> nodeToScc = new HashMap<Node, Set<jq_Method>>();
 	HashMap<Set<jq_Method>, Node> sccToNode = new HashMap<Set<jq_Method>, Node>();
 	HashMap<jq_Method, Node> methToNode = new HashMap<jq_Method, Node>();
+	
+	protected SummaryController sumController = new SummaryController();
 
-	List<jq_Method> accessSeq = new LinkedList<jq_Method>();
+	protected IntraProcSumAnalysis intrapro = new IntraProcSumAnalysis();
+	
+	private Set<jq_Method> libMeths;
 
-	IntraProcSumAnalysis intrapro = new IntraProcSumAnalysis();
+	// total time spending on analyzing lib.
+	public long libTime = 0;
+
+	// total time spending on analyzing app.
+	public long appTime = 0;
 
 	private void init() {
 		getCallGraph();
@@ -107,14 +114,11 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		dumpCallGraph();
 
-		// dump interesting stats
-		dumpStatistics();
-
 		// perform downcast analysis
 		new DowncastAnalysis(relDcm, relDVH, this).run();
 
 		// perform points to set.
-		pointToSet();
+		//new P2SetComparison(relVH, relMV, this).run();
 		//new MayAliasAnalysis(relMV, relVValias, this).run();
 		//make sure you have result.txt under your work-dir before you turn on this!.
 		//new RegressionAnalysis(this).run();
@@ -166,9 +170,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	}
 
 	private void sumAnalyze() {
-
-		// dumpMeth();
-
+		intrapro.setController(sumController);
+		SummariesEnv.v().setController(sumController);
+		
 		// step 1: collapse scc into one node.
 		Graph repGraph = collapseSCCs();
 
@@ -213,10 +217,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			// add m's pred to worklist
 			worklist.addAll(worker.getPreds());
 		}
-
-		if (G.info)
-			System.out.println("[Info] Accessing CallGraph in this sequnce:\n"
-					+ accessSeq);
 	}
 
 	/**
@@ -307,26 +307,13 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			} else {
 				jq_Method m = scc.iterator().next();
 				analyze(m, false);
-				if (G.dbgPermission) {
-					StringUtil.reportInfo("Evils:[" + G.countScc
-							+ "] begin regular node");
-					Summary sum = SummariesEnv.v().getSummary(m);
-					if (sum != null) {
-						int i = sum.getHeapSize();
-						StringUtil.reportInfo("Evils:[" + G.countScc
-								+ "] size [" + i + "]" + " method: " + m);
-					} else {
-						StringUtil.reportInfo("Evils:[" + G.countScc
-								+ "] no IR" + " method: " + m);
-					}
-				}
 			}
 		} else {
 			analyzeSCC(node);
 		}
 
 		// at the end, mark it as terminated.
-		terminateAndDoGC(node);
+		terminate(node);
 
 		if (G.tuning) {
 			long endSCC = System.nanoTime();
@@ -334,11 +321,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 	}
 
-	// mark current node as terminated and perform GC on its successor, if
-	// possible.
-	public static int dcount = 0;
-
-	private void terminateAndDoGC(Node node) {
+	private void terminate(Node node) {
 		node.setTerminated(true);
 
 		// when terminating, decide what locations in the summary to propagate
@@ -348,32 +331,9 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		if (SummariesEnv.v().useClearLocals()) {
 			for (jq_Method m : scc) {
 				Summary sum = SummariesEnv.v().getSummary(m);
-				if (m != null) {
-					sum.removeLocals();
-				}
+				if (m != null)
+					sumController.removeLocals(sum);
 			}
-		}
-
-		if (!SummariesEnv.v().forceGc())
-			return;
-
-		for (Node succ : node.getSuccessors()) {
-			// for each successor, if all its preds are terminated, we can gc
-			// this successor.
-			if (allTerminated(succ.getPreds())) {
-				StringUtil.reportInfo("GC node: " + succ);
-				for (jq_Method meth : nodeToScc.get(succ)) {
-					Summary sumGC = SummariesEnv.v().removeSummary(meth);
-					if (sumGC != null) {
-						assert sumGC != null : "Summary to be GC can not be null";
-						sumGC.gcAbsHeap();
-						sumGC = null;
-						System.gc();
-						StringUtil.reportInfo("GC abstract heap for: " + meth);
-					}
-				}
-			}
-
 		}
 	}
 
@@ -389,8 +349,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	}
 
 	private Pair<Boolean, Boolean> analyze(jq_Method m, boolean isBadScc) {
-		accessSeq.add(m);
-
 		long startMeth = System.nanoTime();
 
 		Summary summary = SummariesEnv.v().initSummary(m);
@@ -419,6 +377,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		for (Pair p : summary.getAbsHeap().keySet()) {
 			num += summary.getAbsHeap().get(p).size();
 		}
+		
 		if (num > 100) {
 			StringUtil.reportInfo("dbgBlowup: "
 					+ "------------------------------------------------");
@@ -441,73 +400,15 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		return summary.isChanged();
 	}
 
-	public static int cgProgress = 0;
-	public static boolean inS = false;
-
 	private void analyzeSCC(Node node) {
-		inS = true;
 		Set<jq_Method> scc = nodeToScc.get(node);
-
-		if (G.dbgPermission) {
-			StringUtil.reportInfo("Evils:[" + G.countScc + "] begin SCC");
-			Map<Integer, Set<jq_Method>> evils = new TreeMap<Integer, Set<jq_Method>>();
-			for (jq_Method m : scc) {
-				Summary sum = SummariesEnv.v().getSummary(m);
-				if (sum == null) {
-					continue;
-				}
-				Set<jq_Method> s = evils.get(sum.getHeapSize());
-				if (s == null) {
-					s = new HashSet<jq_Method>();
-					evils.put(sum.getHeapSize(), s);
-				}
-			}
-			for (int i : evils.keySet()) {
-				Set<jq_Method> s = evils.get(i);
-				for (jq_Method m : s) {
-					StringUtil.reportInfo("Evils:[" + G.countScc + "]size ["
-							+ i + "]" + " method: " + m);
-				}
-			}
-		}
 
 		// Set<jq_Method> wl = new HashSet<jq_Method>();
 		Set<jq_Method> wl = new LinkedHashSet<jq_Method>();
 		// add all methods to worklist
 		wl.addAll(scc);
 
-		int times = 0;
-
 		while (!wl.isEmpty()) {
-
-			times++;
-
-			if (G.dbgPermission) {
-				StringUtil.reportInfo("Evils:[" + G.countScc
-						+ "] begin Iteration [" + times + "]");
-				Map<Integer, Set<jq_Method>> evils = new TreeMap<Integer, Set<jq_Method>>();
-				for (jq_Method m : scc) {
-					Summary sum = SummariesEnv.v().getSummary(m);
-					if (sum == null) {
-						continue;
-					}
-					Set<jq_Method> s = evils.get(sum.getHeapSize());
-					if (s == null) {
-						s = new HashSet<jq_Method>();
-						evils.put(sum.getHeapSize(), s);
-					}
-					s.add(m);
-				}
-				for (int i : evils.keySet()) {
-					Set<jq_Method> s = evils.get(i);
-					for (jq_Method m : s) {
-						StringUtil.reportInfo("Evils:[" + G.countScc
-								+ "] size [" + i + "]" + " method: " + m);
-					}
-
-				}
-			}
-
 			jq_Method worker = wl.iterator().next();
 			wl.remove(worker);
 
@@ -572,14 +473,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		init();
 	}
 
-	private Set<jq_Method> libMeths;
-
-	// total time spending on analyzing lib.
-	public long libTime = 0;
-
-	// total time spending on analyzing app.
-	public long appTime = 0;
-
 	/**
 	 * Provides the program's context-insensitive call graph.
 	 * 
@@ -643,9 +536,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			callGraph.free();
 	}
 
-	public static int count = 0;
-	public static int me = 0;
-
 	public Set<AllocElem> query(jq_Class clazz, jq_Method method,
 			Register variable) {
 		Set<AllocElem> ret = new HashSet<AllocElem>();
@@ -708,170 +598,4 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		return ret;
 	}
-
-	// point2set comparison.
-	public void pointToSet() {
-		if (!relVH.isOpen())
-			relVH.load();
-
-		if (!relMV.isOpen())
-			relMV.load();
-
-		int exact = 0;
-		int subSet = 0;
-		int superSet = 0;
-		int other = 0;
-		int chordEmpty = 0;
-		int scubaEmpty = 0;
-		for (Register r : SummariesEnv.v().getProps()) {
-			RelView view = relMV.getView();
-			view.selectAndDelete(1, r);
-			Iterable<jq_Method> res = view.getAry1ValTuples();
-			jq_Method meth = res.iterator().next();
-			Set<AllocElem> p2Set = query(meth.getDeclaringClass(), meth, r);
-			Set<Quad> sites = new HashSet<Quad>();
-			Set<Alloc> allocs = new HashSet<Alloc>();
-			for (AllocElem alloc : p2Set) {
-				sites.add(alloc.getAlloc().getAllocSite());
-				allocs.add(alloc.getAlloc());
-			}
-
-			RelView viewChord = relVH.getView();
-			viewChord.selectAndDelete(0, r);
-			if (viewChord.size() == 0)
-				continue;
-			Iterable<Quad> resChord = viewChord.getAry1ValTuples();
-			Set<Quad> pts = SetUtils.newSet(viewChord.size());
-			// no filter, add all
-			for (Quad inst : resChord)
-				pts.add(inst);
-
-			System.out.println("P2Set for " + r + " in " + meth);
-			System.out.println("[Scuba] " + sites);
-			System.out.println("[Chord] " + pts);
-			System.out.println("[Scuba] " + "[AllocSite] " + allocs);
-			// assert (pts.containsAll(sites));
-			if (pts.containsAll(sites) && sites.containsAll(pts)) {
-				exact++;
-			} else if (pts.containsAll(sites)) {
-				subSet++;
-			} else if (sites.containsAll(pts)) {
-				superSet++;
-			} else {
-				other++;
-			}
-			if (pts.isEmpty()) {
-				chordEmpty++;
-			}
-			if (sites.isEmpty()) {
-				scubaEmpty++;
-			}
-
-			if (sites.isEmpty()) {
-				Quad q = pts.iterator().next();
-
-				jq_Type c = null;
-				if (q.getOperator() instanceof New) {
-					c = (New.getType(q)).getType();
-				} else if (q.getOperator() instanceof NewArray) {
-					c = (NewArray.getType(q)).getType();
-				}
-				if (c instanceof jq_Class) {
-					if (((jq_Class) c).extendsClass((jq_Class) Program.g()
-							.getClass("java.lang.Exception"))
-							|| ((jq_Class) c).equals((jq_Class) Program.g()
-									.getClass("java.lang.String"))) {
-					} else {
-						System.out.println("------------------------------");
-						System.out.println("Empty happens: ");
-						System.out.println("P2Set for " + r + " in " + meth);
-						System.out.println("[Scuba] " + sites);
-						System.out.println("[Chord] " + pts);
-						System.out
-								.println("[Scuba] " + "[AllocSite] " + allocs);
-						System.out.println("------------------------------");
-					}
-				} else {
-					System.out.println("------------------------------");
-					System.out.println("Empty happens: ");
-					System.out.println("P2Set for " + r + " in " + meth);
-					System.out.println("[Scuba] " + sites);
-					System.out.println("[Chord] " + pts);
-					System.out.println("[Scuba] " + "[AllocSite] " + allocs);
-					System.out.println("------------------------------");
-				}
-			}
-		}
-
-		System.out
-				.println("============================================================");
-		System.out.println("[Scuba] [Exhausitive Comparision Statistics]");
-		System.out.println("[Scuba] and [Chord] exactly the same: " + exact);
-		System.out.println("[Scuba] is better than [Chord]: " + subSet);
-		System.out.println("[Scuba] is worse than [Chord]: " + superSet);
-		System.out.println("[Scuba] and [Chord] have different results: "
-				+ other);
-		System.out.println("[Scuba] empty: " + scubaEmpty);
-		System.out.println("[Chord] emtpy: " + chordEmpty);
-		System.out
-				.println("============================================================");
-	}
-
-	public void dumpStatistics() {
-		StringBuilder b = new StringBuilder("");
-		Map<jq_Method, Summary> sums = SummariesEnv.v().getSums();
-		int total_all = 0;
-		int t_all = 0;
-		int f_all = 0;
-		int other_all = 0;
-		for (jq_Method m : sums.keySet()) {
-			int total = 0;
-			int t = 0;
-			int f = 0;
-			int other = 0;
-			Map<Pair<AbsMemLoc, FieldElem>, P2Set> absHeap = sums.get(m)
-					.getAbsHeap().getHeap();
-			for (Pair<AbsMemLoc, FieldElem> pair : absHeap.keySet()) {
-				P2Set p2set = absHeap.get(pair);
-				total += p2set.size();
-				total_all += p2set.size();
-				for (HeapObject hObj : p2set.keySet()) {
-					BoolExpr cst = p2set.get(hObj);
-					if (ConstraintManager.isTrue(cst)) {
-						t++;
-						t_all++;
-					} else if (ConstraintManager.isFalse(cst)) {
-						f++;
-						f_all++;
-					} else {
-						other++;
-						other_all++;
-					}
-				}
-				b.append("----------------------------------------------\n");
-				b.append("Method: " + m + "\n");
-				b.append("Total: " + total + "\n");
-				b.append("True cst: " + t + "\n");
-				b.append("False cst: " + f + "\n");
-				b.append("Other cst: " + other + "\n");
-			}
-		}
-
-		b.append("----------------------------------------------\n");
-		b.append("Total: " + total_all + "\n");
-		b.append("True cst: " + t_all + "\n");
-		b.append("False cst: " + f_all + "\n");
-		b.append("Other cst: " + other_all + "\n");
-
-		System.out.println(b.toString());
-		System.out.println("ALOADS------------" + Summary.aloadCnt);
-		System.out.println("ASTORES------------" + Summary.astoreCnt);
-		System.out.println("Array------------" + Summary.aNewArrayCnt);
-		System.out.println("MultiArray------------" + Summary.aNewMulArrayCnt);
-		System.out.println("Total downcast------------" + Summary.castCnt);
-
-		StringUtil.reportTotalTime("Total Time on Library: ", libTime);
-		StringUtil.reportTotalTime("Total Time on App: ", appTime);
-	}
-
 }

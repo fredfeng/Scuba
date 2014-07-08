@@ -303,9 +303,11 @@ public class MemLocInstnItem {
 					System.out.println("[dbgCache] " + "caller method: "
 							+ callerHeap.getMethod());
 				}
-				callerHeap.summary.addToDepMap(new Pair<AbsMemLoc, FieldElem>(
-						loc1, field),
-						new Pair<MemLocInstnItem, Set<AccessPath>>(this, orgs));
+				SummariesEnv.v().getController()
+						.addToDepMap(
+								new Pair<AbsMemLoc, FieldElem>(loc1, field),
+								new Pair<MemLocInstnItem, Set<AccessPath>>(
+										this, orgs), callerHeap.summary);
 				if (G.dbgCache) {
 					System.out.println("locDepMap: ");
 					callerHeap.summary.locDepMap.dump();

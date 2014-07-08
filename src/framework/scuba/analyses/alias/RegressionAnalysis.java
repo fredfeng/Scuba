@@ -69,5 +69,7 @@ public class RegressionAnalysis {
 					+ "," + r2 + ")";
 
 		}
+		
+		System.out.println("Regression Test success!");
 	}
 }
