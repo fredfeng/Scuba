@@ -425,11 +425,13 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 		
 		//regression test.
 		jq_Method callee = Invoke.getMethod(stmt).getMethod();
-		if (callee.toString().equals(
-				"check_alias:(Ljava/lang/Object;Ljava/lang/Object;)V@A")) {
+		if (callee.getDeclaringClass().toString()
+				.equals("framework.scuba.helper.AliasHelper")) {
 			Register r1 = Invoke.getParam(stmt, 0).getRegister();
 			Register r2 = Invoke.getParam(stmt, 1).getRegister();
-			SummariesEnv.v().addAliasPairs(meth, r1, r2);
+			boolean flag = callee.toString().contains("notAlias") ? false
+					: true;
+			SummariesEnv.v().addAliasPairs(meth, r1, r2, flag);
 		}
 
 	}

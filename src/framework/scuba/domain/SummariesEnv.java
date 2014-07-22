@@ -8,7 +8,7 @@ import java.util.Set;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
-import chord.util.tuple.object.Trio;
+import chord.util.tuple.object.Quad;
 import framework.scuba.controller.SummaryController;
 
 /**
@@ -58,7 +58,7 @@ public class SummariesEnv {
 	protected Set<jq_Method> libMeths = new HashSet<jq_Method>();
 	
 	//alias pairs
-	protected LinkedHashSet<Trio<jq_Method, Register, Register>> aliasPairs = new LinkedHashSet();
+	protected LinkedHashSet<Quad<jq_Method, Register, Register, Boolean>> aliasPairs = new LinkedHashSet();
 
 	// disable constraint instantiate.
 	protected boolean disableCst = false;
@@ -261,12 +261,12 @@ public class SummariesEnv {
 		this.libMeths = libMeths;
 	}
 	
-	public void addAliasPairs(jq_Method m, Register r1, Register r2) {
-		Trio<jq_Method, Register, Register> trio = new Trio(m, r1, r2);
-		aliasPairs.add(trio);
+	public void addAliasPairs(jq_Method m, Register r1, Register r2, boolean flag) {
+		Quad<jq_Method, Register, Register, Boolean> quad = new Quad(m, r1, r2, flag);
+		aliasPairs.add(quad);
 	}
 	
-	public Set<Trio<jq_Method, Register, Register>> getAliasPairs() {
+	public Set<Quad<jq_Method, Register, Register, Boolean>> getAliasPairs() {
 		return aliasPairs;
 	}
 	
