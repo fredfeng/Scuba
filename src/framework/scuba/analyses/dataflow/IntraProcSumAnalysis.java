@@ -1,32 +1,29 @@
 package framework.scuba.analyses.dataflow;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
-import framework.scuba.domain.AbsMemLoc;
-import framework.scuba.domain.FieldElem;
-import framework.scuba.domain.HeapObject;
-import framework.scuba.domain.LocalVarElem;
-import framework.scuba.domain.P2Set;
-import framework.scuba.domain.RetElem;
+import framework.scuba.controller.SummaryController;
+import framework.scuba.domain.AbsHeap;
+import framework.scuba.domain.AbsHeapHandler;
+import framework.scuba.domain.ArgDvdHandler;
+import framework.scuba.domain.ScubaQuadVisitor;
 import framework.scuba.domain.Summary;
-import framework.scuba.helper.G;
+import framework.scuba.domain.ToPropHandler;
 import framework.scuba.helper.SCCHelper;
 import framework.scuba.utils.Graph;
 import framework.scuba.utils.Node;
-import framework.scuba.utils.StringUtil;
 
 /**
  * Intra-proc summary-based analysis Check the rules in Figure 8 of our paper.
@@ -38,34 +35,27 @@ public class IntraProcSumAnalysis {
 
 	protected Summary summary;
 
-	protected List<BasicBlock> accessBlocksList = new ArrayList<BasicBlock>();
+	protected final SummaryController sumController;
+
+	protected final AbsHeapHandler ahHandler;
+
+	protected final ToPropHandler tpHandler;
+
+	protected final ArgDvdHandler adHandler;
+
+	protected final ScubaQuadVisitor qv;
+
+	public IntraProcSumAnalysis() {
+		sumController = new SummaryController();
+		ahHandler = new AbsHeapHandler();
+		adHandler = new ArgDvdHandler();
+		tpHandler = new ToPropHandler(ahHandler);
+		qv = new ScubaQuadVisitor(sumController, ahHandler);
+	}
 
 	// analyze one method based on the cfg of this method
 	public void analyze(ControlFlowGraph g) {
 
-		if (G.dbgPermission) {
-			StringUtil.reportInfo("dbgPermission");
-			StringUtil.reportInfo("dbgPermission: " + " analyzing method: "
-					+ g.getMethod());
-			StringUtil.reportInfo("dbgPermission: " + g.fullDump());
-		}
-
-		if (G.dbgAntlr) {
-			if (!G.IdMapping.containsKey(summary)) {
-				G.IdMapping.put(summary, ++G.mId);
-			}
-			StringUtil.reportInfo("[dbgAntlr] " + " byte code for method ["
-					+ G.IdMapping.get(summary) + "] " + g.getMethod());
-			System.out
-					.println("==============================================");
-			System.out.println(g.fullDump());
-			System.out
-					.println("==============================================");
-		}
-
-		// create the memory locations for the parameters first if has not
-		// this should be done ONLY once! (the first time we analyze this
-		// method, we can get the full list)
 		if (summary.getFormals() == null) {
 			summary.initFormals();
 			RegisterFactory rf = g.getRegisterFactory();
@@ -80,7 +70,6 @@ public class IntraProcSumAnalysis {
 		}
 
 		BasicBlock entry = g.entry();
-		accessBlocksList.clear();
 		HashSet<BasicBlock> roots = new HashSet<BasicBlock>();
 		HashMap<Node, Set<BasicBlock>> nodeToScc = new HashMap<Node, Set<BasicBlock>>();
 		HashMap<Set<BasicBlock>, Node> sccToNode = new HashMap<Set<BasicBlock>, Node>();
@@ -122,9 +111,7 @@ public class IntraProcSumAnalysis {
 		}
 
 		// step2: analyzing through normal post reverse order.
-		int tmp = 0;
 		for (Node rep : repGraph.getReversePostOrder()) {
-			tmp++;
 
 			Set<BasicBlock> scc = nodeToScc.get(rep);
 			if (scc.size() == 1) {
@@ -149,38 +136,8 @@ public class IntraProcSumAnalysis {
 			}
 		}
 
-		if (G.info) {
-			System.out.println("[Info] Sequence of visiting basic blocks:\n"
-					+ accessBlocksList);
-		}
-
-		summary.getAbsHeap().fillPropSet();
-		if (G.validate) {
-			summary.getAbsHeap().validate();
-		}
-		if (G.dump) {
-			summary.dumpSummaryToFile("" + G.IdMapping.get(summary));
-
-		}
-		if (G.dbgAntlr) {
-			for (AbsMemLoc loc : summary.getAbsHeap().heap) {
-				if ((loc instanceof LocalVarElem && summary.getAbsHeap()
-						.toProp(loc)) || loc instanceof RetElem) {
-					StringUtil
-							.reportInfo("[dbgAntlr] "
-									+ "-----------------------------------------------");
-					StringUtil.reportInfo("[dbgAntlr] " + "P2Set of " + loc);
-					for (FieldElem f : loc.getFields()) {
-						P2Set p2set = summary.getAbsHeap().locToP2Set
-								.get(new Pair<AbsMemLoc, FieldElem>(loc, f));
-						for (HeapObject hObj : p2set.keySet()) {
-							StringUtil.reportInfo("[dbgAntlr] " + "field: " + f
-									+ " " + hObj);
-						}
-					}
-				}
-			}
-		}
+		tpHandler.fillToPropSet();
+		adHandler.markArgDvd();
 	}
 
 	// compute the fixed-point for this scc.
@@ -211,7 +168,6 @@ public class IntraProcSumAnalysis {
 			flagScc.val1 = flag.val1 | flagScc.val1;
 			assert scc.contains(bb) : "You can't analyze the node that is out of current scc.";
 
-			// TODO
 			// if changing the heap, we analyze all basic blocks in the scc
 			// again (conservative)
 			if (flag.val0)
@@ -233,12 +189,12 @@ public class IntraProcSumAnalysis {
 
 	public Pair<Boolean, Boolean> handleBasicBlock(BasicBlock bb,
 			boolean isInSCC) {
-		accessBlocksList.add(bb);
 		Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false, false);
 		// handle each quad in the basicblock.
 		for (Quad q : bb.getQuads()) {
 			// handle the stmt
-			Pair<Boolean, Boolean> flagStmt = summary.handleStmt(q);
+			Pair<Boolean, Boolean> flagStmt = handleStmt(q,
+					summary.getAbsHeap());
 
 			flag.val0 = flagStmt.val0 | flag.val0;
 			flag.val1 = flagStmt.val1 | flag.val1;
@@ -248,8 +204,21 @@ public class IntraProcSumAnalysis {
 		return flag;
 	}
 
-	public void setSummary(Summary sum) {
+	public Pair<Boolean, Boolean> handleStmt(Quad quad, AbsHeap absHeap) {
+		absHeap.markChanged(new Pair<Boolean, Boolean>(false, false));
+		if (quad.getOperator() instanceof Invoke) {
+			return absHeap.isChanged();
+		}
+		quad.accept(qv);
+		return absHeap.isChanged();
+	}
+
+	public void setEverything(Summary sum) {
 		summary = sum;
+		qv.setSummary(sum);
+		tpHandler.setSummary(sum);
+		ahHandler.setAbsHeap(sum.getAbsHeap());
+		adHandler.setAbsHeap(sum.getAbsHeap());
 	}
 
 }

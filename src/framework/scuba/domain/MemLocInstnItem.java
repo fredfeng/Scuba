@@ -13,14 +13,9 @@ import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 
-import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.CstManager;
 
 public class MemLocInstnItem {
-
-	// this maps from the abstract memory locations in the heap of the callee to
-	// the abstract memory locations in the heap of the caller
-	// callee locations --> caller locations
-	final protected MemLocInstnItemCache memLocInstnCache;
 
 	final protected MemLocInstn4Method result;
 
@@ -36,8 +31,8 @@ public class MemLocInstnItem {
 	// hasRet = true: there is a location mapped in the caller's heap
 	protected boolean hasRet = false;
 
-	protected Map<ParamElem, StackObject> formalToActuals = new HashMap<ParamElem, StackObject>();
-	protected Map<RetElem, StackObject> retToReceiver = new HashMap<RetElem, StackObject>();
+	protected Map<ParamElem, StackObject> fmlsToActls = new HashMap<ParamElem, StackObject>();
+	protected Map<RetElem, StackObject> retToRecv = new HashMap<RetElem, StackObject>();
 
 	public MemLocInstnItem(jq_Method caller, Quad callsite, jq_Method callee,
 			MemLocInstn4Method result) {
@@ -45,7 +40,6 @@ public class MemLocInstnItem {
 		this.callsite = callsite;
 		this.callee = callee;
 		this.result = result;
-		memLocInstnCache = new MemLocInstnItemCache(this);
 	}
 
 	public jq_Method getCaller() {
@@ -60,36 +54,6 @@ public class MemLocInstnItem {
 		return callsite;
 	}
 
-	public int size() {
-		return memLocInstnCache.size();
-	}
-
-	// given a location in the callee's heap, remove the cache item in the cache
-	public MemLocInstnSet remove(AbsMemLoc loc) {
-		return memLocInstnCache.remove(loc);
-	}
-
-	public void print() {
-		System.out
-				.println("\n----------------Mem Loc Instantion-----------------");
-		System.out.println("Caller: " + caller);
-		System.out.println("Callee: " + callee);
-		System.out.println("Call site: " + callsite);
-		for (AbsMemLoc loc : memLocInstnCache.keySet()) {
-			System.out.println("*****************************");
-			System.out.println("Location: " + loc + " is instantiated to:");
-			Map<AbsMemLoc, BoolExpr> ret = memLocInstnCache.get(loc)
-					.getInstnLocSet();
-			for (AbsMemLoc loc1 : ret.keySet()) {
-				System.out.println("Location: " + loc1);
-				System.out.println("Constraint: " + ret.get(loc1));
-			}
-		}
-		System.out.println("*****************************");
-		System.out.println("\n-----------------------------------------");
-
-	}
-
 	// initialized the formal-to-actual mapping
 	public void initFormalToActualMapping(List<ParamElem> formals,
 			List<StackObject> actuals) {
@@ -99,13 +63,11 @@ public class MemLocInstnItem {
 		for (int i = 0; i < actuals.size(); i++) {
 			StackObject actual = actuals.get(i);
 			if (actual instanceof PrimitiveElem) {
-				// we just ignore the primitives
 				continue;
 			} else {
 				ParamElem formal = formals.get(i);
-				formalToActuals.put(formal, actual);
-				// memLocInstnCache.put(formal, new MemLocInstnSet(actual,
-				// ConstraintManager.genTrue()));
+				fmlsToActls.put(formal, actual);
+
 			}
 		}
 	}
@@ -113,312 +75,136 @@ public class MemLocInstnItem {
 	// initialize the return value and lhs mapping
 	public void initReturnToLHS(RetElem ret, StackObject lhs) {
 		hasRet = true;
-		retToReceiver.put(ret, lhs);
+		retToRecv.put(ret, lhs);
 		// memLocInstnCache.put(ret,
 		// new MemLocInstnSet(lhs, ConstraintManager.genTrue()));
 	}
 
 	// a wrapper method for memory location instantiation
-	public MemLocInstnSet instnMemLoc(AbsMemLoc loc, AbstractHeap callerHeap,
-			ProgramPoint point) {
+	public MemLocInstnSet instnMemLoc(AbsMemLoc loc, AbsHeap callerHeap,
+			ProgPoint point) {
 		MemLocInstnSet ret = null;
-		if (SummariesEnv.v().useMemLocInstnCache) {
-			Set<AccessPath> orgs = new HashSet<AccessPath>();
-			ret = instnMemLocUsingCache(orgs, loc, callerHeap, point);
-		} else {
-			ret = instnMemLocNoCache(loc, callerHeap, point);
-		}
+		ret = instnMemLocNoCache(loc, callerHeap, point);
+		assert (ret != null) : "null instn!";
 		return ret;
 	}
 
-	// orgs: the callee locations that depend on the instantiated locations
-	// loc: the callee location we want to instantiate
-	protected MemLocInstnSet instnMemLocUsingCache(Set<AccessPath> orgs,
-			AbsMemLoc loc, AbstractHeap callerHeap, ProgramPoint point) {
+	protected MemLocInstnSet instnMemLocNoCache(AbsMemLoc loc,
+			AbsHeap callerHeap, ProgPoint point) {
+		MemLocInstnSet ret = null;
 
-		MemLocInstnSet ret = memLocInstnCache.get(loc);
-
-		// if (loc instanceof ParamElem) {
-		// assert (ret != null) : "parameters should have been instantiated"
-		// + " when the first time init the instantiation";
-		// }
-		//
-		// if (loc instanceof RetElem) {
-		// if (hasRet) {
-		// assert (ret != null) : "return value should have been instantiated"
-		// + " when the first time init the instantiation!";
-		// } else {
-		// assert (ret == null) : "if there is no LHS in the call site, "
-		// + "we cannot instantiate the return value";
-		// }
-		// }
 		if (loc instanceof ParamElem) {
-			if (ret != null) {
-				return ret;
-			}
-			assert (formalToActuals.containsKey(loc)) : "formals to actuals should be instantiated!";
-			ret = new MemLocInstnSet(formalToActuals.get(loc),
-					ConstraintManager.genTrue());
-			memLocInstnCache.put(loc, ret);
-		} else if (loc instanceof LocalVarElem || loc instanceof StaticElem) {
-			// this is my little cute cache
-			if (ret != null) {
-				return ret;
-			}
-			// not hitting cache
-			ret = new MemLocInstnSet(loc, ConstraintManager.genTrue());
-			// put into the map
-			memLocInstnCache.put(loc, ret);
+			assert (fmlsToActls.containsKey(loc)) : loc
+					+ " should have been instantiated!";
+			ret = new MemLocInstnSet(fmlsToActls.get(loc), CstManager.genTrue());
+		} else if (loc instanceof LocalVarElem
+				|| loc instanceof StaticFieldElem) {
+			ret = new MemLocInstnSet(loc, CstManager.genTrue());
 		} else if (loc instanceof RetElem) {
-			if (ret != null) {
-				return ret;
-			}
 			if (hasRet) {
-				// assert (ret != null) : "return value should be mapped"
-				// + " the first time init the instantiation";
-				assert retToReceiver.containsKey(loc) : "ret should have been createad!";
-				ret = new MemLocInstnSet(retToReceiver.get(loc),
-						ConstraintManager.genTrue());
-				memLocInstnCache.put(loc, ret);
-				return ret;
+				assert retToRecv.containsKey(loc) : "ret should have been createad!";
+				ret = new MemLocInstnSet(retToRecv.get(loc),
+						CstManager.genTrue());
 			} else {
 				assert (ret == null) : "return value should"
-						+ " not be instantiated if there is no LHS!";
+						+ " not be instantiated if there is no lhs!";
 				return null;
 			}
 		} else if (loc instanceof AllocElem) {
-			// we also instantiated allocElem only once!
-			// wow! I guess it will save a LOT of time by doing this
-			if (ret != null) {
-				return ret;
-			}
-			// not hitting the cache
+			AllocElem alc = (AllocElem) loc;
 			if (SummariesEnv.v().allocDepth == 0
-					|| ((AllocElem) loc).contxtLength() < SummariesEnv.v().allocDepth) {
-
-				if (((AllocElem) loc).contains(point)) {
-					// to avoid non-termination
-					AllocElem allocElem = callerHeap
-							.getAllocElem(((AllocElem) loc));
-					ret = new MemLocInstnSet(allocElem,
-							ConstraintManager.genTrue());
+					|| alc.ctxtLength() < SummariesEnv.v().allocDepth) {
+				if (alc.contains(point)) {
+					ret = new MemLocInstnSet(alc, CstManager.genTrue());
 				} else {
 					if (SummariesEnv.v().dynAlloc) {
 						// using dynamic allocation
 						if (!SummariesEnv.v().getLibMeths()
-								.contains(point.getBelongingMethod())) {
+								.contains(point.getMethod())) {
 							// caller is NOT in java library
-							AllocElem allocElem = callerHeap.getAllocElem(
-									((AllocElem) loc), point);
-							ret = new MemLocInstnSet(allocElem,
-									ConstraintManager.genTrue());
+							Context ctx = Env.getContext(point,
+									alc.getContext());
+							AllocElem alc1 = Env.getAllocElem(alc.getSite(),
+									alc.getType(), ctx);
+							ret = new MemLocInstnSet(alc1, CstManager.genTrue());
 						} else {
-							// caller is in java library
-							AllocElem allocElem = callerHeap
-									.getAllocElem(((AllocElem) loc));
-							ret = new MemLocInstnSet(allocElem,
-									ConstraintManager.genTrue());
+							ret = new MemLocInstnSet(alc, CstManager.genTrue());
 						}
 					} else {
-						// not using dynamic allocation
-						// just append the context without differentiating
-						AllocElem allocElem = callerHeap.getAllocElem(
-								((AllocElem) loc), point);
-						ret = new MemLocInstnSet(allocElem,
-								ConstraintManager.genTrue());
+						Context ctx = Env.getContext(point, alc.getContext());
+						AllocElem alc1 = Env.getAllocElem(alc.getSite(),
+								alc.getType(), ctx);
+						ret = new MemLocInstnSet(alc1, CstManager.genTrue());
 					}
 				}
-			} else if (((AllocElem) loc).contxtLength() == SummariesEnv.v().allocDepth) {
-				// TODO
-				// AllocElem allocElem = (AllocElem) loc;
-				AllocElem allocElem = callerHeap.getAllocElem((AllocElem) loc);
-				ret = new MemLocInstnSet(allocElem, ConstraintManager.genTrue());
+			} else if (alc.ctxtLength() == SummariesEnv.v().allocDepth) {
+				ret = new MemLocInstnSet(alc, CstManager.genTrue());
 			} else {
 				assert false : "wrong!";
 			}
-			// put into the map
-			memLocInstnCache.put(loc, ret);
-		} else if (loc instanceof AccessPath) {
-			if (ret != null) {
-				return ret;
-			}
+
+		} else if (loc instanceof AccessPathElem) {
 			// instantiation for smashed access path
-			AbsMemLoc base = ((AccessPath) loc).getBase();
-			FieldElem field = ((AccessPath) loc).getField();
-			assert (!orgs.contains((AccessPath) loc)) : "Location " + loc
-					+ " should not depend on the instantiation of"
-					+ " location " + base;
-			orgs.add((AccessPath) loc);
-			MemLocInstnSet instnLocSet = instnMemLocUsingCache(orgs, base,
-					callerHeap, point);
-			assert (orgs.contains((AccessPath) loc)) : "orgs should contain "
-					+ loc + " and we can remove it from orgs";
-			orgs.remove((AccessPath) loc);
-			for (AbsMemLoc loc1 : instnLocSet.keySet()) {
-				result.getSum().addToDepMap(
-						new Pair<AbsMemLoc, FieldElem>(loc1, field),
-						new Pair<MemLocInstnItem, Set<AccessPath>>(this, orgs));
-			}
+			AbsMemLoc inner = ((AccessPathElem) loc).getInner();
+			FieldElem outer = ((AccessPathElem) loc).getOuter();
 
-			ret = callerHeap.instnLookup(instnLocSet, field);
+			MemLocInstnSet instnLocSet = instnMemLocNoCache(inner, callerHeap,
+					point);
+			ret = callerHeap.instnLookup(instnLocSet, outer);
 
-			// a work-list algorithm for find all locations that are
-			// transitively reachable from the current instantiated memory
-			// locations in order to be sound
-			if (SummariesEnv.v().markSmashedFields
-					&& SummariesEnv.v().instnSmashedAPs) {
-				// to avoid non-termination
-				Set<AbsMemLoc> visited = new HashSet<AbsMemLoc>();
-				// work list storing the locations that are candidates as
-				// the instantiated locations
-				LinkedHashSet<Pair<AbsMemLoc, BoolExpr>> wl = new LinkedHashSet<Pair<AbsMemLoc, BoolExpr>>();
-				// the locations that can really be instantiated into
-				MemLocInstnSet targets = new MemLocInstnSet();
-				// initialized the work list
-				if (((AccessPath) loc).isSmashed()) {
-					for (AbsMemLoc loc1 : ret.keySet()) {
-						BoolExpr expr1 = ret.get(loc1);
-						wl.add(new Pair<AbsMemLoc, BoolExpr>(loc1, expr1));
-					}
+			// a work-list algorithm for transitive closure
+			Set<AbsMemLoc> visited = new HashSet<AbsMemLoc>();
+			// the candidates as instantiated locations
+			LinkedHashSet<Pair<AbsMemLoc, BoolExpr>> wl = new LinkedHashSet<Pair<AbsMemLoc, BoolExpr>>();
+			// the locations that can really be instantiated into
+			MemLocInstnSet targets = new MemLocInstnSet();
+			// initialized the work list
+			AccessPathElem path = ((AccessPathElem) loc);
+			if (path.isSmashed()) {
+				for (AbsMemLoc loc1 : ret.keySet()) {
+					BoolExpr expr1 = ret.get(loc1);
+					wl.add(new Pair<AbsMemLoc, BoolExpr>(loc1, expr1));
 				}
+			}
+			Set<FieldElem> smashedFields = path.getSmashedFields();
+			Set<FieldElem> endingFields = path.getEndingFields();
+			// the work list algorithm
+			while (!wl.isEmpty()) {
+				Pair<AbsMemLoc, BoolExpr> elem = wl.iterator().next();
+				wl.remove(elem);
+				AbsMemLoc canddt = elem.val0;
+				BoolExpr cst = elem.val1;
+				// mark as visited
+				visited.add(canddt);
+				// worker is a candidate
+				MemLocInstnSet worker = new MemLocInstnSet(canddt, cst);
 
-				// the work list algorithm
-				while (!wl.isEmpty()) {
-					Pair<AbsMemLoc, BoolExpr> elem = wl.iterator().next();
-					wl.remove(elem);
-					AbsMemLoc canddt = elem.val0;
-					Set<FieldElem> smashedFields = ((AccessPath) loc)
-							.getSmashedFields();
-					Set<FieldElem> endingFields = ((AccessPath) loc)
-							.getEndingFields();
-					BoolExpr cst = elem.val1;
-					// mark as visited
-					visited.add(canddt);
-					// worker is a candidate
-					MemLocInstnSet worker = new MemLocInstnSet(canddt, cst);
-
-					for (FieldElem f1 : canddt.getFields()) {
-						// ignore the in-compatible fields
-						if (!smashedFields.contains(f1)) {
-							continue;
-						}
-						// if ending fields match, then this is one target
-						if (endingFields.contains(f1)) {
-							MemLocInstnSet next = callerHeap.instnLookup(
-									worker, f1);
-							targets.addAll(next);
-						}
-						// if f1 is smashed by ap, then add this into wl
-						if (smashedFields.contains(f1)) {
-							MemLocInstnSet next = callerHeap.instnLookup(
-									worker, f1);
-							for (AbsMemLoc loc2 : next.keySet()) {
-								if (!visited.contains(loc2)) {
-									BoolExpr cst2 = next.get(loc2);
-									wl.add(new Pair<AbsMemLoc, BoolExpr>(loc2,
-											cst2));
-								}
+				for (FieldElem f1 : canddt.getFields()) {
+					// ignore the in-compatible fields
+					if (!smashedFields.contains(f1)) {
+						continue;
+					}
+					// if ending fields match, then this is one target
+					if (endingFields.contains(f1)) {
+						MemLocInstnSet next = callerHeap
+								.instnLookup(worker, f1);
+						targets.addAll(next);
+					}
+					// if f1 is smashed, then add this into wl
+					if (smashedFields.contains(f1)) {
+						MemLocInstnSet next = callerHeap
+								.instnLookup(worker, f1);
+						for (AbsMemLoc loc2 : next.keySet()) {
+							if (!visited.contains(loc2)) {
+								BoolExpr cst2 = next.get(loc2);
+								wl.add(new Pair<AbsMemLoc, BoolExpr>(loc2, cst2));
 							}
 						}
 					}
 				}
-				// then conjoin with the previous result
-				ret.addAll(targets);
 			}
-			if (ret.isEmpty()) {
-			} else {
-				memLocInstnCache.put(loc, ret);
-			}
-		} else {
-			assert false : "wried things happen! Unknow type.";
-		}
-
-		return ret;
-	}
-
-	// this method implements the inference rules in figure 11 of the paper
-	// loc is the location in the callee's heap
-	protected MemLocInstnSet instnMemLocNoCache(AbsMemLoc loc,
-			AbstractHeap callerHeap, ProgramPoint point) {
-
-		MemLocInstnSet ret = memLocInstnCache.get(loc);
-
-		if (loc instanceof ParamElem) {
-			assert (ret != null) : "parameters should have been instantiated"
-					+ " when the first time init the instantiation";
-		}
-
-		if (loc instanceof RetElem) {
-			if (hasRet) {
-				assert (ret != null) : "return value should have been instantiated"
-						+ " when the first time init the instantiation!";
-			} else {
-				assert (ret == null) : "if there is no LHS in the call site, "
-						+ "we cannot instantiate the return value";
-			}
-		}
-
-		if (loc instanceof LocalVarElem || loc instanceof ParamElem
-				|| loc instanceof StaticElem) {
-
-			// this is my little cute cache
-			if (ret != null) {
-				return ret;
-			}
-			// not hitting cache
-			ret = new MemLocInstnSet(loc, ConstraintManager.genTrue());
-			// put into the map
-			memLocInstnCache.put(loc, ret);
-		} else if (loc instanceof RetElem) {
-			if (hasRet) {
-				assert (ret != null) : "return value should be mapped"
-						+ " the first time init the instantiation";
-				return ret;
-			} else {
-				assert (ret == null) : "return value should"
-						+ " not be instantiated if there is no LHS!";
-				return null;
-			}
-		} else if (loc instanceof AllocElem) {
-			// we also instantiated allocElem only once!
-			// wow! I guess it will save a LOT of time by doing this
-			if (ret != null) {
-				return ret;
-			}
-			// not hitting the cache
-			if (SummariesEnv.v().allocDepth == 0
-					|| ((AllocElem) loc).contxtLength() < SummariesEnv.v().allocDepth) {
-
-				if (((AllocElem) loc).contains(point)) {
-					AllocElem allocElem = callerHeap
-							.getAllocElem(((AllocElem) loc));
-					ret = new MemLocInstnSet(allocElem,
-							ConstraintManager.genTrue());
-				} else {
-					AllocElem allocElem = callerHeap.getAllocElem(
-							((AllocElem) loc), point);
-					ret = new MemLocInstnSet(allocElem,
-							ConstraintManager.genTrue());
-				}
-			} else if (((AllocElem) loc).contxtLength() == SummariesEnv.v().allocDepth) {
-
-				AllocElem allocElem = callerHeap.getAllocElem((AllocElem) loc);
-				ret = new MemLocInstnSet(allocElem, ConstraintManager.genTrue());
-			} else {
-				assert false : "wrong!";
-			}
-			// put into the map
-			memLocInstnCache.put(loc, ret);
-		} else if (loc instanceof AccessPath) {
-			AbsMemLoc base = ((AccessPath) loc).getBase();
-			FieldElem field = ((AccessPath) loc).getField();
-			MemLocInstnSet instnLocSet = instnMemLocNoCache(base, callerHeap,
-					point);
-			ret = callerHeap.instnLookup(instnLocSet, field);
-
-			// put into the map
-			memLocInstnCache.put(loc, ret);
-
+			// then conjoin with the previous result
+			ret.addAll(targets);
 		} else {
 			assert false : "wried things happen! Unknow type.";
 		}

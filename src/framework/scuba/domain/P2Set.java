@@ -5,12 +5,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import joeq.Class.jq_Array;
 import joeq.Class.jq_Type;
+import chord.program.Program;
 import chord.util.tuple.object.Pair;
 
 import com.microsoft.z3.BoolExpr;
 
-import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.CstManager;
 
 public class P2Set {
 
@@ -21,15 +23,13 @@ public class P2Set {
 
 	}
 
-	public P2Set(HeapObject obj, BoolExpr constraint) {
-		p2Set.put(obj, constraint);
+	public P2Set(HeapObject obj, BoolExpr cst) {
+		p2Set.put(obj, cst);
 	}
 
 	// this is the default p2set
 	public P2Set(HeapObject obj) {
-		assert (obj.isArgDerived()) : obj + " is not argument derived!";
-		assert (obj instanceof HeapObject) : obj + " is not a heap object!";
-		p2Set.put(obj, ConstraintManager.genTrue());
+		p2Set.put(obj, CstManager.genTrue());
 	}
 
 	public boolean isEmpty() {
@@ -40,22 +40,50 @@ public class P2Set {
 		return p2Set.remove(hObj);
 	}
 
-	// this join method implements the join operation described in definition 8
-	// of the paper, in which it only reads other and write this.p2Set
-	// this method will never get the pointer to the other p2set so do not worry
-	// about modifying the other p2set by modifying this p2set
-	public Pair<Boolean, Boolean> join(P2Set other, AbstractHeap absHeap,
-			jq_Type typeFilter) {
+	public Pair<Boolean, Boolean> join(P2Set other, AbsHeap absHeap,
+			AbsMemLoc src, FieldElem f) {
 		boolean changeHeap = false;
 		boolean changeSum = false;
+		jq_Type typeFilter = null;
+
+		if (f instanceof RegFieldElem) {
+			typeFilter = ((RegFieldElem) f).getField().getType();
+		} else if (f instanceof IndexFieldElem) {
+			typeFilter = ((src.getType() instanceof jq_Array) ? ((jq_Array) src
+					.getType()).getElementType() : Program.g().getClass(
+					"java.lang.Object"));
+		} else if (f instanceof EpsilonFieldElem) {
+			typeFilter = src.getType();
+		} else {
+			assert false : "unknow type!";
+		}
+		assert typeFilter != null;
 
 		for (HeapObject obj : other.keySet()) {
-
 			// filtering the in-compatible types
 			if (SummariesEnv.v().useTypeFilter) {
-				if (!obj.getType().isSubtypeOf(typeFilter)
-						&& !typeFilter.isSubtypeOf(obj.getType())) {
-					continue;
+				if (SummariesEnv.v().level == SummariesEnv.FieldSmashLevel.REG) {
+					if (SummariesEnv.v().useSubTypeFilter) {
+						if (obj instanceof AllocElem) {
+							if (!obj.getType().isSubtypeOf(typeFilter)) {
+								continue;
+							}
+						} else if (obj instanceof AccessPathElem) {
+							if (!obj.getType().isSubtypeOf(typeFilter)
+									&& !typeFilter.isSubtypeOf(obj.getType())) {
+								continue;
+							}
+						} else {
+							assert false;
+						}
+					} else {
+						if (!obj.getType().isSubtypeOf(typeFilter)
+								&& !typeFilter.isSubtypeOf(obj.getType())) {
+							continue;
+						}
+					}
+				} else {
+					assert false : "unknow decoding way!";
 				}
 			}
 
@@ -67,18 +95,17 @@ public class P2Set {
 
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)
-				BoolExpr newCst = ConstraintManager.union(p2Set.get(obj),
-						otherCst);
+				BoolExpr newCst = CstManager.union(p2Set.get(obj), otherCst);
 
 				// TODO
 				// remove the edges with false constraints
-				if (ConstraintManager.isFalse(newCst)) {
+				if (CstManager.isFalse(newCst)) {
 					continue;
 				}
 				// check whether we need to update the p2set of this heap object
 				// TODO check the return value
 				// we should use the equivalence checking
-				if (ConstraintManager.isEqual(p2Set.get(obj), newCst))
+				if (CstManager.isEqual(p2Set.get(obj), newCst))
 					continue;
 
 				p2Set.put(obj, newCst);
@@ -86,27 +113,23 @@ public class P2Set {
 				changeHeap = true;
 				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 					changeSum = true;
-				} else if (obj.isArgDerived() || absHeap.toProp(obj)) {
+				} else if (obj.isArgDvd() || Env.toProp(obj)) {
 					changeSum = true;
 				}
 			} else {
-				// obj is only in other's p2set
-				// AVOID directly get the constraint instance of the other
-				// p2set!!!! only get the shallow copy of the other constraints
-
 				BoolExpr otherCst = other.get(obj);
 				// TODO
 				// remove the edges with false constraints
-				if (ConstraintManager.isFalse(otherCst)) {
+				if (CstManager.isFalse(otherCst)) {
 					continue;
 				}
 
 				// for this case, we should add a new edge
-				p2Set.put(obj, ConstraintManager.clone(other.get(obj)));
+				p2Set.put(obj, CstManager.clone(other.get(obj)));
 				changeHeap = true;
 				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 					changeSum = true;
-				} else if (obj.isArgDerived() || absHeap.toProp(obj)) {
+				} else if (obj.isArgDvd() || Env.toProp(obj)) {
 					changeSum = true;
 				}
 			}
@@ -115,7 +138,7 @@ public class P2Set {
 	}
 
 	// this is used for join operation not related to updating the heap
-	public Pair<Boolean, Boolean> join(P2Set other, AbstractHeap absHeap) {
+	public Pair<Boolean, Boolean> join(P2Set other, AbsHeap absHeap) {
 		boolean changeHeap = false;
 		boolean changeSum = false;
 		for (HeapObject obj : other.keySet()) {
@@ -126,18 +149,17 @@ public class P2Set {
 
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)
-				BoolExpr newCst = ConstraintManager.union(p2Set.get(obj),
-						otherCst);
+				BoolExpr newCst = CstManager.union(p2Set.get(obj), otherCst);
 
 				// TODO
 				// remove the edges with false constraints
-				if (ConstraintManager.isFalse(newCst)) {
+				if (CstManager.isFalse(newCst)) {
 					continue;
 				}
 				// check whether we need to update the p2set of this heap object
 				// TODO check the return value
 				// we should use the equivalence checking
-				if (ConstraintManager.isEqual(p2Set.get(obj), newCst))
+				if (CstManager.isEqual(p2Set.get(obj), newCst))
 					continue;
 
 				p2Set.put(obj, newCst);
@@ -145,7 +167,7 @@ public class P2Set {
 				changeHeap = true;
 				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 					changeSum = true;
-				} else if (obj.isArgDerived() || absHeap.toProp(obj)) {
+				} else if (obj.isArgDvd() || Env.toProp(obj)) {
 					changeSum = true;
 				}
 			} else {
@@ -156,16 +178,16 @@ public class P2Set {
 				BoolExpr otherCst = other.get(obj);
 				// TODO
 				// remove the edges with false constraints
-				if (ConstraintManager.isFalse(otherCst)) {
+				if (CstManager.isFalse(otherCst)) {
 					continue;
 				}
 
 				// for this case, we should add a new edge
-				p2Set.put(obj, ConstraintManager.clone(other.get(obj)));
+				p2Set.put(obj, CstManager.clone(other.get(obj)));
 				changeHeap = true;
 				if (SummariesEnv.v().localType == SummariesEnv.PropType.ALL) {
 					changeSum = true;
-				} else if (obj.isArgDerived() || absHeap.toProp(obj)) {
+				} else if (obj.isArgDvd() || Env.toProp(obj)) {
 					changeSum = true;
 				}
 			}
@@ -182,8 +204,7 @@ public class P2Set {
 		for (HeapObject obj : p2Set.keySet()) {
 			// this newCst is a copy with the same content but different
 			// constraint instances
-			BoolExpr newCst = ConstraintManager.intersect(p2Set.get(obj),
-					otherCst);
+			BoolExpr newCst = CstManager.intersect(p2Set.get(obj), otherCst);
 			p2Set.put(obj, newCst);
 		}
 		return this;

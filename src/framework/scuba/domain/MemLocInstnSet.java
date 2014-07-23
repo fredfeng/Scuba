@@ -7,7 +7,7 @@ import java.util.Set;
 
 import com.microsoft.z3.BoolExpr;
 
-import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.CstManager;
 
 public class MemLocInstnSet {
 
@@ -83,7 +83,7 @@ public class MemLocInstnSet {
 
 				// generate the union of the two (a shallow copy with the same
 				// constraints but different instances)
-				BoolExpr newCst = ConstraintManager.union(
+				BoolExpr newCst = CstManager.union(
 						instnLocSet.get(hObj), otherCst);
 
 				instnLocSet.put(hObj, newCst);
@@ -94,7 +94,7 @@ public class MemLocInstnSet {
 				// set!!!! only get the shallow copy of the other constraints
 
 				// for this case, we should add a new edge
-				instnLocSet.put(hObj, ConstraintManager.clone(other.get(hObj)));
+				instnLocSet.put(hObj, CstManager.clone(other.get(hObj)));
 				ret = true;
 			}
 		}

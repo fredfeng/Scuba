@@ -1,122 +1,60 @@
 package framework.scuba.domain;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+// Context is in the following format:
+// ctx_1 || ctx_2 || .. || ctx_n
+// where ctx_n is the latest one
 
-public class Context {
+public class Context implements Numberable {
 
-	final protected LinkedList<ProgramPoint> pointsSeq = new LinkedList<ProgramPoint>();
+	final protected ProgPoint curr;
 
-	final protected Set<ProgramPoint> points = new HashSet<ProgramPoint>();
+	final protected Context prevCtx;
 
-	public Context() {
+	// number starts from 1, and 1 is for empty context
+	private int number;
 
-	}
-
-	public Context(LinkedList<ProgramPoint> pointsSeq, Set<ProgramPoint> points) {
-		this.pointsSeq.addAll(pointsSeq);
-		this.points.addAll(points);
-	}
-
-	public Context(ProgramPoint point) {
-		this.pointsSeq.add(point);
-		this.points.add(point);
-	}
-
-	public void appendFront(ProgramPoint point) {
-		pointsSeq.addFirst(point);
-		points.add(point);
-	}
-
-	public void appendEnd(ProgramPoint point) {
-		pointsSeq.addLast(point);
-		points.add(point);
-	}
-
-	public void appendEnd(Context otherCtx) {
-		pointsSeq.addAll(otherCtx.getContext());
-		points.addAll(otherCtx.getProgramPoints());
+	// curr = null, prevCtx = null, number = 1 is the base case
+	public Context(ProgPoint curr, Context prevCtx, int number) {
+		this.curr = curr;
+		this.prevCtx = prevCtx;
+		setNumber(number);
 	}
 
 	public int length() {
-		return pointsSeq.size();
+		return curr == null ? 0 : 1 + prevCtx.length();
 	}
 
-	public boolean contains(ProgramPoint point) {
-		return points.contains(point);
+	public boolean contains(ProgPoint point) {
+		return curr == null ? false
+				: (curr == point || prevCtx.contains(point));
 	}
 
-	public int size() {
-		return pointsSeq.size();
-	}
-
-	public Set<ProgramPoint> getProgramPoints() {
-		return this.points;
-	}
-
-	public LinkedList<ProgramPoint> getContext() {
-		return this.pointsSeq;
-	}
-
-	public ProgramPoint getProgramPoint(int index) {
-		return pointsSeq.get(index);
+	// --------------- Numberable ------------------
+	@Override
+	public int getNumber() {
+		return number;
 	}
 
 	@Override
-	public Context clone() {
-		LinkedList<ProgramPoint> pointsSeqCopy = new LinkedList<ProgramPoint>();
-		Set<ProgramPoint> pointsCopy = new HashSet<ProgramPoint>();
-		pointsSeqCopy.addAll(pointsSeq);
-		pointsCopy.addAll(points);
-		Context ret = new Context(pointsSeqCopy, pointsCopy);
-		return ret;
+	public void setNumber(int number) {
+		this.number = number;
+	}
+
+	// --------------- Regular ------------------
+	@Override
+	public int hashCode() {
+		assert number > 0 : "Ctx should have non-negative number.";
+		return number;
 	}
 
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof Context))
-			return false;
-
-		Context otherCtx = (Context) other;
-
-		if (pointsSeq.size() != otherCtx.size())
-			return false;
-
-		for (int i = 0; i < pointsSeq.size(); i++) {
-			ProgramPoint thisPoint = pointsSeq.get(i);
-			ProgramPoint otherPoint = otherCtx.getProgramPoint(i);
-			if (!thisPoint.equals(otherPoint))
-				return false;
-		}
-
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		if (pointsSeq.isEmpty())
-			return 0;
-
-		int ret = 0;
-		int range = 3;
-		for (int i = 0; i < pointsSeq.size(); i++) {
-			ret *= 37;
-			ret += pointsSeq.get(i).hashCode();
-			if (i > range)
-				break;
-		}
-
-		return ret;
+		return this == other;
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("[Ctx]");
-		for (ProgramPoint point : pointsSeq) {
-			sb.append(point + "##");
-		}
-		return sb.toString();
+		return "[Ctx]" + curr + " || " + prevCtx;
 	}
+
 }

@@ -15,27 +15,26 @@ import chord.project.analyses.ProgramRel;
 import chord.util.SetUtils;
 import chord.util.tuple.object.Trio;
 import framework.scuba.analyses.alias.SummaryBasedAnalysis;
-import framework.scuba.domain.Alloc;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.utils.StringUtil;
 
 /**
- * Checking downcast safety based on points-to information
- * Our percentage of unsafety cast should be less than Chord
+ * Checking downcast safety based on points-to information Our percentage of
+ * unsafety cast should be less than Chord
  */
 public class DowncastAnalysis {
-	
+
 	protected ProgramRel relDcm;
 	protected ProgramRel relDVH;
 	SummaryBasedAnalysis analysis;
-	
+
 	public DowncastAnalysis(ProgramRel dcm, ProgramRel dvh,
 			SummaryBasedAnalysis sum) {
 		relDcm = dcm;
 		relDVH = dvh;
 		analysis = sum;
 	}
-	
+
 	// downcast analysis.
 	public void run() {
 		if (!relDcm.isOpen())
@@ -59,29 +58,25 @@ public class DowncastAnalysis {
 			Register r = trio.val1;
 			jq_Type castType = trio.val2;
 			// System.out.println(meth + " reg: " + r + " Type: " + trio.val2);
-			Set<AllocElem> p2Set = analysis.query(meth.getDeclaringClass(), meth, r);
+			Set<AllocElem> p2Set = analysis.query(meth.getDeclaringClass(),
+					meth, r);
 
 			boolean dcScuba = true;
 			Set<Quad> sites = new HashSet<Quad>();
-			Set<Alloc> allocs = new HashSet<Alloc>();
 			if (p2Set.isEmpty())
 				empScuba++;
 
 			for (AllocElem alloc : p2Set) {
-				sites.add(alloc.getAlloc().getAllocSite());
-				allocs.add(alloc.getAlloc());
+				sites.add(alloc.getSite());
 				if (castType.isArrayType()) {
-					if (!alloc.getAlloc().getType().isArrayType())
+					if (!alloc.getType().isArrayType())
 						dcScuba = false;
 				} else {
-					if (alloc.getAlloc().getType().isArrayType())
+					if (alloc.getType().isArrayType())
 						dcScuba = false;
 					else {
 						jq_Class castClz = (jq_Class) castType;
-						jq_Class allocClz = (jq_Class) alloc.getAlloc()
-								.getType();
-
-						// /damm it!
+						jq_Class allocClz = (jq_Class) alloc.getType();
 						if (!allocClz.extendsClass(castClz)
 								&& !allocClz.implementsInterface(castClz))
 							dcScuba = false;

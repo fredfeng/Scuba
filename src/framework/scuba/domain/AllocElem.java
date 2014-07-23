@@ -1,92 +1,52 @@
 package framework.scuba.domain;
 
 import joeq.Class.jq_Type;
+import joeq.Compiler.Quad.Quad;
 
 public class AllocElem extends HeapObject {
 
-	final protected Alloc alloc;
+	// the site where this allocElem is originally allocated
+	final protected Quad site;
 
+	// the context this allocElem goes through
 	final protected Context context;
 
-	public AllocElem(Alloc allocSite, Context context, jq_Type type) {
-		this.alloc = allocSite;
+	public AllocElem(Quad site, Context context, jq_Type type, int number) {
+		super(type, number);
+		this.site = site;
 		this.context = context;
-		this.type = type;
 	}
 
-	public AllocElem findRoot() {
-		return this;
-	}
-
-	public void appendContextFront(ProgramPoint point) {
-		this.context.appendFront(point);
-	}
-
-	public void appendContextEnd(ProgramPoint point) {
-		this.context.appendEnd(point);
-	}
-
-	public int contxtLength() {
-		return context.length();
-	}
-
-	public Alloc getAlloc() {
-		return alloc;
+	public Quad getSite() {
+		return site;
 	}
 
 	public Context getContext() {
 		return context;
 	}
 
-	public boolean contains(ProgramPoint point) {
+	public int ctxtLength() {
+		return context.length();
+	}
+
+	public boolean contains(ProgPoint point) {
 		return context.contains(point);
 	}
 
+	// ------------ Regular --------------
 	@Override
 	public String toString() {
-		return alloc + "||" + context;
-	}
-
-	@Override
-	public String dump() {
-		return alloc + "||" + context;
+		return "[A: " + site + " | " + context + "]";
 	}
 
 	@Override
 	public boolean equals(Object other) {
-		return (other instanceof AllocElem)
-				&& (alloc.equals(((AllocElem) other).alloc))
-				&& (context.equals(((AllocElem) other).context));
+		return this == other;
 	}
 
 	@Override
 	public int hashCode() {
-		return 37 * alloc.hashCode() + context.hashCode();
-	}
-
-	@Override
-	public boolean hasFieldSelector(FieldElem field) {
-		return false;
-	}
-
-	@Override
-	public int countFieldSelector(FieldElem field) {
-		return 0;
-	}
-
-	@Override
-	public boolean hasFieldType(jq_Type type) {
-		return false;
-	}
-
-	@Override
-	public boolean hasFieldTypeComp(jq_Type type) {
-		return false;
-	}
-
-	@Override
-	public AllocElem clone() {
-		return new AllocElem(alloc, context.clone(), type);
+		return number;
 	}
 
 }

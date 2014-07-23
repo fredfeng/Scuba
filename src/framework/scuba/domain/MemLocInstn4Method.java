@@ -1,7 +1,6 @@
 package framework.scuba.domain;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,12 +47,4 @@ public class MemLocInstn4Method {
 		return memLocInstnResult.size();
 	}
 
-	public int itemSize() {
-		int ret = 0;
-		for (Iterator<Map.Entry<Pair<Quad, jq_Method>, MemLocInstnItem>> it = memLocInstnResult
-				.entrySet().iterator(); it.hasNext();) {
-			ret += it.next().getValue().size();
-		}
-		return ret;
-	}
 }

@@ -7,88 +7,36 @@ import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class ParamElem extends StackObject {
 
-	// the class this parameter belongs to
-	jq_Class clazz;
+	protected Register parameter;
 
-	// the method this parameter belongs to
-	jq_Method method;
+	protected jq_Method meth;
 
-	// the parameter of this parameter
-	Register parameter;
+	protected jq_Class clazz;
 
-	public ParamElem(jq_Class clazz, jq_Method method, Register parameter,
-			jq_Type type) {
-		this.clazz = clazz;
-		this.method = method;
+	public ParamElem(Register parameter, jq_Method meth, jq_Class clazz,
+			jq_Type type, int number) {
+		super(type, number);
 		this.parameter = parameter;
-		this.length = 1;
-		this.type = type;
+		this.meth = meth;
+		this.clazz = clazz;
 	}
 
-	@Override
-	public ParamElem findRoot() {
-		return this;
+	public Register getRegister() {
+		return parameter;
 	}
 
-	@Override
-	public boolean equals(Object other) {
-		return (other instanceof ParamElem)
-				&& (clazz.equals(((ParamElem) other).clazz))
-				&& (method.equals(((ParamElem) other).method))
-				&& (parameter.equals(((ParamElem) other).parameter));
+	public jq_Method getMethod() {
+		return meth;
 	}
 
-	@Override
-	public int hashCode() {
-		return 37 * 37 * clazz.hashCode() + 37 * method.hashCode()
-				+ parameter.hashCode();
+	public jq_Class getDeclaringClass() {
+		return clazz;
 	}
 
+	// -------------- Regular ---------------
 	@Override
 	public String toString() {
-		return "[C] " + clazz.getName() + " [M] " + method.getName() + " [P] "
-				+ parameter;
-		// return "[P]" + parameter;
+		return "[P]" + parameter;
 	}
 
-	@Override
-	public String dump() {
-		return "[C] " + clazz.getName() + " [M] " + method.getName() + " [P] "
-				+ parameter;
-	}
-
-	// getClass method
-	public jq_Class getBelongingClass() {
-		return this.clazz;
-	}
-
-	// getMethod method
-	public jq_Method getBelongingMethod() {
-		return this.method;
-	}
-
-	// getParameter method
-	public Register getParameter() {
-		return this.parameter;
-	}
-
-	@Override
-	public boolean hasFieldSelector(FieldElem field) {
-		return false;
-	}
-
-	@Override
-	public int countFieldSelector(FieldElem field) {
-		return 0;
-	}
-
-	@Override
-	public boolean hasFieldType(jq_Type type) {
-		return false;
-	}
-
-	@Override
-	public boolean hasFieldTypeComp(jq_Type type) {
-		return false;
-	}
 }

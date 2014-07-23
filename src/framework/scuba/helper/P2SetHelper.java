@@ -15,7 +15,7 @@ public class P2SetHelper {
 		for (HeapObject obj : p2Set.keySet()) {
 			// intersection is a shallow copy of the constraints with the same
 			// content but different constraint instances
-			BoolExpr newCst = ConstraintManager.intersect(
+			BoolExpr newCst = CstManager.intersect(
 					p2Set.get(obj), otherCst);
 
 			ret.put(obj, newCst);
@@ -32,20 +32,20 @@ public class P2SetHelper {
 			if (pt2.contains(obj)) {
 				// newCst is a copy of constraints, which has nothing to do with
 				// either constraints in the p2sets
-				BoolExpr newCst = ConstraintManager.intersect(
+				BoolExpr newCst = CstManager.intersect(
 						pt1.get(obj), pt2.get(obj));
 
 				ret.put(obj, newCst);
 			} else {
 				// do clone() to get new constraints with the same content but
 				// different instances
-				ret.put(obj, ConstraintManager.clone(pt1.get(obj)));
+				ret.put(obj, CstManager.clone(pt1.get(obj)));
 			}
 		}
 		for (HeapObject obj : pt2.keySet()) {
 			if (!pt1.contains(obj)) {
 				// do clone()
-				ret.put(obj, ConstraintManager.clone(pt2.get(obj)));
+				ret.put(obj, CstManager.clone(pt2.get(obj)));
 			}
 		}
 

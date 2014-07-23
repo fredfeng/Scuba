@@ -4,89 +4,95 @@ import java.util.HashSet;
 import java.util.Set;
 
 import joeq.Class.jq_Type;
+import joeq.Compiler.Quad.BytecodeToQuad.jq_ReturnAddressType;
 
-public abstract class AbsMemLoc {
+public abstract class AbsMemLoc implements Numberable, ArgDerivable {
 
-	protected Set<FieldElem> fields = new HashSet<FieldElem>();
+	protected int number;
 
-	protected int length;
+	protected final jq_Type type;
 
-	protected jq_Type type;
+	protected final Set<FieldElem> fields = new HashSet<FieldElem>();
 
-	public static enum ArgDerivedType {
-		IS_ARG_DERIVED, NOT_ARG_DERIVED, UN_KNOWN;
+	ArgDerivable.ArgDvdType argDvdMarker = ArgDerivable.ArgDvdType.UN_KNOWN;
+
+	public AbsMemLoc(jq_Type type, int number) {
+		if (!type.isPrepared() && !(type instanceof jq_ReturnAddressType)) {
+			type.prepare();
+		}
+		this.type = type;
+		setNumber(number);
 	}
-
-	ArgDerivedType argDerived = ArgDerivedType.UN_KNOWN;
-
-	// abstract methods
-	abstract public AbsMemLoc findRoot();
 
 	public jq_Type getType() {
 		return type;
 	}
-
-	public void setType(jq_Type type) {
-		this.type = type;
-	}
-
-	public void setArgDerived() {
-		this.argDerived = ArgDerivedType.IS_ARG_DERIVED;
-	}
-
-	public void resetArgDerived() {
-		this.argDerived = ArgDerivedType.NOT_ARG_DERIVED;
-	}
-
-	public ArgDerivedType getArgDerivedMarker() {
-		return this.argDerived;
-	}
-
-	public boolean knownArgDerived() {
-		return (this.argDerived != ArgDerivedType.UN_KNOWN);
-	}
-
-	public boolean unknowArgDerived() {
-		return (this.argDerived == ArgDerivedType.UN_KNOWN);
-	}
-
-	public boolean isArgDerived() {
-		return (this.argDerived == ArgDerivedType.IS_ARG_DERIVED);
-	}
-
-	public boolean isNotArgDerived() {
-		return (this.argDerived == ArgDerivedType.NOT_ARG_DERIVED);
-	}
-
-	abstract public boolean hasFieldSelector(FieldElem field);
-
-	// count how many field selectors are there in the given element
-	abstract public int countFieldSelector(FieldElem field);
-
-	abstract public boolean hasFieldType(jq_Type type);
-
-	abstract public boolean hasFieldTypeComp(jq_Type type);
 
 	public void addField(FieldElem field) {
 		fields.add(field);
 	}
 
 	public Set<FieldElem> getFields() {
-		return this.fields;
+		return fields;
 	}
 
-	public int contxtLength() {
-		return length;
+	// -------------- Regular ------------------
+	@Override
+	public int hashCode() {
+		assert number > 0 : "AbsMemLoc should have non-negative number.";
+		return number;
 	}
 
 	@Override
-	abstract public boolean equals(Object other);
+	public boolean equals(Object other) {
+		return this == other;
+	}
+
+	// ---------------- Numberable ------------------
+	@Override
+	public int getNumber() {
+		return number;
+	}
 
 	@Override
-	abstract public int hashCode();
+	public void setNumber(int number) {
+		this.number = number;
+	}
+
+	// ---------------- ArgDerivable ------------------
+	@Override
+	public void setArgDvd() {
+		this.argDvdMarker = ArgDerivable.ArgDvdType.IS_ARG_DERIVED;
+	}
 
 	@Override
-	abstract public String toString();
+	public void resetArgDvd() {
+		this.argDvdMarker = ArgDerivable.ArgDvdType.NOT_ARG_DERIVED;
+	}
 
-	abstract public String dump();
+	@Override
+	public ArgDerivable.ArgDvdType getArgDvdMarker() {
+		return this.argDvdMarker;
+	}
+
+	@Override
+	public boolean knownArgDvd() {
+		return (this.argDvdMarker != ArgDerivable.ArgDvdType.UN_KNOWN);
+	}
+
+	@Override
+	public boolean unknowArgDvd() {
+		return (this.argDvdMarker == ArgDerivable.ArgDvdType.UN_KNOWN);
+	}
+
+	@Override
+	public boolean isArgDvd() {
+		return (this.argDvdMarker == ArgDerivable.ArgDvdType.IS_ARG_DERIVED);
+	}
+
+	@Override
+	public boolean isNotArgDvd() {
+		return (this.argDvdMarker == ArgDerivable.ArgDvdType.NOT_ARG_DERIVED);
+	}
+
 }

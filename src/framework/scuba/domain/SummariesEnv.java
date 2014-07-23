@@ -2,11 +2,13 @@ package framework.scuba.domain;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 import joeq.Class.jq_Method;
 import joeq.Compiler.Quad.RegisterFactory.Register;
+import chord.util.tuple.object.Trio;
 
 /**
  * Global env to store all summaries of their methods. Singleton pattern.
@@ -24,7 +26,7 @@ public class SummariesEnv {
 	protected SumConclusion finalSum;
 
 	public static enum PropType {
-		ALL, NOLOCAL, DOWNCAST, APPLOCAL, NOTHING, NOALLOC;
+		ALL, NOLOCAL, DOWNCAST, APPLOCAL, NOTHING;
 	}
 
 	public static enum FieldSmashLevel {
@@ -39,7 +41,7 @@ public class SummariesEnv {
 	// 0 means infinity
 	protected int allocDepth = 3;
 	// dynamically control the depth
-	protected boolean dynAlloc = true;
+	protected boolean dynAlloc = false;
 
 	// customize what to propagate
 	// protected boolean propFilter = false;
@@ -52,147 +54,53 @@ public class SummariesEnv {
 	// all library methods
 	protected Set<jq_Method> libMeths = new HashSet<jq_Method>();
 
-	// force to invoke garbage collector for abstract heap.
-	protected boolean forceGc = false;
+	// alias pairs
+	protected LinkedHashSet<Trio<jq_Method, Register, Register>> aliasPairs = new LinkedHashSet<Trio<jq_Method, Register, Register>>();
+
 	// disable constraint instantiate.
 	protected boolean disableCst = true;
 	// we mark it as bad scc if its size greater than this number.
 	public final int sccLimit = 30;
 	// type filter
-	public boolean useTypeFilter = false;
+	public boolean useTypeFilter = true;
+	public boolean useSubTypeFilter = true;
 	// whether or not resolve default static access path in the final heap
 	public boolean resolveFinalHeap = true;
-
-	// this is naively just marking the flag in access path
-	public boolean markSmashedFlag = false;
-	// this is the sound way to do smashing
-	public boolean markSmashedFields = true;
-	// this is used for instantiating the locations
-	public boolean instnSmashedAPs = true;
-	// whether use cache for instantiating AccessPath
-	public boolean useMemLocInstnCache = true;
-	// whether use cache for constraint instantiation
-	public boolean useCstInstnCache = true;
-	// whether use cache for extracting terms
-	public boolean useExtractCache = true;
-	// whether use cache for constraint simplification
-	public boolean useSimplifyCache = true;
-	// whether use cache for constraint union operation
-	public boolean useUnionCache = true;
-	// whether use cache for constraint intersection operation
-	public boolean useInterCache = true;
-	// whether use cache for substitution operation of constraints
-	public boolean useSubCache = true;
-	// whether use equivalence checking cache
-	public boolean useEqCache = true;
-	// this is a fantastic way to efficiently skip the instantiation for those
-	// callees that we can magically predict that they will not change the
-	// caller's heap
-	public boolean smartSkip = true;
-	// a fine-grained smart skip for instantiating edges
-	public boolean moreSmartSkip = true;
-	// when dbging SCC use this
-	public boolean jump = true;
-	// a trick to avoid hanging in gigantic SCC (the remove() method)
-	protected boolean badMethodSkip = true;
-
-	public boolean iControl = true;
+	// a trick to avoid hanging in gigantic SCC
+	protected boolean badMethodSkip = false;
 
 	public FieldSmashLevel level = FieldSmashLevel.REG;
-	// public FieldSmashLevel level = FieldSmashLevel.MED;
-	// public FieldSmashLevel level = FieldSmashLevel.HIGH;
-	// public FieldSmashLevel level = FieldSmashLevel.CONTROL;
-	// public FieldSmashLevel level = FieldSmashLevel.ICONTROL;
 	// public FieldSmashLevel level = FieldSmashLevel.TYPESMASH;
-	// public FieldSmashLevel level = FieldSmashLevel.TYPECOMPMASH;
-	public int smashLength = 3;
-
-	// clear locals in the summary
-	protected boolean clearLocals = false;
+	// public FieldSmashLevel level = FieldSmashLevel.TYPECOMPSMASH;
 
 	// fix-point or not
 	protected boolean useFixPoint = true;
 	// when concluding the clinit's and main, use fix-point or not
 	protected boolean topFixPoint = true;
-
 	// whether or not propagate parameters
 	protected boolean propParams = true;
 
-	// which kind of local need to be propagated, e.g. downcast, all locals in
-	// app, etc.
-	protected PropType localType = PropType.APPLOCAL;
-
+	// which kind of local need to be propagated
+	// protected PropType localType = PropType.APPLOCAL;
 	// protected PropType localType = PropType.DOWNCAST;
-	// protected PropType localType = PropType.NOLOCAL;
-	// protected PropType localType = PropType.NOALLOC;
+	protected PropType localType = PropType.NOLOCAL;
+
 	// protected PropType localType = PropType.NOTHING;
 	// protected PropType localType = PropType.ALL;
 
-	public void setMarkSmashedFlag() {
-		markSmashedFlag = true;
-	}
-
-	public void resestMarkSmashedFlag() {
-		markSmashedFlag = false;
-	}
-
 	public PropType getLocalType() {
 		return localType;
-	}
-
-	public boolean useClearLocals() {
-		return clearLocals;
-	}
-
-	public boolean isUsingSmartSkip() {
-		return smartSkip;
-	}
-
-	public boolean isUsingEqCache() {
-		return useEqCache;
-	}
-
-	public boolean isUsingUnionCache() {
-		return useUnionCache;
-	}
-
-	public boolean isUsingSubCache() {
-		return useSubCache;
-	}
-
-	public boolean isUsingInterCache() {
-		return useInterCache;
-	}
-
-	public boolean isUsingSimplifyCache() {
-		return useSimplifyCache;
-	}
-
-	public boolean isUsingMemLocCache() {
-		return useMemLocInstnCache;
-	}
-
-	public boolean isUsingCstCache() {
-		return useCstInstnCache;
-	}
-
-	public boolean isUsingExtractCache() {
-		return useExtractCache;
 	}
 
 	public boolean disableCst() {
 		return disableCst;
 	}
 
-	public boolean forceGc() {
-		return forceGc;
-	}
-
 	public static void reset() {
 		instance = new SummariesEnv();
 	}
 
-	public void sumAll(Set<AbstractHeap> clinitHeaps, AbstractHeap mainHeap) {
+	public void sumAll(Set<AbsHeap> clinitHeaps, AbsHeap mainHeap) {
 		finalSum = new SumConclusion(clinitHeaps, mainHeap);
 		finalSum.sumAllHeaps();
 	}
@@ -259,6 +167,16 @@ public class SummariesEnv {
 		this.libMeths = libMeths;
 	}
 
+	public void addAliasPairs(jq_Method m, Register r1, Register r2) {
+		Trio<jq_Method, Register, Register> trio = new Trio<jq_Method, Register, Register>(
+				m, r1, r2);
+		aliasPairs.add(trio);
+	}
+
+	public Set<Trio<jq_Method, Register, Register>> getAliasPairs() {
+		return aliasPairs;
+	}
+
 	public boolean isStubMethod(String signature) {
 		if (signature.matches("^equals:\\(Ljava/lang/Object;\\)Z@java.*")
 				|| signature.matches("equals:(Ljava/lang/Object;)Z@sun.*")
@@ -269,40 +187,7 @@ public class SummariesEnv {
 				|| signature
 						.matches("^putAllForCreate:\\(Ljava/util/Map;\\)V@java.*")
 				|| signature
-						.matches("getPrngAlgorithm:\\(\\)Ljava/lang/String;@java.*")
-		// || signature
-		// .matches("^remove:\\(Ljava/lang/Object;\\)Z@java.*")
-		// || signature
-		// .matches("^removeAll:\\(Ljava/util/Collection;\\)Z@java.*")
-		// || signature
-		// .matches("^toString:\\(\\)Ljava/lang/String;@sun.*")
-		// || signature
-		// .matches("^toString:\\(\\)Ljava/lang/String;@java.*")
-		// || signature.matches("^rotateRight:\\(Ljava/util/TreeMap.*")
-		// || signature.matches("^rotateLeft:\\(Ljava/util/TreeMap.*")
-		// || signature.matches("^hasMoreElements:\\(\\)Z@java.*")
-		// || signature.matches("^getDefaultPRNG.*")
-		// || signature
-		// .matches("^addAllForTreeSet:\\(Ljava/util/SortedSet;Ljava/lang/Object;\\)V@java.*")
-		// || signature
-		// .matches("^addAll:\\(Ljava/util/Collection;\\)Z@java.*")
-		// || signature.matches("^clone:\\(\\)Ljava/lang/Object;@java.*")
-		// || signature.matches("^clone:\\(\\)Ljava/lang/Object;@sun.*")
-		// just for speeding up debugging.
-		// || signature.matches("^getResource.*")
-		// || signature.matches("^checkCodeSigning:.*")
-		// || signature.matches("^checkTLSServer:.*")
-		// || signature.matches("^checkNetscapeCertType.*")
-		// || signature.matches("^getExtensionValue:.*")
-		// || signature.matches("^getCriticalExtensionOIDs.*")
-		// || signature.matches("^getCriticalExtensionOIDs.*")
-		// || signature.matches("^isNonEuroLangSupported.*")
-		// || signature.matches("^createLocaleList.*")
-		// || signature.matches("^access$000:\\(\\).*sun.*")
-		// || signature.matches("<clinit>:\\(\\)V@sun.*")
-		// || signature.matches("<clinit>:\\(\\)V@javax.*")
-		// || signature.matches("^hasNext:\\(\\)Z@java")
-		)
+						.matches("getPrngAlgorithm:\\(\\)Ljava/lang/String;@java.*"))
 			return true;
 
 		return false;
