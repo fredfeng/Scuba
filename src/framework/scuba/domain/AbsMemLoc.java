@@ -12,6 +12,16 @@ public abstract class AbsMemLoc {
 	protected int length;
 
 	protected jq_Type type;
+	
+	public boolean isInCycle() {
+		return inCycle;
+	}
+
+	public void setInCycle(boolean inCycle) {
+		this.inCycle = inCycle;
+	}
+
+	protected boolean inCycle;
 
 	public static enum ArgDerivedType {
 		IS_ARG_DERIVED, NOT_ARG_DERIVED, UN_KNOWN;

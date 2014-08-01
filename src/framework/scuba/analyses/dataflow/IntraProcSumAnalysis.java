@@ -9,8 +9,9 @@ import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operator.Getstatic;
+import joeq.Compiler.Quad.Operator.Putstatic;
 import joeq.Compiler.Quad.Quad;
-import joeq.Compiler.Quad.QuadVisitor;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.util.tuple.object.Pair;
@@ -66,7 +67,7 @@ public class IntraProcSumAnalysis {
 			System.out
 					.println("==============================================");
 		}
-
+		
 		// create the memory locations for the parameters first if has not
 		// this should be done ONLY once! (the first time we analyze this
 		// method, we can get the full list)
@@ -240,6 +241,8 @@ public class IntraProcSumAnalysis {
 	}
 	
 	public Pair<Boolean, Boolean> handleStmt(Quad quad, AbstractHeap absHeap) {
+		if(quad.getOperator() instanceof Putstatic || quad.getOperator() instanceof Getstatic)
+			return new Pair<Boolean, Boolean>(false, false);
 		absHeap.markChanged(new Pair<Boolean, Boolean>(false, false));
 		quad.accept(qv);
 		return absHeap.isChanged();

@@ -3,23 +3,18 @@ package framework.scuba.analyses.alias;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Method;
-import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.ControlFlowGraph;
-import joeq.Compiler.Quad.Operator.New;
-import joeq.Compiler.Quad.Operator.NewArray;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.alias.CICG;
 import chord.analyses.alias.ICICG;
 import chord.analyses.method.DomM;
-import chord.bddbddb.Rel.RelView;
 import chord.program.Program;
 import chord.project.Chord;
 import chord.project.ClassicProject;
@@ -28,29 +23,27 @@ import chord.project.analyses.JavaAnalysis;
 import chord.project.analyses.ProgramRel;
 import chord.util.SetUtils;
 import chord.util.tuple.object.Pair;
-
-import com.microsoft.z3.BoolExpr;
-
 import framework.scuba.analyses.dataflow.IntraProcSumAnalysis;
-import framework.scuba.analyses.downcast.DowncastAnalysis;
 import framework.scuba.controller.SummaryController;
 import framework.scuba.domain.AbsMemLoc;
 import framework.scuba.domain.AbstractHeap;
-import framework.scuba.domain.Alloc;
+import framework.scuba.domain.AccessPath;
 import framework.scuba.domain.AllocElem;
 import framework.scuba.domain.Env;
 import framework.scuba.domain.EpsilonFieldElem;
 import framework.scuba.domain.FieldElem;
 import framework.scuba.domain.HeapObject;
+import framework.scuba.domain.LocalAccessPath;
 import framework.scuba.domain.LocalVarElem;
 import framework.scuba.domain.P2Set;
+import framework.scuba.domain.StaticAccessPath;
 import framework.scuba.domain.SumConclusion;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.SummariesEnv.PropType;
 import framework.scuba.domain.Summary;
-import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper4CG;
+import framework.scuba.helper.SCCHelper4Heap;
 import framework.scuba.utils.Graph;
 import framework.scuba.utils.Node;
 import framework.scuba.utils.StringUtil;
@@ -111,17 +104,18 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		conclude();
 		long end = System.nanoTime();
 		StringUtil.reportSec("Sum-based analysis runnint time: ", start, end);
+		StringUtil.reportTotalTime("Time on Lookup", G.lookupTime);
 
-		dumpCallGraph();
+//		dumpCallGraph();
 
 		// perform downcast analysis
-		new DowncastAnalysis(relDcm, relDVH, this).run();
+//		new DowncastAnalysis(relDcm, relDVH, this).run();
 
 		// perform points to set.
 		//new P2SetComparison(relVH, relMV, this).run();
 		//new MayAliasAnalysis(relMV, relVValias, this).run();
 		//make sure you have result.txt under your work-dir before you turn on this!.
-		//new RegressionAnalysis(this).run();
+//		new RegressionAnalysis(this).run();
 	}
 
 	// pre-analysis to extract all locals in application. This will decide which
@@ -167,6 +161,18 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		Summary mainSum = SummariesEnv.v().getSummary(
 				Program.g().getMainMethod());
 		SummariesEnv.v().sumAll(clinitHeaps, mainSum.getAbsHeap());
+		
+		int apNum = 0;
+		int allocNum = 0;
+		for(AbsMemLoc loc : mainSum.getAbsHeap().heap) {
+			if(loc instanceof AccessPath) {
+				apNum++;
+				System.out.println("invalid: " + loc);
+			}
+			if(loc instanceof AllocElem) allocNum++;
+		}
+		
+		System.out.println("total alloc: " + allocNum + " total ap: " + apNum );
 	}
 
 	private void sumAnalyze() {
@@ -369,6 +375,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		summary.setHasAnalyzed();
+		
+		detectCycle(summary);
 
 //		 summary.getAbsHeap().dumpHeapToFile(
 //		 m.getDeclaringClass() + "@" + m.toString().replace("/", ""));
@@ -379,12 +387,168 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 		
 		if (num > 100) {
+			/*int heapNodes = summary.getAbsHeap().heap.size();
+			int allocNodes = 0;
+			int allAlloc = 0;
+			int cumSize = 0;
+			//push all stackobjs to worklist.
+			HashSet<AbsMemLoc> worklist = new HashSet<AbsMemLoc>();
+			
+			HashSet<AbsMemLoc> aplist = new HashSet<AbsMemLoc>();
+
+			for(AbsMemLoc loc : summary.getAbsHeap().heap) {
+				if(loc instanceof StackObject) {
+					worklist.add(loc);
+					System.out.println("first level-----: " + loc);
+				}
+				if(loc instanceof AccessPath) {
+					aplist.add(loc);
+					int p2s = 0;
+					for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
+						AbsMemLoc ac = pair.val0;
+						if(ac.equals(loc)) {
+							p2s += summary.getAbsHeap().get(pair).size();
+						}
+					}
+					System.out.println("accessPath: " + loc + " p2size: " + p2s);
+				}
+			}
+			System.out.println("Total AP: " + aplist.size());
+			
+			HashSet<AbsMemLoc> seclist = new HashSet<AbsMemLoc>();
+			for(AbsMemLoc loc : worklist) {
+				for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
+					AbsMemLoc first = pair.val0;
+					if(first.equals(loc)) {
+						cumSize += summary.getAbsHeap().get(pair).size();
+						seclist.addAll(summary.getAbsHeap().get(pair).keySet());
+					}
+				}
+			}
+			
+			System.out.println("second level-of----:" + seclist.size() + " ---> " + seclist);
+
+			HashSet<AbsMemLoc> thrdlist = new HashSet<AbsMemLoc>();
+			for(AbsMemLoc loc : seclist) {
+				for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
+					AbsMemLoc send = pair.val0;
+					if(send.equals(loc)) {
+						cumSize += summary.getAbsHeap().get(pair).size();
+						thrdlist.addAll(summary.getAbsHeap().get(pair).keySet());
+					}
+				}
+			}
+			System.out.println("thrd level-of----:" + thrdlist.size() + " ---> " + thrdlist);
+			
+			HashSet<AbsMemLoc> forlist = new HashSet<AbsMemLoc>();
+			for(AbsMemLoc loc : thrdlist) {
+				for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
+					AbsMemLoc send = pair.val0;
+					if(send.equals(loc)) {
+						cumSize += summary.getAbsHeap().get(pair).size();
+						forlist.addAll(summary.getAbsHeap().get(pair).keySet());
+					}
+				}
+			}
+			System.out.println("forlist level-of----:" + forlist.size() + " ---> " + forlist);
+			
+			HashSet<AbsMemLoc> fiflist = new HashSet<AbsMemLoc>();
+			for(AbsMemLoc loc : forlist) {
+				for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
+					AbsMemLoc send = pair.val0;
+					if(send.equals(loc)) {
+						cumSize += summary.getAbsHeap().get(pair).size();
+						fiflist.addAll(summary.getAbsHeap().get(pair).keySet());
+					}
+				}
+			}
+			System.out.println("fiflist level-of----:" + fiflist.size() + " ---> " + fiflist);
+			
+			System.out.println("Total size : " + cumSize);
+			
+			for(AbsMemLoc loc : summary.getAbsHeap().heap) {
+				if(loc instanceof AllocElem) {
+					//who can point to this guy?
+					allAlloc++;
+					boolean flag = true;
+					System.out.println("---------------------alloc--------" + loc);
+					for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
+						AbsMemLoc src = pair.val0;
+						P2Set p2s = summary.getAbsHeap().get(pair);
+						if(p2s.keySet().contains(loc)) {
+							if(src instanceof AccessPath) {
+								flag = false; 
+								System.out.println("bad access path: " + src);
+								break;
+							}
+						}
+					}
+					if(flag) allocNodes++;
+				}
+			}*/
+			
+			int apNum = 0;
+			int allocNum = 0;
+			
+			Pair<Integer, Integer> allocPair = getInOutInfo(
+					summary.getAbsHeap(), AllocElem.class);
+			for(AbsMemLoc loc : summary.getAbsHeap().heap) {
+				if(loc instanceof AccessPath) apNum++;
+				if(loc instanceof AllocElem) allocNum++;
+			}
 			StringUtil.reportInfo("dbgBlowup: "
 					+ "------------------------------------------------");
 			StringUtil.reportInfo("dbgBlowup: analyzing " + m);
-			System.out.println("BAD..." + num + " " + m);
+			System.out.println("BAD..." + num + " " + m + " AP: " + apNum
+					+ " alloc: " + allocNum + " alloc out Edge: "
+					+ allocPair.val1 + " inEdge: " + allocPair.val0);
 			StringUtil.reportInfo("dbgBlowup: "
 					+ " edges in the current caller: " + num);
+			for(AbsMemLoc loc : summary.getAbsHeap().heap) {
+				if(loc instanceof StaticAccessPath) {
+					int alloc = 0;
+					int gAp = 0;
+					int lAp = 0;
+					for (Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap()
+							.keySet()) {
+						AbsMemLoc first = pair.val0;
+						if (first.equals(loc)) {
+							P2Set p2s = summary.getAbsHeap().get(pair);
+							//what are those p2set looks like?
+							for(HeapObject tgt : p2s.keySet()) {
+								if(tgt instanceof AllocElem) 
+									alloc++;
+								if(tgt instanceof LocalAccessPath) {
+									System.out.println("badglobal:" + loc + "-->" + tgt);
+									lAp++;
+								}
+								if(tgt instanceof StaticAccessPath) 
+									gAp++;
+							}
+						}
+					}
+					System.out.println("global accesspath:  alloc: " + alloc + " gAp: " + gAp + " lAp: " + lAp + " : " + loc);
+				}
+			}
+			
+			System.out.println("--------------alloc---------------------");
+			for(AbsMemLoc loc : summary.getAbsHeap().heap) {
+				if(loc instanceof AllocElem) {
+					boolean flag = true;
+					for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
+						AbsMemLoc first = pair.val0;
+						P2Set p2s = summary.getAbsHeap().get(pair);
+						if (p2s.keySet().contains(loc)) {
+							if (!(first instanceof LocalVarElem)) {
+								flag = false;
+								break;
+							}
+						}
+					}
+					System.out.println("loc allocElem:  " + flag + " " + loc);
+				}
+			}
+
 			StringUtil.reportInfo("dbgBlowup: "
 					+ "~~~~~~~~~~~~~~~~dbgBlowup info~~~~~~~~~~~~~~~~~~~~");
 		}
@@ -398,6 +562,25 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 
 		return summary.isChanged();
+	}
+	
+	private Pair<Integer, Integer> getInOutInfo(AbstractHeap heap, Class clz) {
+		int in = 0;
+		int out = 0;
+		for(Pair<AbsMemLoc, FieldElem> pair : heap.keySet()) {
+			AbsMemLoc first = pair.val0;
+			P2Set p2s = heap.get(pair);
+			
+			if(first.getClass().equals(clz)) {
+				out += heap.get(pair).size();
+			}
+			
+			for (AbsMemLoc tgt : p2s.keySet())
+				if (tgt.getClass().equals(clz))
+					in++;
+		}
+		Pair<Integer, Integer> infopair = new Pair(in, out);
+		return infopair;
 	}
 
 	private void analyzeSCC(Node node) {
@@ -425,9 +608,95 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 					if (scc.contains(pred))
 						wl.add(pred);
 			}
-
 		}
 	}
+	
+	protected void detectCycle(Summary sum) {
+		System.out.println("Detecting cycle for " + sum.getMethod());
+		int heapNum = sum.getAbsHeap().getAllMemLocs().size();
+		SCCHelper4Heap s4g = new SCCHelper4Heap(sum.getAbsHeap(), sum.getAbsHeap().getAllMemLocs());
+		System.out.println("apply SCC algorithm...." + s4g.getComponents().size());
+		int sccEdges = 0;
+		int sccAp = 0;
+
+		for(Set<AbsMemLoc> scc : s4g.getComponents()) {
+			if(scc.size() > 1) {
+				Iterator<AbsMemLoc> it = scc.iterator();
+				System.out.println("Detecting cycle SCC size: " + scc.size() + " Total: " + heapNum);
+				while(it.hasNext()) {
+					AbsMemLoc loc = it.next();
+					loc.setInCycle(true);
+				}
+				//how many edges are in this scc?
+				for (Pair<AbsMemLoc, FieldElem> pair : sum.getAbsHeap().locToP2Set.keySet()) {
+					AbsMemLoc src = pair.val0;
+					P2Set tgts = sum.getAbsHeap().locToP2Set.get(pair);
+					if(scc.contains(src)) {
+						src.setInCycle(true);
+						for(HeapObject o : tgts.keySet()) 
+							sccEdges++;
+					} else {
+						for(HeapObject o : tgts.keySet()) 
+							if(scc.contains(o))
+								sccEdges++;
+					}
+				}
+			} else {
+				AbsMemLoc loc = scc.iterator().next();
+				for (Pair<AbsMemLoc, FieldElem> pair : sum.getAbsHeap().locToP2Set.keySet()) {
+					if(pair.val0.equals(loc)) {
+						P2Set tgts = sum.getAbsHeap().locToP2Set.get(pair);
+						if(tgts.keySet().contains(loc)) {
+							loc.setInCycle(true);
+							break;
+						}
+					}
+				}
+
+			}
+		}
+		
+		/*int totalEdges = 0;
+		int totalAP = 0;
+		int totalAlloc2Ap = 0;
+		int totalAp2Ap = 0;
+
+		for (Pair<AbsMemLoc, FieldElem> pair : sum.getAbsHeap().locToP2Set.keySet()) {
+			AbsMemLoc src = pair.val0;
+			P2Set tgts = sum.getAbsHeap().locToP2Set.get(pair);
+			totalEdges += tgts.keySet().size();
+			
+			for(HeapObject o : tgts.keySet()) {
+				if ((src instanceof AccessPath) && (o instanceof AccessPath))
+					totalAP++;
+			
+				if ((src instanceof AllocElem) && (o instanceof AccessPath))
+					totalAlloc2Ap++;
+				
+				if ((src instanceof AccessPath) && (o instanceof AccessPath))
+					totalAp2Ap++;
+			}
+						
+		}
+		
+		if(totalEdges > 0 && totalAP > 0 && sccEdges > 0)
+			System.out.println("Detecting cycle info: total: " + totalEdges
+					+ " scc: " + sccEdges + " percentage: " + sccEdges * 100
+					/ totalEdges + "%" + " | AP in SCC: " + sccAp * 100
+					/ sccEdges + "%" + " | AP in total: " + sccAp * 100 / totalAP
+					+ "%");
+		
+		if(totalEdges > 0 && totalAlloc2Ap > 0)
+			System.out.println("Detecting alloc2ap: " + totalAlloc2Ap * 100
+					/ totalEdges + "%");
+		
+		if(totalEdges > 0 && totalAp2Ap > 0)
+			System.out.println("Detecting ap2ap: " + totalAp2Ap + " " + totalAp2Ap * 100
+					/ totalEdges + "%");*/
+		
+		System.out.println("End cycle detection......." + sccEdges);
+	}
+
 
 	/* This method will be invoked by Chord automatically. */
 	public void run() {
