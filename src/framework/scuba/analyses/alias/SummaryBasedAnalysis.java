@@ -104,7 +104,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		conclude();
 		long end = System.nanoTime();
 		StringUtil.reportSec("Sum-based analysis runnint time: ", start, end);
-		StringUtil.reportTotalTime("Time on Lookup", G.lookupTime);
 
 //		dumpCallGraph();
 
@@ -387,106 +386,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		}
 		
 		if (num > 100) {
-			/*int heapNodes = summary.getAbsHeap().heap.size();
-			int allocNodes = 0;
-			int allAlloc = 0;
-			int cumSize = 0;
-			//push all stackobjs to worklist.
-			HashSet<AbsMemLoc> worklist = new HashSet<AbsMemLoc>();
-			
-			HashSet<AbsMemLoc> aplist = new HashSet<AbsMemLoc>();
-
-			for(AbsMemLoc loc : summary.getAbsHeap().heap) {
-				if(loc instanceof StackObject) {
-					worklist.add(loc);
-					System.out.println("first level-----: " + loc);
-				}
-				if(loc instanceof AccessPath) {
-					aplist.add(loc);
-					int p2s = 0;
-					for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
-						AbsMemLoc ac = pair.val0;
-						if(ac.equals(loc)) {
-							p2s += summary.getAbsHeap().get(pair).size();
-						}
-					}
-					System.out.println("accessPath: " + loc + " p2size: " + p2s);
-				}
-			}
-			System.out.println("Total AP: " + aplist.size());
-			
-			HashSet<AbsMemLoc> seclist = new HashSet<AbsMemLoc>();
-			for(AbsMemLoc loc : worklist) {
-				for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
-					AbsMemLoc first = pair.val0;
-					if(first.equals(loc)) {
-						cumSize += summary.getAbsHeap().get(pair).size();
-						seclist.addAll(summary.getAbsHeap().get(pair).keySet());
-					}
-				}
-			}
-			
-			System.out.println("second level-of----:" + seclist.size() + " ---> " + seclist);
-
-			HashSet<AbsMemLoc> thrdlist = new HashSet<AbsMemLoc>();
-			for(AbsMemLoc loc : seclist) {
-				for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
-					AbsMemLoc send = pair.val0;
-					if(send.equals(loc)) {
-						cumSize += summary.getAbsHeap().get(pair).size();
-						thrdlist.addAll(summary.getAbsHeap().get(pair).keySet());
-					}
-				}
-			}
-			System.out.println("thrd level-of----:" + thrdlist.size() + " ---> " + thrdlist);
-			
-			HashSet<AbsMemLoc> forlist = new HashSet<AbsMemLoc>();
-			for(AbsMemLoc loc : thrdlist) {
-				for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
-					AbsMemLoc send = pair.val0;
-					if(send.equals(loc)) {
-						cumSize += summary.getAbsHeap().get(pair).size();
-						forlist.addAll(summary.getAbsHeap().get(pair).keySet());
-					}
-				}
-			}
-			System.out.println("forlist level-of----:" + forlist.size() + " ---> " + forlist);
-			
-			HashSet<AbsMemLoc> fiflist = new HashSet<AbsMemLoc>();
-			for(AbsMemLoc loc : forlist) {
-				for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
-					AbsMemLoc send = pair.val0;
-					if(send.equals(loc)) {
-						cumSize += summary.getAbsHeap().get(pair).size();
-						fiflist.addAll(summary.getAbsHeap().get(pair).keySet());
-					}
-				}
-			}
-			System.out.println("fiflist level-of----:" + fiflist.size() + " ---> " + fiflist);
-			
-			System.out.println("Total size : " + cumSize);
-			
-			for(AbsMemLoc loc : summary.getAbsHeap().heap) {
-				if(loc instanceof AllocElem) {
-					//who can point to this guy?
-					allAlloc++;
-					boolean flag = true;
-					System.out.println("---------------------alloc--------" + loc);
-					for(Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap().keySet()) {
-						AbsMemLoc src = pair.val0;
-						P2Set p2s = summary.getAbsHeap().get(pair);
-						if(p2s.keySet().contains(loc)) {
-							if(src instanceof AccessPath) {
-								flag = false; 
-								System.out.println("bad access path: " + src);
-								break;
-							}
-						}
-					}
-					if(flag) allocNodes++;
-				}
-			}*/
-			
 			int apNum = 0;
 			int allocNum = 0;
 			
