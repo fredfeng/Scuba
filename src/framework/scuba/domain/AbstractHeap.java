@@ -113,7 +113,6 @@ public class AbstractHeap extends Heap {
 			// always find the default p2set of (loc, field)
 			P2Set defaultP2Set = new P2Set(defaultTarget);
 			long end = System.nanoTime();
-			G.lookupTime += (end-start); 
 			// return the p2set always including the default p2set
 			if (locToP2Set.containsKey(pair)) {
 				return P2SetHelper.join(locToP2Set.get(pair), defaultP2Set);
@@ -124,7 +123,6 @@ public class AbstractHeap extends Heap {
 			// it is possible to have null pointers
 			P2Set ret = locToP2Set.get(pair);
 			long end = System.nanoTime();
-			G.lookupTime += (end-start); 
 			if (ret != null) {
 				// if the field of this memory does point to something, return
 				// that memory location (cloned to avoid wired bugs)
