@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import joeq.Class.PrimordialClassLoader;
 import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
@@ -52,7 +53,10 @@ public class AbstractHeap extends Heap {
 	// other methods potentially)
 	// 5. <AccessPath> that
 	private final Map<AbsMemLoc, AbsMemLoc> memLocFactory;
-
+	
+	
+	private static AllocElem gElem;
+	
 	// whether the heap and summary has been changed: (heap, summary)
 	private Pair<Boolean, Boolean> isChanged = new Pair<Boolean, Boolean>(
 			false, false);
@@ -72,6 +76,16 @@ public class AbstractHeap extends Heap {
 		this.heap = new HashSet<AbsMemLoc>();
 		this.locToP2Set = new HashMap<Pair<AbsMemLoc, FieldElem>, P2Set>();
 		this.memLocFactory = new HashMap<AbsMemLoc, AbsMemLoc>();
+		this.getGlobalElem();
+	}
+	
+	public void getGlobalElem() {
+		jq_Class clz = (jq_Class)Program.g().getClass("java.lang.Object");
+//		jq_Method m = clz.
+		jq_Method m = clz.getDeclaredInstanceMethods()[1];
+		jq_Type t = PrimordialClassLoader.JavaLangObject;
+		int line = 1; 
+		gElem = this.getAllocElem(clz, m, null, t, line);
 	}
 
 	public jq_Method getMethod() {
@@ -89,6 +103,7 @@ public class AbstractHeap extends Heap {
 	// lookup for p2set which is described in definition 7 of the paper
 	public P2Set lookup(AbsMemLoc loc, FieldElem field) {
 		// create a pair wrapper for lookup
+		long start = System.nanoTime();
 		Pair<AbsMemLoc, FieldElem> pair = new Pair<AbsMemLoc, FieldElem>(loc,
 				field);
 		if (loc.isArgDerived()) {
@@ -97,6 +112,8 @@ public class AbstractHeap extends Heap {
 
 			// always find the default p2set of (loc, field)
 			P2Set defaultP2Set = new P2Set(defaultTarget);
+			long end = System.nanoTime();
+			G.lookupTime += (end-start); 
 			// return the p2set always including the default p2set
 			if (locToP2Set.containsKey(pair)) {
 				return P2SetHelper.join(locToP2Set.get(pair), defaultP2Set);
@@ -106,6 +123,8 @@ public class AbstractHeap extends Heap {
 		} else if (loc.isNotArgDerived()) {
 			// it is possible to have null pointers
 			P2Set ret = locToP2Set.get(pair);
+			long end = System.nanoTime();
+			G.lookupTime += (end-start); 
 			if (ret != null) {
 				// if the field of this memory does point to something, return
 				// that memory location (cloned to avoid wired bugs)
@@ -121,7 +140,7 @@ public class AbstractHeap extends Heap {
 		assert false : "you have not mark the argument derived marker before lookup!";
 		return null;
 	}
-
+	
 	// generalized lookup for p2set described in definition 10 of the paper
 	public P2Set lookup(P2Set p2Set, FieldElem field) {
 		// it is possible to have null pointers that are dereferenced if we
@@ -149,6 +168,15 @@ public class AbstractHeap extends Heap {
 		for (AbsMemLoc loc : instnLocSet.keySet()) {
 			BoolExpr cst = instnLocSet.get(loc);
 
+			if (loc instanceof AccessPath && field instanceof NormalFieldElem && loc.getType() instanceof jq_Class) {
+				jq_Class c = (jq_Class)loc.getType();
+				jq_Field f = ((NormalFieldElem) field).getField();
+				if (c.getInstanceField(f.getNameAndDesc()) == null) {
+					continue;
+				}
+			}
+			
+			
 			P2Set tgt = lookup(loc, field);
 
 			assert (tgt != null) : "get a null p2 set!";
@@ -745,12 +773,21 @@ public class AbstractHeap extends Heap {
 					Pair<AbsMemLoc, FieldElem> key = entry.getKey();
 					P2Set tgts = entry.getValue();
 					AbsMemLoc src = key.val0;
+//					if(src.isInCycle()) continue;
+//					if(src instanceof LocalVarElem) continue;
+//					if(src instanceof AllocElem) continue;
+//					if(src instanceof StaticElem) continue;
+//					if(src instanceof StaticAccessPath) continue;
+
 					FieldElem f = key.val1;
 					Iterator<Map.Entry<HeapObject, BoolExpr>> it1 = tgts
 							.iterator();
 					while (it1.hasNext()) {
 						Map.Entry<HeapObject, BoolExpr> entry1 = it1.next();
 						HeapObject tgt = entry1.getKey();
+//						if(tgt instanceof StaticAccessPath) continue;
+
+//						if(tgt.isInCycle()) continue;
 
 						Pair<Boolean, Boolean> res = instnEdge(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst);
@@ -799,6 +836,11 @@ public class AbstractHeap extends Heap {
 					Pair<AbsMemLoc, FieldElem> key = entry.getKey();
 					P2Set tgts = entry.getValue();
 					AbsMemLoc src = key.val0;
+//					if(src instanceof StaticAccessPath) continue;
+//					if(src.isInCycle()) continue;
+//					if(src instanceof LocalVarElem) continue;
+//					if(src instanceof AllocElem) continue;
+
 					FieldElem f = key.val1;
 
 					Set<Pair<AbsMemLoc, P2Set>> toAdd = new HashSet<Pair<AbsMemLoc, P2Set>>();
@@ -807,6 +849,8 @@ public class AbstractHeap extends Heap {
 					while (it1.hasNext()) {
 						Map.Entry<HeapObject, BoolExpr> entry1 = it1.next();
 						HeapObject tgt = entry1.getKey();
+//						if(tgt instanceof StaticAccessPath) continue;
+//						if(tgt.isInCycle()) continue;
 						instnEdge4RecurCall(src, tgt, f, memLocInstn,
 								calleeHeap, point, typeCst, toAdd);
 						addDepEdges(memLocInstn, src, tgt, f);
@@ -973,7 +1017,7 @@ public class AbstractHeap extends Heap {
 					continue;
 				}
 			}
-
+			
 			for (AbsMemLoc newDst : instnDst.keySet()) {
 				assert (newDst instanceof HeapObject) : ""
 						+ "dst should be instantiated as a heap object!";
@@ -1342,6 +1386,7 @@ public class AbstractHeap extends Heap {
 	// corresponding type and the line number
 	public AllocElem getAllocElem(jq_Class clazz, jq_Method method,
 			Quad allocSite, jq_Type type, int line) {
+//		if(gElem != null) return gElem;
 		if (!type.isPrepared())
 			type.prepare();
 		// create a wrapper
@@ -1373,6 +1418,7 @@ public class AbstractHeap extends Heap {
 		memLocFactory.put(ret, ret);
 
 		return ret;
+//		return gElem;
 	}
 
 	// append the program point to a given AllocElem and generate a new
@@ -1389,6 +1435,7 @@ public class AbstractHeap extends Heap {
 		memLocFactory.put(ret, ret);
 
 		return ret;
+//		return gElem;
 	}
 
 	// get the default target of memory location loc and the field
@@ -2066,7 +2113,7 @@ public class AbstractHeap extends Heap {
 		for (AbsMemLoc loc : allLocs) {
 			if (loc instanceof AccessPath) {
 				b.append("  ").append("\"" + loc.dump() + "\"");
-				b.append(" [shape=circle,label=\"");
+				b.append(" [shape=rectangle,label=\"");
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof AllocElem) {
@@ -2080,10 +2127,10 @@ public class AbstractHeap extends Heap {
 				b.append(loc.toString());
 				b.append("\"];\n");
 			} else if (loc instanceof LocalVarElem) {
-				b.append("  ").append("\"" + loc.dump() + "\"");
-				b.append(" [shape=triangle,label=\"");
-				b.append(loc.toString());
-				b.append("\"];\n");
+//				b.append("  ").append("\"" + loc.dump() + "\"");
+//				b.append(" [shape=triangle,label=\"");
+//				b.append(loc.toString());
+//				b.append("\"];\n");
 			} else if (loc instanceof ParamElem) {
 				b.append("  ").append("\"" + loc.dump() + "\"");
 				b.append(" [shape=oval,label=\"");
@@ -2351,6 +2398,7 @@ public class AbstractHeap extends Heap {
 				for (FieldElem f : fields) {
 					P2Set p2set = locToP2Set
 							.get(new Pair<AbsMemLoc, FieldElem>(alloc, f));
+					if(p2set == null) continue;
 					for (HeapObject hObj : p2set.keySet()) {
 						if (hObj instanceof AllocElem && !toProp.contains(hObj)) {
 							set.add((AllocElem) hObj);
