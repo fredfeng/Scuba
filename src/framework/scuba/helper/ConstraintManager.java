@@ -9,14 +9,16 @@ import joeq.Class.jq_Type;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
+import com.microsoft.z3.ApplyResult;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl;
+import com.microsoft.z3.Goal;
 import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.IntNum;
-import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
+import com.microsoft.z3.Tactic;
 import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.domain.AbsMemLoc;
@@ -48,10 +50,12 @@ public class ConstraintManager {
 
 	static Context ctx;
 
-	static Solver solver;
-
 	// define the uninterpreted function. type(o)=T
 	static FuncDecl typeFun;
+	
+	static Tactic tactic;
+	
+	static Goal goal;
 
 	// constant expr.
 	static BoolExpr trueExpr;
@@ -85,7 +89,9 @@ public class ConstraintManager {
 	public ConstraintManager() {
 		try {
 			ctx = new Context();
-			solver = ctx.MkSolver();
+			tactic = ctx.MkTactic("smt");
+		    goal = ctx.MkGoal(true, false, false);
+		    
 			trueExpr = ctx.MkBool(true);
 			falseExpr = ctx.MkBool(false);
 			typeFun = ctx.MkFuncDecl("type", ctx.IntSort(), ctx.IntSort());
@@ -610,6 +616,7 @@ public class ConstraintManager {
 	public static boolean isEqual(BoolExpr expr1, BoolExpr expr2) {
 
 		boolean ret = false;
+		
 
 		assert expr1 != null : "Constraint can not be null!";
 		assert expr2 != null : "Constraint can not be null!";
@@ -623,12 +630,13 @@ public class ConstraintManager {
 		}
 
 		try {
-			solver.Reset();
+			goal.Reset();
 			BoolExpr e1;
 			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
-			solver.Assert(e2);
-			if (solver.Check() == Status.UNSATISFIABLE) {
+			goal.Assert(e2);
+		    Status status = ApplyTactic(ctx, tactic, goal);
+			if (status == Status.UNSATISFIABLE) {
 				ret = true;
 				if (SummariesEnv.v().isUsingEqCache()) {
 					eqCache.put(new Pair<String, String>(expr1.toString(),
@@ -648,6 +656,18 @@ public class ConstraintManager {
 		}
 
 		return ret;
+	}
+	
+	private static Status ApplyTactic(Context ctx, Tactic t, Goal g) throws Z3Exception {
+		ApplyResult res = t.Apply(g);
+		Status q = Status.UNKNOWN;
+		for (Goal sg : res.Subgoals())
+			if (sg.IsDecidedSat())
+				q = Status.SATISFIABLE;
+			else if (sg.IsDecidedUnsat())
+				q = Status.UNSATISFIABLE;
+		
+		return q;
 	}
 
 	// check if cst is a scala constraint, e.g, true, false
