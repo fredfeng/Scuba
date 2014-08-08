@@ -17,6 +17,8 @@ import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Goal;
 import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.IntNum;
+import com.microsoft.z3.Params;
+import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Tactic;
 import com.microsoft.z3.Z3Exception;
@@ -55,6 +57,9 @@ public class ConstraintManager {
 	
 	static Tactic tactic;
 	
+	static Solver solver;
+
+	
 	static Goal goal;
 
 	// constant expr.
@@ -91,6 +96,11 @@ public class ConstraintManager {
 			ctx = new Context();
 			tactic = ctx.MkTactic("smt");
 		    goal = ctx.MkGoal(true, false, false);
+		    
+		    solver = ctx.MkSolver();
+		    Params solver_params = ctx.MkParams();
+		    solver_params.Add("ignore_solver1", true);
+		    solver.setParameters(solver_params);
 		    
 			trueExpr = ctx.MkBool(true);
 			falseExpr = ctx.MkBool(false);
@@ -141,10 +151,15 @@ public class ConstraintManager {
 			if (isScala(ret))
 				return ret;
 
+			long inststart = System.nanoTime();
+
 			Map<String, BoolExpr> map;
 			map = new HashMap<String, BoolExpr>();
 			if (SummariesEnv.v().isUsingExtractCache()) {
+				long unstart = System.nanoTime();
 				map = extractTermUsingCache(ret);
+				long unend = System.nanoTime();
+				G.extractTime += (unend - unstart);
 			} else {
 				extractTerm(ret, map);
 			}
@@ -175,16 +190,29 @@ public class ConstraintManager {
 				}
 
 				BoolExpr instSub;
-				if (sub.IsEq())
+				long instSubStart = System.nanoTime();
+				if (sub.IsEq()) {
+					long unstart = System.nanoTime();
 					instSub = instEqType(termStr, t, p2Set);
-				else if (sub.IsLE())
+					long unend = System.nanoTime();
+					G.eqTime += (unend - unstart);
+				} else if (sub.IsLE()) {
+					long unstart = System.nanoTime();
 					instSub = instLeType(termStr, t, p2Set);
-				else {
+					long unend = System.nanoTime();
+					G.leTime += (unend - unstart);
+				} else {
 					assert sub.IsGE();
+					long unstart = System.nanoTime();
 					instSub = instGeType(termStr, t, p2Set);
+					long unend = System.nanoTime();
+					G.geTime += (unend - unstart);
 				}
+				long instSubend = System.nanoTime();
+				G.instSubTime += (instSubend - instSubStart);
 
 				if (SummariesEnv.v().isUsingSubCache()) {
+					long unstart = System.nanoTime();
 					BoolExpr tmp = subCache
 							.get(new Trio<String, String, String>(ret1
 									.toString(), sub.toString(), instSub
@@ -196,21 +224,30 @@ public class ConstraintManager {
 							new Trio<String, String, String>(ret1.toString(),
 									sub.toString(), instSub.toString()), tmp);
 					ret1 = tmp;
+					long unend = System.nanoTime();
+					G.subTime += (unend - unstart);
 				} else {
 					ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
+
 				}
 				// ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
 			}
+			long instend = System.nanoTime();
+			G.instTime += (instend - inststart);
 
 			BoolExpr result = null;
 			if (SummariesEnv.v().isUsingSimplifyCache()) {
+				long simStart = System.nanoTime();
 				result = simplifyCache.get(ret1.toString());
 				if (result == null) {
 					result = (BoolExpr) ret1.Simplify();
 					simplifyCache.put(ret1.toString(), result);
 				}
+				long simEnd = System.nanoTime();
+				G.simTime += (simEnd - simStart);
 			} else {
 				result = (BoolExpr) ret1.Simplify();
+
 			}
 
 			if (SummariesEnv.v().isUsingCstCache()) {
@@ -283,9 +320,21 @@ public class ConstraintManager {
 	public static BoolExpr intersect(BoolExpr first, BoolExpr second) {
 
 		BoolExpr ret = null;
+		String str1 = null;
+		String str2 = null;
 		if (SummariesEnv.v().isUsingInterCache()) {
-			ret = interCache.get(new Pair<String, String>(first.toString(),
-					second.toString()));
+			long unstart1 = System.nanoTime();
+
+			 str1 = first.toString();
+			 str2 = second.toString();
+			long unend1 = System.nanoTime();
+			G.fuck4 += (unend1 - unstart1);
+			
+			long unstart = System.nanoTime();
+			ret = interCache.get(new Pair<String, String>(str1,
+					str2));
+			long unend = System.nanoTime();
+			G.fuck3 += (unend - unstart);
 			if (ret != null) {
 				return ret;
 			}
@@ -294,6 +343,8 @@ public class ConstraintManager {
 		if (SummariesEnv.v().disableCst())
 			return trueExpr;
 		try {
+			long unstart = System.nanoTime();
+
 			assert first != null : "Invalid constrait";
 			assert second != null : "Invalid constrait";
 			if (isFalse(first) || isFalse(second)) {
@@ -307,9 +358,10 @@ public class ConstraintManager {
 			}
 
 			if (SummariesEnv.v().isUsingInterCache()) {
-				interCache.put(new Pair<String, String>(first.toString(),
-						second.toString()), ret);
+				interCache.put(new Pair<String, String>(str1, str2), ret);
 			}
+			long unend = System.nanoTime();
+			G.interTime += (unend - unstart);
 			return ret;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -336,6 +388,7 @@ public class ConstraintManager {
 			assert first != null : "Invalid constrait";
 			assert second != null : "Invalid constrait";
 
+			long unstart = System.nanoTime();
 			if (isTrue(first) || isTrue(second)) {
 				ret = trueExpr;
 			} else if (isFalse(first)) {
@@ -350,6 +403,8 @@ public class ConstraintManager {
 				unionCache.put(new Pair<String, String>(first.toString(),
 						second.toString()), ret);
 			}
+			long unend = System.nanoTime();
+			G.unionTime += (unend - unstart);
 			return ret;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -378,9 +433,15 @@ public class ConstraintManager {
 				else
 					return genFalse();
 			} else if (ho instanceof AccessPath) {
+				long tstart1 = System.nanoTime();
 				cur = typeFun.Apply(term);
+				long tend1 = System.nanoTime();
+				G.exprTime += (tend1 - tstart1);
 			}
+			long tstart = System.nanoTime();
 			BoolExpr eq = ctx.MkEq(cur, ctx.MkInt(typeInt));
+			long tend = System.nanoTime();
+			G.exprTime += (tend - tstart);
 			return eq;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -404,9 +465,15 @@ public class ConstraintManager {
 				else
 					return genFalse();
 			} else if (ho instanceof AccessPath) {
+				long tstart1 = System.nanoTime();
 				cur = typeFun.Apply(term);
+				long tend1 = System.nanoTime();
+				G.exprTime += (tend1 - tstart1);
 			}
+			long tstart = System.nanoTime();
 			BoolExpr le = ctx.MkLe((IntExpr) cur, ctx.MkInt(typeInt));
+			long tend = System.nanoTime();
+			G.exprTime += (tend - tstart);
 			return le;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -429,9 +496,16 @@ public class ConstraintManager {
 				else
 					return genFalse();
 			} else if (ho instanceof AccessPath) {
+				long tstart1 = System.nanoTime();
 				cur = typeFun.Apply(term);
+				long tend1 = System.nanoTime();
+				G.exprTime += (tend1 - tstart1);
 			}
+			
+			long tstart = System.nanoTime();
 			BoolExpr le = ctx.MkGe((IntExpr) cur, ctx.MkInt(typeInt));
+			long tend = System.nanoTime();
+			G.exprTime += (tend - tstart);
 			return le;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -451,12 +525,22 @@ public class ConstraintManager {
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
-				BoolExpr newCst = intersect(orgCst,
-						genEqType((HeapObject) ho, t));
+				long tstart = System.nanoTime();
+				BoolExpr eqExpr = genEqType((HeapObject) ho, t);
+				long tend = System.nanoTime();
+				G.genEqTime += (tend - tstart);
+				
+				long tstart1 = System.nanoTime();
+				BoolExpr newCst = intersect(orgCst, eqExpr);
+				long tend1 = System.nanoTime();
+				G.fuck1 += (tend1 - tstart1);
 				if (isTrue(newCst))
 					return trueExpr;
-
+				
+				long tstart2 = System.nanoTime();
 				b = union(b, newCst);
+				long tend2 = System.nanoTime();
+				G.fuck2 += (tend2 - tstart2);
 			}
 		}
 		return b;
@@ -560,7 +644,10 @@ public class ConstraintManager {
 				if (jType instanceof jq_Array)
 					return (BoolExpr) cur;
 
+				long tstart = System.nanoTime();
 				cur = ctx.MkInt(Env.getConstTerm4Class((jq_Class) jType));
+				long tend = System.nanoTime();
+				G.liftTime += (tend - tstart);
 
 			} else if (ho instanceof AccessPath) {
 				AccessPath ap = (AccessPath) ho;
@@ -577,7 +664,10 @@ public class ConstraintManager {
 				// }
 				// put to map for unlifting later.
 				term2Ap.put(symbol, ap);
+				long tstart = System.nanoTime();
 				cur = ctx.MkConst(symbol, ctx.IntSort());
+				long tend = System.nanoTime();
+				G.liftTime += (tend - tstart);
 			}
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -630,12 +720,22 @@ public class ConstraintManager {
 		}
 
 		try {
+			long tstart = System.nanoTime();
 			goal.Reset();
+
 			BoolExpr e1;
 			e1 = ctx.MkIff(expr1, expr2);
 			BoolExpr e2 = ctx.MkNot(e1);
 			goal.Assert(e2);
 		    Status status = ApplyTactic(ctx, tactic, goal);
+//			solver.Assert(e2);
+//			solver.Push();
+//			Status status = solver.Check();
+//			solver.Pop();
+			long tend = System.nanoTime();
+			G.equalsTime += (tend - tstart);
+
+
 			if (status == Status.UNSATISFIABLE) {
 				ret = true;
 				if (SummariesEnv.v().isUsingEqCache()) {

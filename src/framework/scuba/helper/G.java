@@ -68,7 +68,31 @@ public class G {
 
 	// total time spending on inst locations
 	public static long instLocTime = 0;
+	
+	public static long equalsTime = 0;
 
+	public static long unionTime = 0;
+	public static long interTime = 0;
+	public static long subTime = 0;
+	public static long extractTime = 0;
+	public static long instTime = 0;
+	public static long simTime = 0;
+	public static long genTime = 0;
+	public static long instSubTime = 0;
+	public static long liftTime = 0;
+	public static long exprTime = 0;
+	public static long eqTime = 0;
+	public static long fuck1 = 0;
+	public static long fuck2 = 0;
+	public static long fuck3 = 0;
+	public static long fuck4 = 0;
+
+	public static long genEqTime = 0;
+
+	public static long geTime = 0;
+	public static long leTime = 0;
+
+	
 	// time spending on inst locations per inst edges
 	public static long instLocTimePerEdges = 0;
 

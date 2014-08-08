@@ -1,19 +1,25 @@
 package framework.scuba.analyses.alias;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
+import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
+import joeq.Class.jq_Reference;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.alias.CICG;
+import chord.analyses.alias.CIPAAnalysis;
 import chord.analyses.alias.ICICG;
+import chord.analyses.field.DomF;
 import chord.analyses.method.DomM;
 import chord.program.Program;
 import chord.project.Chord;
@@ -44,6 +50,7 @@ import framework.scuba.domain.Summary;
 import framework.scuba.helper.G;
 import framework.scuba.helper.SCCHelper4CG;
 import framework.scuba.helper.SCCHelper4Heap;
+import framework.scuba.utils.ChordUtil;
 import framework.scuba.utils.Graph;
 import framework.scuba.utils.Node;
 import framework.scuba.utils.StringUtil;
@@ -73,6 +80,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relVH;
 	protected ProgramRel relMV;
 	protected ProgramRel relVValias;
+    protected CIPAAnalysis cipa;
 
 	protected CICG callGraph;
 
@@ -95,6 +103,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	private void init() {
 		getCallGraph();
 
+		//set up cipa.
+		setupCipa();
 		// app locals from haiyan's analysis.
 		extractAppLocals();
 
@@ -115,6 +125,68 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		//new MayAliasAnalysis(relMV, relVValias, this).run();
 		//make sure you have result.txt under your work-dir before you turn on this!.
 //		new RegressionAnalysis(this).run();
+	}
+	
+	private void setupCipa() {
+		cipa = (CIPAAnalysis)ClassicProject.g().getTask("cipa-java");
+		assert cipa!=null;
+		DomF domF = (DomF) ClassicProject.g().getTrgt("F");
+	    int numF = domF.size();
+	    //0 is null in chord.
+		for (int v = 1; v < numF; v++) {
+			jq_Field field = domF.get(v);
+			if(!field.getType().isReferenceType())
+				continue;
+			//ignore static and public f.
+			if (field.isPublic() || field.isStatic())
+				continue;
+			jq_Class clz = field.getDeclaringClass();
+			//is this in app?
+			if(!ChordUtil.isLibClass(clz))
+				continue;
+			
+			Set<jq_Method> candidates = new HashSet<jq_Method>();
+			if (field.isPrivate())
+				for(int i = 0; i < clz.getDeclaredInstanceMethods().length; i++)
+					candidates.add(clz.getDeclaredInstanceMethods()[i]);
+
+			if (field.isProtected()) {
+				// methods in the same package.
+				for (jq_Reference ref : Program.g().getClasses()) {
+					if (!(ref instanceof jq_Class))
+						continue;
+					jq_Class pakClz = (jq_Class) ref;
+					if (!pakClz.isInSamePackage(clz))
+						continue;
+					
+					for(int i = 0; i < pakClz.getDeclaredInstanceMethods().length; i++)
+						candidates.add(pakClz.getDeclaredInstanceMethods()[i]);
+				}
+			}
+			
+			boolean unescape = true;
+			for (Object o : candidates) {
+				// will this field escape from this method?
+				jq_Method meth = (jq_Method) o;
+				//static method can not manipulate this.f
+				assert !meth.isStatic();
+				if(meth.isAbstract())
+					continue;
+				// is this method contains load operation of this field?
+				if (!ChordUtil.hasLoadInst(meth, field))
+					continue;
+				// can this field escape from current method?
+				if (ChordUtil.isEscapeFromMeth(cipa, meth, field)) {
+					unescape = false;
+					break;
+				}
+			}
+			
+			if (unescape) {
+				Env.unescapeFields.add(field);
+				System.out.println("unescape: " + field);
+			}
+		}
 	}
 
 	// pre-analysis to extract all locals in application. This will decide which
@@ -296,6 +368,31 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("Working on SCC: " + G.countScc
 					+ nodeToScc.get(node));
 			StringUtil.reportInfo("Size of SCC: " + nodeToScc.get(node).size());
+			
+			if(G.countScc >= 4633) {
+				StringUtil.reportTotalTime("total in equal: ", G.equalsTime);
+				StringUtil.reportTotalTime("total in union: ", G.unionTime);
+				StringUtil.reportTotalTime("total in intersect: ", G.interTime);
+				StringUtil.reportTotalTime("total in extract: ", G.extractTime);
+				StringUtil.reportTotalTime("total in substitute: ", G.subTime);
+				StringUtil.reportTotalTime("total in simplfy: ", G.simTime);
+				StringUtil.reportTotalTime("total in genEqTime: ", G.genEqTime);
+				StringUtil.reportTotalTime("total in fuck1: ", G.fuck1);
+				StringUtil.reportTotalTime("total in fuck2: ", G.fuck2);
+				StringUtil.reportTotalTime("total in fuck3: ", G.fuck3);
+				StringUtil.reportTotalTime("total in fuck4: ", G.fuck4);
+
+				StringUtil.reportTotalTime("total in instEqTime: ", G.eqTime);
+				StringUtil.reportTotalTime("total in instGeTime: ", G.geTime);
+				StringUtil.reportTotalTime("total in instLeTime: ", G.leTime);
+
+				StringUtil.reportTotalTime("total in instSubTime: ", G.instSubTime);
+				StringUtil.reportTotalTime("total in instLiftTime: ", G.liftTime);
+				StringUtil.reportTotalTime("total in instExprTime: ", G.exprTime);
+				StringUtil.reportTotalTime("total in inst: ", G.instTime);
+				StringUtil.reportTotalTime("total in gencst: ", G.genTime);
+				
+			}
 		}
 
 		long startSCC = System.nanoTime();
@@ -398,11 +495,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			StringUtil.reportInfo("dbgBlowup: "
 					+ "------------------------------------------------");
 			StringUtil.reportInfo("dbgBlowup: analyzing " + m);
-			System.out.println("BAD..." + num + " " + m + " AP: " + apNum
-					+ " alloc: " + allocNum + " alloc out Edge: "
-					+ allocPair.val1 + " inEdge: " + allocPair.val0);
+
 			StringUtil.reportInfo("dbgBlowup: "
 					+ " edges in the current caller: " + num);
+			int localAP = 0;
 			for(AbsMemLoc loc : summary.getAbsHeap().heap) {
 				if(loc instanceof StaticAccessPath) {
 					int alloc = 0;
@@ -428,8 +524,28 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 					}
 					System.out.println("global accesspath:  alloc: " + alloc + " gAp: " + gAp + " lAp: " + lAp + " : " + loc);
 				}
+				
+				if(loc instanceof LocalAccessPath) {
+					localAP++;
+					System.out.println("local ap: " + loc);
+					for (Pair<AbsMemLoc, FieldElem> pair : summary.getAbsHeap()
+							.keySet()) {
+						AbsMemLoc first = pair.val0;
+						if (first.equals(loc)) {
+							P2Set p2s = summary.getAbsHeap().get(pair);
+							//what are those p2set looks like?
+							for(HeapObject tgt : p2s.keySet()) {
+								if(tgt instanceof StaticAccessPath) {
+									System.out.println("very bad: " + tgt);
+								}
+							}
+						}
+					}
+				}
 			}
-			
+			System.out.println("BAD..." + num + " " + m + " AP: " + apNum + "(" + localAP + ")"
+					+ " alloc: " + allocNum + " alloc out Edge: "
+					+ allocPair.val1 + " inEdge: " + allocPair.val0);
 			System.out.println("--------------alloc---------------------");
 			for(AbsMemLoc loc : summary.getAbsHeap().heap) {
 				if(loc instanceof AllocElem) {
@@ -497,6 +613,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			if (G.tuning)
 				StringUtil.reportInfo("SCC counter: " + wl.size() + ":"
 						+ worker);
+			
 
 			Pair<Boolean, Boolean> changed = analyze(worker,
 					(scc.size() > SummariesEnv.v().sccLimit));

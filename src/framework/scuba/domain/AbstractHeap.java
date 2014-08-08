@@ -2,9 +2,11 @@ package framework.scuba.domain;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -168,10 +170,44 @@ public class AbstractHeap extends Heap {
 
 			if (loc instanceof AccessPath && field instanceof NormalFieldElem && loc.getType() instanceof jq_Class) {
 				jq_Class c = (jq_Class)loc.getType();
+				Set<jq_Class> subList = new HashSet<jq_Class>(Arrays.asList(c.getSubClasses()));
+				subList.add(c);
+				assert subList.contains(c) : subList + " must contains " + c;
 				jq_Field f = ((NormalFieldElem) field).getField();
-				if (c.getInstanceField(f.getNameAndDesc()) == null) {
+				boolean hasField = false;
+				for(jq_Class sub : subList) {
+					if (sub.getInstanceField(f.getNameAndDesc()) != null) {
+						hasField = true;
+						break;
+					}
+				}
+				if(!hasField) {
+					if(c.isInterface())
+						System.out.println("filter out by type..." + c.isInterface());
+					
 					continue;
 				}
+				
+				NormalFieldElem nf = (NormalFieldElem)field;
+				jq_Field ff = nf.getField();
+				assert ff.getType().isReferenceType();
+				assert !ff.getType().isAddressType();
+				if (Env.unescapeFields.contains(ff)) {
+					if (ff.isPrivate() && !ff.getDeclaringClass().equals(c)) {
+						//need to be in the same class at first.
+						System.out.println("filter out by field...");
+						continue;
+					}
+					if (ff.isProtected() && !c.isInSamePackage(ff.getDeclaringClass())) {
+						//need to be in the same package.
+						System.out.println("filter out by field...");
+						continue;
+					}
+				}
+				
+//				if (c.getInstanceField(f.getNameAndDesc()) == null) {
+//					continue;
+//				}
 			}
 			
 			
@@ -1229,12 +1265,7 @@ public class AbstractHeap extends Heap {
 
 		long endInstCst = System.nanoTime();
 		G.instCstTime += (endInstCst - startInstCst);
-		if (instC.toString().length() > 2500) {
-			int length = instC.toString().length();
-			StringUtil
-					.reportInfo("We are in trouble..." + length + ":" + instC);
-			StringUtil.reportSec("Inst Cst time: ", startInstCst, endInstCst);
-		}
+		StringUtil.reportSec("Inst Cst time: ", startInstCst, endInstCst);
 		return instC;
 	}
 

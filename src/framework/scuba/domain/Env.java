@@ -2,6 +2,7 @@ package framework.scuba.domain;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,10 @@ public class Env {
 	public final static Map<StaticAccessPath, StaticAccessPath> staticAPFactory = new HashMap<StaticAccessPath, StaticAccessPath>();
 
 	public final static Map<ProgramPoint, ProgramPoint> progPointFactory = new HashMap<ProgramPoint, ProgramPoint>();
+	
+	//for all private and protected fields, record the unescape fields
+	//based on CIPA analysis.
+	public final static HashSet<jq_Field> unescapeFields = new HashSet<jq_Field>();
 
 	public static int countAccessPath = 0;
 
