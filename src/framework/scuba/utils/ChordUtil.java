@@ -1,7 +1,6 @@
 package framework.scuba.utils;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
@@ -13,13 +12,16 @@ import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.BytecodeToQuad.jq_ReturnAddressType;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
+import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operator;
 import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Getfield.GETFIELD_A;
 import joeq.Compiler.Quad.Operator.Invoke;
+import joeq.Compiler.Quad.Operator.Putstatic;
 import joeq.Compiler.Quad.Operator.Return;
+import joeq.Compiler.Quad.Operator.Putstatic.PUTSTATIC_A;
 import joeq.Compiler.Quad.Operator.Return.RETURN_A;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
@@ -29,8 +31,8 @@ import chord.analyses.alias.CIPAAnalysis;
 import chord.bddbddb.Rel.RelView;
 import chord.project.ClassicProject;
 import chord.project.analyses.ProgramRel;
-import chord.util.tuple.object.Pair;
 import framework.scuba.analyses.librariesfilter.RelLibrariesT;
+import framework.scuba.domain.SummariesEnv;
 
 public class ChordUtil {
 	
@@ -89,14 +91,13 @@ public class ChordUtil {
 	public static boolean isEscapeFromMeth(CIPAAnalysis cipa, jq_Method meth,
 			jq_Field field) {
 		//1.collect all registers that related to either return value or args.
-		Set<Register> sumRegs = new HashSet<Register>();
+		Set<CIObj> sumRegs = new HashSet<CIObj>();
 		Set<CIObj> reachablePts = new HashSet<CIObj>();
 		ControlFlowGraph cfg = meth.getCFG();
 		
 		RegisterFactory rf = cfg.getRegisterFactory();
 		//r0: this pointer.
 		Register r0 = rf.get(0);
-		System.out.println("checking method: " + meth + " field: " + field);
 		//whether r0 is empty?
 		if(vhRegs.size() == 0) {
 			ProgramRel relVH  = (ProgramRel) ClassicProject.g().getTrgt("VH");
@@ -108,13 +109,11 @@ public class ChordUtil {
 				vhRegs.add(vv);
 		}
 
-		if(!vhRegs.contains(r0)) {
-			System.out.println("pterror:" + r0 + " meth: " + meth + ":vh:" +  vhRegs.size());
+		if(!vhRegs.contains(r0))
 			return false;
-		}
 		
 		CIObj r0Pts = cipa.pointsTo(r0);
-		
+
 		//points-to set of r0.f?
 		CIObj rootPts = cipa.pointsTo(r0Pts, field);
 		if(rootPts.pts.isEmpty())
@@ -123,19 +122,18 @@ public class ChordUtil {
 		reachablePts.add(rootPts);
 		//Collect all the reachable pt objs from root.
 		Set<jq_Field> drvFields = getAllLoadFields(meth);
-		for(jq_Field f : drvFields) {
-			//we already consider this.
-			if(f.equals(field))
-				continue;
-			CIObj newSet = null;
-			for(CIObj pt : reachablePts){
-				CIObj subPts = cipa.pointsTo(pt, f);
-				if(subPts.pts.isEmpty())
-					continue;
-				newSet = subPts;
+		boolean changed = true;
+		while(changed) {
+			Set<CIObj> newSet = new HashSet<CIObj>();
+			for (CIObj pt : reachablePts) {
+				for (jq_Field f : drvFields) {
+					CIObj subPts = cipa.pointsTo(pt, f);
+					if (subPts.pts.isEmpty())
+						continue;
+					newSet.add(subPts);
+				}
 			}
-			if(newSet != null)
-				reachablePts.add(newSet);
+			changed = reachablePts.addAll(newSet);
 		}
 		
 		for (BasicBlock bb : cfg.reversePostOrder()) {
@@ -152,7 +150,7 @@ public class ChordUtil {
 							continue;
 						Register v = vo.getRegister();
 						if (v.getType().isReferenceType())
-							sumRegs.add(v);
+							sumRegs.add(cipa.pointsTo(v));
 					}
 				}
 				//return values.
@@ -162,22 +160,29 @@ public class ChordUtil {
 						continue;
 
 					RegisterOperand ro = (RegisterOperand) operand;
+					Register v = ro.getRegister();
 					jq_Type retType = ro.getType();
 					if (retType instanceof jq_NullType
 							|| retType instanceof jq_ReturnAddressType)
 						continue;
-					sumRegs.add(ro.getRegister());
+					sumRegs.add(cipa.pointsTo(v));
+				}
+				// global static fields.
+				if (op instanceof PUTSTATIC_A) {
+					Operand rhso = Putstatic.getSrc(q);
+					jq_Field st = Putstatic.getField(q).getField();
+					if ((rhso instanceof RegisterOperand))
+						sumRegs.add(cipa.pointsTo(st));
 				}
 			}
 		}
 		
 		//field is reachable from r?
-		for (Register r : sumRegs) {
-			CIObj src = cipa.pointsTo(r);
+		for (CIObj src : sumRegs) 
 			for (CIObj tgt : reachablePts)
 				if (src.mayAlias(tgt))
 					return true;
-		}
+		
 		return false;
 	}
 	

@@ -172,6 +172,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				assert !meth.isStatic();
 				if(meth.isAbstract())
 					continue;
+				if(!SummariesEnv.v().getReachableMethods().contains(meth))
+					continue;
 				// is this method contains load operation of this field?
 				if (!ChordUtil.hasLoadInst(meth, field))
 					continue;

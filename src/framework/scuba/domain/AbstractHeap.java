@@ -181,10 +181,8 @@ public class AbstractHeap extends Heap {
 						break;
 					}
 				}
-				if(!hasField) {
-					if(c.isInterface())
-						System.out.println("filter out by type..." + c.isInterface());
-					
+				if(!hasField && !c.isInterface()) {
+					System.out.println("filter out by type..." + c.isInterface());
 					continue;
 				}
 				
@@ -204,15 +202,9 @@ public class AbstractHeap extends Heap {
 						continue;
 					}
 				}
-				
-//				if (c.getInstanceField(f.getNameAndDesc()) == null) {
-//					continue;
-//				}
 			}
 			
-			
 			P2Set tgt = lookup(loc, field);
-
 			assert (tgt != null) : "get a null p2 set!";
 			P2Set projP2Set = P2SetHelper.project(tgt, cst);
 			ret.join(projP2Set);
