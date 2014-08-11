@@ -9,6 +9,9 @@ import joeq.Class.jq_Method;
 import joeq.Class.jq_Type;
 import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.ControlFlowGraph;
+import joeq.Compiler.Quad.Operator;
+import joeq.Compiler.Quad.Operator.ALoad;
+import joeq.Compiler.Quad.Operator.AStore;
 import joeq.Compiler.Quad.Operator.Getstatic;
 import joeq.Compiler.Quad.Operator.Putstatic;
 import joeq.Compiler.Quad.Quad;
@@ -241,7 +244,8 @@ public class IntraProcSumAnalysis {
 	}
 	
 	public Pair<Boolean, Boolean> handleStmt(Quad quad, AbstractHeap absHeap) {
-		if(quad.getOperator() instanceof Putstatic || quad.getOperator() instanceof Getstatic)
+		Operator op = quad.getOperator();
+		if(op instanceof Putstatic || op instanceof Getstatic || op instanceof AStore || op instanceof ALoad)
 			return new Pair<Boolean, Boolean>(false, false);
 		absHeap.markChanged(new Pair<Boolean, Boolean>(false, false));
 		quad.accept(qv);

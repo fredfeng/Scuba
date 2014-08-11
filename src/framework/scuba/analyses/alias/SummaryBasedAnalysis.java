@@ -1,12 +1,9 @@
 package framework.scuba.analyses.alias;
 
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import joeq.Class.jq_Class;
@@ -105,6 +102,8 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		//set up cipa.
 		setupCipa();
+		ChordUtil.checkEmptyPts(cipa);
+		ChordUtil.checkEmptyFields(cipa);
 		// app locals from haiyan's analysis.
 		extractAppLocals();
 
@@ -633,17 +632,21 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		System.out.println("Detecting cycle for " + sum.getMethod());
 		int heapNum = sum.getAbsHeap().getAllMemLocs().size();
 		SCCHelper4Heap s4g = new SCCHelper4Heap(sum.getAbsHeap(), sum.getAbsHeap().getAllMemLocs());
-		System.out.println("apply SCC algorithm...." + s4g.getComponents().size());
 		int sccEdges = 0;
 		int sccAp = 0;
 
 		for(Set<AbsMemLoc> scc : s4g.getComponents()) {
 			if(scc.size() > 1) {
-				Iterator<AbsMemLoc> it = scc.iterator();
-				System.out.println("Detecting cycle SCC size: " + scc.size() + " Total: " + heapNum);
-				while(it.hasNext()) {
-					AbsMemLoc loc = it.next();
-					loc.setInCycle(true);
+//				Iterator<AbsMemLoc> it = scc.iterator();
+//				System.out.println("Detecting cycle SCC size: " + scc.size() + " Total: " + heapNum);
+//				while(it.hasNext()) {
+//					AbsMemLoc loc = it.next();
+//					loc.setInCycle(true);
+//				}
+				for(AbsMemLoc apLoc : scc) {
+					apLoc.setInCycle(true);
+					if(apLoc instanceof AccessPath)
+						sccAp++;
 				}
 				//how many edges are in this scc?
 				for (Pair<AbsMemLoc, FieldElem> pair : sum.getAbsHeap().locToP2Set.keySet()) {
@@ -712,7 +715,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 			System.out.println("Detecting ap2ap: " + totalAp2Ap + " " + totalAp2Ap * 100
 					/ totalEdges + "%");*/
 		
-		System.out.println("End cycle detection......." + sccEdges);
+		System.out.println("End cycle detection......." + sccEdges + " AP in scc: " + sccAp);
 	}
 
 

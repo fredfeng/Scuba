@@ -181,10 +181,11 @@ public class AbstractHeap extends Heap {
 						break;
 					}
 				}
-				if(!hasField && !c.isInterface()) {
-					System.out.println("filter out by type..." + c.isInterface());
+				if(!hasField) {
+					//System.out.println("filter out by type..." + c.isInterface());
 					continue;
 				}
+
 				
 				NormalFieldElem nf = (NormalFieldElem)field;
 				jq_Field ff = nf.getField();
@@ -799,7 +800,7 @@ public class AbstractHeap extends Heap {
 					Pair<AbsMemLoc, FieldElem> key = entry.getKey();
 					P2Set tgts = entry.getValue();
 					AbsMemLoc src = key.val0;
-//					if(src.isInCycle()) continue;
+					if(src.isInCycle()) continue;
 //					if(src instanceof LocalVarElem) continue;
 //					if(src instanceof AllocElem) continue;
 //					if(src instanceof StaticElem) continue;
@@ -813,7 +814,7 @@ public class AbstractHeap extends Heap {
 						HeapObject tgt = entry1.getKey();
 //						if(tgt instanceof StaticAccessPath) continue;
 
-//						if(tgt.isInCycle()) continue;
+						if(tgt.isInCycle()) continue;
 
 						Pair<Boolean, Boolean> res = instnEdge(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst);
@@ -863,7 +864,7 @@ public class AbstractHeap extends Heap {
 					P2Set tgts = entry.getValue();
 					AbsMemLoc src = key.val0;
 //					if(src instanceof StaticAccessPath) continue;
-//					if(src.isInCycle()) continue;
+					if(src.isInCycle()) continue;
 //					if(src instanceof LocalVarElem) continue;
 //					if(src instanceof AllocElem) continue;
 
@@ -876,7 +877,7 @@ public class AbstractHeap extends Heap {
 						Map.Entry<HeapObject, BoolExpr> entry1 = it1.next();
 						HeapObject tgt = entry1.getKey();
 //						if(tgt instanceof StaticAccessPath) continue;
-//						if(tgt.isInCycle()) continue;
+						if(tgt.isInCycle()) continue;
 						instnEdge4RecurCall(src, tgt, f, memLocInstn,
 								calleeHeap, point, typeCst, toAdd);
 						addDepEdges(memLocInstn, src, tgt, f);

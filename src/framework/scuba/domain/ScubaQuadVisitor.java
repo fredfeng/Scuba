@@ -3,6 +3,38 @@ package framework.scuba.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import joeq.Class.jq_Class;
+import joeq.Class.jq_Field;
+import joeq.Class.jq_Method;
+import joeq.Class.jq_Reference;
+import joeq.Compiler.Quad.Operand;
+import joeq.Compiler.Quad.Operand.FieldOperand;
+import joeq.Compiler.Quad.Operand.ParamListOperand;
+import joeq.Compiler.Quad.Operand.RegisterOperand;
+import joeq.Compiler.Quad.Operand.TypeOperand;
+import joeq.Compiler.Quad.Operator;
+import joeq.Compiler.Quad.Operator.ALoad;
+import joeq.Compiler.Quad.Operator.ALoad.ALOAD_A;
+import joeq.Compiler.Quad.Operator.AStore;
+import joeq.Compiler.Quad.Operator.CheckCast;
+import joeq.Compiler.Quad.Operator.Getfield;
+import joeq.Compiler.Quad.Operator.Getstatic;
+import joeq.Compiler.Quad.Operator.Invoke;
+import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_A;
+import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_A;
+import joeq.Compiler.Quad.Operator.Invoke.INVOKEVIRTUAL_A;
+import joeq.Compiler.Quad.Operator.Move;
+import joeq.Compiler.Quad.Operator.Move.MOVE_A;
+import joeq.Compiler.Quad.Operator.MultiNewArray;
+import joeq.Compiler.Quad.Operator.New;
+import joeq.Compiler.Quad.Operator.NewArray;
+import joeq.Compiler.Quad.Operator.Phi;
+import joeq.Compiler.Quad.Operator.Putfield;
+import joeq.Compiler.Quad.Operator.Putstatic;
+import joeq.Compiler.Quad.Operator.Return;
+import joeq.Compiler.Quad.Quad;
+import joeq.Compiler.Quad.QuadVisitor;
+import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.program.Program;
 import chord.util.tuple.object.Pair;
 
@@ -12,37 +44,6 @@ import framework.scuba.controller.SummaryController;
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.G;
 import framework.scuba.utils.StringUtil;
-import joeq.Class.jq_Class;
-import joeq.Class.jq_Method;
-import joeq.Class.jq_Reference;
-import joeq.Compiler.Quad.Operand;
-import joeq.Compiler.Quad.Operator;
-import joeq.Compiler.Quad.Quad;
-import joeq.Compiler.Quad.QuadVisitor;
-import joeq.Compiler.Quad.Operand.FieldOperand;
-import joeq.Compiler.Quad.Operand.ParamListOperand;
-import joeq.Compiler.Quad.Operand.RegisterOperand;
-import joeq.Compiler.Quad.Operand.TypeOperand;
-import joeq.Compiler.Quad.Operator.ALoad;
-import joeq.Compiler.Quad.Operator.AStore;
-import joeq.Compiler.Quad.Operator.CheckCast;
-import joeq.Compiler.Quad.Operator.Getfield;
-import joeq.Compiler.Quad.Operator.Getstatic;
-import joeq.Compiler.Quad.Operator.Invoke;
-import joeq.Compiler.Quad.Operator.Move;
-import joeq.Compiler.Quad.Operator.MultiNewArray;
-import joeq.Compiler.Quad.Operator.New;
-import joeq.Compiler.Quad.Operator.NewArray;
-import joeq.Compiler.Quad.Operator.Phi;
-import joeq.Compiler.Quad.Operator.Putfield;
-import joeq.Compiler.Quad.Operator.Putstatic;
-import joeq.Compiler.Quad.Operator.Return;
-import joeq.Compiler.Quad.Operator.ALoad.ALOAD_A;
-import joeq.Compiler.Quad.Operator.Invoke.INVOKEINTERFACE_A;
-import joeq.Compiler.Quad.Operator.Invoke.INVOKESTATIC_A;
-import joeq.Compiler.Quad.Operator.Invoke.INVOKEVIRTUAL_A;
-import joeq.Compiler.Quad.Operator.Move.MOVE_A;
-import joeq.Compiler.Quad.RegisterFactory.Register;
 
 public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 
@@ -182,6 +183,11 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 	// v1 = v2.f
 	public void visitGetfield(Quad stmt) {
 		FieldOperand field = Getfield.getField(stmt);
+		jq_Field f = field.getField();
+		if(!Env.reachesF.contains(f) || f.getType().getName().equals("java.lang.String"))
+			return;
+//		if(Env.emptyFields.contains(field))
+//			return;
 
 		if (field.getField().getType() instanceof jq_Reference) {
 			assert (stmt.getOperator() instanceof Getfield);
@@ -214,9 +220,9 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 
 	// v = A.f.
 	public void visitGetstatic(Quad stmt) {
-
 		FieldOperand field = Getstatic.getField(stmt);
-
+		if(Env.emptyFields.contains(field))
+			return;
 		if (field.getField().getType() instanceof jq_Reference) {
 			jq_Method meth = stmt.getMethod();
 			RegisterOperand lhs = Getstatic.getDest(stmt);
@@ -355,6 +361,7 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 					StackObject sObj = sumController.getMemLocation(
 							meth.getDeclaringClass(), meth,
 							ro.getRegister(), ro.getType(), sum);
+					if(sObj == null) continue;
 					assert (sObj != null) : "Fails to locate the right heap obj.";
 					item.initReturnToLHS(calleeSum.getRetValue(), sObj);
 				}
@@ -599,6 +606,10 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 	// v1.f = v2
 	public void visitPutfield(Quad stmt) {
 		FieldOperand field = Putfield.getField(stmt);
+		jq_Field f = field.getField();
+		if(!Env.reachesF.contains(f) || f.getType().getName().equals("java.lang.String"))
+			return;
+		
 		if (field.getField().getType() instanceof jq_Reference) {
 			assert (stmt.getOperator() instanceof Putfield);
 			jq_Method meth = stmt.getMethod();
@@ -636,6 +647,8 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 	public void visitPutstatic(Quad stmt) {
 
 		FieldOperand field = Putstatic.getField(stmt);
+		if(Env.emptyFields.contains(field))
+			return;
 		if (field.getField().getType() instanceof jq_Reference) {
 			jq_Method meth = stmt.getMethod();
 			Operand rhso = Putstatic.getSrc(stmt);

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
@@ -31,6 +32,11 @@ public class Env {
 	//for all private and protected fields, record the unescape fields
 	//based on CIPA analysis.
 	public final static HashSet<jq_Field> unescapeFields = new HashSet<jq_Field>();
+	//empty fields which should be ignored.
+	public static Set<jq_Field> emptyFields = new HashSet<jq_Field>();
+	
+	public static Set<jq_Field> reachesF = new HashSet<jq_Field>();
+
 
 	public static int countAccessPath = 0;
 

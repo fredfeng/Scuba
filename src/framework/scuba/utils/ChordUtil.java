@@ -1,7 +1,12 @@
 package framework.scuba.utils;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Status;
 
 import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
@@ -12,7 +17,6 @@ import joeq.Compiler.Quad.BasicBlock;
 import joeq.Compiler.Quad.BytecodeToQuad.jq_ReturnAddressType;
 import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
-import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
 import joeq.Compiler.Quad.Operand.RegisterOperand;
 import joeq.Compiler.Quad.Operator;
@@ -20,19 +24,24 @@ import joeq.Compiler.Quad.Operator.Getfield;
 import joeq.Compiler.Quad.Operator.Getfield.GETFIELD_A;
 import joeq.Compiler.Quad.Operator.Invoke;
 import joeq.Compiler.Quad.Operator.Putstatic;
-import joeq.Compiler.Quad.Operator.Return;
 import joeq.Compiler.Quad.Operator.Putstatic.PUTSTATIC_A;
+import joeq.Compiler.Quad.Operator.Return;
 import joeq.Compiler.Quad.Operator.Return.RETURN_A;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.alias.CIObj;
 import chord.analyses.alias.CIPAAnalysis;
+import chord.analyses.field.DomF;
 import chord.bddbddb.Rel.RelView;
 import chord.project.ClassicProject;
 import chord.project.analyses.ProgramRel;
+import chord.util.SetUtils;
+import chord.util.tuple.object.Pair;
 import framework.scuba.analyses.librariesfilter.RelLibrariesT;
+import framework.scuba.domain.Env;
 import framework.scuba.domain.SummariesEnv;
+import framework.scuba.helper.G;
 
 public class ChordUtil {
 	
@@ -66,6 +75,25 @@ public class ChordUtil {
             if(str.matches(prefix))
             	return true;
         }
+        
+        for (String prefix : RelLibrariesT.ExcludeAryForShare) {
+            if (str.startsWith(prefix))
+                return true;
+            
+            //haiyan added regular expression matching
+            if(str.matches(prefix))
+            	return true;
+        }
+        
+        for (String prefix : RelLibrariesT.fopExcludeAry) {
+            if (str.startsWith(prefix))
+                return true;
+            
+            //haiyan added regular expression matching
+            if(str.matches(prefix))
+            	return true;
+        }
+        
         return false;
 	}
 	
@@ -200,5 +228,132 @@ public class ChordUtil {
 			}
 		}
 		return set;
+	}
+	
+	public static Set<Register> emptyArgs = new HashSet<Register>();
+	
+	//checking empty pts.
+	public static void checkEmptyPts(CIPAAnalysis cipa) {
+		for(jq_Method meth : Env.cg.getNodes()) {
+			if (meth.isAbstract())
+				continue;
+			ControlFlowGraph cfg = meth.getCFG();
+			RegisterFactory rf = cfg.getRegisterFactory();
+			int numArgs = meth.getParamTypes().length;
+			for (int zIdx = 0; zIdx < numArgs; zIdx++) {
+				Register v = rf.get(zIdx);
+				if (!v.getType().isReferenceType())
+					continue;
+				CIObj pObj = cipa.pointsTo(v);
+				if(pObj.pts.isEmpty()) {
+					System.out.println(pObj.pts + "verygood....." + v + " in " + meth + meth.isStatic());
+					emptyArgs.add(v);
+				}
+			}
+		}
+		System.out.println("total good: " + emptyArgs.size());
+		
+	}
+	
+	private static final Map<Register, CIObj> reg2Pt = new HashMap<Register, CIObj>();
+	
+	static final Map<Pair<CIObj, jq_Field>, CIObj> fieldCache = new HashMap<Pair<CIObj, jq_Field>, CIObj>();
+
+	public static void checkEmptyFields(CIPAAnalysis cipa) {
+		ProgramRel relReachableF = (ProgramRel) ClassicProject.g().getTrgt("reachableF");
+		if (!relReachableF.isOpen())
+			relReachableF.load();
+		
+		assert relReachableF.size() > 1 : "fails to load reachableF";
+		
+		Iterable<jq_Field> resF = relReachableF.getAry1ValTuples();
+		Set<jq_Field> reaches = SetUtils.iterableToSet(resF,
+				relReachableF.size());
+
+		DomF domF = (DomF) ClassicProject.g().getTrgt("F");
+		Set<jq_Field> all = new HashSet<jq_Field>();
+		int numF = domF.size();
+		for (int v = 1; v < numF; v++)
+			all.add(domF.get(v));
+		
+		Set<jq_Field> unreaches = new HashSet<jq_Field>(all);
+		unreaches.removeAll(reaches);
+		Env.reachesF = reaches;
+		
+//		for(jq_Field f : reaches) {
+//			
+//		}
+//		
+//		for(jq_Field f : unreaches) {
+//			System.out.println("empty field: " + f +  " class: " + f.getDeclaringClass());
+//		}
+
+
+//	    int numF = domF.size();
+//	    assert numF > 0 : "Fails to load domF.";
+	    //0 is null in chord.
+		/*for (int v = 1; v < numF; v++) {
+			jq_Field field = domF.get(v);
+			if(!field.getType().isReferenceType())
+				continue;
+			if(field.getType().getName().equals("java.lang.String")) {
+				Env.emptyFields.add(field);
+				continue;
+			}
+			
+			System.out.println("Checking field: " + field + " static: " + field.isStatic() + " clz: " + field.getDeclaringClass());
+			//static field: directly check its points to set.
+			if(field.isStatic()) {
+				CIObj pt = cipa.pointsTo(field);
+				if(pt.pts.isEmpty())
+					Env.emptyFields.add(field);
+			} else {
+				continue;
+				jq_Class decClz = field.getDeclaringClass();
+				boolean flag = true;
+				for(int i = 0; i < decClz.getVirtualMethods().length; i++) {
+					jq_Method m = decClz.getVirtualMethods()[i];
+					if (!SummariesEnv.v().getReachableMethods().contains(m))
+						continue;
+					if (m.isAbstract())
+						continue;
+					ControlFlowGraph cfg = m.getCFG();
+					RegisterFactory rf = cfg.getRegisterFactory();
+					Register r0 = rf.get(0);
+					CIObj base = null;
+					if (reg2Pt.containsKey(r0))
+						base = reg2Pt.get(r0);
+					else {
+						base = cipa.pointsTo(r0);
+						reg2Pt.put(r0, base);
+					}
+
+					if (base.pts.isEmpty())
+						continue;
+
+					CIObj fPt = null;
+					Pair<CIObj, jq_Field> pair = new Pair<CIObj, jq_Field>(
+							base, field);
+					if (fieldCache.containsKey(pair)) {
+						fPt = fieldCache.get(pair);
+					} else {
+						fPt = cipa.pointsTo(base, field);
+						fieldCache.put(pair, fPt);
+					}
+
+					if (!fPt.pts.isEmpty()) {
+						flag = false;
+						break;
+					}
+				}
+				if(flag)
+					Env.emptyFields.add(field);
+			}
+			
+		}*/
+		
+		//dump all empty fields
+//		for(jq_Field f : Env.emptyFields)
+//			System.out.println("empty field: " + f +  " class: " + f.getDeclaringClass());
 	}
 }
