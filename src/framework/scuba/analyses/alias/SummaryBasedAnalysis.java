@@ -77,6 +77,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 	protected ProgramRel relVH;
 	protected ProgramRel relMV;
 	protected ProgramRel relVValias;
+	protected ProgramRel relTF;
     protected CIPAAnalysis cipa;
 
 	protected CICG callGraph;
@@ -104,6 +105,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		setupCipa();
 		ChordUtil.checkEmptyPts(cipa);
 		ChordUtil.checkEmptyFields(cipa);
+		ChordUtil.populateTF(relTF);
 		// app locals from haiyan's analysis.
 		extractAppLocals();
 
@@ -112,7 +114,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		sumAnalyze();
 		conclude();
 		long end = System.nanoTime();
-		StringUtil.reportSec("Sum-based analysis runnint time: ", start, end);
+		StringUtil.reportSec("Sum-based analysis running time: ", start, end);
 
 //		dumpCallGraph();
 
@@ -378,10 +380,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				StringUtil.reportTotalTime("total in substitute: ", G.subTime);
 				StringUtil.reportTotalTime("total in simplfy: ", G.simTime);
 				StringUtil.reportTotalTime("total in genEqTime: ", G.genEqTime);
-				StringUtil.reportTotalTime("total in fuck1: ", G.fuck1);
-				StringUtil.reportTotalTime("total in fuck2: ", G.fuck2);
-				StringUtil.reportTotalTime("total in fuck3: ", G.fuck3);
-				StringUtil.reportTotalTime("total in fuck4: ", G.fuck4);
+				StringUtil.reportTotalTime("total in cst1: ", G.cst1);
+				StringUtil.reportTotalTime("total in cst2: ", G.cst2);
+				StringUtil.reportTotalTime("total in cst3: ", G.cst3);
+				StringUtil.reportTotalTime("total in cst4: ", G.cst4);
 
 				StringUtil.reportTotalTime("total in instEqTime: ", G.eqTime);
 				StringUtil.reportTotalTime("total in instGeTime: ", G.geTime);
@@ -621,9 +623,12 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 			// only when changing the summary, we add all the callers
 			if (changed.val1) {
+				Set<jq_Method> bak = new LinkedHashSet<jq_Method>();
 				for (jq_Method pred : callGraph.getPreds(worker))
 					if (scc.contains(pred))
-						wl.add(pred);
+						bak.add(pred);
+				bak.addAll(wl);
+				wl = new LinkedHashSet<jq_Method>(bak);
 			}
 		}
 	}
@@ -737,13 +742,18 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 		relMV = (ProgramRel) ClassicProject.g().getTrgt("MV");
 		relVH = (ProgramRel) ClassicProject.g().getTrgt("ptsVH");
 		relVValias = (ProgramRel) ClassicProject.g().getTrgt("VValias");
+		
+	    relTF = (ProgramRel) ClassicProject.g().getTrgt("TF");
 
 		if (!relDcLocal.isOpen())
 			relDcLocal.load();
 
 		if (!relReachableM.isOpen())
 			relReachableM.load();
-
+		
+		if (!relTF.isOpen())
+			relTF.load();
+		
 		Iterable<jq_Method> resM = relReachableM.getAry1ValTuples();
 		Set<jq_Method> reaches = SetUtils.iterableToSet(resM,
 				relReachableM.size());

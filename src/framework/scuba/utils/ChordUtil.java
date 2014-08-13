@@ -276,9 +276,26 @@ public class ChordUtil {
 		for (int v = 1; v < numF; v++)
 			all.add(domF.get(v));
 		
+		Set<jq_Field> woString = new HashSet<jq_Field>();
+		for(jq_Field sf : reaches) {
+			if(sf == null) {
+				System.out.println("ignore array type");
+				continue;
+			}
+			if(!sf.getType().getName().equals("java.lang.String"))
+				woString.add(sf);
+			else
+				System.out.println("this is string: " + sf);
+		}
+		
 		Set<jq_Field> unreaches = new HashSet<jq_Field>(all);
 		unreaches.removeAll(reaches);
 		Env.reachesF = reaches;
+		System.out.println("total fields: " + numF);
+		System.out.println("reachable fields: " + reaches.size());
+		System.out.println("reachable fields w/o string: " + woString.size());
+
+
 		
 //		for(jq_Field f : reaches) {
 //			
@@ -355,5 +372,24 @@ public class ChordUtil {
 		//dump all empty fields
 //		for(jq_Field f : Env.emptyFields)
 //			System.out.println("empty field: " + f +  " class: " + f.getDeclaringClass());
+	}
+	
+	public static final Map<jq_Field, Set<jq_Type>> field2Types = new HashMap<jq_Field, Set<jq_Type>>();
+	
+	public static void populateTF(ProgramRel relTF) {
+		for (jq_Field f : Env.reachesF) {
+			RelView view = relTF.getView();
+			view.selectAndDelete(1, f);
+			Iterable<jq_Type> resT = view.getAry1ValTuples();
+			Set<jq_Type> types = SetUtils.iterableToSet(resT, view.size());
+			field2Types.put(f, types);
+		}
+		//dump results
+		for(jq_Field f : field2Types.keySet()) {
+			if(f == null)
+				continue;
+			if(f.isStatic())
+				continue;
+		}
 	}
 }

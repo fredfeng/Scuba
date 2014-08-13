@@ -328,13 +328,13 @@ public class ConstraintManager {
 			 str1 = first.toString();
 			 str2 = second.toString();
 			long unend1 = System.nanoTime();
-			G.fuck4 += (unend1 - unstart1);
+			G.cst4 += (unend1 - unstart1);
 			
 			long unstart = System.nanoTime();
 			ret = interCache.get(new Pair<String, String>(str1,
 					str2));
 			long unend = System.nanoTime();
-			G.fuck3 += (unend - unstart);
+			G.cst3 += (unend - unstart);
 			if (ret != null) {
 				return ret;
 			}
@@ -533,14 +533,14 @@ public class ConstraintManager {
 				long tstart1 = System.nanoTime();
 				BoolExpr newCst = intersect(orgCst, eqExpr);
 				long tend1 = System.nanoTime();
-				G.fuck1 += (tend1 - tstart1);
+				G.cst1 += (tend1 - tstart1);
 				if (isTrue(newCst))
 					return trueExpr;
 				
 				long tstart2 = System.nanoTime();
 				b = union(b, newCst);
 				long tend2 = System.nanoTime();
-				G.fuck2 += (tend2 - tstart2);
+				G.cst2 += (tend2 - tstart2);
 			}
 		}
 		return b;

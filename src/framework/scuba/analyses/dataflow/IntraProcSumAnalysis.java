@@ -245,7 +245,7 @@ public class IntraProcSumAnalysis {
 	
 	public Pair<Boolean, Boolean> handleStmt(Quad quad, AbstractHeap absHeap) {
 		Operator op = quad.getOperator();
-		if(op instanceof Putstatic || op instanceof Getstatic || op instanceof AStore || op instanceof ALoad)
+		if(op instanceof Putstatic || op instanceof Getstatic)
 			return new Pair<Boolean, Boolean>(false, false);
 		absHeap.markChanged(new Pair<Boolean, Boolean>(false, false));
 		quad.accept(qv);

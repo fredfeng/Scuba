@@ -82,10 +82,10 @@ public class G {
 	public static long liftTime = 0;
 	public static long exprTime = 0;
 	public static long eqTime = 0;
-	public static long fuck1 = 0;
-	public static long fuck2 = 0;
-	public static long fuck3 = 0;
-	public static long fuck4 = 0;
+	public static long cst1 = 0;
+	public static long cst2 = 0;
+	public static long cst3 = 0;
+	public static long cst4 = 0;
 
 	public static long genEqTime = 0;
 
