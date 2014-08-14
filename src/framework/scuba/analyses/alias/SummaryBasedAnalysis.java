@@ -14,6 +14,7 @@ import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Quad;
 import joeq.Compiler.Quad.RegisterFactory.Register;
 import chord.analyses.alias.CICG;
+//import chord.analyses.alias.CICG;
 import chord.analyses.alias.CIPAAnalysis;
 import chord.analyses.alias.ICICG;
 import chord.analyses.field.DomF;
@@ -331,8 +332,10 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 
 		assert tltSCCMeths == methsInCG : tltSCCMeths + " VS " + methsInCG;
 
+		int max = 0;
 		for (Set<jq_Method> scc : s4g.getComponents()) {
 			Node cur = sccToNode.get(scc);
+			if(scc.size() > max) max = scc.size();
 			for (jq_Method nb : scc) {
 				// init successor.
 				for (jq_Method sucb : callGraph.getSuccs(nb)) {
@@ -360,7 +363,7 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				}
 			}
 		}
-
+		
 		return repGraph;
 	}
 
@@ -383,7 +386,6 @@ public class SummaryBasedAnalysis extends JavaAnalysis {
 				StringUtil.reportTotalTime("total in cst1: ", G.cst1);
 				StringUtil.reportTotalTime("total in cst2: ", G.cst2);
 				StringUtil.reportTotalTime("total in cst3: ", G.cst3);
-				StringUtil.reportTotalTime("total in cst4: ", G.cst4);
 
 				StringUtil.reportTotalTime("total in instEqTime: ", G.eqTime);
 				StringUtil.reportTotalTime("total in instGeTime: ", G.geTime);

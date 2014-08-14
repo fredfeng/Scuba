@@ -76,17 +76,17 @@ public class ConstraintManager {
 	// this is my little cute cache for constraint instantiation
 	public static final CstInstnCache instnCache = new CstInstnCache();
 
-	static final Map<String, Map<String, BoolExpr>> extractCache = new HashMap<String, Map<String, BoolExpr>>();
+	static final Map<BoolExpr, Map<BoolExpr, BoolExpr>> extractCache = new HashMap<BoolExpr, Map<BoolExpr, BoolExpr>>();
 
-	static final Map<String, BoolExpr> simplifyCache = new HashMap<String, BoolExpr>();
+	static final Map<BoolExpr, BoolExpr> simplifyCache = new HashMap<BoolExpr, BoolExpr>();
 
-	static final Map<Pair<String, String>, BoolExpr> unionCache = new HashMap<Pair<String, String>, BoolExpr>();
+	static final Map<Pair<BoolExpr, BoolExpr>, BoolExpr> unionCache = new HashMap<Pair<BoolExpr, BoolExpr>, BoolExpr>();
 
-	static final Map<Pair<String, String>, BoolExpr> interCache = new HashMap<Pair<String, String>, BoolExpr>();
+	static final Map<Pair<BoolExpr, BoolExpr>, BoolExpr> interCache = new HashMap<Pair<BoolExpr, BoolExpr>, BoolExpr>();
 
-	static final Map<Trio<String, String, String>, BoolExpr> subCache = new HashMap<Trio<String, String, String>, BoolExpr>();
+	static final Map<Trio<BoolExpr, BoolExpr, BoolExpr>, BoolExpr> subCache = new HashMap<Trio<BoolExpr, BoolExpr, BoolExpr>, BoolExpr>();
 
-	static final Map<Pair<String, String>, Boolean> eqCache = new HashMap<Pair<String, String>, Boolean>();
+	static final Map<Pair<BoolExpr, BoolExpr>, Boolean> eqCache = new HashMap<Pair<BoolExpr, BoolExpr>, Boolean>();
 
 	// the dependence map for cst instantiation
 	static final CstInstnCacheDepMap cstDepMap = new CstInstnCacheDepMap();
@@ -138,10 +138,10 @@ public class ConstraintManager {
 
 		try {
 			if (SummariesEnv.v().isUsingSimplifyCache()) {
-				ret = simplifyCache.get(expr.toString());
+				ret = simplifyCache.get(expr);
 				if (ret == null) {
 					ret = (BoolExpr) expr.Simplify();
-					simplifyCache.put(expr.toString(), ret);
+					simplifyCache.put(expr, ret);
 				}
 			} else {
 				ret = (BoolExpr) expr.Simplify();
@@ -153,8 +153,8 @@ public class ConstraintManager {
 
 			long inststart = System.nanoTime();
 
-			Map<String, BoolExpr> map;
-			map = new HashMap<String, BoolExpr>();
+			Map<BoolExpr, BoolExpr> map;
+			map = new HashMap<BoolExpr, BoolExpr>();
 			if (SummariesEnv.v().isUsingExtractCache()) {
 				long unstart = System.nanoTime();
 				map = extractTermUsingCache(ret);
@@ -214,15 +214,13 @@ public class ConstraintManager {
 				if (SummariesEnv.v().isUsingSubCache()) {
 					long unstart = System.nanoTime();
 					BoolExpr tmp = subCache
-							.get(new Trio<String, String, String>(ret1
-									.toString(), sub.toString(), instSub
-									.toString()));
+							.get(new Trio<BoolExpr, BoolExpr, BoolExpr>(ret1, sub, instSub));
 					if (tmp == null) {
 						tmp = (BoolExpr) ret1.Substitute(sub, instSub);
 					}
 					subCache.put(
-							new Trio<String, String, String>(ret1.toString(),
-									sub.toString(), instSub.toString()), tmp);
+							new Trio<BoolExpr, BoolExpr, BoolExpr>(ret1,
+									sub, instSub), tmp);
 					ret1 = tmp;
 					long unend = System.nanoTime();
 					G.subTime += (unend - unstart);
@@ -238,10 +236,10 @@ public class ConstraintManager {
 			BoolExpr result = null;
 			if (SummariesEnv.v().isUsingSimplifyCache()) {
 				long simStart = System.nanoTime();
-				result = simplifyCache.get(ret1.toString());
+				result = simplifyCache.get(ret1);
 				if (result == null) {
 					result = (BoolExpr) ret1.Simplify();
-					simplifyCache.put(ret1.toString(), result);
+					simplifyCache.put(ret1, result);
 				}
 				long simEnd = System.nanoTime();
 				G.simTime += (simEnd - simStart);
@@ -264,40 +262,40 @@ public class ConstraintManager {
 		return null;
 	}
 
-	public static Map<String, BoolExpr> extractTermUsingCache(Expr expr)
+	public static Map<BoolExpr, BoolExpr> extractTermUsingCache(Expr expr)
 			throws Z3Exception {
-		Map<String, BoolExpr> ret = extractCache.get(expr.toString());
+		Map<BoolExpr, BoolExpr> ret = extractCache.get(expr);
 		if (ret != null) {
 			return ret;
 		}
-		ret = new HashMap<String, BoolExpr>();
+		ret = new HashMap<BoolExpr, BoolExpr>();
 
 		// using toString as the key to map the same expr, buggy.
 
 		if (expr.IsEq() || expr.IsLE() || expr.IsGE()) {
-			ret.put(expr.toString(), (BoolExpr) expr);
+			ret.put((BoolExpr)expr, (BoolExpr) expr);
 		} else if (expr.IsAnd() || expr.IsOr()) {
 
 			for (int i = 0; i < expr.NumArgs(); i++) {
 				assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:"
 						+ expr.Args()[i];
 				BoolExpr sub = (BoolExpr) expr.Args()[i];
-				Map<String, BoolExpr> map = extractTermUsingCache(sub);
+				Map<BoolExpr, BoolExpr> map = extractTermUsingCache(sub);
 				ret.putAll(map);
 			}
 		}
 
-		extractCache.put(expr.toString(), ret);
+		extractCache.put((BoolExpr)expr, ret);
 		return ret;
 	}
 
 	// given an expr, extract all its sub terms for instantiating.
-	public static void extractTerm(Expr expr, Map<String, BoolExpr> map) {
+	public static void extractTerm(Expr expr, Map<BoolExpr, BoolExpr> map) {
 		try {
 			// using toString as the key to map the same expr, buggy.
 
 			if (expr.IsEq() || expr.IsLE() || expr.IsGE()) {
-				map.put(expr.toString(), (BoolExpr) expr);
+				map.put((BoolExpr)expr, (BoolExpr) expr);
 				return;
 			}
 
@@ -320,19 +318,10 @@ public class ConstraintManager {
 	public static BoolExpr intersect(BoolExpr first, BoolExpr second) {
 
 		BoolExpr ret = null;
-		String str1 = null;
-		String str2 = null;
 		if (SummariesEnv.v().isUsingInterCache()) {
-			long unstart1 = System.nanoTime();
-
-			 str1 = first.toString();
-			 str2 = second.toString();
-			long unend1 = System.nanoTime();
-			G.cst4 += (unend1 - unstart1);
-			
 			long unstart = System.nanoTime();
-			ret = interCache.get(new Pair<String, String>(str1,
-					str2));
+			ret = interCache.get(new Pair<BoolExpr, BoolExpr>(first,
+					second));
 			long unend = System.nanoTime();
 			G.cst3 += (unend - unstart);
 			if (ret != null) {
@@ -358,7 +347,7 @@ public class ConstraintManager {
 			}
 
 			if (SummariesEnv.v().isUsingInterCache()) {
-				interCache.put(new Pair<String, String>(str1, str2), ret);
+				interCache.put(new Pair<BoolExpr, BoolExpr>(first, second), ret);
 			}
 			long unend = System.nanoTime();
 			G.interTime += (unend - unstart);
@@ -374,8 +363,7 @@ public class ConstraintManager {
 	public static BoolExpr union(BoolExpr first, BoolExpr second) {
 		BoolExpr ret = null;
 		if (SummariesEnv.v().isUsingUnionCache()) {
-			ret = unionCache.get(new Pair<String, String>(first.toString(),
-					second.toString()));
+			ret = unionCache.get(new Pair<BoolExpr, BoolExpr>(first, second));
 			if (ret != null) {
 				return ret;
 			}
@@ -400,8 +388,8 @@ public class ConstraintManager {
 			}
 
 			if (SummariesEnv.v().isUsingUnionCache()) {
-				unionCache.put(new Pair<String, String>(first.toString(),
-						second.toString()), ret);
+				unionCache.put(new Pair<BoolExpr, BoolExpr>(first,
+						second), ret);
 			}
 			long unend = System.nanoTime();
 			G.unionTime += (unend - unstart);
@@ -712,8 +700,8 @@ public class ConstraintManager {
 		assert expr2 != null : "Constraint can not be null!";
 
 		if (SummariesEnv.v().isUsingEqCache()) {
-			Pair<String, String> pair = new Pair<String, String>(
-					expr1.toString(), expr2.toString());
+			Pair<BoolExpr, BoolExpr> pair = new Pair<BoolExpr, BoolExpr>(
+					expr1, expr2);
 			if (eqCache.containsKey(pair)) {
 				return eqCache.get(pair);
 			}
@@ -739,8 +727,8 @@ public class ConstraintManager {
 			if (status == Status.UNSATISFIABLE) {
 				ret = true;
 				if (SummariesEnv.v().isUsingEqCache()) {
-					eqCache.put(new Pair<String, String>(expr1.toString(),
-							expr2.toString()), ret);
+					eqCache.put(new Pair<BoolExpr, BoolExpr>(expr1,
+							expr2), ret);
 				}
 				return ret;
 			}
@@ -751,7 +739,7 @@ public class ConstraintManager {
 		ret = false;
 		if (SummariesEnv.v().isUsingEqCache()) {
 			eqCache.put(
-					new Pair<String, String>(expr1.toString(), expr2.toString()),
+					new Pair<BoolExpr, BoolExpr>(expr1, expr2),
 					ret);
 		}
 

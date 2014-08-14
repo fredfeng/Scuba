@@ -13,7 +13,7 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Reference;
-import chord.analyses.alias.CICG;
+import chord.analyses.alias.ICICG;
 import chord.program.Program;
 import framework.scuba.helper.ArgDerivedHelper;
 
@@ -41,7 +41,7 @@ public class Env {
 	public static int countAccessPath = 0;
 
 	// Callgraph instance.
-	public static CICG cg;
+	public static ICICG cg;
 
 	/**
 	 * This map holds all key,value pairs such that value.getSuperclass() ==
