@@ -366,9 +366,7 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 					item.initReturnToLHS(calleeSum.getRetValue(), sObj);
 				}
 			}
-			if (G.tuning)
-				StringUtil.reportInfo("calleeSum Info: "
-						+ calleeSum.getMethod());
+
 			// instantiation the edges in the callee's heap
 
 			Pair<Boolean, Boolean> flag = new Pair<Boolean, Boolean>(false,
@@ -413,6 +411,10 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 			if (SummariesEnv.v().jump) {
 				sum.addJumpInstnSet(calleeSum);
 			}
+			
+			if (G.tuning)
+				StringUtil.reportInfo("calleeSum Info: "
+						+ calleeSum.getMethod() + " size****" + sum.getHeapSize());
 
 			sum.getAbsHeap().markChanged(flag);
 
@@ -427,7 +429,7 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 
 		long endInstCallsite = System.nanoTime();
 		if (G.tuning)
-			StringUtil.reportSec("Time to instantiate callsite: " + stmt,
+			StringUtil.reportSec("Time to instantiate callsite: " + stmt + " size:" + sum.getAbsHeap().size(),
 					startInstCallsite, endInstCallsite);
 		
 		//regression test.
