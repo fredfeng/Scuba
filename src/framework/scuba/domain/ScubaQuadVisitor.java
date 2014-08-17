@@ -184,8 +184,18 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 	public void visitGetfield(Quad stmt) {
 		FieldOperand field = Getfield.getField(stmt);
 		jq_Field f = field.getField();
-		if(!Env.reachesF.contains(f) || f.getType().getName().equals("java.lang.String"))
+		if (!Env.reachesF.contains(f)
+				|| f.getType().getName().equals("java.lang.String")
+//				|| f.getType().getName().equals("java.util.Date")
+//				|| f.getName().toString().contains("next")
+//				|| f.getName().toString().contains("header")
+				|| f.getName().toString().contains("this$")		
+//				|| f.getName().toString().contains("previous")
+				)		
+		{
+			System.out.println("ignore field in get : " + stmt.getMethod() +  " field:" + f);
 			return;
+		}
 //		if(Env.emptyFields.contains(field))
 //			return;
 
@@ -609,8 +619,18 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 	public void visitPutfield(Quad stmt) {
 		FieldOperand field = Putfield.getField(stmt);
 		jq_Field f = field.getField();
-		if(!Env.reachesF.contains(f) || f.getType().getName().equals("java.lang.String"))
+		if (!Env.reachesF.contains(f)
+				|| f.getType().getName().equals("java.lang.String")
+//				|| f.getType().getName().equals("java.util.Date")
+//				|| f.getName().toString().contains("next")
+//				|| f.getName().toString().contains("header")
+				|| f.getName().toString().contains("this$")		
+//				|| f.getName().toString().contains("previous")
+				)	
+		{
+			System.out.println("ignore field in put : " + stmt.getMethod() +  " field:" + f);
 			return;
+		}
 		
 		if (field.getField().getType() instanceof jq_Reference) {
 			assert (stmt.getOperator() instanceof Putfield);
