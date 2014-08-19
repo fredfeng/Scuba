@@ -7,6 +7,7 @@ import joeq.Class.jq_Class;
 import joeq.Class.jq_Field;
 import joeq.Class.jq_Method;
 import joeq.Class.jq_Reference;
+import joeq.Compiler.Quad.ControlFlowGraph;
 import joeq.Compiler.Quad.Operand;
 import joeq.Compiler.Quad.Operand.FieldOperand;
 import joeq.Compiler.Quad.Operand.ParamListOperand;
@@ -43,6 +44,7 @@ import com.microsoft.z3.BoolExpr;
 import framework.scuba.controller.SummaryController;
 import framework.scuba.domain.AbstractHeap.VariableType;
 import framework.scuba.helper.G;
+import framework.scuba.utils.ChordUtil;
 import framework.scuba.utils.StringUtil;
 
 public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
@@ -185,19 +187,18 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 		FieldOperand field = Getfield.getField(stmt);
 		jq_Field f = field.getField();
 		if (!Env.reachesF.contains(f)
-				|| f.getType().getName().equals("java.lang.String")
-//				|| f.getType().getName().equals("java.util.Date")
-//				|| f.getName().toString().contains("next")
-//				|| f.getName().toString().contains("header")
-				|| f.getName().toString().contains("this$")		
-//				|| f.getName().toString().contains("previous")
-				)		
-		{
-			System.out.println("ignore field in get : " + stmt.getMethod() +  " field:" + f);
+				|| f.getType().getName().equals("java.lang.String"))
+				return;
+		
+		/*jq_Method mm = stmt.getMethod();
+		if (mm.toString().contains("iterator")
+				&& f.getName().toString().contains("this$")) {
+			if(mm.toString().contains("WeakHashMap") || mm.toString().contains(".HashMap")) {
+			System.out.println("ignore field in get : " + stmt.getMethod()
+					+ " field:" + f);
 			return;
-		}
-//		if(Env.emptyFields.contains(field))
-//			return;
+			}
+		}*/
 
 		if (field.getField().getType() instanceof jq_Reference) {
 			assert (stmt.getOperator() instanceof Getfield);
@@ -275,6 +276,25 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 		assert (stmt.getOperator() instanceof Invoke);
 		// the callsite's belonging method
 		jq_Method meth = stmt.getMethod();
+		
+		//do we care about this stmt?
+		jq_Method libCallee = Invoke.getMethod(stmt).getMethod();
+//		if(ChordUtil.isLibClass(meth.getDeclaringClass()) && (libCallee.toString().contains("iterator") || libCallee.toString().contains("next:()"))) {
+//			if(!meth.getReturnType().isReferenceType()) {
+//				System.out.println("skip stmt:  " + stmt + " in " + meth);
+//				return;
+//			}
+//		}
+		
+		if(ChordUtil.isLibClass(libCallee.getDeclaringClass()) && !libCallee.isStatic()) {
+			if (libCallee.getReturnType().getName().equals("java.lang.String")
+					|| libCallee.getReturnType().isPrimitiveType()) {
+				if (libCallee.getParamTypes().length == 1 && !libCallee.toString().contains("<init>")) {
+					System.out.println("skip stmt:  " + stmt + " in " + meth + " static? " + libCallee.isStatic());
+					return;
+				}
+			}
+		}
 		// retrieve the summaries of the potential callees
 		// getSumCstPairList returns only the summaries for methods that
 		// have been analyzed
@@ -412,8 +432,13 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 			// summary effects this method
 			calleeSum.jumpEffectSet.add(sum);
 
+			System.out.println("debug leak: " + calleeSumCst.val0.getMethod()
+					+ " size: " + calleeSumCst.val0.getHeapSize());
+			
 			flag = sum.getAbsHeap().handleInvokeStmt(meth.getDeclaringClass(), meth,
 					stmt.getID(), calleeSum.getAbsHeap(), item, hasTypeCst);
+			
+			System.out.println("can we get to this....");
 
 			if (SummariesEnv.v().smartSkip) {
 				sum.addSmartSkip(item);
@@ -619,18 +644,18 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 	public void visitPutfield(Quad stmt) {
 		FieldOperand field = Putfield.getField(stmt);
 		jq_Field f = field.getField();
+		
 		if (!Env.reachesF.contains(f)
-				|| f.getType().getName().equals("java.lang.String")
-//				|| f.getType().getName().equals("java.util.Date")
-//				|| f.getName().toString().contains("next")
-//				|| f.getName().toString().contains("header")
-				|| f.getName().toString().contains("this$")		
-//				|| f.getName().toString().contains("previous")
-				)	
-		{
-			System.out.println("ignore field in put : " + stmt.getMethod() +  " field:" + f);
+				|| f.getType().getName().equals("java.lang.String"))
+				return;
+		
+		/*jq_Method mm = stmt.getMethod();
+		if (mm.toString().contains("iterator:()")
+				&& f.getName().toString().contains("this$")) {
+			System.out.println("ignore field in get : " + stmt.getMethod()
+					+ " field:" + f);
 			return;
-		}
+		}*/
 		
 		if (field.getField().getType() instanceof jq_Reference) {
 			assert (stmt.getOperator() instanceof Putfield);
