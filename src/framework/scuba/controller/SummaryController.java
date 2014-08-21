@@ -39,6 +39,8 @@ import framework.scuba.domain.StackObject;
 import framework.scuba.domain.SummariesEnv;
 import framework.scuba.domain.Summary;
 import framework.scuba.helper.ConstraintManager;
+import framework.scuba.helper.G;
+import framework.scuba.utils.ChordUtil;
 import framework.scuba.utils.StringUtil;
 
 public class SummaryController {
@@ -210,6 +212,9 @@ public class SummaryController {
 		// find all qualified callees and the constraints
 		// all dynamic targets.
 		Set<jq_Method> tgtSet = Env.cg.getTargets(callsite);
+		if(Invoke.getMethod(callsite).toString().contains("hashCode"))
+			System.out.println("HashCode targets-------: " + tgtSet.size() + " " + tgtSet);
+		
 		if (tgtSet.size() == 0) {
 			StringUtil
 					.reportInfo("Fail to find model for callee..." + callsite);
@@ -250,6 +255,7 @@ public class SummaryController {
 
 			// generate pt-set for the receiver.
 			StackObject so = getMemLocation(clz, caller, recv, ro.getType(), sum);
+			if(so == null) return ret;
 			AbstractHeap absHeap = sum.getAbsHeap();
 			P2Set p2Set = absHeap.lookup(so,
 					EpsilonFieldElem.getEpsilonFieldElem());
@@ -264,9 +270,12 @@ public class SummaryController {
 
 				if (SummariesEnv.v().disableCst() || sum.isInBadScc()) {
 					cst = ConstraintManager.genTrue();
-				} else
+				} else {
+					long sstart = System.nanoTime();
 					cst = genCst(p2Set, tgt, tgtType, tgtSet);
-
+					long tend = System.nanoTime();
+					G.genTime += (tend - sstart);
+				}
 				if (p2Set.isEmpty())
 					cst = ConstraintManager.genTrue();
 

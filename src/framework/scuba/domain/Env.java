@@ -33,7 +33,7 @@ public class Env {
 	//based on CIPA analysis.
 	public final static HashSet<jq_Field> unescapeFields = new HashSet<jq_Field>();
 	//empty fields which should be ignored.
-	public static Set<jq_Field> emptyFields = new HashSet<jq_Field>();
+//	public static Set<jq_Field> emptyFields = new HashSet<jq_Field>();
 	
 	public static Set<jq_Field> reachesF = new HashSet<jq_Field>();
 

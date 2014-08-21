@@ -232,8 +232,6 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 	// v = A.f.
 	public void visitGetstatic(Quad stmt) {
 		FieldOperand field = Getstatic.getField(stmt);
-		if(Env.emptyFields.contains(field))
-			return;
 		if (field.getField().getType() instanceof jq_Reference) {
 			jq_Method meth = stmt.getMethod();
 			RegisterOperand lhs = Getstatic.getDest(stmt);
@@ -286,7 +284,7 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 //			}
 //		}
 		
-		if(ChordUtil.isLibClass(libCallee.getDeclaringClass()) && !libCallee.isStatic()) {
+/*		if(ChordUtil.isLibClass(libCallee.getDeclaringClass()) && !libCallee.isStatic()) {
 			if (libCallee.getReturnType().getName().equals("java.lang.String")
 					|| libCallee.getReturnType().isPrimitiveType()) {
 				if (libCallee.getParamTypes().length == 1 && !libCallee.toString().contains("<init>")) {
@@ -294,7 +292,7 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 					return;
 				}
 			}
-		}
+		}*/
 		// retrieve the summaries of the potential callees
 		// getSumCstPairList returns only the summaries for methods that
 		// have been analyzed
@@ -694,8 +692,6 @@ public class ScubaQuadVisitor extends QuadVisitor.EmptyVisitor {
 	public void visitPutstatic(Quad stmt) {
 
 		FieldOperand field = Putstatic.getField(stmt);
-		if(Env.emptyFields.contains(field))
-			return;
 		if (field.getField().getType() instanceof jq_Reference) {
 			jq_Method meth = stmt.getMethod();
 			Operand rhso = Putstatic.getSrc(stmt);

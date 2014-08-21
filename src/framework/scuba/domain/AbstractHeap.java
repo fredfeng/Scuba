@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -31,6 +30,7 @@ import framework.scuba.helper.ArgDerivedHelper;
 import framework.scuba.helper.ConstraintManager;
 import framework.scuba.helper.G;
 import framework.scuba.helper.P2SetHelper;
+import framework.scuba.utils.ChordUtil;
 import framework.scuba.utils.StringUtil;
 
 public class AbstractHeap extends Heap {
@@ -174,32 +174,34 @@ public class AbstractHeap extends Heap {
 				subList.add(c);
 				assert subList.contains(c) : subList + " must contains " + c;
 				jq_Field f = ((NormalFieldElem) field).getField();
-				boolean hasField = false;
-				for(jq_Class sub : subList) {
-					if (sub.getInstanceField(f.getNameAndDesc()) != null) {
-						hasField = true;
-						break;
+				assert Env.reachesF.contains(f);
+				Set<jq_Type> types = ChordUtil.field2Types.get(f);
+				if (!types.contains(c)) {
+					boolean flag = true;
+					for (jq_Type t : types) {
+						if (!(t instanceof jq_Class))
+							continue;
+						jq_Class clz = (jq_Class) t;
+						if (clz.isSubtypeOf(c)) {
+							flag = false;
+							break;
+						}
 					}
+					if(flag)
+						continue;
 				}
-				if(!hasField) {
-					//System.out.println("filter out by type..." + c.isInterface());
-					continue;
-				}
-
 				
 				NormalFieldElem nf = (NormalFieldElem)field;
 				jq_Field ff = nf.getField();
-				assert ff.getType().isReferenceType();
-				assert !ff.getType().isAddressType();
 				if (Env.unescapeFields.contains(ff)) {
 					if (ff.isPrivate() && !ff.getDeclaringClass().equals(c)) {
 						//need to be in the same class at first.
-						System.out.println("filter out by field...");
+						System.out.println("filter out by field..." + c + "->" + ff + ":" + ff.getDeclaringClass());
 						continue;
 					}
 					if (ff.isProtected() && !c.isInSamePackage(ff.getDeclaringClass())) {
 						//need to be in the same package.
-						System.out.println("filter out by field...");
+						System.out.println("filter out by field..." + c + "->" + ff + ":" + ff.getDeclaringClass());
 						continue;
 					}
 				}
@@ -800,7 +802,7 @@ public class AbstractHeap extends Heap {
 					Pair<AbsMemLoc, FieldElem> key = entry.getKey();
 					P2Set tgts = entry.getValue();
 					AbsMemLoc src = key.val0;
-					if(src.isInCycle()) continue;
+//					if(src.isInCycle()) continue;
 //					if(src instanceof LocalVarElem) continue;
 //					if(src instanceof AllocElem) continue;
 //					if(src instanceof StaticElem) continue;
@@ -814,7 +816,7 @@ public class AbstractHeap extends Heap {
 						HeapObject tgt = entry1.getKey();
 //						if(tgt instanceof StaticAccessPath) continue;
 
-						if(tgt.isInCycle()) continue;
+//						if(tgt.isInCycle()) continue;
 
 						Pair<Boolean, Boolean> res = instnEdge(src, tgt, f,
 								memLocInstn, calleeHeap, point, typeCst);
@@ -857,6 +859,7 @@ public class AbstractHeap extends Heap {
 				Map<Pair<AbsMemLoc, FieldElem>, Set<Pair<AbsMemLoc, P2Set>>> result = new HashMap<Pair<AbsMemLoc, FieldElem>, Set<Pair<AbsMemLoc, P2Set>>>();
 				Iterator<Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set>> it = calleeHeap.locToP2Set
 						.entrySet().iterator();
+				System.out.println("stupid recursive call...");
 				while (it.hasNext()) {
 					Map.Entry<Pair<AbsMemLoc, FieldElem>, P2Set> entry = it
 							.next();
@@ -864,7 +867,7 @@ public class AbstractHeap extends Heap {
 					P2Set tgts = entry.getValue();
 					AbsMemLoc src = key.val0;
 //					if(src instanceof StaticAccessPath) continue;
-					if(src.isInCycle()) continue;
+//					if(src.isInCycle()) continue;
 //					if(src instanceof LocalVarElem) continue;
 //					if(src instanceof AllocElem) continue;
 
@@ -877,7 +880,7 @@ public class AbstractHeap extends Heap {
 						Map.Entry<HeapObject, BoolExpr> entry1 = it1.next();
 						HeapObject tgt = entry1.getKey();
 //						if(tgt instanceof StaticAccessPath) continue;
-						if(tgt.isInCycle()) continue;
+//						if(tgt.isInCycle()) continue;
 						instnEdge4RecurCall(src, tgt, f, memLocInstn,
 								calleeHeap, point, typeCst, toAdd);
 						addDepEdges(memLocInstn, src, tgt, f);
@@ -1259,6 +1262,26 @@ public class AbstractHeap extends Heap {
 		long endInstCst = System.nanoTime();
 		G.instCstTime += (endInstCst - startInstCst);
 		StringUtil.reportSec("Inst Cst time: ", startInstCst, endInstCst);
+		StringUtil.reportTotalTime("total in equal: ", G.equalsTime);
+		StringUtil.reportTotalTime("total in union: ", G.unionTime);
+		StringUtil.reportTotalTime("total in intersect: ", G.interTime);
+		StringUtil.reportTotalTime("total in extract: ", G.extractTime);
+		StringUtil.reportTotalTime("total in substitute: ", G.subTime);
+		StringUtil.reportTotalTime("total in simplfy: ", G.simTime);
+		StringUtil.reportTotalTime("total in genEqTime: ", G.genEqTime);
+		StringUtil.reportTotalTime("total in cst1: ", G.cst1);
+		StringUtil.reportTotalTime("total in cst2: ", G.cst2);
+		StringUtil.reportTotalTime("total in cst3: ", G.cst3);
+
+		StringUtil.reportTotalTime("total in instEqTime: ", G.eqTime);
+		StringUtil.reportTotalTime("total in instGeTime: ", G.geTime);
+		StringUtil.reportTotalTime("total in instLeTime: ", G.leTime);
+
+		StringUtil.reportTotalTime("total in instSubTime: ", G.instSubTime);
+		StringUtil.reportTotalTime("total in instLiftTime: ", G.liftTime);
+		StringUtil.reportTotalTime("total in instExprTime: ", G.exprTime);
+		StringUtil.reportTotalTime("total in inst: ", G.instTime);
+		StringUtil.reportTotalTime("total in gencst: ", G.genTime);
 		return instC;
 	}
 

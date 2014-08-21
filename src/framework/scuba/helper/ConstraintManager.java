@@ -1,7 +1,9 @@
 package framework.scuba.helper;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import joeq.Class.jq_Array;
 import joeq.Class.jq_Class;
@@ -9,18 +11,15 @@ import joeq.Class.jq_Type;
 import chord.util.tuple.object.Pair;
 import chord.util.tuple.object.Trio;
 
-import com.microsoft.z3.ApplyResult;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.Goal;
 import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.IntNum;
 import com.microsoft.z3.Params;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
-import com.microsoft.z3.Tactic;
 import com.microsoft.z3.Z3Exception;
 
 import framework.scuba.domain.AbsMemLoc;
@@ -55,12 +54,7 @@ public class ConstraintManager {
 	// define the uninterpreted function. type(o)=T
 	static FuncDecl typeFun;
 	
-	static Tactic tactic;
-	
 	static Solver solver;
-
-	
-	static Goal goal;
 
 	// constant expr.
 	static BoolExpr trueExpr;
@@ -83,6 +77,8 @@ public class ConstraintManager {
 	static final Map<Pair<BoolExpr, BoolExpr>, BoolExpr> unionCache = new HashMap<Pair<BoolExpr, BoolExpr>, BoolExpr>();
 
 	static final Map<Pair<BoolExpr, BoolExpr>, BoolExpr> interCache = new HashMap<Pair<BoolExpr, BoolExpr>, BoolExpr>();
+	
+	static final Map<Pair<MemLocInstnSet, jq_Class>, BoolExpr> myInstCache = new HashMap<Pair<MemLocInstnSet, jq_Class>, BoolExpr>();
 
 	static final Map<Trio<BoolExpr, BoolExpr, BoolExpr>, BoolExpr> subCache = new HashMap<Trio<BoolExpr, BoolExpr, BoolExpr>, BoolExpr>();
 
@@ -94,17 +90,14 @@ public class ConstraintManager {
 	public ConstraintManager() {
 		try {
 			ctx = new Context();
-			tactic = ctx.MkTactic("smt");
-		    goal = ctx.MkGoal(true, false, false);
+		    solver = ctx.mkSolver();
+	        Params solver_params = ctx.mkParams();
+	        solver_params.add("ignore_solver1", true);
+	        solver.setParameters(solver_params);
 		    
-		    solver = ctx.MkSolver();
-		    Params solver_params = ctx.MkParams();
-		    solver_params.Add("ignore_solver1", true);
-		    solver.setParameters(solver_params);
-		    
-			trueExpr = ctx.MkBool(true);
-			falseExpr = ctx.MkBool(false);
-			typeFun = ctx.MkFuncDecl("type", ctx.IntSort(), ctx.IntSort());
+			trueExpr = ctx.mkBool(true);
+			falseExpr = ctx.mkBool(false);
+			typeFun = ctx.mkFuncDecl("type", ctx.getIntSort(), ctx.getIntSort());
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -140,11 +133,11 @@ public class ConstraintManager {
 			if (SummariesEnv.v().isUsingSimplifyCache()) {
 				ret = simplifyCache.get(expr);
 				if (ret == null) {
-					ret = (BoolExpr) expr.Simplify();
+					ret = (BoolExpr) expr.simplify();
 					simplifyCache.put(expr, ret);
 				}
 			} else {
-				ret = (BoolExpr) expr.Simplify();
+				ret = (BoolExpr) expr.simplify();
 			}
 			// ret = (BoolExpr) expr.Simplify();
 
@@ -167,18 +160,18 @@ public class ConstraintManager {
 
 			BoolExpr ret1 = ret;
 			for (BoolExpr sub : map.values()) {
-				assert sub.IsEq() || sub.IsLE() || sub.IsGE() : "invalid sub expr"
+				assert sub.isEq() || sub.isLE() || sub.isGE() : "invalid sub expr"
 						+ sub;
-				Expr term = sub.Args()[0].Args()[0];
+				Expr term = sub.getArgs()[0].getArgs()[0];
 				String termStr = term.toString();
 				// Using toString is ugly, but that's the only way i can get
 				// from Z3...
 				AccessPath ap = (AccessPath) liftInv(termStr);
 				assert ap != null;
 
-				assert sub.Args()[1] instanceof IntNum : "arg must be IntNum!";
-				IntNum typeInt = (IntNum) sub.Args()[1];
-				jq_Class t = Env.class2TermRev.get(typeInt.Int());
+				assert sub.getArgs()[1] instanceof IntNum : "arg must be IntNum!";
+				IntNum typeInt = (IntNum) sub.getArgs()[1];
+				jq_Class t = Env.class2TermRev.get(typeInt.getInt());
 				assert t != null : typeInt;
 				// get points-to set for term
 				MemLocInstnSet p2Set = item.instnMemLoc(ap, callerHeap, point);
@@ -191,18 +184,18 @@ public class ConstraintManager {
 
 				BoolExpr instSub;
 				long instSubStart = System.nanoTime();
-				if (sub.IsEq()) {
+				if (sub.isEq()) {
 					long unstart = System.nanoTime();
 					instSub = instEqType(termStr, t, p2Set);
 					long unend = System.nanoTime();
 					G.eqTime += (unend - unstart);
-				} else if (sub.IsLE()) {
+				} else if (sub.isLE()) {
 					long unstart = System.nanoTime();
 					instSub = instLeType(termStr, t, p2Set);
 					long unend = System.nanoTime();
 					G.leTime += (unend - unstart);
 				} else {
-					assert sub.IsGE();
+					assert sub.isGE();
 					long unstart = System.nanoTime();
 					instSub = instGeType(termStr, t, p2Set);
 					long unend = System.nanoTime();
@@ -216,7 +209,7 @@ public class ConstraintManager {
 					BoolExpr tmp = subCache
 							.get(new Trio<BoolExpr, BoolExpr, BoolExpr>(ret1, sub, instSub));
 					if (tmp == null) {
-						tmp = (BoolExpr) ret1.Substitute(sub, instSub);
+						tmp = (BoolExpr) ret1.substitute(sub, instSub);
 					}
 					subCache.put(
 							new Trio<BoolExpr, BoolExpr, BoolExpr>(ret1,
@@ -225,7 +218,7 @@ public class ConstraintManager {
 					long unend = System.nanoTime();
 					G.subTime += (unend - unstart);
 				} else {
-					ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
+					ret1 = (BoolExpr) ret1.substitute(sub, instSub);
 
 				}
 				// ret1 = (BoolExpr) ret1.Substitute(sub, instSub);
@@ -238,13 +231,13 @@ public class ConstraintManager {
 				long simStart = System.nanoTime();
 				result = simplifyCache.get(ret1);
 				if (result == null) {
-					result = (BoolExpr) ret1.Simplify();
+					result = (BoolExpr) ret1.simplify();
 					simplifyCache.put(ret1, result);
 				}
 				long simEnd = System.nanoTime();
 				G.simTime += (simEnd - simStart);
 			} else {
-				result = (BoolExpr) ret1.Simplify();
+				result = (BoolExpr) ret1.simplify();
 
 			}
 
@@ -272,14 +265,14 @@ public class ConstraintManager {
 
 		// using toString as the key to map the same expr, buggy.
 
-		if (expr.IsEq() || expr.IsLE() || expr.IsGE()) {
+		if (expr.isEq() || expr.isLE() || expr.isGE()) {
 			ret.put((BoolExpr)expr, (BoolExpr) expr);
-		} else if (expr.IsAnd() || expr.IsOr()) {
+		} else if (expr.isAnd() || expr.isOr()) {
 
-			for (int i = 0; i < expr.NumArgs(); i++) {
-				assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:"
-						+ expr.Args()[i];
-				BoolExpr sub = (BoolExpr) expr.Args()[i];
+			for (int i = 0; i < expr.getNumArgs(); i++) {
+				assert expr.getArgs()[i] instanceof BoolExpr : "Not BoolExpr:"
+						+ expr.getArgs()[i];
+				BoolExpr sub = (BoolExpr) expr.getArgs()[i];
 				Map<BoolExpr, BoolExpr> map = extractTermUsingCache(sub);
 				ret.putAll(map);
 			}
@@ -294,17 +287,17 @@ public class ConstraintManager {
 		try {
 			// using toString as the key to map the same expr, buggy.
 
-			if (expr.IsEq() || expr.IsLE() || expr.IsGE()) {
+			if (expr.isEq() || expr.isLE() || expr.isGE()) {
 				map.put((BoolExpr)expr, (BoolExpr) expr);
 				return;
 			}
 
-			if (expr.IsAnd() || expr.IsOr()) {
+			if (expr.isAnd() || expr.isOr()) {
 
-				for (int i = 0; i < expr.NumArgs(); i++) {
-					assert expr.Args()[i] instanceof BoolExpr : "Not BoolExpr:"
-							+ expr.Args()[i];
-					BoolExpr sub = (BoolExpr) expr.Args()[i];
+				for (int i = 0; i < expr.getNumArgs(); i++) {
+					assert expr.getArgs()[i] instanceof BoolExpr : "Not BoolExpr:"
+							+ expr.getArgs()[i];
+					BoolExpr sub = (BoolExpr) expr.getArgs()[i];
 					extractTerm(sub, map);
 				}
 			}
@@ -343,7 +336,7 @@ public class ConstraintManager {
 			} else if (isTrue(second)) {
 				ret = first;
 			} else {
-				ret = ctx.MkAnd(new BoolExpr[] { first, second });
+				ret = ctx.mkAnd(new BoolExpr[] { first, second });
 			}
 
 			if (SummariesEnv.v().isUsingInterCache()) {
@@ -384,7 +377,7 @@ public class ConstraintManager {
 			} else if (isFalse(second)) {
 				ret = first;
 			} else {
-				ret = ctx.MkOr(new BoolExpr[] { first, second });
+				ret = ctx.mkOr(new BoolExpr[] { first, second });
 			}
 
 			if (SummariesEnv.v().isUsingUnionCache()) {
@@ -413,8 +406,8 @@ public class ConstraintManager {
 		int typeInt = Env.class2Term.get(t);
 		try {
 			if (ho instanceof AllocElem) {
-				assert term.IsInt();
-				int srcInt = ((IntNum) term).Int();
+				assert term.isInt();
+				int srcInt = ((IntNum) term).getInt();
 				int tgtInt = Env.getConstTerm4Class(t);
 				if (srcInt == tgtInt)
 					return genTrue();
@@ -422,12 +415,12 @@ public class ConstraintManager {
 					return genFalse();
 			} else if (ho instanceof AccessPath) {
 				long tstart1 = System.nanoTime();
-				cur = typeFun.Apply(term);
+				cur = typeFun.apply(term);
 				long tend1 = System.nanoTime();
 				G.exprTime += (tend1 - tstart1);
 			}
 			long tstart = System.nanoTime();
-			BoolExpr eq = ctx.MkEq(cur, ctx.MkInt(typeInt));
+			BoolExpr eq = ctx.mkEq(cur, ctx.mkInt(typeInt));
 			long tend = System.nanoTime();
 			G.exprTime += (tend - tstart);
 			return eq;
@@ -445,8 +438,8 @@ public class ConstraintManager {
 		int typeInt = Env.class2Term.get(t);
 		try {
 			if (ho instanceof AllocElem) {
-				assert term.IsInt();
-				int srcInt = ((IntNum) term).Int();
+				assert term.isInt();
+				int srcInt = ((IntNum) term).getInt();
 				int tgtInt = Env.getConstTerm4Class(t);
 				if (srcInt <= tgtInt)
 					return genTrue();
@@ -454,12 +447,12 @@ public class ConstraintManager {
 					return genFalse();
 			} else if (ho instanceof AccessPath) {
 				long tstart1 = System.nanoTime();
-				cur = typeFun.Apply(term);
+				cur = typeFun.apply(term);
 				long tend1 = System.nanoTime();
 				G.exprTime += (tend1 - tstart1);
 			}
 			long tstart = System.nanoTime();
-			BoolExpr le = ctx.MkLe((IntExpr) cur, ctx.MkInt(typeInt));
+			BoolExpr le = ctx.mkLe((IntExpr) cur, ctx.mkInt(typeInt));
 			long tend = System.nanoTime();
 			G.exprTime += (tend - tstart);
 			return le;
@@ -477,7 +470,7 @@ public class ConstraintManager {
 		int typeInt = Env.class2Term.get(t);
 		try {
 			if (ho instanceof AllocElem) {
-				int srcInt = ((IntNum) term).Int();
+				int srcInt = ((IntNum) term).getInt();
 				int tgtInt = Env.getConstTerm4Class(t);
 				if (srcInt >= tgtInt)
 					return genTrue();
@@ -485,13 +478,13 @@ public class ConstraintManager {
 					return genFalse();
 			} else if (ho instanceof AccessPath) {
 				long tstart1 = System.nanoTime();
-				cur = typeFun.Apply(term);
+				cur = typeFun.apply(term);
 				long tend1 = System.nanoTime();
 				G.exprTime += (tend1 - tstart1);
 			}
 			
 			long tstart = System.nanoTime();
-			BoolExpr le = ctx.MkGe((IntExpr) cur, ctx.MkInt(typeInt));
+			BoolExpr le = ctx.mkGe((IntExpr) cur, ctx.mkInt(typeInt));
 			long tend = System.nanoTime();
 			G.exprTime += (tend - tstart);
 			return le;
@@ -501,6 +494,8 @@ public class ConstraintManager {
 		}
 		return (BoolExpr) cur;
 	}
+	
+	public static Set<MemLocInstnSet> cacheSet = new HashSet<MemLocInstnSet>();
 
 	// type(o) = T
 	public static BoolExpr instEqType(String term, jq_Class t,
@@ -509,7 +504,16 @@ public class ConstraintManager {
 		BoolExpr b = genFalse();
 		if (p2Set.isEmpty())
 			return genTrue();
-
+		
+		
+		Pair<MemLocInstnSet, jq_Class> pair = new Pair<MemLocInstnSet, jq_Class>(
+				p2Set, t);
+		
+		if (myInstCache.containsKey(pair)) {
+			return myInstCache.get(pair);
+		}
+		
+		System.out.println("size of pts: " + p2Set.keySet().size() + " cache:" + cacheSet.add(p2Set));
 		for (AbsMemLoc ho : p2Set.keySet()) {
 			if (ho instanceof HeapObject) {
 				BoolExpr orgCst = p2Set.get(ho);
@@ -531,6 +535,8 @@ public class ConstraintManager {
 				G.cst2 += (tend2 - tstart2);
 			}
 		}
+		
+		myInstCache.put(pair, b);
 		return b;
 	}
 
@@ -588,7 +594,11 @@ public class ConstraintManager {
 
 		for (HeapObject ho : p2Set.keySet()) {
 			BoolExpr orgCst = p2Set.get(ho);
-			BoolExpr newCst = intersect(orgCst, genEqType(ho, t));
+			long tstart = System.nanoTime();
+			BoolExpr eqExpr = genEqType(ho, t);
+			long tend = System.nanoTime();
+			G.genEqTime += (tend - tstart);
+			BoolExpr newCst = intersect(orgCst, eqExpr);
 			if (isTrue(newCst))
 				return trueExpr;
 			b = union(b, newCst);
@@ -633,7 +643,7 @@ public class ConstraintManager {
 					return (BoolExpr) cur;
 
 				long tstart = System.nanoTime();
-				cur = ctx.MkInt(Env.getConstTerm4Class((jq_Class) jType));
+				cur = ctx.mkInt(Env.getConstTerm4Class((jq_Class) jType));
 				long tend = System.nanoTime();
 				G.liftTime += (tend - tstart);
 
@@ -653,7 +663,7 @@ public class ConstraintManager {
 				// put to map for unlifting later.
 				term2Ap.put(symbol, ap);
 				long tstart = System.nanoTime();
-				cur = ctx.MkConst(symbol, ctx.IntSort());
+				cur = ctx.mkConst(symbol, ctx.getIntSort());
 				long tend = System.nanoTime();
 				G.liftTime += (tend - tstart);
 			}
@@ -709,17 +719,13 @@ public class ConstraintManager {
 
 		try {
 			long tstart = System.nanoTime();
-			goal.Reset();
-
 			BoolExpr e1;
-			e1 = ctx.MkIff(expr1, expr2);
-			BoolExpr e2 = ctx.MkNot(e1);
-			goal.Assert(e2);
-		    Status status = ApplyTactic(ctx, tactic, goal);
-//			solver.Assert(e2);
-//			solver.Push();
-//			Status status = solver.Check();
-//			solver.Pop();
+			e1 = ctx.mkIff(expr1, expr2);
+			BoolExpr e2 = ctx.mkNot(e1);
+			solver.push();
+			solver.add(e2);
+			Status status = solver.check();
+			solver.pop();
 			long tend = System.nanoTime();
 			G.equalsTime += (tend - tstart);
 
@@ -746,22 +752,10 @@ public class ConstraintManager {
 		return ret;
 	}
 	
-	private static Status ApplyTactic(Context ctx, Tactic t, Goal g) throws Z3Exception {
-		ApplyResult res = t.Apply(g);
-		Status q = Status.UNKNOWN;
-		for (Goal sg : res.Subgoals())
-			if (sg.IsDecidedSat())
-				q = Status.SATISFIABLE;
-			else if (sg.IsDecidedUnsat())
-				q = Status.UNSATISFIABLE;
-		
-		return q;
-	}
-
 	// check if cst is a scala constraint, e.g, true, false
 	public static boolean isScala(BoolExpr cst) {
 		try {
-			if (cst.IsTrue() || cst.IsFalse())
+			if (cst.isTrue() || cst.isFalse())
 				return true;
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
@@ -772,7 +766,7 @@ public class ConstraintManager {
 
 	public static boolean isTrue(BoolExpr cst) {
 		try {
-			return cst.IsTrue();
+			return cst.isTrue();
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -782,7 +776,7 @@ public class ConstraintManager {
 
 	public static boolean isFalse(BoolExpr cst) {
 		try {
-			return cst.IsFalse();
+			return cst.isFalse();
 		} catch (Z3Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
